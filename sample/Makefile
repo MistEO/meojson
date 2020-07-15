@@ -1,4 +1,4 @@
-CXX = g++ -Wall -g -std=c++11
+CXX = g++ -Wall -g -std=gnu++14
 LIBS = -lpthread
 
 INC = ../include
@@ -9,7 +9,7 @@ SRC_FILES = $(shell ls $(SRC)/*.cpp sample.cpp)
 OBJS = $(patsubst %.cpp, $(BUILD)/%.o, $(notdir $(SRC_FILES)))
 
 TARGET: $(BUILD) $(OBJS)
-	$(CXX) -o $(TARGET) $(OBJS) $(LIBS) -I$(INC)
+	$(CXX) -o $(TARGET) $(OBJS) -I$(INC) $(LIBS)
 
 $(BUILD):
 	mkdir -p $(BUILD)

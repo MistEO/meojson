@@ -2,10 +2,18 @@
 #include "json_value.h"
 
 #include <utility>
+#include <regex>
 
+// To do
 bool json::object::parse(const std::string &content)
 {
+
     return true;
+}
+
+bool json::object::valid() const
+{
+    return m_valid;
 }
 
 json::value json::object::at(const std::string &key) const
@@ -21,6 +29,21 @@ bool json::object::insert(const std::string &key, const json::value &value)
 bool json::object::earse(const std::string &key)
 {
     return m_map.erase(key) > 0 ? true : false;
+}
+
+std::string json::object::to_string() const
+{
+    std::string str = "{ ";
+    for (auto iter = m_map.cbegin(); iter != m_map.cend(); ++iter)
+    {
+        if (iter != m_map.cbegin())
+        {
+            str += ", ";
+        }
+        str += "\"" + iter->first + "\": " + iter->second.to_string();
+    }
+    str += " }";
+    return str;
 }
 
 json::value &json::object::operator[](const std::string &key)
