@@ -10,6 +10,16 @@ namespace json
     class value
     {
     public:
+        enum ValueType
+        {
+            JsonNull,
+            JsonString,
+            JsonNumber,
+            JsonArray,
+            JsonObject,
+            JsonInvalid
+        };
+
         value() = default;
         value(const value &rhs) = default;
         value(const json::object &obj);
@@ -40,5 +50,6 @@ namespace json
     private:
         std::string m_raw;
         bool m_valid = true;
+        ValueType m_type;
     };
 } // namespace json

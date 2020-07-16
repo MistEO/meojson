@@ -10,7 +10,9 @@ int main()
     root["num"] = json::value::number(3.14);
     std::cout << root.to_string() << std::endl;
 
-    std::string content = "   ";
+    std::ifstream in("test.json", std::ios_base::in);
+
+    std::string content = "{ \" aaa \" : 123 , \" bbb \" : 456 }";
     json::value json;
     json.parse(content);
 
