@@ -12,9 +12,9 @@ int main()
 
     std::ifstream in("test.json", std::ios_base::in);
 
-    std::string content = "{ \" aaa \" : 123 , \" bbb \" : 456 }";
+    std::string content = "[ 123, 456 , 789 ]";
     json::value json;
-    json.parse(content);
+    std::cout << "parse ret : " << (json.parse(content) ? "true" : "false") << std::endl;
 
     return 0;
 }
