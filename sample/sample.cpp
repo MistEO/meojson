@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include "json.h"
 
@@ -10,11 +11,16 @@ int main()
     root["num"] = json::value::number(3.14);
     std::cout << root.to_string() << std::endl;
 
-    std::ifstream in("test.json", std::ios_base::in);
+    std::ifstream ifs("test.json");
+    std::stringstream ibuf;
+    ibuf << ifs.rdbuf();
+    std::string content(ibuf.str());
+    // std::string content("{ \n\n\n }");
+    std::cout << content << std::endl;
 
-    std::string content = "[ 123, 456 , 789 ]";
     json::value json;
     std::cout << "parse ret : " << (json.parse(content) ? "true" : "false") << std::endl;
+    std::cout << json.as_object()["version"].as_integer() << std::endl;
 
     return 0;
 }

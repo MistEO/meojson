@@ -17,7 +17,7 @@ $(BUILD):
 $(BUILD)/sample.o: sample.cpp $(INC)/*.h
 	$(CXX) -o $@ -c $< -I$(INC)
 
-$(BUILD)/%.o: $(SRC)/%.cpp $(INC)/%.h
+$(BUILD)/%.o: $(SRC)/%.cpp $(INC)/*.h
 	$(CXX) -o $@ -c $< -I$(INC)
 
 .PHONY: clean
