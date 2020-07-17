@@ -2,7 +2,6 @@
 *.d
 
 # Compiled Object files
-build
 *.slo
 *.lo
 *.o
@@ -31,7 +30,6 @@ build
 *.exe
 *.out
 *.app
-sample/demo
 
 # IDE files
 .vscode
