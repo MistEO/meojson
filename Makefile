@@ -1,37 +1,38 @@
 INC = include
 SRC = src
 # LIBS = -lpthread
-BUILD = build
 
 SRC_FILES = $(shell ls $(SRC)/*.cpp)
 SAMPLE_FILE = sample/sample.cpp
 
-CXXRELEASE = g++ -Wall -O2 -std=c++11
-CXXDEBUG = g++ -Wall -g -std=c++11 -DDEBUG
+CCSTD = gnu++14
+CCRELEASE = g++ -Wall -O2 -std=$(CCSTD)
+CCDEBUG = g++ -Wall -g -std=$(CCSTD) -DDEBUG
 
+BUILD = build
 TARGET = $(BUILD)/libjson.so
 DEMO = $(BUILD)/demo.out
 OBJS = $(patsubst %.cpp, $(BUILD)/%.o, $(notdir $(SRC_FILES) $(SAMPLE_FILE)))
 TEST = $(BUILD)/test.out
 
 ### release
-release: $(BUILD) clean $(TARGET)
+release: clean $(BUILD) $(TARGET) $(DEMO)
 
 $(TARGET): $(SRC_FILES) $(INC)/*.h
-	$(CXXRELEASE) $(SRC_FILES) -o $(TARGET) -I$(INC) $(LIBS) -fPIC -shared
+	$(CCRELEASE) $(SRC_FILES) -o $(TARGET) -I$(INC) $(LIBS) -fPIC -shared
 
-# $(DEMO): $(SAMPLE_FILE) $(INC)/*.h
-# 	$(CXXRELEASE) $(SAMPLE_FILE) -o $(DEMO) -I$(INC) -L$(BUILD) -ljson $(LIBS)
+$(DEMO): $(SAMPLE_FILE) $(INC)/*.h
+	$(CCRELEASE) $(SAMPLE_FILE) -o $(DEMO) -I$(INC) $(LIBS) -L$(BUILD) -ljson
 
 ### debug
 debug: $(BUILD) $(OBJS)
-	$(CXXDEBUG) -o $(TEST) $(OBJS) -I$(INC) $(LIBS)
+	$(CCDEBUG) -o $(TEST) $(OBJS) -I$(INC) $(LIBS)
 
 $(BUILD)/sample.o: $(SAMPLE_FILE) $(INC)/*.h
-	$(CXXDEBUG) -o $@ -c $< -I$(INC)
+	$(CCDEBUG) -o $@ -c $< -I$(INC)
 
 $(BUILD)/%.o: $(SRC)/%.cpp $(INC)/*.h
-	$(CXXDEBUG) -o $@ -c $< -I$(INC)
+	$(CCDEBUG) -o $@ -c $< -I$(INC)
 
 ### public
 $(BUILD):

@@ -1,9 +1,15 @@
 #include "json_value.h"
+
+#include <regex>
+#include <algorithm>
+
+#ifdef DEBUG
+#include <iostream>
+#endif
+
 #include "json_object.h"
 #include "json_array.h"
 #include "json_exception.h"
-
-#include <algorithm>
 
 json::value::value(const json::object &obj)
 {
@@ -17,60 +23,71 @@ json::value::value(const json::array &arr)
     m_valid = arr.valid();
 }
 
-const std::string json::value::reg_str_json_whitespace = "(?:\\s*)";
-
-const std::string json::value::reg_str_json_null = "(?:null)";
-const std::string json::value::reg_str_json_boolean = "(?:true|false)";
-const std::string json::value::reg_str_json_string = "(?:\".*\")";
-
-const std::string json::value::reg_str_json_number_fraction = "(?:\\.\\d+)?";
-const std::string json::value::reg_str_json_number_exponent = "(?:(?:e|E)(?:-|\\+)?\\d+)?";
-const std::string json::value::reg_str_json_number = "(?:-?\\d+" + reg_str_json_number_fraction + reg_str_json_number_exponent + ")";
-
-const std::string json::value::reg_str_json_value = "(" + reg_str_json_null + "|" + reg_str_json_string + "|" + reg_str_json_number + "|(?:\\{.*\\})|(?:\\[.*\\]))";
-
-const std::string json::value::reg_str_json_object_pair = "(?:" + reg_str_json_string + reg_str_json_whitespace + "\\: " + reg_str_json_whitespace + reg_str_json_value + ")";
-const std::string json::value::reg_str_json_object = "\\{" + reg_str_json_whitespace + "(?:(?:" + reg_str_json_object_pair + reg_str_json_whitespace + "," + reg_str_json_whitespace + ")*" + reg_str_json_object_pair + ")?" + reg_str_json_whitespace + "\\}";
-
-const std::string json::value::reg_str_json_array_element = reg_str_json_value;
-const std::string json::value::reg_str_json_array = "\\[" + reg_str_json_whitespace + "(?:(?:" + reg_str_json_array_element + reg_str_json_whitespace + "," + reg_str_json_whitespace + ")*" + reg_str_json_array_element + ")?" + reg_str_json_whitespace + "\\]";
-
-const std::regex json::value::reg_json_null(reg_str_json_null);
-const std::regex json::value::reg_json_boolean(reg_str_json_boolean);
-const std::regex json::value::reg_json_string(reg_str_json_string);
-const std::regex json::value::reg_json_number(reg_str_json_number);
-const std::regex json::value::reg_json_object(reg_str_json_object);
-const std::regex json::value::reg_json_array(reg_str_json_array);
-
-// Reference
-// Json     https://www.json.org/json-zh.html
-// Regex    https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Regular_Expressions
-bool json::value::parse(const std::string &content)
+bool json::value::parse(const std::string &content, bool only_judge_valid)
 {
     std::string format_content(content);
     std::replace(format_content.begin(), format_content.end(), '\n', ' ');
+    if (!only_judge_valid)
+    {
+        m_raw = format_content;
+    }
+
+    // Reference
+    // Json     https://www.json.org/json-zh.html
+    // Regex    https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Regular_Expressions
+    static const std::string reg_str_json_whitespace = "(?:\\s*)";
+
+    static const std::string reg_str_json_null = "(?:null)";
+    static const std::string reg_str_json_boolean = "(?:true|false)";
+    static const std::string reg_str_json_string = "(?:\".*?\")";
+
+    static const std::string reg_str_json_number_fraction = "(?:\\.\\d+)?";
+    static const std::string reg_str_json_number_exponent = "(?:(?:e|E)(?:-|\\+)?\\d+)?";
+    static const std::string reg_str_json_number = "(?:-?\\d+" + reg_str_json_number_fraction + reg_str_json_number_exponent + ")";
+
+    static const std::string reg_str_json_value = "(" + reg_str_json_null + "|" + reg_str_json_string + "|" + reg_str_json_number + "|(?:\\{.*?\\})|(?:\\[.*?\\]))";
+
+    static const std::string reg_str_json_object_pair = "(?:" + reg_str_json_string + reg_str_json_whitespace + "\\: " + reg_str_json_whitespace + reg_str_json_value + ")";
+    static const std::string reg_str_json_object = "\\{" + reg_str_json_whitespace + "(?:(?:" + reg_str_json_object_pair + reg_str_json_whitespace + "," + reg_str_json_whitespace + ")*?" + reg_str_json_object_pair + ")?" + reg_str_json_whitespace + "\\}";
+
+    static const std::string reg_str_json_array_element = reg_str_json_value;
+    static const std::string reg_str_json_array = "\\[" + reg_str_json_whitespace + "(?:(?:" + reg_str_json_array_element + reg_str_json_whitespace + "," + reg_str_json_whitespace + ")*?" + reg_str_json_array_element + ")?" + reg_str_json_whitespace + "\\]";
+
+    static const std::regex reg_json_null(reg_str_json_null);
+    static const std::regex reg_json_boolean(reg_str_json_boolean);
+    static const std::regex reg_json_string(reg_str_json_string);
+    static const std::regex reg_json_number(reg_str_json_number);
+    static const std::regex reg_json_object(reg_str_json_object);
+    static const std::regex reg_json_array(reg_str_json_array);
+    static const std::regex reg_json_value(reg_str_json_value);
+
+    if (std::regex_match(format_content, reg_json_value))
+    { //just for debug
+        m_valid = true;
+    }
+    else
+    {
+        m_valid = false;
+        return m_valid;
+    }
 
     std::smatch match_result;
-    // if (std::regex_match(format_content, match_result, std::regex(reg_str_json_value)))
-    // { //just for debug
-    //     m_valid = true;
-    // }
-    if (std::regex_match(format_content, match_result, reg_json_null))
+    if (std::regex_match(format_content, reg_json_null))
     {
         m_valid = true;
         m_type = JsonNull;
     }
-    else if (std::regex_match(format_content, match_result, reg_json_boolean))
+    else if (std::regex_match(format_content, reg_json_boolean))
     {
         m_valid = true;
         m_type = JsonBoolean;
     }
-    else if (std::regex_match(format_content, match_result, reg_json_string))
+    else if (std::regex_match(format_content, reg_json_string))
     {
         m_valid = true;
         m_type = JsonString;
     }
-    else if (std::regex_match(format_content, match_result, reg_json_number))
+    else if (std::regex_match(format_content, reg_json_number))
     {
         m_valid = true;
         m_type = JsonNumber;
@@ -79,7 +96,7 @@ bool json::value::parse(const std::string &content)
     {
         for (auto it = match_result.begin() + 1; it != match_result.end(); ++it)
         {
-            bool sub_parse = parse(*it);
+            bool sub_parse = parse(*it, true);
             if (sub_parse == false)
             {
                 m_valid = false;
@@ -94,7 +111,7 @@ bool json::value::parse(const std::string &content)
     {
         for (auto it = match_result.begin() + 1; it != match_result.end(); ++it)
         {
-            if (parse(*it) == false)
+            if (parse(*it, true) == false)
             {
                 m_valid = false;
                 m_type = JsonInvalid;
@@ -109,7 +126,6 @@ bool json::value::parse(const std::string &content)
         m_valid = false;
         m_type = JsonInvalid;
     }
-    m_raw = content;
 
     return m_valid;
 }
@@ -126,13 +142,20 @@ int json::value::as_integer() const
 
 bool json::value::as_boolean() const
 {
-    if (m_raw == "true")
+    if (m_type == JsonBoolean)
     {
-        return true;
-    }
-    else if (m_raw == "false")
-    {
-        return false;
+        if (m_raw == "true")
+        {
+            return true;
+        }
+        else if (m_raw == "false")
+        {
+            return false;
+        }
+        else
+        {
+            throw json::exception("Invalid translate");
+        }
     }
     else
     {

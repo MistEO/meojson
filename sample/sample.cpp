@@ -15,11 +15,11 @@ int main()
     std::stringstream ibuf;
     ibuf << ifs.rdbuf();
     std::string content(ibuf.str());
-    // std::string content("{ \n\n\n }");
     std::cout << content << std::endl;
 
     json::value json;
-    std::cout << "parse ret : " << (json.parse(content) ? "true" : "false") << std::endl;
+    bool parse_ret = json.parse(content);
+    std::cout << "parse ret : " << (parse_ret ? "true" : "false") << std::endl;
     std::cout << json.as_object()["version"].as_integer() << std::endl;
 
     return 0;

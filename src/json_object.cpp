@@ -1,21 +1,42 @@
 #include "json_object.h"
+
+#include <regex>
+#include <utility>
+#include <algorithm>
+
+#ifdef DEBUG
+#include <iostream>
+#endif
+
 #include "json_value.h"
 
-#include <utility>
-#include <regex>
-
-// To do
 bool json::object::parse(const std::string &content)
 {
-    const std::string reg_json_whitespace = "(?:\\s*)";
+    std::string format_content(content);
+    std::replace(format_content.begin(), format_content.end(), '\n', ' ');
 
-    const std::string reg_json_string = "(?:\"(.*)\")";
+    // Reference
+    // Json     https://www.json.org/json-zh.html
+    // Regex    https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Regular_Expressions
+    static const std::string reg_str_json_whitespace = "(?:\\s*)";
 
-    const std::string reg_json_object_pair = "(?:" + reg_json_string + reg_json_whitespace + "\\: " + reg_json_whitespace + "(.+?))";
-    const std::string reg_json_object = "\\{" + reg_json_whitespace + "(?:(?:" + reg_json_object_pair + reg_json_whitespace + "," + reg_json_whitespace + ")*" + reg_json_object_pair + ")?" + reg_json_whitespace + "\\}";
+    static const std::string reg_str_json_null = "(?:null)";
+    static const std::string reg_str_json_boolean = "(?:true|false)";
+    static const std::string reg_str_json_string = "(?:\".*?\")";
+
+    static const std::string reg_str_json_number_fraction = "(?:\\.\\d+)?";
+    static const std::string reg_str_json_number_exponent = "(?:(?:e|E)(?:-|\\+)?\\d+)?";
+    static const std::string reg_str_json_number = "(?:-?\\d+" + reg_str_json_number_fraction + reg_str_json_number_exponent + ")";
+
+    static const std::string reg_str_json_value = "(" + reg_str_json_null + "|" + reg_str_json_string + "|" + reg_str_json_number + "|(?:\\{.*?\\})|(?:\\[.*?\\]))";
+
+    static const std::string reg_str_json_object_pair = "(?:(" + reg_str_json_string + ")" + reg_str_json_whitespace + "\\: " + reg_str_json_whitespace + reg_str_json_value + ")";
+    static const std::string reg_str_json_object = "\\{" + reg_str_json_whitespace + "(?:(?:" + reg_str_json_object_pair + reg_str_json_whitespace + "," + reg_str_json_whitespace + ")*" + reg_str_json_object_pair + ")?" + reg_str_json_whitespace + "\\}";
+
+    static const std::regex reg_json_object(reg_str_json_object);
 
     std::smatch match_result;
-    if (std::regex_match(content, match_result, std::regex(reg_json_object)))
+    if (std::regex_match(format_content, match_result, reg_json_object))
     {
         for (auto it = match_result.begin() + 1; it != match_result.end() - 1 && it != match_result.end(); ++it)
         {
@@ -29,6 +50,7 @@ bool json::object::parse(const std::string &content)
                 m_map.clear();
                 break;
             }
+            key = key.substr(1, key.length() - 2);  // 去除两侧引号
             m_map[key] = value;
         }
         m_valid = true;

@@ -2,10 +2,11 @@
 
 #include <string>
 #include <vector>
-#include "json_value.h"
 
 namespace json
 {
+    class value;
+    
     class array
     {
     public:

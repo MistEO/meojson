@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <regex>
 
 namespace json
 {
@@ -29,7 +28,7 @@ namespace json
 
         ~value() = default;
 
-        bool parse(const std::string &content);
+        bool parse(const std::string &content, bool only_judge_valid = false);
         bool valid() const;
 
         int as_integer() const;
@@ -54,34 +53,5 @@ namespace json
         std::string m_raw;
         bool m_valid = true;
         ValueType m_type;
-
-    private:
-        static const std::string reg_str_json_whitespace;
-
-        static const std::string reg_str_json_null;
-
-        static const std::string reg_str_json_boolean;
-
-        static const std::string reg_str_json_string;
-
-        static const std::string reg_str_json_number_fraction;
-        static const std::string reg_str_json_number_exponent;
-        static const std::string reg_str_json_number;
-
-        static const std::string reg_str_json_value;
-
-        static const std::string reg_str_json_object_pair;
-        static const std::string reg_str_json_object;
-
-        static const std::string reg_str_json_array_element;
-        static const std::string reg_str_json_array;
-
-        static const std::regex reg_json_null;
-        static const std::regex reg_json_boolean;
-        static const std::regex reg_json_string;
-        static const std::regex reg_json_number;
-        static const std::regex reg_json_object;
-        static const std::regex reg_json_array;
-        //static const std::regex reg_json_value;
     };
 } // namespace json
