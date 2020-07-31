@@ -12,13 +12,13 @@ namespace json
     public:
         enum ValueType
         {
+            JsonInvalid,
             JsonNull,
             JsonBoolean,
             JsonString,
             JsonNumber,
             JsonArray,
-            JsonObject,
-            JsonInvalid
+            JsonObject
         };
 
         value() = default;
@@ -30,9 +30,10 @@ namespace json
 
         bool parse(const std::string &content, bool only_judge_valid = false);
         bool valid() const;
+        ValueType type() const;
 
-        int as_integer() const;
         bool as_boolean() const;
+        int as_integer() const;
         double as_double() const;
         std::string as_string() const;
         object as_object() const;
@@ -51,7 +52,6 @@ namespace json
 
     private:
         std::string m_raw;
-        bool m_valid = true;
         ValueType m_type;
     };
 } // namespace json

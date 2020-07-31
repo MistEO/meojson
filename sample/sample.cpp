@@ -9,7 +9,7 @@ int main()
     json::object root;
     root["str"] = json::value::string("plain text");
     root["num"] = json::value::number(3.14);
-    std::cout << root.to_string() << std::endl;
+    // std::cout << root.to_string() << std::endl;
 
     std::ifstream ifs("test.json");
     std::stringstream ibuf;

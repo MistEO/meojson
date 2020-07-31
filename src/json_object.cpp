@@ -23,6 +23,7 @@ bool json::object::parse(const std::string &content)
     static const std::string reg_str_json_null = "(?:null)";
     static const std::string reg_str_json_boolean = "(?:true|false)";
     static const std::string reg_str_json_string = "(?:\".*?\")";
+    static const std::string reg_str_json_string_capturing = "(?:\"(.*?)\")";
 
     static const std::string reg_str_json_number_fraction = "(?:\\.\\d+)?";
     static const std::string reg_str_json_number_exponent = "(?:(?:e|E)(?:-|\\+)?\\d+)?";
@@ -30,7 +31,7 @@ bool json::object::parse(const std::string &content)
 
     static const std::string reg_str_json_value = "(" + reg_str_json_null + "|" + reg_str_json_string + "|" + reg_str_json_number + "|(?:\\{.*?\\})|(?:\\[.*?\\]))";
 
-    static const std::string reg_str_json_object_pair = "(?:(" + reg_str_json_string + ")" + reg_str_json_whitespace + "\\: " + reg_str_json_whitespace + reg_str_json_value + ")";
+    static const std::string reg_str_json_object_pair = "(?:" + reg_str_json_string_capturing + reg_str_json_whitespace + "\\: " + reg_str_json_whitespace + reg_str_json_value + ")";
     static const std::string reg_str_json_object = "\\{" + reg_str_json_whitespace + "(?:(?:" + reg_str_json_object_pair + reg_str_json_whitespace + "," + reg_str_json_whitespace + ")*" + reg_str_json_object_pair + ")?" + reg_str_json_whitespace + "\\}";
 
     static const std::regex reg_json_object(reg_str_json_object);
@@ -50,7 +51,6 @@ bool json::object::parse(const std::string &content)
                 m_map.clear();
                 break;
             }
-            key = key.substr(1, key.length() - 2);  // 去除两侧引号
             m_map[key] = value;
         }
         m_valid = true;
