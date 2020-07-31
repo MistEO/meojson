@@ -3,13 +3,13 @@
 #include <regex>
 #include <algorithm>
 
-#ifdef DEBUG
-#include <iostream>
-#endif
-
 #include "json_object.h"
 #include "json_array.h"
 #include "json_exception.h"
+
+#ifdef DEBUG
+#include <iostream>
+#endif
 
 json::value::value(const json::object &obj)
 {
@@ -67,13 +67,13 @@ bool json::value::parse(const std::string &content, bool only_judge_valid)
     static const std::string reg_str_json_array_element = reg_str_json_value;
     static const std::string reg_str_json_array = "\\[" + reg_str_json_whitespace + "(?:(?:" + reg_str_json_array_element + reg_str_json_whitespace + "," + reg_str_json_whitespace + ")*?" + reg_str_json_array_element + ")?" + reg_str_json_whitespace + "\\]";
 
-    static const std::regex reg_json_null(reg_str_json_null);
-    static const std::regex reg_json_boolean(reg_str_json_boolean);
-    static const std::regex reg_json_string(reg_str_json_string);
-    static const std::regex reg_json_number(reg_str_json_number);
-    static const std::regex reg_json_object(reg_str_json_object);
-    static const std::regex reg_json_array(reg_str_json_array);
-    static const std::regex reg_json_value(reg_str_json_value);
+    static const std::regex reg_json_null("^" + reg_str_json_null + "$");
+    static const std::regex reg_json_boolean("^" + reg_str_json_boolean + "$");
+    static const std::regex reg_json_string("^" + reg_str_json_string + "$");
+    static const std::regex reg_json_number("^" + reg_str_json_number + "$");
+    static const std::regex reg_json_object("^" + reg_str_json_object + "$");
+    static const std::regex reg_json_array("^" + reg_str_json_array + "$");
+    static const std::regex reg_json_value("^" + reg_str_json_value + "$");
 
     if (!std::regex_match(format_content, reg_json_value))
     {

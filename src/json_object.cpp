@@ -4,11 +4,11 @@
 #include <utility>
 #include <algorithm>
 
+#include "json_value.h"
+
 #ifdef DEBUG
 #include <iostream>
 #endif
-
-#include "json_value.h"
 
 bool json::object::parse(const std::string &content)
 {
@@ -34,11 +34,23 @@ bool json::object::parse(const std::string &content)
     static const std::string reg_str_json_object_pair = "(?:" + reg_str_json_string_capturing + reg_str_json_whitespace + "\\: " + reg_str_json_whitespace + reg_str_json_value + ")";
     static const std::string reg_str_json_object = "\\{" + reg_str_json_whitespace + "(?:(?:" + reg_str_json_object_pair + reg_str_json_whitespace + "," + reg_str_json_whitespace + ")*" + reg_str_json_object_pair + ")?" + reg_str_json_whitespace + "\\}";
 
-    static const std::regex reg_json_object(reg_str_json_object);
+    static const std::regex reg_json_object("^" + reg_str_json_object + "$");
+
+#ifdef DEBUG
+    std::cout << reg_str_json_object << std::endl;
+#endif
 
     std::smatch match_result;
     if (std::regex_match(format_content, match_result, reg_json_object))
     {
+#ifdef DEBUG
+        std::cout << "========START DEBUG========" << std::endl;
+        for (auto dbit = match_result.begin(); dbit != match_result.end(); ++dbit)
+        {
+            std::cout << "===" << *dbit << std::endl;
+        }
+        std::cout << "========END DEBUG========" << std::endl;
+#endif
         for (auto it = match_result.begin() + 1; it != match_result.end() - 1 && it != match_result.end(); ++it)
         {
             std::string key = *it;
