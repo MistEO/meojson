@@ -20,7 +20,7 @@ int main()
     json::value json;
     bool parse_ret = json.parse(content);
     std::cout << "parse ret : " << (parse_ret ? "true" : "false") << std::endl;
-    std::cout << json.as_object()["version"].as_integer() << std::endl;
+    std::cout << json.as_object()["configurations"].as_array().at(0).as_object()["name"].as_string() << std::endl;
 
     return 0;
 }

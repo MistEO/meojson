@@ -5,7 +5,7 @@ SRC = src
 SRC_FILES = $(shell ls $(SRC)/*.cpp)
 SAMPLE_FILE = sample/sample.cpp
 
-CCSTD = gnu++14
+CCSTD = c++17
 CCRELEASE = g++ -Wall -O2 -std=$(CCSTD)
 CCDEBUG = g++ -Wall -g -std=$(CCSTD) -DDEBUG
 

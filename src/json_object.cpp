@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include "json_value.h"
+#include "json_exception.h"
 
 #ifdef DEBUG
 #include <iostream>
@@ -29,43 +30,42 @@ bool json::object::parse(const std::string &content)
     static const std::string reg_str_json_number_exponent = "(?:(?:e|E)(?:-|\\+)?\\d+)?";
     static const std::string reg_str_json_number = "(?:-?\\d+" + reg_str_json_number_fraction + reg_str_json_number_exponent + ")";
 
-    static const std::string reg_str_json_value = "(" + reg_str_json_null + "|" + reg_str_json_string + "|" + reg_str_json_number + "|(?:\\{.*\\})|(?:\\[.*\\]))";
+    static const std::string reg_str_json_value = "(" + reg_str_json_null + "|" + reg_str_json_boolean + "|" + reg_str_json_string + "|" + reg_str_json_number + "|(?:\\{.*\\})|(?:\\[.*\\]))";
 
     static const std::string reg_str_json_object_pair = "(?:" + reg_str_json_string_capturing + reg_str_json_whitespace + "\\:" + reg_str_json_whitespace + reg_str_json_value + ")";
     static const std::string reg_str_json_object = "\\{" + reg_str_json_whitespace + "(?:(?:" + reg_str_json_object_pair + reg_str_json_whitespace + "," + reg_str_json_whitespace + ")*" + reg_str_json_object_pair + ")?" + reg_str_json_whitespace + "\\}";
 
+    static const std::regex reg_json_object_pair(reg_str_json_object_pair);
     static const std::regex reg_json_object("^" + reg_str_json_object + "$");
 
-#ifdef DEBUG
-    std::cout << reg_str_json_object << std::endl;
-#endif
-
     std::smatch match_result;
-    if (std::regex_match(format_content, match_result, reg_json_object))
+    if (std::regex_match(format_content, reg_json_object))
     {
-#ifdef DEBUG
-        std::cout << "========START DEBUG========" << __FILE__ << ":" << __FUNCTION__ << std::endl;
-        for (auto dbit = match_result.begin(); dbit != match_result.end(); ++dbit)
+        m_valid = true;
+        std::string search_content = format_content;
+        while (std::regex_search(search_content, match_result, reg_json_object_pair))
         {
-            std::cout << "===" << *dbit << std::endl;
-        }
-        std::cout << "========END DEBUG========" << __FILE__ << ":" << __FUNCTION__ << std::endl;
-#endif
-        for (auto it = match_result.begin() + 1; it != match_result.end() - 1 && it != match_result.end(); ++it)
-        {
-            std::string key = *it;
-            ++it; // move to value
-            json::value value;
-            bool sub_parse = value.parse(*it);
-            if (sub_parse == false)
+            if (match_result.size() == 3)
             {
-                m_valid = false;
+                std::string key = match_result[1];
+                json::value value;
+                bool sub_parse = value.parse(match_result[2]);
+                if (sub_parse == false)
+                {
+                    m_valid = false;
+                    m_map.clear();
+                    break;
+                }
+                m_map[key] = value;
+            }
+            else
+            {
                 m_map.clear();
+                m_valid = false;
                 break;
             }
-            m_map[key] = value;
+            search_content = match_result.suffix().str();
         }
-        m_valid = true;
     }
     else
     {

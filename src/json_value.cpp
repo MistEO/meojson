@@ -59,7 +59,7 @@ bool json::value::parse(const std::string &content, bool only_judge_valid)
     static const std::string reg_str_json_number_exponent = "(?:(?:e|E)(?:-|\\+)?\\d+)?";
     static const std::string reg_str_json_number = "(?:-?\\d+" + reg_str_json_number_fraction + reg_str_json_number_exponent + ")";
 
-    static const std::string reg_str_json_value = "(" + reg_str_json_null + "|" + reg_str_json_string + "|" + reg_str_json_number + "|(?:\\{.*\\})|(?:\\[.*\\]))";
+    static const std::string reg_str_json_value = "(" + reg_str_json_null + "|" + reg_str_json_boolean + "|" + reg_str_json_string + "|" + reg_str_json_number + "|(?:\\{.*\\})|(?:\\[.*\\]))";
 
     static const std::string reg_str_json_object_pair = "(?:" + reg_str_json_string + reg_str_json_whitespace + "\\:" + reg_str_json_whitespace + reg_str_json_value + ")";
     static const std::string reg_str_json_object = "\\{" + reg_str_json_whitespace + "(?:(?:" + reg_str_json_object_pair + reg_str_json_whitespace + "," + reg_str_json_whitespace + ")*?" + reg_str_json_object_pair + ")?" + reg_str_json_whitespace + "\\}";
@@ -71,7 +71,9 @@ bool json::value::parse(const std::string &content, bool only_judge_valid)
     static const std::regex reg_json_boolean("^" + reg_str_json_boolean + "$");
     static const std::regex reg_json_string("^" + reg_str_json_string + "$");
     static const std::regex reg_json_number("^" + reg_str_json_number + "$");
+    static const std::regex reg_json_object_pair(reg_str_json_object_pair);
     static const std::regex reg_json_object("^" + reg_str_json_object + "$");
+    static const std::regex reg_json_array_element(reg_str_json_array_element);
     static const std::regex reg_json_array("^" + reg_str_json_array + "$");
     static const std::regex reg_json_value("^" + reg_str_json_value + "$");
 
@@ -100,34 +102,51 @@ bool json::value::parse(const std::string &content, bool only_judge_valid)
     }
     else if (std::regex_match(format_content, match_result, reg_json_object))
     {
-#ifdef DEBUG
-        std::cout << "========START DEBUG========" << __FILE__ << ":" << __FUNCTION__ << std::endl;
-        for (auto dbit = match_result.begin(); dbit != match_result.end(); ++dbit)
+        std::string search_content = format_content;
+        while (std::regex_search(search_content, match_result, reg_json_object_pair))
         {
-            std::cout << "===" << *dbit << std::endl;
-        }
-        std::cout << "========END DEBUG========" << __FILE__ << ":" << __FUNCTION__ << std::endl;
-#endif
-        for (auto it = match_result.begin() + 1; it != match_result.end(); ++it)
-        {
-            bool sub_parse = parse(*it, true);
-            if (sub_parse == false)
+            if (match_result.size() == 2)
+            {
+                std::string key = match_result[1];
+                json::value value;
+                bool sub_parse = parse(match_result[1], true);
+                if (sub_parse == false)
+                {
+                    m_type = JsonInvalid;
+                    break;
+                }
+            }
+            else
             {
                 m_type = JsonInvalid;
                 break;
             }
+            search_content = match_result.suffix().str();
         }
         m_type = JsonObject;
     }
     else if (std::regex_match(format_content, match_result, reg_json_array))
     {
-        for (auto it = match_result.begin() + 1; it != match_result.end(); ++it)
+        std::string search_content = format_content.substr(1, format_content.size() - 2);
+        while (std::regex_search(search_content, match_result, reg_json_array_element))
         {
-            if (parse(*it, true) == false)
+            if (match_result.size() == 2)
+            {
+                std::string key = match_result[1];
+                json::value value;
+                bool sub_parse = parse(match_result[1], true);
+                if (sub_parse == false)
+                {
+                    m_type = JsonInvalid;
+                    break;
+                }
+            }
+            else
             {
                 m_type = JsonInvalid;
                 break;
             }
+            search_content = match_result.suffix().str();
         }
         m_type = JsonArray;
     }

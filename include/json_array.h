@@ -6,7 +6,7 @@
 namespace json
 {
     class value;
-    
+
     class array
     {
     public:
