@@ -22,16 +22,16 @@ bool json::object::parse(const std::string &content)
 
     static const std::string reg_str_json_null = "(?:null)";
     static const std::string reg_str_json_boolean = "(?:true|false)";
-    static const std::string reg_str_json_string = "(?:\".*?\")";
-    static const std::string reg_str_json_string_capturing = "(?:\"(.*?)\")";
+    static const std::string reg_str_json_string = "(?:\"[^\"]*\")";
+    static const std::string reg_str_json_string_capturing = "(?:\"([^\"]*)\")";
 
     static const std::string reg_str_json_number_fraction = "(?:\\.\\d+)?";
     static const std::string reg_str_json_number_exponent = "(?:(?:e|E)(?:-|\\+)?\\d+)?";
     static const std::string reg_str_json_number = "(?:-?\\d+" + reg_str_json_number_fraction + reg_str_json_number_exponent + ")";
 
-    static const std::string reg_str_json_value = "(" + reg_str_json_null + "|" + reg_str_json_string + "|" + reg_str_json_number + "|(?:\\{.*?\\})|(?:\\[.*?\\]))";
+    static const std::string reg_str_json_value = "(" + reg_str_json_null + "|" + reg_str_json_string + "|" + reg_str_json_number + "|(?:\\{.*\\})|(?:\\[.*\\]))";
 
-    static const std::string reg_str_json_object_pair = "(?:" + reg_str_json_string_capturing + reg_str_json_whitespace + "\\: " + reg_str_json_whitespace + reg_str_json_value + ")";
+    static const std::string reg_str_json_object_pair = "(?:" + reg_str_json_string_capturing + reg_str_json_whitespace + "\\:" + reg_str_json_whitespace + reg_str_json_value + ")";
     static const std::string reg_str_json_object = "\\{" + reg_str_json_whitespace + "(?:(?:" + reg_str_json_object_pair + reg_str_json_whitespace + "," + reg_str_json_whitespace + ")*" + reg_str_json_object_pair + ")?" + reg_str_json_whitespace + "\\}";
 
     static const std::regex reg_json_object("^" + reg_str_json_object + "$");
@@ -44,12 +44,12 @@ bool json::object::parse(const std::string &content)
     if (std::regex_match(format_content, match_result, reg_json_object))
     {
 #ifdef DEBUG
-        std::cout << "========START DEBUG========" << std::endl;
+        std::cout << "========START DEBUG========" << __FILE__ << ":" << __FUNCTION__ << std::endl;
         for (auto dbit = match_result.begin(); dbit != match_result.end(); ++dbit)
         {
             std::cout << "===" << *dbit << std::endl;
         }
-        std::cout << "========END DEBUG========" << std::endl;
+        std::cout << "========END DEBUG========" << __FILE__ << ":" << __FUNCTION__ << std::endl;
 #endif
         for (auto it = match_result.begin() + 1; it != match_result.end() - 1 && it != match_result.end(); ++it)
         {
