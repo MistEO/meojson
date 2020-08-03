@@ -1,19 +1,19 @@
-INC = include
-SRC = src
-# LIBS = -lpthread
+INC := include
+SRC := src
+# LIBS := -lpthread
 
-SRC_FILES = $(shell ls $(SRC)/*.cpp)
-SAMPLE_FILE = sample/sample.cpp
+SRC_FILES := $(shell ls $(SRC)/*.cpp)
+SAMPLE_FILE := sample/sample.cpp
 
-CCSTD = c++17
-CCRELEASE = g++ -Wall -O2 -std=$(CCSTD)
-CCDEBUG = g++ -Wall -g -std=$(CCSTD) -DDEBUG
+CCSTD := c++11
+CCRELEASE := g++ -Wall -O2 -std=$(CCSTD)
+CCDEBUG := g++ -Wall -g -std=$(CCSTD) -DDEBUG
 
-BUILD = build
-TARGET = $(BUILD)/libjson.so
-DEMO = $(BUILD)/demo.out
-OBJS = $(patsubst %.cpp, $(BUILD)/%.o, $(notdir $(SRC_FILES) $(SAMPLE_FILE)))
-TEST = $(BUILD)/test.out
+BUILD := build
+TARGET := $(BUILD)/libjson.so
+DEMO := $(BUILD)/demo.out
+OBJS := $(patsubst %.cpp, $(BUILD)/%.o, $(notdir $(SRC_FILES) $(SAMPLE_FILE)))
+TEST := $(BUILD)/test.out
 
 ### release
 release: clean $(BUILD) $(TARGET) $(DEMO)
