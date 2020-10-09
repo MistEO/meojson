@@ -3,159 +3,76 @@
 #include <regex>
 #include <algorithm>
 
-#include "json_object.h"
-#include "json_array.h"
-#include "json_exception.h"
-
 #ifdef DEBUG
 #include <iostream>
 #endif
 
-json::value::value(const json::object &obj)
+#include "json_exception.h"
+
+// Reference
+// Json     https://www.json.org/json-zh.html
+// Regex    https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Regular_Expressions
+const std::string json::value::reg_str_json_whitespace("(?:\\s*)");
+
+const std::string json::value::reg_str_json_null("(?:null)");
+
+const std::string json::value::reg_str_json_boolean("(?:true|false)");
+
+const std::string json::value::reg_str_json_string("(?:\"[^\"]*\")");
+
+const std::string json::value::reg_str_json_number_fraction("(?:\\.\\d+)?");
+const std::string json::value::reg_str_json_number_exponent("(?:(?:e|E)(?:-|\\+)?\\d+)?");
+const std::string json::value::reg_str_json_number("(?:-?\\d+" + json::value::reg_str_json_number_fraction + json::value::reg_str_json_number_exponent + ")");
+
+const std::string json::value::reg_str_json_non_nested_value("(" + json::value::reg_str_json_null + "|" + json::value::reg_str_json_boolean + "|" + json::value::reg_str_json_string + "|" + json::value::reg_str_json_number + ")");
+
+const std::regex json::value::reg_json_null("^" + json::value::reg_str_json_null + "$");
+const std::regex json::value::reg_json_boolean("^" + json::value::reg_str_json_boolean + "$");
+const std::regex json::value::reg_json_string("^" + json::value::reg_str_json_string + "$");
+const std::regex json::value::reg_json_number("^" + json::value::reg_str_json_number + "$");
+const std::regex json::value::reg_json_non_nested_value("^" + json::value::reg_str_json_non_nested_value + "$");
+
+bool json::value::parse(const std::string &content)
 {
-    m_raw = obj.to_string();
-    if (obj.valid())
-    {
-        m_type = JsonObject;
-    }
-    else
-    {
-        m_type = JsonInvalid;
-    }
+    auto parse_iter = content.cbegin();
+    parse_once(content, parse_iter);
 }
 
-json::value::value(const json::array &arr)
+std::string::const_iterator json::value::parse_once(const std::string &content, const std::string::const_iterator &first)
 {
-    m_raw = arr.to_string();
-    if (arr.valid())
+    auto cur = first;
+    if (cur == content.cend())
     {
-        m_type = JsonArray;
-    }
-    else
-    {
-        m_type = JsonInvalid;
-    }
-}
-
-bool json::value::parse(const std::string &content, bool only_judge_valid)
-{
-    std::string format_content(content);
-    std::replace(format_content.begin(), format_content.end(), '\n', ' ');
-    if (!only_judge_valid)
-    {
-        m_raw = format_content;
+        return content.cend();
     }
 
-    // Reference
-    // Json     https://www.json.org/json-zh.html
-    // Regex    https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Regular_Expressions
-    static const std::string reg_str_json_whitespace = "(?:\\s*)";
-
-    static const std::string reg_str_json_null = "(?:null)";
-    static const std::string reg_str_json_boolean = "(?:true|false)";
-    static const std::string reg_str_json_string = "(?:\"[^\"]*\")";
-
-    static const std::string reg_str_json_number_fraction = "(?:\\.\\d+)?";
-    static const std::string reg_str_json_number_exponent = "(?:(?:e|E)(?:-|\\+)?\\d+)?";
-    static const std::string reg_str_json_number = "(?:-?\\d+" + reg_str_json_number_fraction + reg_str_json_number_exponent + ")";
-
-    static const std::string reg_str_json_value = "(" + reg_str_json_null + "|" + reg_str_json_boolean + "|" + reg_str_json_string + "|" + reg_str_json_number + "|(?:\\{.*\\})|(?:\\[.*\\]))";
-
-    static const std::string reg_str_json_object_pair = "(?:" + reg_str_json_string + reg_str_json_whitespace + "\\:" + reg_str_json_whitespace + reg_str_json_value + ")";
-    static const std::string reg_str_json_object = "\\{" + reg_str_json_whitespace + "(?:(?:" + reg_str_json_object_pair + reg_str_json_whitespace + "," + reg_str_json_whitespace + ")*?" + reg_str_json_object_pair + ")?" + reg_str_json_whitespace + "\\}";
-
-    static const std::string reg_str_json_array_element = reg_str_json_value;
-    static const std::string reg_str_json_array = "\\[" + reg_str_json_whitespace + "(?:(?:" + reg_str_json_array_element + reg_str_json_whitespace + "," + reg_str_json_whitespace + ")*?" + reg_str_json_array_element + ")?" + reg_str_json_whitespace + "\\]";
-
-    static const std::regex reg_json_null("^" + reg_str_json_null + "$");
-    static const std::regex reg_json_boolean("^" + reg_str_json_boolean + "$");
-    static const std::regex reg_json_string("^" + reg_str_json_string + "$");
-    static const std::regex reg_json_number("^" + reg_str_json_number + "$");
-    static const std::regex reg_json_object_pair(reg_str_json_object_pair);
-    static const std::regex reg_json_object("^" + reg_str_json_object + "$");
-    static const std::regex reg_json_array_element(reg_str_json_array_element);
-    static const std::regex reg_json_array("^" + reg_str_json_array + "$");
-    static const std::regex reg_json_value("^" + reg_str_json_value + "$");
-
-    if (!std::regex_match(format_content, reg_json_value))
-    {
-        m_type = JsonInvalid;
-        return false;
-    }
-
-    std::smatch match_result;
-    if (std::regex_match(format_content, reg_json_null))
-    {
-        m_type = JsonNull;
-    }
-    else if (std::regex_match(format_content, reg_json_boolean))
-    {
-        m_type = JsonBoolean;
-    }
-    else if (std::regex_match(format_content, reg_json_string))
-    {
-        m_type = JsonString;
-    }
-    else if (std::regex_match(format_content, reg_json_number))
-    {
-        m_type = JsonNumber;
-    }
-    else if (std::regex_match(format_content, match_result, reg_json_object))
-    {
-        std::string search_content = format_content;
-        while (std::regex_search(search_content, match_result, reg_json_object_pair))
+    // 去空格
+    auto remove_white_space_func = [&]() -> decltype(cur) {
+        while (*cur == ' ' || *cur == '\t' || *cur == '\r' || *cur == '\n')
         {
-            if (match_result.size() == 2)
+            ++cur;
+            if (cur == content.cend())
             {
-                std::string key = match_result[1];
-                json::value value;
-                bool sub_parse = parse(match_result[1], true);
-                if (sub_parse == false)
-                {
-                    m_type = JsonInvalid;
-                    break;
-                }
+                return content.cend();
             }
-            else
-            {
-                m_type = JsonInvalid;
-                break;
-            }
-            search_content = match_result.suffix().str();
         }
-        m_type = JsonObject;
-    }
-    else if (std::regex_match(format_content, match_result, reg_json_array))
+        return cur;
+    };
+
+    if (remove_white_space_func() == content.cend())
     {
-        std::string search_content = format_content.substr(1, format_content.size() - 2);
-        while (std::regex_search(search_content, match_result, reg_json_array_element))
-        {
-            if (match_result.size() == 2)
-            {
-                std::string key = match_result[1];
-                json::value value;
-                bool sub_parse = parse(match_result[1], true);
-                if (sub_parse == false)
-                {
-                    m_type = JsonInvalid;
-                    break;
-                }
-            }
-            else
-            {
-                m_type = JsonInvalid;
-                break;
-            }
-            search_content = match_result.suffix().str();
-        }
-        m_type = JsonArray;
-    }
-    else
-    {
-        m_type = JsonInvalid;
+        return content.cend();
     }
 
-    return m_type != JsonInvalid;
+    switch (*cur)
+    {
+    case '{':
+        break;
+    case '[':
+        break;
+    default:
+        break;
+    }
 }
 
 bool json::value::valid() const

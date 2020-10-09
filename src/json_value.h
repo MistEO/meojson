@@ -4,9 +4,6 @@
 
 namespace json
 {
-    class object;
-    class array;
-
     class value
     {
     public:
@@ -23,12 +20,10 @@ namespace json
 
         value() = default;
         value(const value &rhs) = default;
-        value(const json::object &obj);
-        value(const json::array &arr);
 
         ~value() = default;
 
-        bool parse(const std::string &content, bool only_judge_valid = false);
+        bool parse(const std::string &content);
         bool valid() const;
         ValueType type() const;
 
@@ -50,7 +45,28 @@ namespace json
         //static json::value array(const json::array &arr);
         static json::value null();
 
+    protected:
+        static const std::string reg_str_json_whitespace;
+
+        static const std::string reg_str_json_null;
+        static const std::string reg_str_json_boolean;
+        static const std::string reg_str_json_string;
+        static const std::string reg_str_json_number;
+
+        static const std::string reg_str_json_non_nested_value;
+
+        static const std::regex reg_json_null;
+        static const std::regex reg_json_boolean;
+        static const std::regex reg_json_string;
+        static const std::regex reg_json_number;
+        static const std::regex reg_json_non_nested_value;
+
     private:
+        static const std::string reg_str_json_number_fraction;
+        static const std::string reg_str_json_number_exponent;
+
+        std::string::const_iterator parse_once(const std::string &content, const std::string::const_iterator &first);
+
         std::string m_raw;
         ValueType m_type;
     };
