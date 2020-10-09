@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <regex>
 
 namespace json
 {
@@ -31,8 +32,8 @@ namespace json
         int as_integer() const;
         double as_double() const;
         std::string as_string() const;
-        object as_object() const;
-        array as_array() const;
+        // object as_object() const;
+        // array as_array() const;
 
         std::string to_string() const;
 
@@ -65,7 +66,7 @@ namespace json
         static const std::string reg_str_json_number_fraction;
         static const std::string reg_str_json_number_exponent;
 
-        std::string::const_iterator parse_once(const std::string &content, const std::string::const_iterator &first);
+        std::string::const_iterator parse_value(const std::string &content, const std::string::const_iterator &first);
 
         std::string m_raw;
         ValueType m_type;
