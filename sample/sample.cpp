@@ -2,7 +2,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "json_parser.h"
+#include "json.h"
 
 int main()
 {
@@ -12,8 +12,10 @@ int main()
     std::string content(ibuf.str());
     std::cout << content << std::endl;
 
-    bool parse_ret = json::parser::parse(content);
-    std::cout << "parse ret : " << (parse_ret ? "true" : "false") << std::endl;
+    json::value val;
+    val = json::parser::parse(content);
+    std::cout << "parse success" << std::endl;
+    std::cout << val.as_object()["version"].as_integer() << std::endl;
 
     return 0;
 }

@@ -3,19 +3,60 @@
 #include "json_array.h"
 #include "json_exception.h"
 
-bool json::value::as_boolean() const
+json::value::value(const object &obj)
+    : _type(JsonObject),
+      _object_data(obj.raw_data())
 {
-    if (m_type == JsonInvalid)
+    ;
+}
+
+json::value::value(const array &arr)
+    : _type(JsonArray),
+      _array_data(arr.raw_data())
+{
+}
+
+bool json::value::empty() const
+{
+    if (_type == JsonInvalid)
     {
         throw json::exception("Invalid json");
     }
-    else if (m_type == JsonBoolean)
+    else if (_type == JsonWhiteSpace)
     {
-        if (m_raw == "true")
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool json::value::valid() const
+{
+    if (_type != JsonInvalid)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool json::value::as_boolean() const
+{
+    if (_type == JsonInvalid)
+    {
+        throw json::exception("Invalid json");
+    }
+    else if (_type == JsonBoolean)
+    {
+        if (_basic_type_data == "true")
         {
             return true;
         }
-        else if (m_raw == "false")
+        else if (_basic_type_data == "false")
         {
             return false;
         }
@@ -32,13 +73,13 @@ bool json::value::as_boolean() const
 
 int json::value::as_integer() const
 {
-    if (m_type == JsonInvalid)
+    if (_type == JsonInvalid)
     {
         throw json::exception("Invalid json");
     }
-    else if (m_type == JsonNumber)
+    else if (_type == JsonNumber)
     {
-        return std::stoi(m_raw);
+        return std::stoi(_basic_type_data);
     }
     else
     {
@@ -48,13 +89,13 @@ int json::value::as_integer() const
 
 double json::value::as_double() const
 {
-    if (m_type == JsonInvalid)
+    if (_type == JsonInvalid)
     {
         throw json::exception("Invalid json");
     }
-    else if (m_type == JsonNumber)
+    else if (_type == JsonNumber)
     {
-        return std::stod(m_raw);
+        return std::stod(_basic_type_data);
     }
     else
     {
@@ -64,13 +105,13 @@ double json::value::as_double() const
 
 std::string json::value::as_string() const
 {
-    if (m_type == JsonInvalid)
+    if (_type == JsonInvalid)
     {
         throw json::exception("Invalid json");
     }
-    else if (m_type == JsonString)
+    else if (_type == JsonString)
     {
-        std::string str = m_raw.substr(1, m_raw.size() - 2);
+        std::string str = _basic_type_data.substr(1, _basic_type_data.size() - 2);
         return str;
     }
     else
@@ -81,22 +122,13 @@ std::string json::value::as_string() const
 
 json::object json::value::as_object() const
 {
-    if (m_type == JsonInvalid)
+    if (_type == JsonInvalid)
     {
         throw json::exception("Invalid json");
     }
-    else if (m_type == JsonObject)
+    else if (_type == JsonObject)
     {
-
-        json::object object;
-        if (object.parse(m_raw))
-        {
-            return object;
-        }
-        else
-        {
-            throw json::exception("Unknown Parse Error");
-        }
+        return json::object(_object_data);
     }
     else
     {
@@ -106,22 +138,13 @@ json::object json::value::as_object() const
 
 json::array json::value::as_array() const
 {
-    if (m_type == JsonInvalid)
+    if (_type == JsonInvalid)
     {
         throw json::exception("Invalid json");
     }
-    else if (m_type == JsonArray)
+    else if (_type == JsonArray)
     {
-
-        json::array array;
-        if (array.parse(m_raw))
-        {
-            return array;
-        }
-        else
-        {
-            throw json::exception("Unknown Parse Error");
-        }
+        return json::array(_array_data);
     }
     else
     {
@@ -131,67 +154,85 @@ json::array json::value::as_array() const
 
 std::string json::value::to_string() const
 {
-    return m_raw;
+    switch (_type)
+    {
+    case JsonInvalid:
+        throw json::exception("Invalid json");
+    case JsonWhiteSpace:
+    case JsonNull:
+    case JsonBoolean:
+    case JsonString:
+    case JsonNumber:
+        return _basic_type_data;
+    case JsonObject:
+        return json::object(_object_data).to_string();
+    case JsonArray:
+        return json::array(_array_data).to_string();
+    default:
+        throw json::exception("Unknown Value Type");
+    }
 }
 
 json::value json::value::string(const char *str)
 {
     json::value val;
-    val.m_raw = std::string() + "\"" + str + "\"";
-    val.m_type = JsonString;
+    val._type = JsonString;
+    val._basic_type_data = std::string() + "\"" + str + "\"";
     return val;
 }
 
 json::value json::value::string(const std::string &str)
 {
     json::value val;
-    val.m_raw = "\"" + str + "\"";
-    val.m_type = JsonString;
+    val._type = JsonString;
+    val._basic_type_data = "\"" + str + "\"";
     return val;
 }
 
 json::value json::value::number(int num)
 {
     json::value val;
-    val.m_raw = std::to_string(num);
-    val.m_type = JsonNumber;
+    val._type = JsonNumber;
+    val._basic_type_data = std::to_string(num);
     return val;
 }
 
 json::value json::value::number(double num)
 {
     json::value val;
-    val.m_raw = std::to_string(num);
-    val.m_type = JsonNumber;
+    val._type = JsonNumber;
+    val._basic_type_data = std::to_string(num);
     return val;
 }
 
 json::value json::value::boolean(bool b)
 {
     json::value val;
-    val.m_raw = b ? "true" : "false";
-    val.m_type = JsonBoolean;
+    val._type = JsonBoolean;
+    val._basic_type_data = b ? "true" : "false";
     return val;
 }
 
 json::value json::value::null()
 {
     json::value val;
-    val.m_raw = "null";
-    val.m_type = JsonNull;
+    val._type = JsonNull;
+    val._basic_type_data = "null";
     return val;
 }
 
 // json::value json::value::object(const json::object &obj)
 // {
 //     json::value val;
-//     val.m_raw = obj.to_string();
+//     val._type = JsonObject;
+//     val._object_data = obj.raw_data();
 //     return val;
 // }
 
 // json::value json::value::array(const json::array &arr)
 // {
 //     json::value val;
-//     val.m_raw = arr.to_string();
+//     val._type = JsonArray;
+//     val._array_data = arr.raw_data();
 //     return val;
 // }
