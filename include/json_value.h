@@ -67,6 +67,9 @@ namespace json
         static const std::string reg_str_json_number_exponent;
 
         std::string::const_iterator parse_value(const std::string &content, const std::string::const_iterator &first);
+        std::string::const_iterator parse_object(const std::string &content, const std::string::const_iterator &first);
+        std::string::const_iterator parse_array(const std::string &content, const std::string::const_iterator &first);
+        std::string::const_iterator parse_whitespace(const std::string &content, const std::string::const_iterator &first);
 
         std::string m_raw;
         ValueType m_type;
