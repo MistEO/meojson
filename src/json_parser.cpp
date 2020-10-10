@@ -109,8 +109,7 @@ json::value json::parser::parse_value(const std::string &content, std::string::c
         {
             std::string val = match_result[1];
             cur += val.size();
-            parse_result._type = maybe_type;
-            parse_result._basic_type_data = val;
+            parse_result.set_raw_data(maybe_type, val);
         }
         else
         {
@@ -139,13 +138,14 @@ json::object json::parser::parse_object(const std::string &content, std::string:
     }
 
     parse_whitespace(content, cur);
-    json::object parse_result_object;
+
     if (*cur == ']')
     {
         ++cur;
-        return parse_result_object;
+        return json::object();
     }
 
+    json::object parse_result_object;
     while (true)
     {
         parse_whitespace(content, cur);
@@ -219,15 +219,15 @@ json::array json::parser::parse_array(const std::string &content, std::string::c
     {
         throw exception("Parsing error: " + std::string(cur, content.cend()));
     }
-    parse_whitespace(content, cur);
 
-    json::array parse_result_array;
+    parse_whitespace(content, cur);
     if (*cur == ']')
     {
         ++cur;
-        return parse_result_array;
+        return json::array();
     }
 
+    json::array parse_result_array;
     while (true)
     {
         parse_whitespace(content, cur);

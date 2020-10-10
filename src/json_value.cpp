@@ -221,6 +221,12 @@ json::value json::value::null()
     return val;
 }
 
+void json::value::set_raw_data(json::value::ValueType type, const std::string &data)
+{
+    _type = type;
+    _basic_type_data = data;
+}
+
 // json::value json::value::object(const json::object &obj)
 // {
 //     json::value val;

@@ -15,7 +15,7 @@ int main()
     json::value val;
     val = json::parser::parse(content);
     std::cout << "parse success" << std::endl;
-    std::cout << val.as_object()["version"].as_integer() << std::endl;
+    std::cout << val.as_object()["configurations"].as_array()[0].as_object()["name"].as_string() << std::endl;
 
     return 0;
 }

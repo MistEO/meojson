@@ -11,8 +11,6 @@ namespace json
 
     class value
     {
-        friend class parser;
-
     public:
         enum ValueType
         {
@@ -52,6 +50,10 @@ namespace json
         // static json::value object(const json::object &obj);
         // static json::value array(const json::array &arr);
         static json::value null();
+
+    private:
+        friend class parser;
+        void set_raw_data(ValueType type, const std::string &data);
 
     private:
         ValueType _type = JsonWhiteSpace;
