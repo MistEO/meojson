@@ -221,10 +221,10 @@ json::value json::value::null()
     return val;
 }
 
-void json::value::set_raw_data(json::value::ValueType type, const std::string &data)
+void json::value::set_raw_basic_data(json::value::ValueType type, const std::string &basic_data)
 {
     _type = type;
-    _basic_type_data = data;
+    _basic_type_data = basic_data;
 }
 
 // json::value json::value::object(const json::object &obj)

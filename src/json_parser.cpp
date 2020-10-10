@@ -109,7 +109,7 @@ json::value json::parser::parse_value(const std::string &content, std::string::c
         {
             std::string val = match_result[1];
             cur += val.size();
-            parse_result.set_raw_data(maybe_type, val);
+            parse_result.set_raw_basic_data(maybe_type, val);
         }
         else
         {

@@ -51,9 +51,7 @@ namespace json
         // static json::value array(const json::array &arr);
         static json::value null();
 
-    private:
-        friend class parser;
-        void set_raw_data(ValueType type, const std::string &data);
+        void set_raw_basic_data(json::value::ValueType type, const std::string &basic_data);
 
     private:
         ValueType _type = JsonWhiteSpace;
