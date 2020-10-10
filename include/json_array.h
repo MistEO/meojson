@@ -16,17 +16,19 @@ namespace json
 
         ~array() = default;
 
-        bool parse(const std::string &content);
-        bool valid() const;
-
-        json::value at(int index) const;
+        bool empty() const;
+        const json::value at(int index) const;
+        void push_back(const json::value &value);
+        // void earse(int index);
 
         std::string to_string() const;
 
         json::value &operator[](int index);
+        const json::value &operator[](int index) const;
+
+        const std::vector<json::value> &raw_data() const;
 
     private:
-        std::vector<json::value> m_vector;
-        bool m_valid = true;
+        std::vector<json::value> _array_data;
     };
 } // namespace json

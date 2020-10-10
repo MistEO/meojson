@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <map>
+#include <vector>
 
 namespace json
 {
@@ -9,9 +11,12 @@ namespace json
 
     class value
     {
+        friend class parser;
+
     public:
         enum ValueType
         {
+            JsonWhiteSpace,
             JsonInvalid,
             JsonNull,
             JsonBoolean,
@@ -20,17 +25,15 @@ namespace json
             JsonArray,
             JsonObject
         };
-
         value() = default;
         value(const value &rhs) = default;
-        value(const json::object &obj);
-        value(const json::array &arr);
+        value(const object &obj);
+        value(const array &arr);
 
         ~value() = default;
 
-        bool parse(const std::string &content, bool only_judge_valid = false);
+        bool empty() const;
         bool valid() const;
-        ValueType type() const;
 
         bool as_boolean() const;
         int as_integer() const;
@@ -46,12 +49,14 @@ namespace json
         static json::value number(int num);
         static json::value number(double num);
         static json::value boolean(bool b);
-        //static json::value object(const json::object &obj);
-        //static json::value array(const json::array &arr);
+        // static json::value object(const json::object &obj);
+        // static json::value array(const json::array &arr);
         static json::value null();
 
     private:
-        std::string m_raw;
-        ValueType m_type;
+        ValueType _type = JsonWhiteSpace;
+        std::string _basic_type_data;
+        std::map<std::string, json::value> _object_data;
+        std::vector<json::value> _array_data;
     };
 } // namespace json
