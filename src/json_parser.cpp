@@ -54,10 +54,10 @@ json::value json::parser::initial_parse(const std::string &content, std::string:
     case '"':
         return parse_string(content, cur);
     case 'n':
-        return parse_by_regex(content, cur, reg_json_null, JsonNull);
+        return parse_by_regex(content, cur, reg_json_null, ValueType::JsonNull);
     case 't':
     case 'f':
-        return parse_by_regex(content, cur, reg_json_boolean, JsonBoolean);
+        return parse_by_regex(content, cur, reg_json_boolean, ValueType::JsonBoolean);
     case '-':
     case '0':
     case '1':
@@ -69,7 +69,7 @@ json::value json::parser::initial_parse(const std::string &content, std::string:
     case '7':
     case '8':
     case '9':
-        return parse_by_regex(content, cur, reg_json_number, JsonNumber);
+        return parse_by_regex(content, cur, reg_json_number, ValueType::JsonNumber);
     default:
         throw json::exception("Parsing error: " + std::string(cur, content.cend()));
     }
@@ -88,7 +88,7 @@ json::value json::parser::parse_by_regex(const std::string &content, std::string
     }
     else
     {
-        throw json::exception("Parsing regex " + std::to_string(type) + " error: " + cur_string);
+        throw json::exception("Parsing regex " + std::to_string(static_cast<int>(type)) + " error: " + cur_string);
     }
     return parse_result;
 }

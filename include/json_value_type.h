@@ -2,7 +2,7 @@
 
 namespace json
 {
-    enum ValueType
+    enum class ValueType
     {
         JsonWhiteSpace,
         JsonNull,

@@ -44,7 +44,7 @@ namespace json
         void set_raw_basic_data(json::ValueType type, const std::string &basic_data);
 
     private:
-        json::ValueType _type = JsonWhiteSpace;
+        json::ValueType _type = ValueType::JsonWhiteSpace;
         std::string _basic_type_data;
         std::map<std::string, json::value> _object_data;
         std::vector<json::value> _array_data;
