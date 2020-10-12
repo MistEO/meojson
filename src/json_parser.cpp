@@ -97,7 +97,7 @@ json::value json::parser::parse_value(const std::string &content, std::string::c
     default:
         maybe_value = false;
         maybe_type = json::value::JsonInvalid;
-        throw exception("Parsing error: " + std::string(cur, content.cend()));
+        throw json::exception("Parsing error: " + std::string(cur, content.cend()));
         break;
     }
 
@@ -113,7 +113,7 @@ json::value json::parser::parse_value(const std::string &content, std::string::c
         }
         else
         {
-            throw exception("Parsing error: " + cur_string);
+            throw json::exception("Parsing error: " + cur_string);
         }
     }
 
@@ -134,7 +134,7 @@ json::object json::parser::parse_object(const std::string &content, std::string:
     }
     else
     {
-        throw exception("Parsing error: " + std::string(cur, content.cend()));
+        throw json::exception("Parsing error: " + std::string(cur, content.cend()));
     }
 
     parse_whitespace(content, cur);
@@ -161,7 +161,7 @@ json::object json::parser::parse_object(const std::string &content, std::string:
         }
         else
         {
-            throw exception("Parsing error: " + std::string(cur, content.cend()));
+            throw json::exception("Parsing error: " + std::string(cur, content.cend()));
         }
 
         parse_whitespace(content, cur);
@@ -172,7 +172,7 @@ json::object json::parser::parse_object(const std::string &content, std::string:
         }
         else
         {
-            throw exception("Parsing error: " + std::string(cur, content.cend()));
+            throw json::exception("Parsing error: " + std::string(cur, content.cend()));
         }
 
         parse_whitespace(content, cur);
@@ -198,7 +198,7 @@ json::object json::parser::parse_object(const std::string &content, std::string:
     }
     else
     {
-        throw exception("Parsing error: " + std::string(cur, content.cend()));
+        throw json::exception("Parsing error: " + std::string(cur, content.cend()));
     }
     return parse_result_object;
 }
@@ -217,7 +217,7 @@ json::array json::parser::parse_array(const std::string &content, std::string::c
     }
     else
     {
-        throw exception("Parsing error: " + std::string(cur, content.cend()));
+        throw json::exception("Parsing error: " + std::string(cur, content.cend()));
     }
 
     parse_whitespace(content, cur);
@@ -253,7 +253,7 @@ json::array json::parser::parse_array(const std::string &content, std::string::c
     }
     else
     {
-        throw exception("Parsing error: " + std::string(cur, content.cend()));
+        throw json::exception("Parsing error: " + std::string(cur, content.cend()));
     }
     return parse_result_array;
 }
