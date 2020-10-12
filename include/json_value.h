@@ -4,6 +4,8 @@
 #include <map>
 #include <vector>
 
+#include "json_value_type.h"
+
 namespace json
 {
     class object;
@@ -12,17 +14,6 @@ namespace json
     class value
     {
     public:
-        enum ValueType
-        {
-            JsonWhiteSpace,
-            JsonInvalid,
-            JsonNull,
-            JsonBoolean,
-            JsonString,
-            JsonNumber,
-            JsonArray,
-            JsonObject
-        };
         value() = default;
         value(const value &rhs) = default;
         value(const object &obj);
@@ -51,10 +42,10 @@ namespace json
         // static json::value array(const json::array &arr);
         static json::value null();
 
-        void set_raw_basic_data(json::value::ValueType type, const std::string &basic_data);
+        void set_raw_basic_data(json::ValueType type, const std::string &basic_data);
 
     private:
-        ValueType _type = JsonWhiteSpace;
+        json::ValueType _type = JsonWhiteSpace;
         std::string _basic_type_data;
         std::map<std::string, json::value> _object_data;
         std::vector<json::value> _array_data;
