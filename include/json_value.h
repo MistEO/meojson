@@ -22,7 +22,6 @@ namespace json
         ~value() = default;
 
         bool empty() const;
-        bool valid() const;
 
         bool as_boolean() const;
         int as_integer() const;

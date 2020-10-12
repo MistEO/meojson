@@ -18,23 +18,7 @@ json::value::value(const array &arr)
 
 bool json::value::empty() const
 {
-    if (_type == JsonInvalid)
-    {
-        throw json::exception("Invalid json");
-    }
-    else if (_type == JsonWhiteSpace)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool json::value::valid() const
-{
-    if (_type != JsonInvalid)
+    if (_type == JsonWhiteSpace)
     {
         return true;
     }
@@ -46,11 +30,7 @@ bool json::value::valid() const
 
 bool json::value::as_boolean() const
 {
-    if (_type == JsonInvalid)
-    {
-        throw json::exception("Invalid json");
-    }
-    else if (_type == JsonBoolean)
+    if (_type == JsonBoolean)
     {
         if (_basic_type_data == "true")
         {
@@ -73,11 +53,7 @@ bool json::value::as_boolean() const
 
 int json::value::as_integer() const
 {
-    if (_type == JsonInvalid)
-    {
-        throw json::exception("Invalid json");
-    }
-    else if (_type == JsonNumber)
+    if (_type == JsonNumber)
     {
         return std::stoi(_basic_type_data);
     }
@@ -89,11 +65,7 @@ int json::value::as_integer() const
 
 double json::value::as_double() const
 {
-    if (_type == JsonInvalid)
-    {
-        throw json::exception("Invalid json");
-    }
-    else if (_type == JsonNumber)
+    if (_type == JsonNumber)
     {
         return std::stod(_basic_type_data);
     }
@@ -105,11 +77,7 @@ double json::value::as_double() const
 
 std::string json::value::as_string() const
 {
-    if (_type == JsonInvalid)
-    {
-        throw json::exception("Invalid json");
-    }
-    else if (_type == JsonString)
+    if (_type == JsonString)
     {
         std::string str = _basic_type_data.substr(1, _basic_type_data.size() - 2);
         return str;
@@ -122,11 +90,7 @@ std::string json::value::as_string() const
 
 json::object json::value::as_object() const
 {
-    if (_type == JsonInvalid)
-    {
-        throw json::exception("Invalid json");
-    }
-    else if (_type == JsonObject)
+    if (_type == JsonObject)
     {
         return json::object(_object_data);
     }
@@ -138,11 +102,7 @@ json::object json::value::as_object() const
 
 json::array json::value::as_array() const
 {
-    if (_type == JsonInvalid)
-    {
-        throw json::exception("Invalid json");
-    }
-    else if (_type == JsonArray)
+    if (_type == JsonArray)
     {
         return json::array(_array_data);
     }
@@ -156,8 +116,6 @@ std::string json::value::to_string() const
 {
     switch (_type)
     {
-    case JsonInvalid:
-        throw json::exception("Invalid json");
     case JsonWhiteSpace:
     case JsonNull:
     case JsonBoolean:

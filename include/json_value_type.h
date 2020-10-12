@@ -5,7 +5,6 @@ namespace json
     enum ValueType
     {
         JsonWhiteSpace,
-        JsonInvalid,
         JsonNull,
         JsonBoolean,
         JsonString,
