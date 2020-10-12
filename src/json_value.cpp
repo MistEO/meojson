@@ -42,12 +42,12 @@ bool json::value::as_boolean() const
         }
         else
         {
-            throw json::exception("Unknown Parse Error");
+            throw exception("Unknown Parse Error");
         }
     }
     else
     {
-        throw json::exception("Wrong Type");
+        throw exception("Wrong Type");
     }
 }
 
@@ -59,7 +59,7 @@ int json::value::as_integer() const
     }
     else
     {
-        throw json::exception("Wrong Type");
+        throw exception("Wrong Type");
     }
 }
 
@@ -71,7 +71,7 @@ double json::value::as_double() const
     }
     else
     {
-        throw json::exception("Wrong Type");
+        throw exception("Wrong Type");
     }
 }
 
@@ -84,7 +84,7 @@ std::string json::value::as_string() const
     }
     else
     {
-        throw json::exception("Wrong Type");
+        throw exception("Wrong Type");
     }
 }
 
@@ -92,11 +92,11 @@ json::object json::value::as_object() const
 {
     if (_type == ValueType::JsonObject)
     {
-        return json::object(_object_data);
+        return object(_object_data);
     }
     else
     {
-        throw json::exception("Wrong Type");
+        throw exception("Wrong Type");
     }
 }
 
@@ -104,11 +104,11 @@ json::array json::value::as_array() const
 {
     if (_type == ValueType::JsonArray)
     {
-        return json::array(_array_data);
+        return array(_array_data);
     }
     else
     {
-        throw json::exception("Wrong Type");
+        throw exception("Wrong Type");
     }
 }
 
@@ -123,17 +123,17 @@ std::string json::value::to_string() const
     case ValueType::JsonNumber:
         return _basic_type_data;
     case ValueType::JsonObject:
-        return json::object(_object_data).to_string();
+        return object(_object_data).to_string();
     case ValueType::JsonArray:
-        return json::array(_array_data).to_string();
+        return array(_array_data).to_string();
     default:
-        throw json::exception("Unknown Value Type");
+        throw exception("Unknown Value Type");
     }
 }
 
 json::value json::value::string(const char *str)
 {
-    json::value val;
+    value val;
     val._type = ValueType::JsonString;
     val._basic_type_data = std::string() + "\"" + str + "\"";
     return val;
@@ -141,7 +141,7 @@ json::value json::value::string(const char *str)
 
 json::value json::value::string(const std::string &str)
 {
-    json::value val;
+    value val;
     val._type = ValueType::JsonString;
     val._basic_type_data = "\"" + str + "\"";
     return val;
@@ -149,7 +149,7 @@ json::value json::value::string(const std::string &str)
 
 json::value json::value::number(int num)
 {
-    json::value val;
+    value val;
     val._type = ValueType::JsonNumber;
     val._basic_type_data = std::to_string(num);
     return val;
@@ -157,7 +157,7 @@ json::value json::value::number(int num)
 
 json::value json::value::number(double num)
 {
-    json::value val;
+    value val;
     val._type = ValueType::JsonNumber;
     val._basic_type_data = std::to_string(num);
     return val;
@@ -165,7 +165,7 @@ json::value json::value::number(double num)
 
 json::value json::value::boolean(bool b)
 {
-    json::value val;
+    value val;
     val._type = ValueType::JsonBoolean;
     val._basic_type_data = b ? "true" : "false";
     return val;
@@ -173,7 +173,7 @@ json::value json::value::boolean(bool b)
 
 json::value json::value::null()
 {
-    json::value val;
+    value val;
     val._type = ValueType::JsonNull;
     val._basic_type_data = "null";
     return val;

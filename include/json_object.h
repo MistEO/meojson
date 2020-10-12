@@ -12,25 +12,25 @@ namespace json
     public:
         object() = default;
         object(const object &rhs) = default;
-        object(const std::map<std::string, json::value> &value_map);
+        object(const std::map<std::string, value> &value_map);
 
         ~object() = default;
 
         bool empty() const;
 
-        const json::value at(const std::string &key) const;
-        bool insert(const std::string &key, const json::value &value);
+        const value at(const std::string &key) const;
+        bool insert(const std::string &key, const value &value);
         bool earse(const std::string &key);
 
         std::string to_string() const;
 
-        json::value &operator[](const std::string &key);
-        const json::value &operator[](const std::string &key) const;
+        value &operator[](const std::string &key);
+        const value &operator[](const std::string &key) const;
 
-        const std::map<std::string, json::value> &raw_data() const;
+        const std::map<std::string, value> &raw_data() const;
 
     private:
-        std::map<std::string, json::value> _object_data;
+        std::map<std::string, value> _object_data;
         bool _valid = false;
     };
 } // namespace json

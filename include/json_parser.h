@@ -38,7 +38,7 @@ namespace json
     private:
         static value initial_parse(const std::string &content, std::string::const_iterator &cur);
 
-        static value parse_by_regex(const std::string &content, std::string::const_iterator &cur, const std::regex &regex, json::ValueType type);
+        static value parse_by_regex(const std::string &content, std::string::const_iterator &cur, const std::regex &regex, ValueType type);
         static value parse_string(const std::string &content, std::string::const_iterator &cur);
         static object parse_object(const std::string &content, std::string::const_iterator &cur);
         static array parse_array(const std::string &content, std::string::const_iterator &cur);

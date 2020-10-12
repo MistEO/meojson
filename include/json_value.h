@@ -32,21 +32,21 @@ namespace json
 
         std::string to_string() const;
 
-        static json::value string(const char *str);
-        static json::value string(const std::string &str);
-        static json::value number(int num);
-        static json::value number(double num);
-        static json::value boolean(bool b);
-        // static json::value object(const json::object &obj);
-        // static json::value array(const json::array &arr);
-        static json::value null();
+        static value string(const char *str);
+        static value string(const std::string &str);
+        static value number(int num);
+        static value number(double num);
+        static value boolean(bool b);
+        // static value object(const object &obj);
+        // static value array(const array &arr);
+        static value null();
 
-        void set_raw_basic_data(json::ValueType type, const std::string &basic_data);
+        void set_raw_basic_data(ValueType type, const std::string &basic_data);
 
     private:
-        json::ValueType _type = ValueType::JsonWhiteSpace;
+        ValueType _type = ValueType::JsonWhiteSpace;
         std::string _basic_type_data;
-        std::map<std::string, json::value> _object_data;
-        std::vector<json::value> _array_data;
+        std::map<std::string, value> _object_data;
+        std::vector<value> _array_data;
     };
 } // namespace json
