@@ -100,7 +100,6 @@ json::value json::parser::parse_string(const std::string &content, std::string::
 
 std::string json::parser::parse_string_and_return(const std::string &content, std::string::const_iterator &cur)
 {
-    auto first = cur;
     if (*cur == '"')
     {
         ++cur;
@@ -110,6 +109,8 @@ std::string json::parser::parse_string_and_return(const std::string &content, st
         throw exception("Parsing string error: " + std::string(cur, content.cend()));
     }
 
+    auto first = cur;
+    auto last = cur;
     while (true)
     {
         if (cur == content.cend())
@@ -118,12 +119,13 @@ std::string json::parser::parse_string_and_return(const std::string &content, st
         }
         if (*cur == '"' && *(cur - 1) != '\\')
         {
+            last = cur;
             ++cur;
             break;
         }
         ++cur;
     }
-    return std::string(first, cur);
+    return std::string(first, last);
 }
 
 json::object json::parser::parse_object(const std::string &content, std::string::const_iterator &cur)
@@ -150,8 +152,7 @@ json::object json::parser::parse_object(const std::string &content, std::string:
     {
         parse_whitespace(content, cur);
 
-        std::string key_temp = parse_string_and_return(content, cur);
-        std::string key = key_temp.substr(1, key_temp.size() - 2);
+        std::string key = parse_string_and_return(content, cur);
 
         parse_whitespace(content, cur);
 
