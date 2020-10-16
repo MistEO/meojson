@@ -109,7 +109,7 @@ std::string json::parser::parse_string_and_return(const std::string &content, st
         throw exception("Parsing string error: " + std::string(cur, content.cend()));
     }
 
-    auto first = cur;
+    const auto first = cur;
     auto last = cur;
     while (true)
     {
