@@ -16,8 +16,11 @@ namespace json
     public:
         value() = default;
         value(const value &rhs) = default;
+        value(value &&rhs) = default;
         value(const object &obj);
+        value(object &&obj);
         value(const array &arr);
+        value(array &&arr);
 
         ~value() = default;
 
@@ -40,6 +43,9 @@ namespace json
         // static value object(const object &obj);
         // static value array(const array &arr);
         static value null();
+
+        value &operator=(const value &) = default;
+        value &operator=(value &&) = default;
 
         void set_raw_basic_data(ValueType type, const std::string &basic_data);
 

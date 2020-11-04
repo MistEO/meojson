@@ -8,6 +8,12 @@ json::array::array(const std::vector<json::value> &value_array)
     ;
 }
 
+json::array::array(std::vector<json::value> &&value_array)
+    : _array_data(value_array)
+{
+    ;
+}
+
 bool json::array::empty() const
 {
     return _array_data.empty();
@@ -19,6 +25,11 @@ const json::value json::array::at(int index) const
 }
 
 void json::array::push_back(const json::value &value)
+{
+    _array_data.push_back(value);
+}
+
+void json::array::push_back(json::value &&value)
 {
     _array_data.push_back(value);
 }
@@ -48,7 +59,7 @@ const json::value &json::array::operator[](int index) const
     return _array_data.at(index);
 }
 
-const std::vector<json::value> &json::array::raw_data() const
-{
-    return _array_data;
-}
+// const std::vector<json::value> &json::array::raw_data() const
+// {
+//     return _array_data;
+// }

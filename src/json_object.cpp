@@ -8,6 +8,12 @@ json::object::object(const std::map<std::string, json::value> &value_map)
     ;
 }
 
+json::object::object(std::map<std::string, json::value> &&value_map)
+    : _object_data(value_map)
+{
+    ;
+}
+
 bool json::object::empty() const
 {
     return _object_data.empty();
@@ -19,6 +25,11 @@ const json::value json::object::at(const std::string &key) const
 }
 
 bool json::object::insert(const std::string &key, const json::value &value)
+{
+    return _object_data.insert(std::make_pair(key, value)).second;
+}
+
+bool json::object::insert(std::string &&key, json::value &&value)
 {
     return _object_data.insert(std::make_pair(key, value)).second;
 }
@@ -53,7 +64,7 @@ const json::value &json::object::operator[](const std::string &key) const
     return _object_data.at(key);
 }
 
-const std::map<std::string, json::value> &json::object::raw_data() const
-{
-    return _object_data;
-}
+// const std::map<std::string, json::value> &json::object::raw_data() const
+// {
+//     return _object_data;
+// }

@@ -5,15 +5,30 @@
 
 json::value::value(const object &obj)
     : _type(ValueType::JsonObject),
-      _object_data(obj.raw_data())
+      _object_data(obj._object_data)
+{
+    ;
+}
+
+json::value::value(object &&obj)
+    : _type(ValueType::JsonObject),
+      _object_data(std::move(obj._object_data))
 {
     ;
 }
 
 json::value::value(const array &arr)
     : _type(ValueType::JsonArray),
-      _array_data(arr.raw_data())
+      _array_data(arr._array_data)
 {
+    ;
+}
+
+json::value::value(array &&arr)
+    : _type(ValueType::JsonArray),
+      _array_data(std::move(arr._array_data))
+{
+    ;
 }
 
 bool json::value::empty() const
@@ -79,8 +94,7 @@ std::string json::value::as_string() const
 {
     if (_type == ValueType::JsonString)
     {
-        std::string str = _basic_type_data.substr(1, _basic_type_data.size() - 2);
-        return str;
+        return _basic_type_data.substr(1, _basic_type_data.size() - 2);
     }
     else
     {
@@ -178,6 +192,8 @@ json::value json::value::null()
     val._basic_type_data = "null";
     return val;
 }
+
+
 
 void json::value::set_raw_basic_data(json::ValueType type, const std::string &basic_data)
 {

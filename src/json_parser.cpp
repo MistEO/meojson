@@ -169,7 +169,7 @@ json::object json::parser::parse_object(const std::string &content, std::string:
         value val = initial_parse(content, cur);
         parse_whitespace(content, cur);
 
-        parse_result_object.insert(key, val);
+        parse_result_object.insert(std::move(key), std::move(val));
 
         if (*cur == ',')
         {
@@ -218,7 +218,7 @@ json::array json::parser::parse_array(const std::string &content, std::string::c
         value val = initial_parse(content, cur);
         parse_whitespace(content, cur);
 
-        parse_result_array.push_back(val);
+        parse_result_array.push_back(std::move(val));
 
         if (*cur == ',')
         {
