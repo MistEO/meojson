@@ -33,6 +33,7 @@ namespace json
         const value &operator[](const std::string &key) const;
         object &operator=(const object &) = default;
         object &operator=(object &&) = default;
+        
         // const std::map<std::string, value> &raw_data() const;
 
     private:

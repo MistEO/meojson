@@ -32,6 +32,7 @@ namespace json
         const value &operator[](int index) const;
         array &operator=(const array &) = default;
         array &operator=(array &&) = default;
+
         // const std::vector<value> &raw_data() const;
 
     private:
