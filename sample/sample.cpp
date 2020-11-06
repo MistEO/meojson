@@ -17,14 +17,14 @@ int main()
 
     /*** Parse: String to Json ***/
     {
-        std::ifstream ifs("test.json");
+        std::ifstream ifs("rand.json");
         std::stringstream ibuf;
         ibuf << ifs.rdbuf();
         std::string content(ibuf.str());
-        std::cout << content << std::endl;
+        //std::cout << content << std::endl;
 
         json::value val;
-        const int loop_times = 100000;
+        const int loop_times = 10;
 
         auto b_time = get_time();
 
@@ -41,7 +41,7 @@ int main()
     /*** Ify: Json to String  ***/
     {
         auto b_time = get_time();
-        const int loop_times = 100000;
+        const int loop_times = 10000;
         json::object obj;
         for (int i = 0; i != loop_times; ++i)
         {
