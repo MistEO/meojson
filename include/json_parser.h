@@ -43,7 +43,7 @@ namespace json
         static object parse_object(const std::string &content, std::string::const_iterator &cur);
         static array parse_array(const std::string &content, std::string::const_iterator &cur);
 
-        static void parse_whitespace(const std::string &content, std::string::const_iterator &cur);
+        static bool parse_whitespace(const std::string &content, std::string::const_iterator &cur);
         static std::string parse_string_and_return(const std::string &content, std::string::const_iterator &cur);
     };
 } // namespace json
