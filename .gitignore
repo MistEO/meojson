@@ -33,3 +33,4 @@
 
 # IDE files
 .vscode
+build/rand.json

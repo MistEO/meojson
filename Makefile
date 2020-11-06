@@ -4,6 +4,7 @@ SRC := src
 
 SRC_FILES := $(shell ls $(SRC)/*.cpp)
 SAMPLE_FILE := sample/sample.cpp
+SAMPLE_OBJ := $(patsubst %.cpp,%.o,$(notdir $(SAMPLE_FILE)))
 
 CCSTD := c++11
 CCRELEASE := g++ -Wall -O2 -std=$(CCSTD)
@@ -15,6 +16,16 @@ DEMO := $(BUILD)/demo.out
 OBJS := $(patsubst %.cpp, $(BUILD)/%.o, $(notdir $(SRC_FILES) $(SAMPLE_FILE)))
 TEST := $(BUILD)/test.out
 
+### debug
+debug: $(BUILD) $(OBJS)
+	$(CCDEBUG) -o $(TEST) $(OBJS) -I$(INC) $(LIBS)
+
+$(BUILD)/$(SAMPLE_OBJ): $(SAMPLE_FILE) $(INC)/*.h
+	$(CCDEBUG) -o $@ -c $< -I$(INC)
+
+$(BUILD)/%.o: $(SRC)/%.cpp $(INC)/*.h
+	$(CCDEBUG) -o $@ -c $< -I$(INC)
+
 ### release
 release: clean $(BUILD) $(TARGET) $(DEMO)
 
@@ -23,16 +34,6 @@ $(TARGET): $(SRC_FILES) $(INC)/*.h
 
 $(DEMO): $(SAMPLE_FILE) $(INC)/*.h
 	$(CCRELEASE) $(SAMPLE_FILE) -o $(DEMO) -I$(INC) $(LIBS) -L$(BUILD) -ljson
-
-### debug
-debug: $(BUILD) $(OBJS)
-	$(CCDEBUG) -o $(TEST) $(OBJS) -I$(INC) $(LIBS)
-
-$(BUILD)/sample.o: $(SAMPLE_FILE) $(INC)/*.h
-	$(CCDEBUG) -o $@ -c $< -I$(INC)
-
-$(BUILD)/%.o: $(SRC)/%.cpp $(INC)/*.h
-	$(CCDEBUG) -o $@ -c $< -I$(INC)
 
 ### public
 $(BUILD):
