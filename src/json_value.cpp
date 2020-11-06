@@ -12,7 +12,7 @@ json::value::value(const object &obj)
 
 json::value::value(object &&obj)
     : _type(ValueType::JsonObject),
-      _object_data(std::move(obj._object_data))
+      _object_data(std::forward<std::map<std::string, value>>(obj._object_data))
 {
     ;
 }
@@ -26,7 +26,7 @@ json::value::value(const array &arr)
 
 json::value::value(array &&arr)
     : _type(ValueType::JsonArray),
-      _array_data(std::move(arr._array_data))
+      _array_data(std::forward<std::vector<value>>(arr._array_data))
 {
     ;
 }
@@ -92,7 +92,10 @@ double json::value::as_double() const
 
 std::string json::value::as_string() const
 {
-    if (_type == ValueType::JsonString)
+    if (_type == ValueType::JsonString &&
+        _basic_type_data.size() >= 2 &&
+        _basic_type_data.at(0) == '"' &&
+        _basic_type_data.at(_basic_type_data.size() - 1) == '"')
     {
         return _basic_type_data.substr(1, _basic_type_data.size() - 2);
     }
@@ -191,6 +194,12 @@ json::value json::value::null()
     val._type = ValueType::JsonNull;
     val._basic_type_data = "null";
     return val;
+}
+
+void json::value::set_raw_basic_data(json::ValueType type, const std::string &basic_data)
+{
+    _type = type;
+    _basic_type_data = basic_data;
 }
 
 void json::value::set_raw_basic_data(json::ValueType type, std::string &&basic_data)
