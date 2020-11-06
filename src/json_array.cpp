@@ -31,7 +31,8 @@ void json::array::push_back(const json::value &value)
 
 void json::array::push_back(json::value &&value)
 {
-    _array_data.push_back(value);
+    _array_data.push_back(
+        std::forward<json::value>(value));
 }
 
 std::string json::array::to_string() const

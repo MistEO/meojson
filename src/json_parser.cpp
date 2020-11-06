@@ -84,7 +84,7 @@ json::value json::parser::parse_by_regex(const std::string &content, std::string
     {
         std::string val = match_result[1];
         cur += val.size();
-        parse_result.set_raw_basic_data(type, val);
+        parse_result.set_raw_basic_data(type, std::move(val));
     }
     else
     {

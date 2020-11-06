@@ -31,7 +31,11 @@ bool json::object::insert(const std::string &key, const json::value &value)
 
 bool json::object::insert(std::string &&key, json::value &&value)
 {
-    return _object_data.insert(std::make_pair(key, value)).second;
+    return _object_data.insert(
+                           std::make_pair(
+                               std::forward<std::string>(key),
+                               std::forward<json::value>(value)))
+        .second;
 }
 
 bool json::object::earse(const std::string &key)

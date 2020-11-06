@@ -47,7 +47,7 @@ namespace json
         value &operator=(const value &) = default;
         value &operator=(value &&) = default;
 
-        void set_raw_basic_data(ValueType type, const std::string &basic_data);
+        void set_raw_basic_data(ValueType type, std::string &&basic_data);
 
     private:
         ValueType _type = ValueType::JsonWhiteSpace;

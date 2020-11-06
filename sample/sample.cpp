@@ -33,7 +33,8 @@ int main()
     auto e_time = get_time();
 
     std::cout << "parse success" << std::endl;
-    std::cout << (e_time - b_time) << " ns" << std::endl;
+    long long dis = (e_time - b_time);
+    std::cout << dis << " ns, about " << dis / 1000 / 1000 << " ms." << std::endl;
 
     std::cout << val.as_object()["configurations"].as_array()[0].as_object()["name"].as_string() << std::endl;
 
