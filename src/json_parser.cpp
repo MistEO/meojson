@@ -15,12 +15,22 @@
 json::value json::parser::parse(const std::string &content)
 {
     auto cur = content.cbegin();
-    parse_whitespace(content, cur);
-    if (cur == content.cend())
+    bool ws_ret = parse_whitespace(content, cur);
+    if (!ws_ret)
     {
         return value();
     }
-    return initial_parse(content, cur);
+    auto value = initial_parse(content, cur);
+    ws_ret = parse_whitespace(content, cur);
+
+    if (!ws_ret)
+    {
+        return value;
+    }
+    else
+    {
+        throw exception("Parsing error: " + std::string(cur, content.cend()));
+    }
 }
 
 /*** 
@@ -29,6 +39,10 @@ json::value json::parser::parse(const std::string &content)
 ***/
 json::value json::parser::initial_parse(const std::string &content, std::string::const_iterator &cur)
 {
+    if (cur == content.cend())
+    {
+        throw exception("Parsing error, is cend");
+    }
     switch (*cur)
     {
     case '{':
@@ -59,6 +73,28 @@ json::value json::parser::initial_parse(const std::string &content, std::string:
     }
 }
 
+json::value json::parser::parse_by_regex(const std::string &content, std::string::const_iterator &cur, const std::regex &regex, json::ValueType type)
+{
+    if (cur == content.cend())
+    {
+        throw exception("Parsing regex " + std::to_string(static_cast<int>(type)) + " error, is cend");
+    }
+    std::string cur_string(cur, content.cend());
+    std::smatch match_result;
+    value parse_result;
+    if (std::regex_search(cur_string, match_result, regex) && match_result.size() == 2)
+    {
+        std::string val = match_result[1];
+        cur += val.size();
+        parse_result.set_raw_basic_data(type, std::move(val));
+    }
+    else
+    {
+        throw exception("Parsing regex " + std::to_string(static_cast<int>(type)) + " error: " + cur_string);
+    }
+    return parse_result;
+}
+
 json::value json::parser::parse_string(const std::string &content, std::string::const_iterator &cur)
 {
     return value::string(parse_string_and_return(content, cur));
@@ -66,7 +102,7 @@ json::value json::parser::parse_string(const std::string &content, std::string::
 
 std::string json::parser::parse_string_and_return(const std::string &content, std::string::const_iterator &cur)
 {
-    if (*cur == '"')
+    if (cur != content.cend() && *cur == '"')
     {
         ++cur;
     }
@@ -81,9 +117,9 @@ std::string json::parser::parse_string_and_return(const std::string &content, st
     {
         if (cur == content.cend())
         {
-            throw exception("Parsing string error: " + std::string(cur, content.cend()));
+            throw exception("Parsing string error, is cend");
         }
-        if (*cur == '"' && *(cur - 1) != '\\')
+        else if (*cur == '"' && *(cur - 1) != '\\')
         {
             last = cur;
             ++cur;
@@ -107,14 +143,14 @@ json::value json::parser::parse_boolean(const std::string &content, std::string:
     static const std::string true_string = "true";
     static const std::string false_string = "false";
     if (*cur == 't' &&
-        std::distance(cur, content.cend()) >= true_string.size() &&
+        static_cast<size_t>(std::distance(cur, content.cend())) >= true_string.size() &&
         std::string(cur, cur + true_string.size()) == true_string)
     {
         cur += true_string.size();
         return value::boolean(true);
     }
     else if (*cur == 'f' &&
-             std::distance(cur, content.cend()) >= false_string.size() &&
+             static_cast<size_t>(std::distance(cur, content.cend())) >= false_string.size() &&
              std::string(cur, cur + false_string.size()) == false_string)
     {
         cur += false_string.size();
@@ -129,7 +165,7 @@ json::value json::parser::parse_boolean(const std::string &content, std::string:
 json::value json::parser::parse_null(const std::string &content, std::string::const_iterator &cur)
 {
     static const std::string null_string = "null";
-    if (std::distance(cur, content.cend()) >= null_string.size() &&
+    if (static_cast<size_t>(std::distance(cur, content.cend())) >= null_string.size() &&
         std::string(cur, cur + null_string.size()) == null_string)
     {
         cur += null_string.size();
@@ -143,7 +179,7 @@ json::value json::parser::parse_null(const std::string &content, std::string::co
 
 json::object json::parser::parse_object(const std::string &content, std::string::const_iterator &cur)
 {
-    if (*cur == '{')
+    if (cur != content.cend() && *cur == '{')
     {
         ++cur;
     }
@@ -152,9 +188,13 @@ json::object json::parser::parse_object(const std::string &content, std::string:
         throw exception("Parsing object error: " + std::string(cur, content.cend()));
     }
 
-    parse_whitespace(content, cur);
+    bool ws_ret = parse_whitespace(content, cur);
 
-    if (*cur == ']')
+    if (!ws_ret)
+    {
+        throw exception("Parsing object error, is cend");
+    }
+    else if (*cur == ']')
     {
         ++cur;
         return object();
@@ -167,9 +207,9 @@ json::object json::parser::parse_object(const std::string &content, std::string:
 
         std::string key = parse_string_and_return(content, cur);
 
-        parse_whitespace(content, cur);
+        ws_ret = parse_whitespace(content, cur);
 
-        if (*cur == ':')
+        if (ws_ret && *cur == ':')
         {
             ++cur;
         }
@@ -180,11 +220,14 @@ json::object json::parser::parse_object(const std::string &content, std::string:
 
         parse_whitespace(content, cur);
         value val = initial_parse(content, cur);
-        parse_whitespace(content, cur);
-
+        ws_ret = parse_whitespace(content, cur);
         parse_result_object.insert(std::move(key), std::move(val));
 
-        if (*cur == ',')
+        if (!ws_ret)
+        {
+            throw exception("Parsing object error, is cend");
+        }
+        else if (*cur == ',')
         {
             ++cur;
         }
@@ -194,8 +237,8 @@ json::object json::parser::parse_object(const std::string &content, std::string:
         }
     }
 
-    parse_whitespace(content, cur);
-    if (*cur == '}')
+    ws_ret = parse_whitespace(content, cur);
+    if (ws_ret && *cur == '}')
     {
         ++cur;
     }
@@ -208,7 +251,7 @@ json::object json::parser::parse_object(const std::string &content, std::string:
 
 json::array json::parser::parse_array(const std::string &content, std::string::const_iterator &cur)
 {
-    if (*cur == '[')
+    if (cur != content.cend() && *cur == '[')
     {
         ++cur;
     }
@@ -217,8 +260,12 @@ json::array json::parser::parse_array(const std::string &content, std::string::c
         throw exception("Parsing array error: " + std::string(cur, content.cend()));
     }
 
-    parse_whitespace(content, cur);
-    if (*cur == ']')
+    bool ws_ret = parse_whitespace(content, cur);
+    if (!ws_ret)
+    {
+        throw exception("Parsing array error, is cend");
+    }
+    else if (*cur == ']')
     {
         ++cur;
         return array();
@@ -229,11 +276,15 @@ json::array json::parser::parse_array(const std::string &content, std::string::c
     {
         parse_whitespace(content, cur);
         value val = initial_parse(content, cur);
-        parse_whitespace(content, cur);
+        ws_ret = parse_whitespace(content, cur);
 
         parse_result_array.push_back(std::move(val));
 
-        if (*cur == ',')
+        if (!ws_ret)
+        {
+            throw exception("Parsing array error, is cend");
+        }
+        else if (*cur == ',')
         {
             ++cur;
         }
@@ -243,8 +294,8 @@ json::array json::parser::parse_array(const std::string &content, std::string::c
         }
     }
 
-    parse_whitespace(content, cur);
-    if (*cur == ']')
+    ws_ret = parse_whitespace(content, cur);
+    if (ws_ret && *cur == ']')
     {
         ++cur;
     }
@@ -255,28 +306,18 @@ json::array json::parser::parse_array(const std::string &content, std::string::c
     return parse_result_array;
 }
 
-json::value json::parser::parse_by_regex(const std::string &content, std::string::const_iterator &cur, const std::regex &regex, json::ValueType type)
-{
-    std::string cur_string(cur, content.cend());
-    std::smatch match_result;
-    value parse_result;
-    if (std::regex_search(cur_string, match_result, regex) && match_result.size() == 2)
-    {
-        std::string val = match_result[1];
-        cur += val.size();
-        parse_result.set_raw_basic_data(type, std::move(val));
-    }
-    else
-    {
-        throw exception("Parsing regex " + std::to_string(static_cast<int>(type)) + " error: " + cur_string);
-    }
-    return parse_result;
-}
-
-void json::parser::parse_whitespace(const std::string &content, std::string::const_iterator &cur)
+bool json::parser::parse_whitespace(const std::string &content, std::string::const_iterator &cur)
 {
     while (cur != content.cend() && (*cur == ' ' || *cur == '\t' || *cur == '\r' || *cur == '\n'))
     {
         ++cur;
+    }
+    if (cur != content.cend())
+    {
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }

@@ -30,7 +30,7 @@ namespace json
         static array parse_array(const std::string &content, std::string::const_iterator &cur);
 
         static value parse_by_regex(const std::string &content, std::string::const_iterator &cur, const std::regex &regex, ValueType type);
-        static void parse_whitespace(const std::string &content, std::string::const_iterator &cur);
+        static bool parse_whitespace(const std::string &content, std::string::const_iterator &cur);
         static std::string parse_string_and_return(const std::string &content, std::string::const_iterator &cur);
     };
 } // namespace json
