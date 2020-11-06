@@ -189,7 +189,6 @@ json::object json::parser::parse_object(const std::string &content, std::string:
     }
 
     bool ws_ret = parse_whitespace(content, cur);
-
     if (!ws_ret)
     {
         throw exception("Parsing object error, is cend");
@@ -203,7 +202,11 @@ json::object json::parser::parse_object(const std::string &content, std::string:
     object parse_result_object;
     while (true)
     {
-        parse_whitespace(content, cur);
+        ws_ret = parse_whitespace(content, cur);
+        if (!ws_ret)
+        {
+            throw exception("Parsing object error, is cend");
+        }
 
         std::string key = parse_string_and_return(content, cur);
 
@@ -218,16 +221,22 @@ json::object json::parser::parse_object(const std::string &content, std::string:
             throw exception("Parsing object error: " + std::string(cur, content.cend()));
         }
 
-        parse_whitespace(content, cur);
-        value val = initial_parse(content, cur);
         ws_ret = parse_whitespace(content, cur);
-        parse_result_object.insert(std::move(key), std::move(val));
-
         if (!ws_ret)
         {
             throw exception("Parsing object error, is cend");
         }
-        else if (*cur == ',')
+
+        value val = initial_parse(content, cur);
+
+        ws_ret = parse_whitespace(content, cur);
+        if (!ws_ret)
+        {
+            throw exception("Parsing object error, is cend");
+        }
+
+        parse_result_object.insert(std::move(key), std::move(val));
+        if (*cur == ',')
         {
             ++cur;
         }
@@ -274,17 +283,23 @@ json::array json::parser::parse_array(const std::string &content, std::string::c
     array parse_result_array;
     while (true)
     {
-        parse_whitespace(content, cur);
-        value val = initial_parse(content, cur);
         ws_ret = parse_whitespace(content, cur);
-
-        parse_result_array.push_back(std::move(val));
-
         if (!ws_ret)
         {
             throw exception("Parsing array error, is cend");
         }
-        else if (*cur == ',')
+
+        value val = initial_parse(content, cur);
+
+        ws_ret = parse_whitespace(content, cur);
+        if (!ws_ret)
+        {
+            throw exception("Parsing array error, is cend");
+        }
+
+        parse_result_array.push_back(std::move(val));
+
+        if (*cur == ',')
         {
             ++cur;
         }
@@ -312,6 +327,7 @@ bool json::parser::parse_whitespace(const std::string &content, std::string::con
     {
         ++cur;
     }
+
     if (cur != content.cend())
     {
         return true;

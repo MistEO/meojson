@@ -26,7 +26,7 @@ int main()
 
     auto b_time = get_time();
 
-    for (int i = 0; i != 10000; ++i)
+    for (int i = 0; i != 100000; ++i)
     {
         val = json::parser::parse(content);
     }
