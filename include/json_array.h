@@ -18,7 +18,7 @@ namespace json
         array(array &&rhs) = default;
         array(const std::vector<value> &value_array);
         array(std::vector<value> &&value_array);
-        array(std::initializer_list<value> value_list);
+        // array(std::initializer_list<value> value_list);
 
         ~array() = default;
 

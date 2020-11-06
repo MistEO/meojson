@@ -57,8 +57,8 @@ int main()
             json::object obj2;
             obj2["obj2_key1"] = json::value::string("i am child");
             obj["child"] = obj2;
-            json::array arr = {json::value::string("123"), json::value::number(456)};
-            obj["arr"] = arr;
+            // json::array arr = {json::value::string("123"), json::value::number(456)};
+            // obj["arr"] = arr;
         }
         auto e_time = get_time();
         auto dis = (e_time - b_time);
