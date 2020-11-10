@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#include <initializer_list>
+// #include <initializer_list>
 
 namespace json
 {
@@ -13,6 +13,11 @@ namespace json
         friend class value;
 
     public:
+        typedef std::vector<value>::iterator iterator;
+        typedef std::vector<value>::const_iterator const_iterator;
+        typedef std::vector<value>::reverse_iterator reverse_iterator;
+        typedef std::vector<value>::const_reverse_iterator const_reverse_iterator;
+
         array() = default;
         array(const array &rhs) = default;
         array(array &&rhs) = default;
@@ -24,11 +29,22 @@ namespace json
 
         bool empty() const;
         const value at(int index) const;
+        size_t size() const;
+        std::string to_string() const;
+
         void push_back(const value &value);
         void push_back(value &&value);
         // void earse(int index);
 
-        std::string to_string() const;
+        iterator begin();
+        iterator end();
+        const_iterator cbegin() const;
+        const_iterator cend() const;
+
+        reverse_iterator rbegin();
+        reverse_iterator rend();
+        const_reverse_iterator crbegin() const;
+        const_reverse_iterator crend() const;
 
         value &operator[](int index);
         const value &operator[](int index) const;

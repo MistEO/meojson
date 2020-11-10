@@ -24,6 +24,16 @@ const json::value json::object::at(const std::string &key) const
     return _object_data.at(key);
 }
 
+size_t json::object::size() const
+{
+    return _object_data.size();
+}
+
+void json::object::clear()
+{
+    _object_data.clear();
+}
+
 bool json::object::insert(const std::string &key, const json::value &value)
 {
     return _object_data.insert(std::make_pair(key, value)).second;
@@ -56,6 +66,45 @@ std::string json::object::to_string() const
     }
     str += "}";
     return str;
+}
+
+json::object::iterator json::object::begin()
+{
+    return _object_data.begin();
+}
+
+json::object::iterator json::object::end()
+{
+    return _object_data.end();
+}
+
+json::object::const_iterator json::object::cbegin() const
+{
+    return _object_data.cbegin();
+}
+
+json::object::const_iterator json::object::cend() const
+{
+    return _object_data.cend();
+}
+
+json::object::reverse_iterator json::object::rbegin()
+{
+    return _object_data.rbegin();
+}
+json::object::reverse_iterator json::object::rend()
+{
+    return _object_data.rend();
+}
+
+json::object::const_reverse_iterator json::object::crbegin() const
+{
+    return _object_data.crbegin();
+}
+
+json::object::const_reverse_iterator json::object::crend() const
+{
+    return _object_data.crend();
 }
 
 json::value &json::object::operator[](const std::string &key)
