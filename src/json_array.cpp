@@ -14,10 +14,10 @@ json::array::array(std::vector<json::value> &&value_array)
     ;
 }
 
-// json::array::array(std::initializer_list<json::value> value_list)
-//     : _array_data(value_list)
-// {
-// }
+json::array::array(std::initializer_list<json::value> value_list)
+    : _array_data(value_list)
+{
+}
 
 bool json::array::empty() const
 {
