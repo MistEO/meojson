@@ -27,7 +27,7 @@ std::pair<bool, json::value> json::parser::parse(const std::string &content)
         return std::make_pair(false, value());
     }
 
-    return std::make_pair(true, result);
+    return std::make_pair(true, std::forward<value>(result));
 }
 
 std::pair<bool, json::value> json::parser::initial_parse(const std::string &content, std::string::const_iterator &cur)
@@ -137,7 +137,7 @@ std::pair<bool, json::value> json::parser::parse_number(const std::string &conte
 
         value result;
         result.set_raw_basic_data(ValueType::Number, std::move(num));
-        return std::make_pair(true, result);
+        return std::make_pair(true, std::move(result));
     }
     else
     {
@@ -212,7 +212,7 @@ std::pair<bool, json::array> json::parser::parse_array(const std::string &conten
     {
         return std::make_pair(false, array());
     }
-    return std::make_pair(true, result);
+    return std::make_pair(true, std::move(result));
 }
 
 std::pair<bool, json::object> json::parser::parse_object(const std::string &content, std::string::const_iterator &cur)
@@ -295,7 +295,7 @@ std::pair<bool, json::object> json::parser::parse_object(const std::string &cont
     {
         return std::make_pair(false, object());
     }
-    return std::make_pair(true, result);
+    return std::make_pair(true, std::move(result));
 }
 
 bool json::parser::parse_whitespace(const std::string &content, std::string::const_iterator &cur)
