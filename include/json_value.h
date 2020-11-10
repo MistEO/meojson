@@ -3,6 +3,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <ostream>
 
 namespace json
 {
@@ -12,7 +13,6 @@ namespace json
     enum class ValueType
     {
         Invalid,
-        WhiteSpace,
         Null,
         Boolean,
         String,
@@ -28,43 +28,46 @@ namespace json
         value() = default;
         value(const value &rhs) = default;
         value(value &&rhs) = default;
-        value(const object &obj);
-        value(object &&obj);
         value(const array &arr);
         value(array &&arr);
+        value(const object &obj);
+        value(object &&obj);
 
         ~value() = default;
 
+        bool valid() const;
         bool empty() const;
-
+        ValueType type() const;
         bool as_boolean() const;
         int as_integer() const;
         double as_double() const;
         std::string as_string() const;
-        object as_object() const;
         array as_array() const;
+        object as_object() const;
 
         std::string to_string() const;
-
-        static value string(const char *str);
-        static value string(const std::string &str);
-        static value number(int num);
-        static value number(double num);
-        static value boolean(bool b);
-        // static value object(const object &obj);
-        // static value array(const array &arr);
-        static value null();
-
-        value &operator=(const value &) = default;
-        value &operator=(value &&) = default;
 
         void set_raw_basic_data(ValueType type, const std::string &basic_data);
         void set_raw_basic_data(ValueType type, std::string &&basic_data);
 
+        value &operator=(const value &) = default;
+        value &operator=(value &&) = default;
+
+        static value null();
+        static value boolean(bool b);
+        static value number(int num);
+        static value number(double num);
+        static value string(const char *str);
+        static value string(const std::string &str);
+        static value string(std::string &&str);
+
     private:
-        ValueType _type = ValueType::WhiteSpace;
-        std::string _basic_type_data;
+        ValueType _type = ValueType::Null;
+        std::string _basic_type_data = "null";
         std::map<std::string, value> _object_data;
         std::vector<value> _array_data;
     };
+
+    std::ostream &operator<<(std::ostream &out, const value &value);
+
 } // namespace json

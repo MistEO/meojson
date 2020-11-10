@@ -56,4 +56,7 @@ namespace json
         std::map<std::string, value> _object_data;
         bool _valid = false;
     };
+
+    std::ostream &operator<<(std::ostream &out, const json::object &object);
+
 } // namespace json

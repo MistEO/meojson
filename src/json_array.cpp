@@ -113,3 +113,11 @@ const json::value &json::array::operator[](int index) const
 // {
 //     return _array_data;
 // }
+
+std::ostream &operator<<(std::ostream &out, const json::array &array)
+{
+    // TODO: format output
+
+    out << array.to_string();
+    return out;
+}

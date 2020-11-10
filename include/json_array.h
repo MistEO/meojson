@@ -56,4 +56,7 @@ namespace json
     private:
         std::vector<value> _array_data;
     };
+
+    std::ostream &operator<<(std::ostream &out, const array &array);
+
 } // namespace json

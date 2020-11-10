@@ -3,20 +3,6 @@
 #include "json_array.h"
 #include "json_exception.h"
 
-json::value::value(const object &obj)
-    : _type(ValueType::Object),
-      _object_data(obj._object_data)
-{
-    ;
-}
-
-json::value::value(object &&obj)
-    : _type(ValueType::Object),
-      _object_data(std::forward<std::map<std::string, value>>(obj._object_data))
-{
-    ;
-}
-
 json::value::value(const array &arr)
     : _type(ValueType::Array),
       _array_data(arr._array_data)
@@ -31,9 +17,23 @@ json::value::value(array &&arr)
     ;
 }
 
-bool json::value::empty() const
+json::value::value(const object &obj)
+    : _type(ValueType::Object),
+      _object_data(obj._object_data)
 {
-    if (_type == ValueType::WhiteSpace)
+    ;
+}
+
+json::value::value(object &&obj)
+    : _type(ValueType::Object),
+      _object_data(std::forward<std::map<std::string, value>>(obj._object_data))
+{
+    ;
+}
+
+bool json::value::valid() const
+{
+    if (_type != ValueType::Invalid)
     {
         return true;
     }
@@ -41,6 +41,23 @@ bool json::value::empty() const
     {
         return false;
     }
+}
+
+bool json::value::empty() const
+{
+    if (_type == ValueType::Null && _basic_type_data == "null")
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+json::ValueType json::value::type() const
+{
+    return _type;
 }
 
 bool json::value::as_boolean() const
@@ -105,18 +122,6 @@ std::string json::value::as_string() const
     }
 }
 
-json::object json::value::as_object() const
-{
-    if (_type == ValueType::Object)
-    {
-        return object(_object_data);
-    }
-    else
-    {
-        throw exception("Wrong Type");
-    }
-}
-
 json::array json::value::as_array() const
 {
     if (_type == ValueType::Array)
@@ -129,11 +134,22 @@ json::array json::value::as_array() const
     }
 }
 
+json::object json::value::as_object() const
+{
+    if (_type == ValueType::Object)
+    {
+        return object(_object_data);
+    }
+    else
+    {
+        throw exception("Wrong Type");
+    }
+}
+
 std::string json::value::to_string() const
 {
     switch (_type)
     {
-    case ValueType::WhiteSpace:
     case ValueType::Null:
     case ValueType::Boolean:
     case ValueType::String:
@@ -148,19 +164,31 @@ std::string json::value::to_string() const
     }
 }
 
-json::value json::value::string(const char *str)
+void json::value::set_raw_basic_data(json::ValueType type, const std::string &basic_data)
+{
+    _type = type;
+    _basic_type_data = basic_data;
+}
+
+void json::value::set_raw_basic_data(json::ValueType type, std::string &&basic_data)
+{
+    _type = type;
+    _basic_type_data = std::forward<std::string>(basic_data);
+}
+
+json::value json::value::null()
 {
     value val;
-    val._type = ValueType::String;
-    val._basic_type_data = std::string() + "\"" + str + "\"";
+    val._type = ValueType::Null;
+    val._basic_type_data = "null";
     return val;
 }
 
-json::value json::value::string(const std::string &str)
+json::value json::value::boolean(bool b)
 {
     value val;
-    val._type = ValueType::String;
-    val._basic_type_data = "\"" + str + "\"";
+    val._type = ValueType::Boolean;
+    val._basic_type_data = b ? "true" : "false";
     return val;
 }
 
@@ -180,46 +208,34 @@ json::value json::value::number(double num)
     return val;
 }
 
-json::value json::value::boolean(bool b)
+json::value json::value::string(const char *str)
 {
     value val;
-    val._type = ValueType::Boolean;
-    val._basic_type_data = b ? "true" : "false";
+    val._type = ValueType::String;
+    val._basic_type_data = std::string() + "\"" + str + "\"";
     return val;
 }
 
-json::value json::value::null()
+json::value json::value::string(const std::string &str)
 {
     value val;
-    val._type = ValueType::Null;
-    val._basic_type_data = "null";
+    val._type = ValueType::String;
+    val._basic_type_data = "\"" + str + "\"";
     return val;
 }
 
-void json::value::set_raw_basic_data(json::ValueType type, const std::string &basic_data)
+json::value json::value::string(std::string &&str)
 {
-    _type = type;
-    _basic_type_data = basic_data;
+    value val;
+    val._type = ValueType::String;
+    val._basic_type_data = "\"" + std::forward<std::string>(str) + "\"";
+    return val;
 }
 
-void json::value::set_raw_basic_data(json::ValueType type, std::string &&basic_data)
+std::ostream &operator<<(std::ostream &out, const json::value &value)
 {
-    _type = type;
-    _basic_type_data = std::forward<std::string>(basic_data);
+    // TODO: format output
+
+    out << value.to_string();
+    return out;
 }
-
-// json::value json::value::object(const json::object &obj)
-// {
-//     json::value val;
-//     val._type = ValueType::Object;
-//     val._object_data = obj.raw_data();
-//     return val;
-// }
-
-// json::value json::value::array(const json::array &arr)
-// {
-//     json::value val;
-//     val._type = ValueType::Array;
-//     val._array_data = arr.raw_data();
-//     return val;
-// }

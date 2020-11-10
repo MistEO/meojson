@@ -121,3 +121,11 @@ const json::value &json::object::operator[](const std::string &key) const
 // {
 //     return _object_data;
 // }
+
+std::ostream &operator<<(std::ostream &out, const json::object &object)
+{
+    // TODO: format output
+
+    out << object.to_string();
+    return out;
+}
