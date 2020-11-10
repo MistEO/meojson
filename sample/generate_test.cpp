@@ -24,21 +24,20 @@ int main()
 
 json::value rand_value(int depth)
 {
-    int type = rand() % 6;
-    switch (static_cast<json::ValueType>(type + 1))
+    int type = rand() % static_cast<int>(json::ValueType::NUM_T);
+    switch (static_cast<json::ValueType>(type))
     {
-    case json::ValueType::JsonWhiteSpace:
-    case json::ValueType::JsonNull:
+    case json::ValueType::Null:
         return json::value::null();
-    case json::ValueType::JsonBoolean:
+    case json::ValueType::Boolean:
         return json::value::boolean(rand() % 1);
-    case json::ValueType::JsonString:
+    case json::ValueType::String:
         return json::value::string(rand_string(max_string_length));
-    case json::ValueType::JsonNumber:
+    case json::ValueType::Number:
         return json::value::number(rand());
-    case json::ValueType::JsonArray:
+    case json::ValueType::Array:
         return rand_array(depth + 1);
-    case json::ValueType::JsonObject:
+    case json::ValueType::Object:
         return rand_object(depth + 1);
     default:
         return json::value::null();

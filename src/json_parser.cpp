@@ -135,7 +135,7 @@ json::value json::parser::parse_number(const std::string &content, std::string::
     static const std::string reg_str_json_number("(-?\\d+(?:\\.\\d+)?(?:(?:e|E)(?:-|\\+)?\\d+)?)");
     static const std::regex reg_json_number("^" + reg_str_json_number);
 
-    return parse_by_regex(content, cur, reg_json_number, ValueType::JsonNumber);
+    return parse_by_regex(content, cur, reg_json_number, ValueType::Number);
 }
 
 json::value json::parser::parse_boolean(const std::string &content, std::string::const_iterator &cur)

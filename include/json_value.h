@@ -11,13 +11,15 @@ namespace json
 
     enum class ValueType
     {
-        JsonWhiteSpace,
-        JsonNull,
-        JsonBoolean,
-        JsonString,
-        JsonNumber,
-        JsonArray,
-        JsonObject
+        Invalid,
+        WhiteSpace,
+        Null,
+        Boolean,
+        String,
+        Number,
+        Array,
+        Object,
+        NUM_T
     };
 
     class value
@@ -60,7 +62,7 @@ namespace json
         void set_raw_basic_data(ValueType type, std::string &&basic_data);
 
     private:
-        ValueType _type = ValueType::JsonWhiteSpace;
+        ValueType _type = ValueType::WhiteSpace;
         std::string _basic_type_data;
         std::map<std::string, value> _object_data;
         std::vector<value> _array_data;
