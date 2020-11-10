@@ -27,7 +27,7 @@ int main()
 
     for (int i = 0; i != loop_times; ++i)
     {
-        val = json::parser::parse(content);
+        val = json::parser::parse(content).second;
     }
     auto e_time = get_time();
     long long dis = (e_time - b_time);

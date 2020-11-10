@@ -15,21 +15,21 @@ int main()
         std::string content(ibuf.str());
         //std::cout << content << std::endl;
 
-        json::value json = json::parser::parse(content);
+        auto &&[ret, json] = json::parser::parse(content);
 
-        std::cout << "parse success" << std::endl;
-        std::cout << json.as_object()["configurations"].as_array().at(0).as_object()["name"].as_string() << std::endl;
-#if __cplusplus >= 201703L // C++17
-        for (auto &&[key, val] : json.as_object()["configurations"].as_array().at(0).as_object())
+        if (ret)
         {
-            std::cout << key << ": " << val.to_string() << std::endl;
+            std::cout << "parse success" << std::endl;
+            std::cout << json.as_object()["configurations"].as_array().at(0).as_object()["name"].as_string() << std::endl;
+            for (auto &&[key, val] : json.as_object()["configurations"].as_array().at(0).as_object())
+            {
+                std::cout << key << ": " << val.to_string() << std::endl;
+            }
         }
-#elif __cplusplus >= 201103L // C++11
-        for (auto &&pair : json.as_object()["configurations"].as_array().at(0).as_object())
+        else
         {
-            std::cout << pair.first << ": " << pair.second.to_string() << std::endl;
+            std::cout << "parse failed" << std::endl;
         }
-#endif
     }
 
     /*** Generate ***/

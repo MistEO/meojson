@@ -6,7 +6,7 @@ SRC_FILES := $(shell ls $(SRC)/*.cpp)
 SAMPLE_FILE := sample/sample.cpp
 SAMPLE_OBJ := $(patsubst %.cpp,%.o,$(notdir $(SAMPLE_FILE)))
 
-CCSTD := c++11
+CCSTD := c++17
 CCRELEASE := g++ -Wall -O2 -std=$(CCSTD)
 CCDEBUG := g++ -Wall -g -std=$(CCSTD) -DDEBUG
 

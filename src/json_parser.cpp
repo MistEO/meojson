@@ -1,56 +1,55 @@
 #include "json_parser.h"
 
 #include <regex>
-#include <algorithm>
-
-#ifdef DEBUG
-#include <iostream>
-#endif
 
 #include "json_value.h"
 #include "json_object.h"
 #include "json_array.h"
-#include "json_exception.h"
-
-json::value json::parser::parse(const std::string &content)
-{
-    auto cur = content.cbegin();
-    bool ws_ret = parse_whitespace(content, cur);
-    if (!ws_ret)
-    {
-        return value();
-    }
-    auto value = initial_parse(content, cur);
-    ws_ret = parse_whitespace(content, cur);
-
-    if (!ws_ret)
-    {
-        return value;
-    }
-    else
-    {
-        throw exception("Parsing error: " + std::to_string(std::distance(content.cbegin(), cur)));
-    }
-}
 
 /*** 
  * Reference
  * Json     https://www.json.org/json-zh.html
 ***/
-json::value json::parser::initial_parse(const std::string &content, std::string::const_iterator &cur)
+
+std::pair<bool, json::value> json::parser::parse(const std::string &content)
+{
+    auto cur = content.cbegin();
+
+    auto &&[ret, result] = initial_parse(content, cur);
+    if (!ret)
+    {
+        return std::make_pair(false, value());
+    }
+
+    // 解析完成后，后面不应再有除空格外的内容
+    if (parse_whitespace(content, cur))
+    {
+        return std::make_pair(false, value());
+    }
+
+    return std::make_pair(true, result);
+}
+
+std::pair<bool, json::value> json::parser::initial_parse(const std::string &content, std::string::const_iterator &cur)
 {
     if (cur == content.cend())
     {
-        throw exception("Parsing error: " + std::to_string(std::distance(content.cbegin(), cur)));
+        return std::make_pair(false, value());
     }
     switch (*cur)
     {
-    case '{':
-        return parse_object(content, cur);
-    case '[':
-        return parse_array(content, cur);
-    case '"':
-        return parse_string(content, cur);
+    case ' ':
+    case '\t':
+    case '\r':
+    case '\n':
+        if (parse_whitespace(content, cur))
+        {
+            return initial_parse(content, cur);
+        }
+        else
+        {
+            return std::make_pair(false, value());
+        }
     case 'n':
         return parse_null(content, cur);
     case 't':
@@ -68,197 +67,95 @@ json::value json::parser::initial_parse(const std::string &content, std::string:
     case '8':
     case '9':
         return parse_number(content, cur);
+    case '"':
+        return parse_string(content, cur);
+    case '[':
+        return parse_array(content, cur);
+    case '{':
+        return parse_object(content, cur);
     default:
-        throw exception("Parsing error: " + std::to_string(std::distance(content.cbegin(), cur)));
+        return std::make_pair(false, value());
     }
 }
 
-json::value json::parser::parse_by_regex(const std::string &content, std::string::const_iterator &cur, const std::regex &regex, json::ValueType type)
+std::pair<bool, json::value> json::parser::parse_null(const std::string &content, std::string::const_iterator &cur)
 {
-    if (cur == content.cend())
+    static const std::string null_string = "null";
+
+    if (static_cast<size_t>(std::distance(cur, content.cend())) >= null_string.size() &&
+        std::string(cur, cur + null_string.size()) == null_string)
     {
-        throw exception("Parsing regex " + std::to_string(static_cast<int>(type)) + " error: " + std::to_string(std::distance(content.cbegin(), cur)));
-    }
-    std::string cur_string(cur, content.cend());
-    std::smatch match_result;
-    value parse_result;
-    if (std::regex_search(cur_string, match_result, regex) && match_result.size() == 2)
-    {
-        std::string val = match_result[1];
-        cur += val.size();
-        parse_result.set_raw_basic_data(type, std::move(val));
+        cur += null_string.size();
+        return std::make_pair(true, value::null());
     }
     else
     {
-        throw exception("Parsing regex " + std::to_string(static_cast<int>(type)) + " error: " + cur_string);
+        return std::make_pair(false, value());
     }
-    return parse_result;
 }
 
-json::value json::parser::parse_string(const std::string &content, std::string::const_iterator &cur)
-{
-    return value::string(parse_string_and_return(content, cur));
-}
-
-std::string json::parser::parse_string_and_return(const std::string &content, std::string::const_iterator &cur)
-{
-    if (cur != content.cend() && *cur == '"')
-    {
-        ++cur;
-    }
-    else
-    {
-        throw exception("Parsing string error: " + std::to_string(std::distance(content.cbegin(), cur)));
-    }
-
-    const auto first = cur;
-    auto last = cur;
-    while (true)
-    {
-        if (cur == content.cend())
-        {
-            throw exception("Parsing string error: " + std::to_string(std::distance(content.cbegin(), cur)));
-        }
-        else if (*cur == '"' && *(cur - 1) != '\\')
-        {
-            last = cur;
-            ++cur;
-            break;
-        }
-        ++cur;
-    }
-    return std::string(first, last);
-}
-
-json::value json::parser::parse_number(const std::string &content, std::string::const_iterator &cur)
-{
-    static const std::string reg_str_json_number("(-?\\d+(?:\\.\\d+)?(?:(?:e|E)(?:-|\\+)?\\d+)?)");
-    static const std::regex reg_json_number("^" + reg_str_json_number);
-
-    return parse_by_regex(content, cur, reg_json_number, ValueType::Number);
-}
-
-json::value json::parser::parse_boolean(const std::string &content, std::string::const_iterator &cur)
+std::pair<bool, json::value> json::parser::parse_boolean(const std::string &content, std::string::const_iterator &cur)
 {
     static const std::string true_string = "true";
     static const std::string false_string = "false";
+
     if (*cur == 't' &&
         static_cast<size_t>(std::distance(cur, content.cend())) >= true_string.size() &&
         std::string(cur, cur + true_string.size()) == true_string)
     {
         cur += true_string.size();
-        return value::boolean(true);
+        return std::make_pair(true, value::boolean(true));
     }
     else if (*cur == 'f' &&
              static_cast<size_t>(std::distance(cur, content.cend())) >= false_string.size() &&
              std::string(cur, cur + false_string.size()) == false_string)
     {
         cur += false_string.size();
-        return value::boolean(false);
+        return std::make_pair(true, value::boolean(false));
     }
     else
     {
-        throw exception("Parsing boolean error: " + std::to_string(std::distance(content.cbegin(), cur)));
+        return std::make_pair(false, value());
     }
 }
 
-json::value json::parser::parse_null(const std::string &content, std::string::const_iterator &cur)
+std::pair<bool, json::value> json::parser::parse_number(const std::string &content, std::string::const_iterator &cur)
 {
-    static const std::string null_string = "null";
-    if (static_cast<size_t>(std::distance(cur, content.cend())) >= null_string.size() &&
-        std::string(cur, cur + null_string.size()) == null_string)
+    static const std::string reg_str_json_number("(-?\\d+(?:\\.\\d+)?(?:(?:e|E)(?:-|\\+)?\\d+)?)");
+    static const std::regex reg_json_number("^" + reg_str_json_number);
+
+    if (cur == content.cend())
     {
-        cur += null_string.size();
-        return value::null();
+        return std::make_pair(false, value());
+    }
+    std::string cur_string(cur, content.cend());
+    std::smatch match_result;
+    if (std::regex_search(cur_string, match_result, reg_json_number) && match_result.size() == 2)
+    {
+        std::string num = match_result[1];
+        cur += num.size();
+
+        value result;
+        result.set_raw_basic_data(ValueType::Number, std::move(num));
+        return std::make_pair(true, result);
     }
     else
     {
-        throw exception("Parsing null error: " + std::to_string(std::distance(content.cbegin(), cur)));
+        return std::make_pair(false, value());
     }
 }
 
-json::object json::parser::parse_object(const std::string &content, std::string::const_iterator &cur)
+std::pair<bool, json::value> json::parser::parse_string(const std::string &content, std::string::const_iterator &cur)
 {
-    if (cur != content.cend() && *cur == '{')
+    auto &&[ret, str] = parse_string_str(content, cur);
+    if (!ret)
     {
-        ++cur;
+        return std::make_pair(false, value());
     }
-    else
-    {
-        throw exception("Parsing object error: " + std::to_string(std::distance(content.cbegin(), cur)));
-    }
-
-    bool ws_ret = parse_whitespace(content, cur);
-    if (!ws_ret)
-    {
-        throw exception("Parsing object error: " + std::to_string(std::distance(content.cbegin(), cur)));
-    }
-    else if (*cur == '}')
-    {
-        ++cur;
-        return object();
-    }
-
-    object parse_result_object;
-    while (true)
-    {
-        ws_ret = parse_whitespace(content, cur);
-        if (!ws_ret)
-        {
-            throw exception("Parsing object error: " + std::to_string(std::distance(content.cbegin(), cur)));
-        }
-
-        std::string key = parse_string_and_return(content, cur);
-
-        ws_ret = parse_whitespace(content, cur);
-
-        if (ws_ret && *cur == ':')
-        {
-            ++cur;
-        }
-        else
-        {
-            throw exception("Parsing object error: " + std::to_string(std::distance(content.cbegin(), cur)));
-        }
-
-        ws_ret = parse_whitespace(content, cur);
-        if (!ws_ret)
-        {
-            throw exception("Parsing object error: " + std::to_string(std::distance(content.cbegin(), cur)));
-        }
-
-        value val = initial_parse(content, cur);
-
-        ws_ret = parse_whitespace(content, cur);
-        if (!ws_ret)
-        {
-            throw exception("Parsing object error: " + std::to_string(std::distance(content.cbegin(), cur)));
-        }
-
-        parse_result_object.insert(std::move(key), std::move(val));
-        if (*cur == ',')
-        {
-            ++cur;
-        }
-        else
-        {
-            break;
-        }
-    }
-
-    ws_ret = parse_whitespace(content, cur);
-    if (ws_ret && *cur == '}')
-    {
-        ++cur;
-    }
-    else
-    {
-        throw exception("Parsing object error: " + std::to_string(std::distance(content.cbegin(), cur)));
-    }
-    return parse_result_object;
+    return std::make_pair(true, json::value::string(str));
 }
 
-json::array json::parser::parse_array(const std::string &content, std::string::const_iterator &cur)
+std::pair<bool, json::array> json::parser::parse_array(const std::string &content, std::string::const_iterator &cur)
 {
     if (cur != content.cend() && *cur == '[')
     {
@@ -266,38 +163,36 @@ json::array json::parser::parse_array(const std::string &content, std::string::c
     }
     else
     {
-        throw exception("Parsing array error: " + std::to_string(std::distance(content.cbegin(), cur)));
+        return std::make_pair(false, array());
     }
 
-    bool ws_ret = parse_whitespace(content, cur);
-    if (!ws_ret)
+    if (!parse_whitespace(content, cur))
     {
-        throw exception("Parsing array error: " + std::to_string(std::distance(content.cbegin(), cur)));
+        return std::make_pair(false, array());
     }
     else if (*cur == ']')
     {
         ++cur;
-        return array();
+        // empty array
+        return std::make_pair(true, array());
     }
 
-    array parse_result_array;
+    array result;
     while (true)
     {
-        ws_ret = parse_whitespace(content, cur);
-        if (!ws_ret)
+        if (!parse_whitespace(content, cur))
         {
-            throw exception("Parsing array error: " + std::to_string(std::distance(content.cbegin(), cur)));
+            return std::make_pair(false, array());
         }
 
-        value val = initial_parse(content, cur);
+        auto &&[ret, val] = initial_parse(content, cur);
 
-        ws_ret = parse_whitespace(content, cur);
-        if (!ws_ret)
+        if (!parse_whitespace(content, cur))
         {
-            throw exception("Parsing array error: " + std::to_string(std::distance(content.cbegin(), cur)));
+            return std::make_pair(false, array());
         }
 
-        parse_result_array.push_back(std::move(val));
+        result.push_back(std::forward<value>(val));
 
         if (*cur == ',')
         {
@@ -309,16 +204,98 @@ json::array json::parser::parse_array(const std::string &content, std::string::c
         }
     }
 
-    ws_ret = parse_whitespace(content, cur);
-    if (ws_ret && *cur == ']')
+    if (parse_whitespace(content, cur) && *cur == ']')
     {
         ++cur;
     }
     else
     {
-        throw exception("Parsing array error: " + std::to_string(std::distance(content.cbegin(), cur)));
+        return std::make_pair(false, array());
     }
-    return parse_result_array;
+    return std::make_pair(true, result);
+}
+
+std::pair<bool, json::object> json::parser::parse_object(const std::string &content, std::string::const_iterator &cur)
+{
+    if (cur != content.cend() && *cur == '{')
+    {
+        ++cur;
+    }
+    else
+    {
+        return std::make_pair(false, object());
+    }
+
+    if (!parse_whitespace(content, cur))
+    {
+        return std::make_pair(false, object());
+    }
+    else if (*cur == '}')
+    {
+        ++cur;
+        // empty object
+        return std::make_pair(true, object());
+    }
+
+    object result;
+    while (true)
+    {
+        if (!parse_whitespace(content, cur))
+        {
+            return std::make_pair(false, object());
+        }
+
+        auto &&[key_ret, key] = parse_string_str(content, cur);
+        if (!key_ret)
+        {
+            return std::make_pair(false, object());
+        }
+
+        if (parse_whitespace(content, cur) && *cur == ':')
+        {
+            ++cur;
+        }
+        else
+        {
+            return std::make_pair(false, object());
+        }
+
+        if (!parse_whitespace(content, cur))
+        {
+            return std::make_pair(false, object());
+        }
+
+        auto &&[val_ret, val] = initial_parse(content, cur);
+        if (!val_ret)
+        {
+            return std::make_pair(false, object());
+        }
+
+        if (!parse_whitespace(content, cur))
+        {
+            return std::make_pair(false, object());
+        }
+
+        result.insert(std::forward<std::string>(key), std::forward<value>(val));
+        if (*cur == ',')
+        {
+            ++cur;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    if (parse_whitespace(content, cur) && *cur == '}')
+    {
+        ++cur;
+    }
+    else
+    {
+        return std::make_pair(false, object());
+    }
+    return std::make_pair(true, result);
 }
 
 bool json::parser::parse_whitespace(const std::string &content, std::string::const_iterator &cur)
@@ -336,4 +313,34 @@ bool json::parser::parse_whitespace(const std::string &content, std::string::con
     {
         return false;
     }
+}
+
+std::pair<bool, std::string> json::parser::parse_string_str(const std::string &content, std::string::const_iterator &cur)
+{
+    if (cur != content.cend() && *cur == '"')
+    {
+        ++cur;
+    }
+    else
+    {
+        return std::make_pair(false, std::string());
+    }
+
+    const auto first = cur;
+    auto last = cur;
+    while (true)
+    {
+        if (cur == content.cend())
+        {
+            return std::make_pair(false, std::string());
+        }
+        else if (*cur == '"' && *(cur - 1) != '\\')
+        {
+            last = cur;
+            ++cur;
+            break;
+        }
+        ++cur;
+    }
+    return std::make_pair(true, std::string(first, last));
 }
