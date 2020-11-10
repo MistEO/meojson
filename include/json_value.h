@@ -4,12 +4,21 @@
 #include <map>
 #include <vector>
 
-#include "json_value_type.h"
-
 namespace json
 {
     class object;
     class array;
+
+    enum class ValueType
+    {
+        JsonWhiteSpace,
+        JsonNull,
+        JsonBoolean,
+        JsonString,
+        JsonNumber,
+        JsonArray,
+        JsonObject
+    };
 
     class value
     {

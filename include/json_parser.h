@@ -3,13 +3,12 @@
 #include <string>
 #include <regex>
 
-#include "json_value_type.h"
-
 namespace json
 {
     class value;
     class object;
     class array;
+    enum class ValueType;
 
     class parser
     {
