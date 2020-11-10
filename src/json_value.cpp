@@ -5,28 +5,28 @@
 
 json::value::value(const array &arr)
     : _type(ValueType::Array),
-      _array_data(arr._array_data)
+      _array(arr)
 {
     ;
 }
 
 json::value::value(array &&arr)
     : _type(ValueType::Array),
-      _array_data(std::forward<std::vector<value>>(arr._array_data))
+      _array(std::forward<array>(arr))
 {
     ;
 }
 
 json::value::value(const object &obj)
     : _type(ValueType::Object),
-      _object_data(obj._object_data)
+      _object(obj)
 {
     ;
 }
 
 json::value::value(object &&obj)
     : _type(ValueType::Object),
-      _object_data(std::forward<std::map<std::string, value>>(obj._object_data))
+      _object(std::forward<object>(obj))
 {
     ;
 }
@@ -126,7 +126,7 @@ json::array json::value::as_array() const
 {
     if (_type == ValueType::Array)
     {
-        return array(_array_data);
+        return _array;
     }
     else
     {
@@ -138,7 +138,7 @@ json::object json::value::as_object() const
 {
     if (_type == ValueType::Object)
     {
-        return object(_object_data);
+        return _object;
     }
     else
     {
@@ -156,9 +156,9 @@ std::string json::value::to_string() const
     case ValueType::Number:
         return _basic_type_data;
     case ValueType::Object:
-        return object(_object_data).to_string();
+        return _object.to_string();
     case ValueType::Array:
-        return array(_array_data).to_string();
+        return _array.to_string();
     default:
         throw exception("Unknown Value Type");
     }

@@ -1,15 +1,13 @@
 #pragma once
 
 #include <string>
-#include <map>
-#include <vector>
 #include <ostream>
+
+#include "json_object.h"
+#include "json_array.h"
 
 namespace json
 {
-    class object;
-    class array;
-
     enum class ValueType
     {
         Invalid,
@@ -64,8 +62,8 @@ namespace json
     private:
         ValueType _type = ValueType::Null;
         std::string _basic_type_data = "null";
-        std::map<std::string, value> _object_data;
-        std::vector<value> _array_data;
+        object _object;
+        array _array;
     };
 
     std::ostream &operator<<(std::ostream &out, const value &value);
