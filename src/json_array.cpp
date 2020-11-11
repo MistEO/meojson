@@ -36,12 +36,12 @@ size_t json::array::size() const
 
 void json::array::push_back(const json::value &value)
 {
-    _array_data.push_back(value);
+    _array_data.emplace_back(value);
 }
 
 void json::array::push_back(json::value &&value)
 {
-    _array_data.push_back(
+    _array_data.emplace_back(
         std::forward<json::value>(value));
 }
 
