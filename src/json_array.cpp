@@ -2,20 +2,20 @@
 
 #include "json_value.h"
 
-json::array::array(const std::vector<json::value> &value_array)
-    : _array_data(value_array)
+json::array::array(const json_array &vector)
+    : _array_data(vector)
 {
     ;
 }
 
-json::array::array(std::vector<json::value> &&value_array)
-    : _array_data(value_array)
+json::array::array(json_array &&vector)
+    : _array_data(vector)
 {
     ;
 }
 
-json::array::array(std::initializer_list<json::value> value_list)
-    : _array_data(value_list)
+json::array::array(std::initializer_list<json::value> init_list)
+    : _array_data(init_list)
 {
 }
 
@@ -109,7 +109,7 @@ const json::value &json::array::operator[](int index) const
     return _array_data.at(index);
 }
 
-// const std::vector<json::value> &json::array::raw_data() const
+// const json_array &json::array::raw_data() const
 // {
 //     return _array_data;
 // }

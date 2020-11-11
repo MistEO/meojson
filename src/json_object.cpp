@@ -2,14 +2,14 @@
 
 #include "json_value.h"
 
-json::object::object(const std::map<std::string, json::value> &value_map)
-    : _object_data(value_map)
+json::object::object(const json_object &map)
+    : _object_data(map)
 {
     ;
 }
 
-json::object::object(std::map<std::string, json::value> &&value_map)
-    : _object_data(value_map)
+json::object::object(json_object &&map)
+    : _object_data(map)
 {
     ;
 }
@@ -88,25 +88,6 @@ json::object::const_iterator json::object::cend() const
     return _object_data.cend();
 }
 
-json::object::reverse_iterator json::object::rbegin()
-{
-    return _object_data.rbegin();
-}
-json::object::reverse_iterator json::object::rend()
-{
-    return _object_data.rend();
-}
-
-json::object::const_reverse_iterator json::object::crbegin() const
-{
-    return _object_data.crbegin();
-}
-
-json::object::const_reverse_iterator json::object::crend() const
-{
-    return _object_data.crend();
-}
-
 json::value &json::object::operator[](const std::string &key)
 {
     return _object_data[key];
@@ -117,7 +98,7 @@ const json::value &json::object::operator[](const std::string &key) const
     return _object_data.at(key);
 }
 
-// const std::map<std::string, json::value> &json::object::raw_data() const
+// const json_object &json::object::raw_data() const
 // {
 //     return _object_data;
 // }

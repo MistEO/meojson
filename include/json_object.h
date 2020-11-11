@@ -6,22 +6,20 @@
 namespace json
 {
     class value;
-
     class object
     {
         friend class value;
 
     public:
-        typedef std::map<std::string, value>::iterator iterator;
-        typedef std::map<std::string, value>::const_iterator const_iterator;
-        typedef std::map<std::string, value>::reverse_iterator reverse_iterator;
-        typedef std::map<std::string, value>::const_reverse_iterator const_reverse_iterator;
+        typedef std::map<std::string, value> json_object;
+        typedef json_object::iterator iterator;
+        typedef json_object::const_iterator const_iterator;
 
         object() = default;
         object(const object &rhs) = default;
         object(object &&rhs) = default;
-        object(const std::map<std::string, value> &value_map);
-        object(std::map<std::string, value> &&value_map);
+        object(const json_object &map);
+        object(json_object &&map);
 
         ~object() = default;
 
@@ -40,20 +38,15 @@ namespace json
         const_iterator cbegin() const;
         const_iterator cend() const;
 
-        reverse_iterator rbegin();
-        reverse_iterator rend();
-        const_reverse_iterator crbegin() const;
-        const_reverse_iterator crend() const;
-
         value &operator[](const std::string &key);
         const value &operator[](const std::string &key) const;
         object &operator=(const object &) = default;
         object &operator=(object &&) = default;
 
-        // const std::map<std::string, value> &raw_data() const;
+        // const json_object &raw_data() const;
 
     private:
-        std::map<std::string, value> _object_data;
+        json_object _object_data;
         bool _valid = false;
     };
 

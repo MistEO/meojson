@@ -37,12 +37,12 @@ int main()
         json::object obj;
         obj["key1"] = json::value::string("hello");
         obj["PI"] = json::value::number(3.1416);
-        std::vector<json::value> value_vector;
+        json::array arr;
         for (int i = 0; i != 10; ++i)
         {
-            value_vector.push_back(json::value::number(i));
+            arr.push_back(json::value::number(i));
         }
-        obj["list"] = json::array(value_vector);
+        obj["list"] = arr;
 
         json::object obj2;
         obj2["obj2_key1"] = json::value::string("i am child");
