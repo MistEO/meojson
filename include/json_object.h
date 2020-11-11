@@ -11,9 +11,9 @@ namespace json
         friend class value;
 
     public:
-        typedef std::map<std::string, value> json_object;
-        typedef json_object::iterator iterator;
-        typedef json_object::const_iterator const_iterator;
+        using json_object = std::map<std::string, value>;
+        using iterator = json_object::iterator;
+        using const_iterator = json_object::const_iterator;
 
         object() = default;
         object(const object &rhs) = default;

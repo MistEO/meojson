@@ -13,11 +13,11 @@ namespace json
         friend class value;
 
     public:
-        typedef std::vector<value> json_array;
-        typedef json_array::iterator iterator;
-        typedef json_array::const_iterator const_iterator;
-        typedef json_array::reverse_iterator reverse_iterator;
-        typedef json_array::const_reverse_iterator const_reverse_iterator;
+        using json_array = std::vector<value>;
+        using iterator = json_array::iterator;
+        using const_iterator = json_array::const_iterator;
+        using reverse_iterator = json_array::reverse_iterator;
+        using const_reverse_iterator = json_array::const_reverse_iterator;
 
         array() = default;
         array(const array &rhs) = default;
