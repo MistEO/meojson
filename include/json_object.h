@@ -11,15 +11,13 @@ namespace json
         friend class value;
 
     public:
-        using json_object = std::map<std::string, value>;
-        using iterator = json_object::iterator;
-        using const_iterator = json_object::const_iterator;
+        using raw_object = std::map<std::string, value>;
+        using iterator = raw_object::iterator;
+        using const_iterator = raw_object::const_iterator;
 
         object() = default;
         object(const object &rhs) = default;
         object(object &&rhs) = default;
-        object(const json_object &obj);
-        object(json_object &&obj);
 
         ~object() = default;
 
@@ -43,10 +41,10 @@ namespace json
         object &operator=(const object &) = default;
         object &operator=(object &&) = default;
 
-        // const json_object &raw_data() const;
+        // const raw_object &raw_data() const;
 
     private:
-        json_object _object_data;
+        raw_object _object_data;
         bool _valid = false;
     };
 

@@ -25,9 +25,9 @@ namespace json
     public:
         value() = default;
         value(const value &rhs) = default;
-        value(value &&rhs) noexcept = default;
+        value(value &&rhs) = default;
         value(const array &arr);
-        value(array &&arr) noexcept;
+        value(array &&arr);
         value(const object &obj);
         value(object &&obj);
 

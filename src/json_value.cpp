@@ -10,7 +10,7 @@ json::value::value(const array &arr)
     ;
 }
 
-json::value::value(array &&arr) noexcept
+json::value::value(array &&arr)
     : _type(ValueType::Array),
       _array(std::forward<array>(arr))
 {
@@ -24,7 +24,7 @@ json::value::value(const object &obj)
     ;
 }
 
-json::value::value(object &&obj) noexcept
+json::value::value(object &&obj)
     : _type(ValueType::Object),
       _object(std::forward<object>(obj))
 {

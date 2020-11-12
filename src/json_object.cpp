@@ -2,18 +2,6 @@
 
 #include "json_value.h"
 
-json::object::object(const json_object &obj)
-    : _object_data(obj)
-{
-    ;
-}
-
-json::object::object(json_object &&obj) noexcept
-    : _object_data(std::forward<json_object>(obj))
-{
-    ;
-}
-
 bool json::object::empty() const noexcept
 {
     return _object_data.empty();
@@ -97,7 +85,7 @@ const json::value &json::object::operator[](const std::string &key) const
     return _object_data.at(key);
 }
 
-// const json_object &json::object::raw_data() const
+// const raw_object &json::object::raw_data() const
 // {
 //     return _object_data;
 // }

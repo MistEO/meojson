@@ -2,14 +2,14 @@
 
 #include "json_value.h"
 
-json::array::array(const json_array &arr)
+json::array::array(const raw_array &arr)
     : _array_data(arr)
 {
     ;
 }
 
-json::array::array(json_array &&arr) noexcept
-    : _array_data(std::forward<json_array>(arr))
+json::array::array(raw_array &&arr) noexcept
+    : _array_data(std::forward<raw_array>(arr))
 {
     ;
 }
@@ -109,7 +109,7 @@ const json::value &json::array::operator[](int index) const
     return _array_data.at(index);
 }
 
-// const json_array &json::array::raw_data() const
+// const raw_array &json::array::raw_data() const
 // {
 //     return _array_data;
 // }

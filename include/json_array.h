@@ -13,17 +13,17 @@ namespace json
         friend class value;
 
     public:
-        using json_array = std::vector<value>;
-        using iterator = json_array::iterator;
-        using const_iterator = json_array::const_iterator;
-        using reverse_iterator = json_array::reverse_iterator;
-        using const_reverse_iterator = json_array::const_reverse_iterator;
+        using raw_array = std::vector<value>;
+        using iterator = raw_array::iterator;
+        using const_iterator = raw_array::const_iterator;
+        using reverse_iterator = raw_array::reverse_iterator;
+        using const_reverse_iterator = raw_array::const_reverse_iterator;
 
         array() = default;
         array(const array &rhs) = default;
         array(array &&rhs) noexcept = default;
-        array(const json_array &arr);
-        array(json_array &&arr) noexcept;
+        array(const raw_array &arr);
+        array(raw_array &&arr) noexcept;
         array(std::initializer_list<value> init_list);
 
         ~array() noexcept = default;
@@ -52,10 +52,10 @@ namespace json
         array &operator=(const array &) = default;
         array &operator=(array &&) = default;
 
-        // const json_array &raw_data() const;
+        // const raw_array &raw_data() const;
 
     private:
-        json_array _array_data;
+        raw_array _array_data;
     };
 
     std::ostream &operator<<(std::ostream &out, const array &arr);
