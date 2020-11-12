@@ -8,7 +8,7 @@ SAMPLE_OBJ := $(patsubst %.cpp,%.o,$(notdir $(SAMPLE_FILE)))
 
 CCSTD := c++17
 CCRELEASE := g++ -Wall -O2 -std=$(CCSTD)
-CCDEBUG := g++ -Wall -g -std=$(CCSTD) -DDEBUG
+CCDEBUG := g++ -Wall -O2 -std=$(CCSTD) -g -DDEBUG
 
 BUILD := build
 TARGET := $(BUILD)/libjson.so

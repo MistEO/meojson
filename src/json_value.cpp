@@ -10,7 +10,7 @@ json::value::value(const array &arr)
     ;
 }
 
-json::value::value(array &&arr)
+json::value::value(array &&arr) noexcept
     : _type(ValueType::Array),
       _array(std::forward<array>(arr))
 {
@@ -24,14 +24,14 @@ json::value::value(const object &obj)
     ;
 }
 
-json::value::value(object &&obj)
+json::value::value(object &&obj) noexcept
     : _type(ValueType::Object),
       _object(std::forward<object>(obj))
 {
     ;
 }
 
-bool json::value::valid() const
+bool json::value::valid() const noexcept
 {
     if (_type != ValueType::Invalid)
     {
@@ -43,9 +43,9 @@ bool json::value::valid() const
     }
 }
 
-bool json::value::empty() const
+bool json::value::empty() const noexcept
 {
-    if (_type == ValueType::Null && _basic_type_data == "null")
+    if (_type == ValueType::Null && _basic_type_data.compare("null") == 0)
     {
         return true;
     }
@@ -55,7 +55,7 @@ bool json::value::empty() const
     }
 }
 
-json::ValueType json::value::type() const
+json::ValueType json::value::type() const noexcept
 {
     return _type;
 }

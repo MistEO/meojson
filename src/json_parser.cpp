@@ -298,7 +298,7 @@ std::pair<bool, json::object> json::parser::parse_object(const std::string &cont
     return std::make_pair(true, std::move(result));
 }
 
-bool json::parser::parse_whitespace(const std::string &content, std::string::const_iterator &cur)
+bool json::parser::parse_whitespace(const std::string &content, std::string::const_iterator &cur) noexcept
 {
     while (cur != content.cend() && (*cur == ' ' || *cur == '\t' || *cur == '\r' || *cur == '\n'))
     {

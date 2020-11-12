@@ -8,7 +8,7 @@ json::array::array(const json_array &arr)
     ;
 }
 
-json::array::array(json_array &&arr)
+json::array::array(json_array &&arr) noexcept
     : _array_data(std::forward<json_array>(arr))
 {
     ;
@@ -19,7 +19,7 @@ json::array::array(std::initializer_list<json::value> init_list)
 {
 }
 
-bool json::array::empty() const
+bool json::array::empty() const noexcept
 {
     return _array_data.empty();
 }
@@ -29,7 +29,7 @@ const json::value json::array::at(int index) const
     return _array_data.at(index);
 }
 
-size_t json::array::size() const
+size_t json::array::size() const noexcept
 {
     return _array_data.size();
 }
@@ -60,41 +60,41 @@ std::string json::array::to_string() const
     return str;
 }
 
-json::array::iterator json::array::begin()
+json::array::iterator json::array::begin() noexcept
 {
     return _array_data.begin();
 }
 
-json::array::iterator json::array::end()
+json::array::iterator json::array::end() noexcept
 {
     return _array_data.end();
 }
 
-json::array::const_iterator json::array::cbegin() const
+json::array::const_iterator json::array::cbegin() const noexcept
 {
     return _array_data.cbegin();
 }
 
-json::array::const_iterator json::array::cend() const
+json::array::const_iterator json::array::cend() const noexcept
 {
     return _array_data.cend();
 }
 
-json::array::reverse_iterator json::array::rbegin()
+json::array::reverse_iterator json::array::rbegin() noexcept
 {
     return _array_data.rbegin();
 }
-json::array::reverse_iterator json::array::rend()
+json::array::reverse_iterator json::array::rend() noexcept
 {
     return _array_data.rend();
 }
 
-json::array::const_reverse_iterator json::array::crbegin() const
+json::array::const_reverse_iterator json::array::crbegin() const noexcept
 {
     return _array_data.crbegin();
 }
 
-json::array::const_reverse_iterator json::array::crend() const
+json::array::const_reverse_iterator json::array::crend() const noexcept
 {
     return _array_data.crend();
 }

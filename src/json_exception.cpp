@@ -5,10 +5,6 @@ json::exception::exception(const std::string &msg)
 {
 }
 
-json::exception::~exception() noexcept
-{
-}
-
 const char *json::exception::what() const noexcept
 {
     return m_msg.c_str();

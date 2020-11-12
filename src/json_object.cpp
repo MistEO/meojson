@@ -8,13 +8,13 @@ json::object::object(const json_object &obj)
     ;
 }
 
-json::object::object(json_object &&obj)
+json::object::object(json_object &&obj) noexcept
     : _object_data(std::forward<json_object>(obj))
 {
     ;
 }
 
-bool json::object::empty() const
+bool json::object::empty() const noexcept
 {
     return _object_data.empty();
 }
@@ -24,12 +24,12 @@ const json::value json::object::at(const std::string &key) const
     return _object_data.at(key);
 }
 
-size_t json::object::size() const
+size_t json::object::size() const noexcept
 {
     return _object_data.size();
 }
 
-void json::object::clear()
+void json::object::clear() noexcept
 {
     _object_data.clear();
 }
@@ -67,22 +67,22 @@ std::string json::object::to_string() const
     return str;
 }
 
-json::object::iterator json::object::begin()
+json::object::iterator json::object::begin() noexcept
 {
     return _object_data.begin();
 }
 
-json::object::iterator json::object::end()
+json::object::iterator json::object::end() noexcept
 {
     return _object_data.end();
 }
 
-json::object::const_iterator json::object::cbegin() const
+json::object::const_iterator json::object::cbegin() const noexcept
 {
     return _object_data.cbegin();
 }
 
-json::object::const_iterator json::object::cend() const
+json::object::const_iterator json::object::cend() const noexcept
 {
     return _object_data.cend();
 }

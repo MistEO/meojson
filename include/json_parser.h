@@ -14,7 +14,7 @@ namespace json
     {
     public:
         parser() = delete;
-        ~parser() = default;
+        ~parser() noexcept = default;
 
         static std::pair<bool, value> parse(const std::string &content);
 
@@ -28,7 +28,7 @@ namespace json
         static std::pair<bool, array> parse_array(const std::string &content, std::string::const_iterator &cur);
         static std::pair<bool, object> parse_object(const std::string &content, std::string::const_iterator &cur);
 
-        static bool parse_whitespace(const std::string &content, std::string::const_iterator &cur);
+        static bool parse_whitespace(const std::string &content, std::string::const_iterator &cur) noexcept;
         static std::pair<bool, std::string> parse_string_str(const std::string &content, std::string::const_iterator &cur);
     };
 } // namespace json

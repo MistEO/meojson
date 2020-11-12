@@ -25,17 +25,17 @@ namespace json
     public:
         value() = default;
         value(const value &rhs) = default;
-        value(value &&rhs) = default;
+        value(value &&rhs) noexcept = default;
         value(const array &arr);
-        value(array &&arr);
+        value(array &&arr) noexcept;
         value(const object &obj);
         value(object &&obj);
 
         ~value() = default;
 
-        bool valid() const;
-        bool empty() const;
-        ValueType type() const;
+        bool valid() const noexcept;
+        bool empty() const noexcept;
+        ValueType type() const noexcept;
         bool as_boolean() const;
         int as_integer() const;
         double as_double() const;

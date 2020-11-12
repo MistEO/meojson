@@ -21,31 +21,31 @@ namespace json
 
         array() = default;
         array(const array &rhs) = default;
-        array(array &&rhs) = default;
+        array(array &&rhs) noexcept = default;
         array(const json_array &arr);
-        array(json_array &&arr);
+        array(json_array &&arr) noexcept;
         array(std::initializer_list<value> init_list);
 
-        ~array() = default;
+        ~array() noexcept = default;
 
-        bool empty() const;
+        bool empty() const noexcept;
         const value at(int index) const;
-        size_t size() const;
+        size_t size() const noexcept;
         std::string to_string() const;
 
         void push_back(const value &val);
         void push_back(value &&val);
         // void earse(int index);
 
-        iterator begin();
-        iterator end();
-        const_iterator cbegin() const;
-        const_iterator cend() const;
+        iterator begin() noexcept;
+        iterator end() noexcept;
+        const_iterator cbegin() const noexcept;
+        const_iterator cend() const noexcept;
 
-        reverse_iterator rbegin();
-        reverse_iterator rend();
-        const_reverse_iterator crbegin() const;
-        const_reverse_iterator crend() const;
+        reverse_iterator rbegin() noexcept;
+        reverse_iterator rend() noexcept;
+        const_reverse_iterator crbegin() const noexcept;
+        const_reverse_iterator crend() const noexcept;
 
         value &operator[](int index);
         const value &operator[](int index) const;
