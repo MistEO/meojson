@@ -2,14 +2,14 @@
 
 #include "json_value.h"
 
-json::object::object(const json_object &map)
-    : _object_data(map)
+json::object::object(const json_object &obj)
+    : _object_data(obj)
 {
     ;
 }
 
-json::object::object(json_object &&map)
-    : _object_data(map)
+json::object::object(json_object &&obj)
+    : _object_data(std::forward<json_object>(obj))
 {
     ;
 }
@@ -39,11 +39,11 @@ bool json::object::insert(const std::string &key, const json::value &value)
     return _object_data.emplace(key, value).second;
 }
 
-bool json::object::insert(std::string &&key, json::value &&value)
+bool json::object::insert(std::string &&key, json::value &&val)
 {
     return _object_data.emplace(
                            std::forward<std::string>(key),
-                           std::forward<json::value>(value))
+                           std::forward<json::value>(val))
         .second;
 }
 
@@ -102,10 +102,10 @@ const json::value &json::object::operator[](const std::string &key) const
 //     return _object_data;
 // }
 
-std::ostream &operator<<(std::ostream &out, const json::object &object)
+std::ostream &operator<<(std::ostream &out, const json::object &obj)
 {
     // TODO: format output
 
-    out << object.to_string();
+    out << obj.to_string();
     return out;
 }

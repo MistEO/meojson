@@ -232,10 +232,10 @@ json::value json::value::string(std::string &&str)
     return val;
 }
 
-std::ostream &operator<<(std::ostream &out, const json::value &value)
+std::ostream &operator<<(std::ostream &out, const json::value &val)
 {
     // TODO: format output
 
-    out << value.to_string();
+    out << val.to_string();
     return out;
 }

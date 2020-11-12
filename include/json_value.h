@@ -66,6 +66,6 @@ namespace json
         array _array;
     };
 
-    std::ostream &operator<<(std::ostream &out, const value &value);
+    std::ostream &operator<<(std::ostream &out, const value &val);
 
 } // namespace json

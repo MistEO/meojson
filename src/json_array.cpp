@@ -2,14 +2,14 @@
 
 #include "json_value.h"
 
-json::array::array(const json_array &vector)
-    : _array_data(vector)
+json::array::array(const json_array &arr)
+    : _array_data(arr)
 {
     ;
 }
 
-json::array::array(json_array &&vector)
-    : _array_data(vector)
+json::array::array(json_array &&arr)
+    : _array_data(std::forward<json_array>(arr))
 {
     ;
 }
@@ -34,15 +34,15 @@ size_t json::array::size() const
     return _array_data.size();
 }
 
-void json::array::push_back(const json::value &value)
+void json::array::push_back(const json::value &val)
 {
-    _array_data.emplace_back(value);
+    _array_data.emplace_back(val);
 }
 
-void json::array::push_back(json::value &&value)
+void json::array::push_back(json::value &&val)
 {
     _array_data.emplace_back(
-        std::forward<json::value>(value));
+        std::forward<json::value>(val));
 }
 
 std::string json::array::to_string() const
@@ -114,10 +114,10 @@ const json::value &json::array::operator[](int index) const
 //     return _array_data;
 // }
 
-std::ostream &operator<<(std::ostream &out, const json::array &array)
+std::ostream &operator<<(std::ostream &out, const json::array &arr)
 {
     // TODO: format output
 
-    out << array.to_string();
+    out << arr.to_string();
     return out;
 }

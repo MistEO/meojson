@@ -18,8 +18,8 @@ namespace json
         object() = default;
         object(const object &rhs) = default;
         object(object &&rhs) = default;
-        object(const json_object &map);
-        object(json_object &&map);
+        object(const json_object &obj);
+        object(json_object &&obj);
 
         ~object() = default;
 
@@ -29,8 +29,8 @@ namespace json
         std::string to_string() const;
 
         void clear();
-        bool insert(const std::string &key, const value &value);
-        bool insert(std::string &&key, value &&value);
+        bool insert(const std::string &key, const value &val);
+        bool insert(std::string &&key, value &&val);
         bool earse(const std::string &key);
 
         iterator begin();
@@ -50,6 +50,6 @@ namespace json
         bool _valid = false;
     };
 
-    std::ostream &operator<<(std::ostream &out, const json::object &object);
+    std::ostream &operator<<(std::ostream &out, const json::object &obj);
 
 } // namespace json

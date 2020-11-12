@@ -22,9 +22,9 @@ namespace json
         array() = default;
         array(const array &rhs) = default;
         array(array &&rhs) = default;
-        array(const json_array &array);
-        array(json_array &&array);
-        array(std::initializer_list<value> value_list);
+        array(const json_array &arr);
+        array(json_array &&arr);
+        array(std::initializer_list<value> init_list);
 
         ~array() = default;
 
@@ -33,8 +33,8 @@ namespace json
         size_t size() const;
         std::string to_string() const;
 
-        void push_back(const value &value);
-        void push_back(value &&value);
+        void push_back(const value &val);
+        void push_back(value &&val);
         // void earse(int index);
 
         iterator begin();
@@ -58,6 +58,6 @@ namespace json
         json_array _array_data;
     };
 
-    std::ostream &operator<<(std::ostream &out, const array &array);
+    std::ostream &operator<<(std::ostream &out, const array &arr);
 
 } // namespace json
