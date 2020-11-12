@@ -6,9 +6,9 @@ SRC_FILES := $(shell ls $(SRC)/*.cpp)
 SAMPLE_FILE := sample/sample.cpp
 SAMPLE_OBJ := $(patsubst %.cpp,%.o,$(notdir $(SAMPLE_FILE)))
 
-CCSTD := c++17
-CCRELEASE := g++ -Wall -O2 -std=$(CCSTD)
-CCDEBUG := g++ -Wall -O2 -std=$(CCSTD) -g -DDEBUG
+OPT := -O2
+CCRELEASE := g++ -Wall $(OPT) -std=c++17
+CCDEBUG := g++ -Wall $(OPT) -g -DDEBUG -std=c++17
 
 BUILD := build
 TARGET := $(BUILD)/libjson.so
