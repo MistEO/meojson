@@ -10,8 +10,6 @@ namespace json
 
     class array
     {
-        friend class value;
-
     public:
         using raw_array = std::vector<value>;
         using iterator = raw_array::iterator;

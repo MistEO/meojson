@@ -9,8 +9,6 @@ namespace json
 {
     class object
     {
-        friend class value;
-
     public:
         using raw_object = std::unordered_map<std::string, value>;
         using iterator = raw_object::iterator;
