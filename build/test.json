@@ -19,7 +19,8 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "make_debug"
+            "preLaunchTask": "make_debug",
+            "number_test": 123.46e-31
         }
     ]
 }

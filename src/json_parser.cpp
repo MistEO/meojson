@@ -121,31 +121,89 @@ std::pair<bool, json::value> json::parser::parse_boolean(const std::string &cont
 
 std::pair<bool, json::value> json::parser::parse_number(const std::string &content, std::string::const_iterator &cur)
 {
-    static const std::string reg_str_json_number("(-?\\d+(?:\\.\\d+)?(?:(?:e|E)(?:-|\\+)?\\d+)?)");
-    static const std::regex reg_json_number("^" + reg_str_json_number);
-
     if (cur == content.cend())
     {
         return std::make_pair(false, value());
     }
-    std::string cur_string(cur, content.cend());
-    std::smatch match_result;
-    if (std::regex_search(cur_string, match_result, reg_json_number) && match_result.size() == 2)
-    {
-        std::string num = match_result[1];
-        cur += num.size();
 
-        value result;
-        result.set_raw_basic_data(value_type::Number, std::move(num));
-        return std::make_pair(true, std::move(result));
+    static auto parse_digit = [&]() -> bool {
+        // 至少要有一个数字
+        if (cur != content.cend() && *cur >= '0' && *cur <= '9')
+        {
+            ++cur;
+        }
+        else
+        {
+            return false;
+        }
+
+        while (cur != content.cend() && *cur >= '0' && *cur <= '9')
+        {
+            ++cur;
+        }
+        return true;
+    };
+
+    auto first = cur;
+    if (*cur == '-')
+    {
+        ++cur;
     }
-    else
+    if (!parse_digit())
     {
         return std::make_pair(false, value());
     }
+
+    if (*cur == '.')
+    {
+        ++cur;
+        if (!parse_digit())
+        {
+            return std::make_pair(false, value());
+        }
+    }
+
+    if (*cur == 'e' || *cur == 'E')
+    {
+        ++cur;
+        if (*cur == '+' || *cur == '-')
+        {
+            ++cur;
+            if (!parse_digit())
+            {
+                return std::make_pair(false, value());
+            }
+        }
+    }
+
+    std::string num_str(first, cur);
+    value result;
+    result.set_raw_basic_data(value_type::Number, std::move(num_str));
+    return std::make_pair(true, std::move(result));
+
+    // 正则太慢了，弃用之~~~
+    // static const std::string reg_str_json_number("(-?\\d+(?:\\.\\d+)?(?:(?:e|E)(?:-|\\+)?\\d+)?)");
+    // static const std::regex reg_json_number("^" + reg_str_json_number);
+
+    // std::string cur_string(cur, content.cend());
+    // std::smatch match_result;
+    // if (std::regex_search(cur_string, match_result, reg_json_number) && match_result.size() == 2)
+    // {
+    //     std::string num = match_result[1];
+    //     cur += num.size();
+
+    //     value result;
+    //     result.set_raw_basic_data(value_type::Number, std::move(num));
+    //     return std::make_pair(true, std::move(result));
+    // }
+    // else
+    // {
+    //     return std::make_pair(false, value());
+    // }
 }
 
-std::pair<bool, json::value> json::parser::parse_string(const std::string &content, std::string::const_iterator &cur)
+std::pair<bool, json::value>
+json::parser::parse_string(const std::string &content, std::string::const_iterator &cur)
 {
     auto &&[ret, str] = parse_string_str(content, cur);
     if (!ret)
