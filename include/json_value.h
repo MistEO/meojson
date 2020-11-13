@@ -9,7 +9,7 @@ namespace json
     class array;
     class object;
 
-    enum class ValueType
+    enum class value_type
     {
         Invalid,
         Null,
@@ -36,7 +36,7 @@ namespace json
 
         bool valid() const noexcept;
         bool empty() const noexcept;
-        ValueType type() const noexcept;
+        value_type type() const noexcept;
         bool as_boolean() const;
         int as_integer() const;
         double as_double() const;
@@ -46,8 +46,8 @@ namespace json
 
         std::string to_string() const;
 
-        void set_raw_basic_data(ValueType type, const std::string &basic_data);
-        void set_raw_basic_data(ValueType type, std::string &&basic_data);
+        void set_raw_basic_data(value_type type, const std::string &basic_data);
+        void set_raw_basic_data(value_type type, std::string &&basic_data);
 
         value &operator=(const value &) = default;
         value &operator=(value &&) = default;
@@ -61,7 +61,7 @@ namespace json
         static value string(std::string &&str);
 
     private:
-        ValueType _type = ValueType::Null;
+        value_type _type = value_type::Null;
         std::string _basic_type_data = "null";
         std::shared_ptr<object> _object_ptr = nullptr;
         std::shared_ptr<array> _array_ptr = nullptr;

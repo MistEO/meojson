@@ -136,7 +136,7 @@ std::pair<bool, json::value> json::parser::parse_number(const std::string &conte
         cur += num.size();
 
         value result;
-        result.set_raw_basic_data(ValueType::Number, std::move(num));
+        result.set_raw_basic_data(value_type::Number, std::move(num));
         return std::make_pair(true, std::move(result));
     }
     else
