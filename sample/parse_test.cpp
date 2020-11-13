@@ -21,6 +21,8 @@ int main()
     std::string content(ibuf.str());
     //std::cout << content << std::endl;
 
+    std::cout << "string length: " << content.size() << std::endl;
+
     json::value val;
 
     auto b_time = get_time();
@@ -30,9 +32,9 @@ int main()
         val = json::parser::parse(content).second;
     }
     auto e_time = get_time();
-    long long pre = (e_time - b_time) / loop_times;
+    long long avg_time = (e_time - b_time) / loop_times;
 
-    std::cout << "parse success, pre time: " << pre << " ns, about " << pre / 1000000 << " ms" << std::endl;
+    std::cout << "cppjson parse, avg time: " << avg_time << " ns, about " << avg_time / 1000000.0 << " ms" << std::endl;
 
     return 0;
 }

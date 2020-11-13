@@ -11,7 +11,7 @@ json::array rand_array(int depth);
 constexpr int max_key_length = 64;
 constexpr int max_string_length = 4096;
 constexpr int max_depth = 2;
-constexpr int max_element_length = 64;
+constexpr int max_element_length = 128;
 
 int main()
 {
