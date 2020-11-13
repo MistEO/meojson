@@ -4,36 +4,31 @@
 #include "json_exception.h"
 
 json::value::value(const array &arr)
-    : _type(ValueType::Array)
-//   _array(arr)
+    : _type(ValueType::Array),
+      _array_ptr(std::make_shared<array>(arr))
 {
-    auto ptr = std::make_shared<array>();
-    *ptr = arr;
-    _array_ptr = std::move(ptr);
+    ;
 }
 
 json::value::value(array &&arr)
-    : _type(ValueType::Array)
+    : _type(ValueType::Array),
+      _array_ptr(std::make_shared<array>(std::forward<array>(arr)))
 {
-    auto ptr = std::make_shared<array>();
-    *ptr = std::forward<array>(arr);
-    _array_ptr = std::move(ptr);
+    ;
 }
 
 json::value::value(const object &obj)
-    : _type(ValueType::Object)
+    : _type(ValueType::Object),
+      _object_ptr(std::make_shared<object>(obj))
 {
-    auto ptr = std::make_shared<object>();
-    *ptr = obj;
-    _object_ptr = std::move(ptr);
+    ;
 }
 
 json::value::value(object &&obj)
-    : _type(ValueType::Object)
+    : _type(ValueType::Object),
+      _object_ptr(std::make_shared<object>(std::forward<object>(obj)))
 {
-    auto ptr = std::make_shared<object>();
-    *ptr = std::forward<object>(obj);
-    _object_ptr = std::move(ptr);
+    ;
 }
 
 bool json::value::valid() const noexcept
