@@ -15,6 +15,11 @@ std::pair<bool, json::value> json::parser::parse(const std::string &content)
 {
     auto cur = content.cbegin();
 
+    if (!parse_whitespace(content, cur))
+    {
+        return std::make_pair(false, value::null());
+    }
+
     auto &&[ret, result] = initial_parse(content, cur);
     if (!ret)
     {
