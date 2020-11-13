@@ -30,9 +30,9 @@ int main()
         val = json::parser::parse(content).second;
     }
     auto e_time = get_time();
-    long long dis = (e_time - b_time);
+    long long pre = (e_time - b_time) / loop_times;
 
-    std::cout << "parse success, pre time: " << dis / loop_times << " ns" << std::endl;
+    std::cout << "parse success, pre time: " << pre << " ns, about " << pre / 1000000 << " ms" << std::endl;
 
     return 0;
 }

@@ -2,12 +2,13 @@
 
 #include <string>
 #include <ostream>
-
-#include "json_object.h"
-#include "json_array.h"
+#include <memory>
 
 namespace json
 {
+    class array;
+    class object;
+
     enum class ValueType
     {
         Invalid,
@@ -62,8 +63,8 @@ namespace json
     private:
         ValueType _type = ValueType::Null;
         std::string _basic_type_data = "null";
-        object _object;
-        array _array;
+        std::shared_ptr<object> _object_ptr = nullptr;
+        std::shared_ptr<array> _array_ptr = nullptr;
     };
 
     std::ostream &operator<<(std::ostream &out, const value &val);

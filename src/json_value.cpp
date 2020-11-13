@@ -4,31 +4,36 @@
 #include "json_exception.h"
 
 json::value::value(const array &arr)
-    : _type(ValueType::Array),
-      _array(arr)
+    : _type(ValueType::Array)
+//   _array(arr)
 {
-    ;
+    auto ptr = std::make_shared<array>();
+    *ptr = arr;
+    _array_ptr = std::move(ptr);
 }
 
 json::value::value(array &&arr)
-    : _type(ValueType::Array),
-      _array(std::forward<array>(arr))
+    : _type(ValueType::Array)
 {
-    ;
+    auto ptr = std::make_shared<array>();
+    *ptr = std::forward<array>(arr);
+    _array_ptr = std::move(ptr);
 }
 
 json::value::value(const object &obj)
-    : _type(ValueType::Object),
-      _object(obj)
+    : _type(ValueType::Object)
 {
-    ;
+    auto ptr = std::make_shared<object>();
+    *ptr = obj;
+    _object_ptr = std::move(ptr);
 }
 
 json::value::value(object &&obj)
-    : _type(ValueType::Object),
-      _object(std::forward<object>(obj))
+    : _type(ValueType::Object)
 {
-    ;
+    auto ptr = std::make_shared<object>();
+    *ptr = std::forward<object>(obj);
+    _object_ptr = std::move(ptr);
 }
 
 bool json::value::valid() const noexcept
@@ -126,7 +131,7 @@ json::array json::value::as_array() const
 {
     if (_type == ValueType::Array)
     {
-        return _array;
+        return *_array_ptr;
     }
     else
     {
@@ -138,7 +143,7 @@ json::object json::value::as_object() const
 {
     if (_type == ValueType::Object)
     {
-        return _object;
+        return *_object_ptr;
     }
     else
     {
@@ -156,9 +161,9 @@ std::string json::value::to_string() const
     case ValueType::Number:
         return _basic_type_data;
     case ValueType::Object:
-        return _object.to_string();
+        return _object_ptr->to_string();
     case ValueType::Array:
-        return _array.to_string();
+        return _array_ptr->to_string();
     default:
         throw exception("Unknown Value Type");
     }
@@ -178,10 +183,7 @@ void json::value::set_raw_basic_data(json::ValueType type, std::string &&basic_d
 
 json::value json::value::null()
 {
-    value val;
-    val._type = ValueType::Null;
-    val._basic_type_data = "null";
-    return val;
+    return value();
 }
 
 json::value json::value::boolean(bool b)

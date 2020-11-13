@@ -1,17 +1,18 @@
 #pragma once
 
 #include <string>
-#include <map>
+#include <unordered_map>
+
+#include "json_value.h"
 
 namespace json
 {
-    class value;
     class object
     {
         friend class value;
 
     public:
-        using raw_object = std::map<std::string, value>;
+        using raw_object = std::unordered_map<std::string, value>;
         using iterator = raw_object::iterator;
         using const_iterator = raw_object::const_iterator;
 
