@@ -44,7 +44,6 @@ namespace json
 
     private:
         raw_object _object_data;
-        bool _valid = false;
     };
 
     std::ostream &operator<<(std::ostream &out, const json::object &obj);
