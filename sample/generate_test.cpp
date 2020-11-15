@@ -11,7 +11,7 @@ json::array rand_array(int depth);
 constexpr int max_key_length = 64;
 constexpr int max_string_length = 4096;
 constexpr int max_depth = 2;
-constexpr int max_element_length = 128;
+constexpr int max_element_length = 256;
 
 int main()
 {
@@ -28,19 +28,19 @@ json::value rand_value(int depth)
     switch (static_cast<json::value_type>(type))
     {
     case json::value_type::Null:
-        return json::value::null();
+        return json::value();
     case json::value_type::Boolean:
-        return json::value::boolean(rand() % 1);
+        return static_cast<bool>(rand() % 1);
     case json::value_type::String:
-        return json::value::string(rand_string(max_string_length));
+        return rand_string(max_string_length);
     case json::value_type::Number:
-        return json::value::number(rand());
+        return rand();
     case json::value_type::Array:
         return rand_array(depth + 1);
     case json::value_type::Object:
         return rand_object(depth + 1);
     default:
-        return json::value::null();
+        return json::value();
     }
 }
 
