@@ -27,6 +27,21 @@ namespace json
         value() = default;
         value(const value &rhs) = default;
         value(value &&rhs) noexcept = default;
+
+        value(bool b);
+        value(int num);
+        value(unsigned num);
+        value(long num);
+        value(unsigned long num);
+        value(long long num);
+        value(unsigned long long num);
+        value(float num);
+        value(double num);
+        value(long double num);
+        value(const char *str);
+        value(const std::string &str);
+        value(std::string &&str);
+
         value(const array &arr);
         value(array &&arr);
         value(const object &obj);
@@ -37,13 +52,24 @@ namespace json
         bool valid() const noexcept;
         bool empty() const noexcept;
         value_type type() const noexcept;
+        const value &at(size_t pos) const;
+        const value &at(const std::string key) const;
+
         bool as_boolean() const;
         int as_integer() const;
+        // unsigned as_unsigned() const;
+        long as_long() const;
+        unsigned long as_unsigned_long() const;
+        long long as_long_long() const;
+        unsigned long long as_unsigned_long_long() const;
+        float as_float() const;
         double as_double() const;
+        long double as_long_double() const;
         std::string as_string() const;
         array as_array() const;
         object as_object() const;
 
+        // return raw string
         std::string to_string() const;
 
         void set_raw_basic_data(value_type type, const std::string &basic_data);
@@ -52,19 +78,16 @@ namespace json
         value &operator=(const value &) = default;
         value &operator=(value &&) = default;
 
-        static value null();
-        static value boolean(bool b);
-        static value number(int num);
-        static value number(double num);
-        static value string(const char *str);
-        static value string(const std::string &str);
-        static value string(std::string &&str);
+        const value &operator[](size_t pos) const;
+        value &operator[](size_t pos);
+        value &operator[](const std::string &key);
+        value &operator[](std::string &&key);
 
     private:
         value_type _type = value_type::Null;
-        std::string _basic_type_data = "null";
-        std::shared_ptr<object> _object_ptr = nullptr;
+        std::string _raw_basic_data = "null";
         std::shared_ptr<array> _array_ptr = nullptr;
+        std::shared_ptr<object> _object_ptr = nullptr;
     };
 
     std::ostream &operator<<(std::ostream &out, const value &val);

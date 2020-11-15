@@ -27,13 +27,13 @@ namespace json
         ~array() noexcept = default;
 
         bool empty() const noexcept;
-        const value at(int index) const;
+        const value &at(size_t pos) const;
         size_t size() const noexcept;
         std::string to_string() const;
 
         void push_back(const value &val);
         void push_back(value &&val);
-        // void earse(int index);
+        // void earse(size_t pos);
 
         iterator begin() noexcept;
         iterator end() noexcept;
@@ -45,8 +45,9 @@ namespace json
         const_reverse_iterator crbegin() const noexcept;
         const_reverse_iterator crend() const noexcept;
 
-        value &operator[](int index);
-        const value &operator[](int index) const;
+        const value &operator[](size_t pos) const;
+        value &operator[](size_t pos);
+
         array &operator=(const array &) = default;
         array &operator=(array &&) = default;
 

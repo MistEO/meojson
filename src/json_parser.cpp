@@ -17,7 +17,7 @@ std::pair<bool, json::value> json::parser::parse(const std::string &content)
 
     if (!parse_whitespace(content, cur))
     {
-        return std::make_pair(false, value::null());
+        return std::make_pair(false, value());
     }
 
     auto &&[ret, result] = initial_parse(content, cur);
@@ -91,7 +91,7 @@ std::pair<bool, json::value> json::parser::parse_null(const std::string &content
         std::string(cur, cur + null_string.size()) == null_string)
     {
         cur += null_string.size();
-        return std::make_pair(true, value::null());
+        return std::make_pair(true, value());
     }
     else
     {
@@ -109,14 +109,14 @@ std::pair<bool, json::value> json::parser::parse_boolean(const std::string &cont
         std::string(cur, cur + true_string.size()) == true_string)
     {
         cur += true_string.size();
-        return std::make_pair(true, value::boolean(true));
+        return std::make_pair(true, value(true));
     }
     else if (*cur == 'f' &&
              static_cast<size_t>(std::distance(cur, content.cend())) >= false_string.size() &&
              std::string(cur, cur + false_string.size()) == false_string)
     {
         cur += false_string.size();
-        return std::make_pair(true, value::boolean(false));
+        return std::make_pair(true, value(false));
     }
     else
     {
@@ -215,7 +215,7 @@ json::parser::parse_string(const std::string &content, std::string::const_iterat
     {
         return std::make_pair(false, value());
     }
-    return std::make_pair(true, json::value::string(str));
+    return std::make_pair(true, value(std::forward<std::string>(str)));
 }
 
 std::pair<bool, json::array> json::parser::parse_array(const std::string &content, std::string::const_iterator &cur)

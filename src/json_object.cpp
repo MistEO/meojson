@@ -7,7 +7,7 @@ bool json::object::empty() const noexcept
     return _object_data.empty();
 }
 
-const json::value json::object::at(const std::string &key) const
+const json::value &json::object::at(const std::string &key) const
 {
     return _object_data.at(key);
 }
@@ -80,9 +80,9 @@ json::value &json::object::operator[](const std::string &key)
     return _object_data[key];
 }
 
-const json::value &json::object::operator[](const std::string &key) const
+json::value &json::object::operator[](std::string &&key)
 {
-    return _object_data.at(key);
+    return _object_data[std::forward<std::string>(key)];
 }
 
 // const raw_object &json::object::raw_data() const

@@ -15,7 +15,7 @@ BUILD := build
 OBJS := $(patsubst %.cpp, $(BUILD)/%.o, $(notdir $(SRC_FILES) $(SAMPLE_FILE)))
 SAMPLE_OBJ := $(patsubst %.cpp,%.o,$(notdir $(SAMPLE_FILE)))
 TARGET := $(BUILD)/libjson.so
-DEMO := $(patsubst %.o,%.out,$(SAMPLE_OBJ))
+DEMO := $(patsubst %.o,$(BUILD)/%.out,$(SAMPLE_OBJ))
 
 ### release
 release: $(BUILD) $(TARGET) $(DEMO)

@@ -24,9 +24,9 @@ bool json::array::empty() const noexcept
     return _array_data.empty();
 }
 
-const json::value json::array::at(int index) const
+const json::value &json::array::at(size_t pos) const
 {
-    return _array_data.at(index);
+    return _array_data.at(pos);
 }
 
 size_t json::array::size() const noexcept
@@ -99,14 +99,14 @@ json::array::const_reverse_iterator json::array::crend() const noexcept
     return _array_data.crend();
 }
 
-json::value &json::array::operator[](int index)
+json::value &json::array::operator[](size_t pos)
 {
-    return _array_data[index];
+    return _array_data[pos];
 }
 
-const json::value &json::array::operator[](int index) const
+const json::value &json::array::operator[](size_t pos) const
 {
-    return _array_data.at(index);
+    return _array_data[pos];
 }
 
 // const raw_array &json::array::raw_data() const

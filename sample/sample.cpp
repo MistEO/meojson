@@ -1,6 +1,4 @@
 #include <iostream>
-#include <fstream>
-#include <sstream>
 
 #include "json.h"
 
@@ -9,10 +7,35 @@ int main()
 
     /*** Parse ***/
     {
-        std::ifstream ifs("test.json");
-        std::stringstream ibuf;
-        ibuf << ifs.rdbuf();
-        std::string content(ibuf.str());
+        std::cout << "****** Parsing ****** " << std::endl;
+        std::string content = R"(
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) 启动",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/sample.out",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "为 gdb 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "make_debug",
+            "number_test": 123.46e-31
+        }
+    ]
+}
+)";
         //std::cout << content << std::endl;
 
         auto &&[ret, json] = json::parser::parse(content);
@@ -20,8 +43,9 @@ int main()
         if (ret)
         {
             std::cout << "parse success" << std::endl;
-            std::cout << json.as_object()["configurations"].as_array().at(0).as_object()["name"].as_string() << std::endl;
-            for (auto &&[key, val] : json.as_object()["configurations"].as_array().at(0).as_object())
+
+            std::cout << json["configurations"][0]["name"].as_string() << std::endl;
+            for (auto &&[key, val] : json["configurations"][0]["setupCommands"][0].as_object())
             {
                 std::cout << key << ": " << val.to_string() << std::endl;
             }
@@ -32,23 +56,18 @@ int main()
         }
     }
 
+    std::cout << std::endl;
+
     /*** Generate ***/
     {
-        json::object obj;
-        obj["key1"] = json::value::string("hello");
-        obj["PI"] = json::value::number(3.1416);
-        json::array arr;
-        for (int i = 0; i != 10; ++i)
-        {
-            arr.push_back(json::value::number(i));
-        }
-        obj["list"] = arr;
+        std::cout << "****** Generating ******" << std::endl;
 
-        json::object obj2;
-        obj2["obj2_key1"] = json::value::string("i am child");
-        obj["child"] = obj2;
-        // json::array arr = {json::value::string("123"), json::value::number(456)};
-        // obj["arr"] = arr;
+        json::value obj;
+        obj["key1"] = "hello";
+        obj["PI"] = 3.1416;
+        obj["list"] = json::array({"a", "b", "c"});
+
+        obj["child"]["obj2_key1"] = "i am child";
 
         std::cout << obj.to_string() << std::endl;
     }

@@ -21,7 +21,7 @@ namespace json
         ~object() = default;
 
         bool empty() const noexcept;
-        const value at(const std::string &key) const;
+        const value &at(const std::string &key) const;
         size_t size() const noexcept;
         std::string to_string() const;
 
@@ -36,7 +36,8 @@ namespace json
         const_iterator cend() const noexcept;
 
         value &operator[](const std::string &key);
-        const value &operator[](const std::string &key) const;
+        value &operator[](std::string &&key);
+
         object &operator=(const object &) = default;
         object &operator=(object &&) = default;
 
