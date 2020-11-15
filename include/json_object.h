@@ -2,6 +2,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <initializer_list>
 
 #include "json_value.h"
 
@@ -17,6 +18,7 @@ namespace json
         object() = default;
         object(const object &rhs) = default;
         object(object &&rhs) = default;
+        object(std::initializer_list<raw_object::value_type> init_list);
 
         ~object() = default;
 

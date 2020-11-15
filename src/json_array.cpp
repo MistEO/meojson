@@ -14,7 +14,7 @@ json::array::array(raw_array &&arr) noexcept
     ;
 }
 
-json::array::array(std::initializer_list<json::value> init_list)
+json::array::array(std::initializer_list<raw_array::value_type> init_list)
     : _array_data(init_list)
 {
 }
@@ -32,6 +32,11 @@ const json::value &json::array::at(size_t pos) const
 size_t json::array::size() const noexcept
 {
     return _array_data.size();
+}
+
+void json::array::clear() noexcept
+{
+    _array_data.clear();
 }
 
 void json::array::push_back(const json::value &val)

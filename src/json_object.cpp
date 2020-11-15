@@ -2,6 +2,14 @@
 
 #include "json_value.h"
 
+json::object::object(std::initializer_list<raw_object::value_type> init_list)
+{
+    for (auto &&[key, val] : init_list)
+    {
+        insert(key, val);
+    }
+}
+
 bool json::object::empty() const noexcept
 {
     return _object_data.empty();

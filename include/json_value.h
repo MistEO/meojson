@@ -29,6 +29,7 @@ namespace json
         value(value &&rhs) noexcept = default;
 
         value(bool b);
+
         value(int num);
         value(unsigned num);
         value(long num);
@@ -38,14 +39,19 @@ namespace json
         value(float num);
         value(double num);
         value(long double num);
+
         value(const char *str);
         value(const std::string &str);
         value(std::string &&str);
 
         value(const array &arr);
         value(array &&arr);
+        // value(std::initializer_list<value> init_list); // for array
+
         value(const object &obj);
         value(object &&obj);
+        // error: conversion from ‘<brace-enclosed initializer list>’ to ‘json::value’ is ambiguous
+        // value(std::initializer_list<std::pair<std::string, value>> init_list); // for object
 
         ~value() = default;
 
@@ -82,6 +88,8 @@ namespace json
         value &operator[](size_t pos);
         value &operator[](const std::string &key);
         value &operator[](std::string &&key);
+
+        static value invalid_value();
 
     private:
         value_type _type = value_type::Null;

@@ -62,14 +62,21 @@ int main()
     {
         std::cout << "****** Generating ******" << std::endl;
 
-        json::value obj;
-        obj["key1"] = "hello";
-        obj["PI"] = 3.1416;
-        obj["list"] = json::array({"a", "b", "c"});
+        json::value json;
+        json["lib"] = "cppjson";
+        json["Pi"] = 3.1416;
+        json["star"] = 0;
+        json["star"] = json["star"].as_integer() + 1;
 
-        obj["child"]["obj2_key1"] = "i am child";
+        json["arr"] = json::array({"a", "b", "c"});
 
-        std::cout << obj.to_string() << std::endl;
+        json["obj"] = json::object(
+            {{"key1", "value1"},
+             {"key2", 123}});
+
+        json["obj"]["key3"] = json::array({1, 2, 3});
+
+        std::cout << json.to_string() << std::endl;
     }
 
     return 0;

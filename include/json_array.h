@@ -22,7 +22,7 @@ namespace json
         array(array &&rhs) noexcept = default;
         array(const raw_array &arr);
         array(raw_array &&arr) noexcept;
-        array(std::initializer_list<value> init_list);
+        array(std::initializer_list<raw_array::value_type> init_list);
 
         ~array() noexcept = default;
 
@@ -31,6 +31,7 @@ namespace json
         size_t size() const noexcept;
         std::string to_string() const;
 
+        void clear() noexcept;
         void push_back(const value &val);
         void push_back(value &&val);
         // void earse(size_t pos);

@@ -122,6 +122,20 @@ json::value::value(object &&obj)
     ;
 }
 
+// json::value::value(std::initializer_list<value> init_list)
+//     : _type(value_type::Array),
+//       _array_ptr(std::make_shared<array>(init_list))
+// {
+//     ;
+// }
+
+// json::value::value(std::initializer_list<std::pair<std::string, value>> init_list)
+//     : _type(value_type::Object),
+//       _object_ptr(std::make_shared<object>(init_list))
+// {
+//     ;
+// }
+
 bool json::value::valid() const noexcept
 {
     if (_type != value_type::Invalid)
@@ -433,6 +447,13 @@ json::value &json::value::operator[](std::string &&key)
     {
         throw exception("Wrong Type");
     }
+}
+
+json::value json::value::invalid_value()
+{
+    value val;
+    val.set_raw_basic_data(json::value_type::Null, std::string());
+    return val;
 }
 
 std::ostream &operator<<(std::ostream &out, const json::value &val)
