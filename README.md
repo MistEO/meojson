@@ -41,7 +41,7 @@
     std::cout << json.to_string() << std::endl;
     ```
 
-- `meojson`需要编译器支持C++17标准
+- `meojson`仅依赖于STL，但需要编译器支持C++17标准
 
 ### 安装
 
@@ -55,7 +55,7 @@
 2. 在您的项目，添加`-lmeojson`编译选项
 3. 集成代码并使用
 
-### 集成
+### 示例
 
 ```c++
 /***
@@ -131,7 +131,7 @@ int main()
 
 ### Introduction
 
-- `meojson` is a `very fast` json parserfor C++, O(n) Complexity, 1200% faster than Tecent's RapidJson.
+- `meojson` is a `very fast` json parser for C++, O(n) Complexity, 1200% faster than Tecent's RapidJson.
 
     ```bash
     # How to test
@@ -142,7 +142,7 @@ int main()
 
     ![image](test/parse/parse_result.png)
 
-- `meojson` is also an easy-to-use C++ JSON generation library that can use various syntactic sugars to elegantly generate JSON
+- `meojson` is also an easy-to-use json generator for C++ that can use various syntactic sugars to elegantly generate JSON
 
     ```c++
     json::value json;
@@ -166,7 +166,7 @@ int main()
     std::cout << json.to_string() << std::endl;
     ```
 
-- `meojson` requires the compiler to support the C++17 standard
+- `meojson` only depends on STL, but requires the compiler to support the C++17 standard
 
 ### Installation
 
