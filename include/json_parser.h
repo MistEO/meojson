@@ -2,6 +2,7 @@
 
 #include <string>
 #include <utility>
+#include <limits>
 
 namespace json
 {
@@ -17,18 +18,32 @@ namespace json
         ~parser() noexcept = default;
 
         static std::pair<bool, value> parse(const std::string &content);
+        // Using lazy evaluation, Parsing is faster, but the speed of obtaining values will be affected.
+        static std::pair<bool, value> lazy_parse(const std::string &content, size_t max_depth = 1);
 
     private:
-        static std::pair<bool, value> initial_parse(const std::string &content, std::string::const_iterator &cur);
+        static std::pair<bool, value> parse_value(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth);
 
         static std::pair<bool, value> parse_null(const std::string &content, std::string::const_iterator &cur);
         static std::pair<bool, value> parse_boolean(const std::string &content, std::string::const_iterator &cur);
         static std::pair<bool, value> parse_number(const std::string &content, std::string::const_iterator &cur);
+        // parse and return a json::value whose type is value_type::String
         static std::pair<bool, value> parse_string(const std::string &content, std::string::const_iterator &cur);
-        static std::pair<bool, array> parse_array(const std::string &content, std::string::const_iterator &cur);
-        static std::pair<bool, object> parse_object(const std::string &content, std::string::const_iterator &cur);
+        static std::pair<bool, array> parse_array(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth);
+        static std::pair<bool, object> parse_object(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth);
 
-        static bool parse_whitespace(const std::string &content, std::string::const_iterator &cur) noexcept;
-        static std::pair<bool, std::string> parse_string_str(const std::string &content, std::string::const_iterator &cur);
+        // parse and return a std::string
+        static std::pair<bool, std::string> parse_str(const std::string &content, std::string::const_iterator &cur);
+
+        static bool skip_whitespace(const std::string &content, std::string::const_iterator &cur) noexcept;
+        static bool skip_digit(const std::string &content, std::string::const_iterator &cur) noexcept;
+
+        static bool skip_value(const std::string &content, std::string::const_iterator &cur) noexcept;
+        static bool skip_null(const std::string &content, std::string::const_iterator &cur) noexcept;
+        static bool skip_boolean(const std::string &content, std::string::const_iterator &cur) noexcept;
+        static bool skip_number(const std::string &content, std::string::const_iterator &cur) noexcept;
+        static bool skip_string(const std::string &content, std::string::const_iterator &cur) noexcept;
+        static bool skip_array(const std::string &content, std::string::const_iterator &cur) noexcept;
+        static bool skip_object(const std::string &content, std::string::const_iterator &cur) noexcept;
     };
 } // namespace json
