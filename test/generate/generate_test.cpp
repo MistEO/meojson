@@ -11,12 +11,18 @@ json::array rand_array(int depth);
 
 constexpr int max_key_length = 64;
 constexpr int max_string_length = 4096;
-constexpr int max_depth = 2;
-constexpr int max_element_length = 256;
 
-int main()
+int max_depth = 2;
+int max_element_count = 256;
+
+int main(int argc, char *argv[])
 {
     srand(time(NULL));
+    if (argc == 3)
+    {
+        max_depth = atoi(argv[1]);
+        max_element_count = atoi(argv[2]);
+    }
     json::object root = rand_object(0);
     std::cout << root.to_string() << std::endl;
 
@@ -52,10 +58,10 @@ json::object rand_object(int depth)
     {
         return obj;
     }
-    int times = rand() % max_element_length;
+    int times = rand() % max_element_count;
     if (depth == 0)
     {
-        times = max_element_length;
+        times = max_element_count;
     }
     for (int i = 0; i != times; ++i)
     {
@@ -73,7 +79,7 @@ json::array rand_array(int depth)
     {
         return arr;
     }
-    int times = rand() % max_element_length;
+    int times = rand() % max_element_count;
     for (int i = 0; i != times; ++i)
     {
         json::value value = rand_value(depth);
