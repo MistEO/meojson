@@ -28,7 +28,7 @@ make debug -j5 "SAMPLE_FILE=test/generate/generate_test.cpp" -C ../../
 cd ../../build
 ./generate_test.out 2 256 > rand.json
 
-echo -e "\033[32m------------ all ready, start testing ------------\033[0m"
+echo -e "\033[32m\n------------ all ready, start testing ------------\033[0m"
 echo -e "\033[32m------------ testing meojson ------------\033[0m"
 ./meojson_test.out rand.json 10
 echo -e "\033[32m------------ testing rapidjson ------------\033[0m"

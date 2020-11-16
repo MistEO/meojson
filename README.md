@@ -15,7 +15,7 @@
     ./test.sh
     ```
 
-    ![image](parse_test.png)
+    ![image](test/parse/parse_result.png)
 
 - `meojson`也是一个使用方便的C++ JSON生成库，可以使用各种语法糖优雅地生成JSON
 
@@ -140,7 +140,7 @@ int main()
     ./test.sh
     ```
 
-    ![image](parse_test.png)
+    ![image](test/parse/parse_result.png)
 
 - `meojson` is also an easy-to-use C++ JSON generation library that can use various syntactic sugars to elegantly generate JSON
 
