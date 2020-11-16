@@ -42,22 +42,18 @@ int main()
         std::cout << "****** Generating ******" << std::endl;
 
         json::value json;
-        json["lib"] = "meojson";
+        json["hello"] = "meojson";
         json["Pi"] = 3.1416;
-        json["stars"] = 0;
-        json["stars"] = json["stars"].as_integer() + 1;
 
         json["arr"] = json::array(
             {"a", "b", "c"});
+        json["obj"] = json::object(
+            {{"obj_key1", "aaa"},
+             {"obj_key2", 123},
+             {"obj_key3", true}});
+        json["obj_another"]["child"]["grand"] = "i am grand";
 
-        json["obj_aaa"] = json::object(
-            {{"key1", "value1"},
-             {"key2", 123}});
-
-        json["obj_bbb"]["key3"] = json::array(
-            {1, 2, 3});
-
-        // Output "{"obj_bbb":{"key3":[1,2,3]},"obj_aaa":{"key2":123,"key1":"value1"},"arr":["a","b","c"],"Pi":3.141600,"stars":1,"lib":"meojson"}"
+        // Output "{"obj_another":{"child":{"grand":"i am grand"}},"obj":{"obj_key3":true,"obj_key2":123,"obj_key1":"aaa"},"arr":["a","b","c"],"Pi":3.141600,"hello":"meojson"}"
         std::cout << json.to_string() << std::endl;
     }
 
