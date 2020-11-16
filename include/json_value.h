@@ -94,8 +94,8 @@ namespace json
     private:
         value_type _type = value_type::Null;
         std::string _raw_basic_data = "null";
-        std::shared_ptr<array> _array_ptr = nullptr;
-        std::shared_ptr<object> _object_ptr = nullptr;
+        mutable std::shared_ptr<array> _array_ptr = nullptr;
+        mutable std::shared_ptr<object> _object_ptr = nullptr;
     };
 
     std::ostream &operator<<(std::ostream &out, const value &val);

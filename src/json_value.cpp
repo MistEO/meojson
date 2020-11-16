@@ -1,6 +1,7 @@
 #include "json_value.h"
 #include "json_object.h"
 #include "json_array.h"
+#include "json_parser.h"
 #include "json_exception.h"
 
 json::value::value(bool b)
@@ -391,8 +392,13 @@ void json::value::set_raw_basic_data(json::value_type type, std::string &&basic_
 
 const json::value &json::value::operator[](size_t pos) const
 {
-    if (_type == value_type::Array)
+    if (_type == value_type::Array && _array_ptr != nullptr)
     {
+        return (*_array_ptr)[pos];
+    }
+    else if (_type == value_type::Array && !_raw_basic_data.empty())
+    {
+        _array_ptr = json::parser::parse(_raw_basic_data).second._array_ptr;
         return (*_array_ptr)[pos];
     }
     else
@@ -403,8 +409,13 @@ const json::value &json::value::operator[](size_t pos) const
 
 json::value &json::value::operator[](size_t pos)
 {
-    if (_type == value_type::Array)
+    if (_type == value_type::Array && _array_ptr != nullptr)
     {
+        return (*_array_ptr)[pos];
+    }
+    else if (_type == value_type::Array && !_raw_basic_data.empty())
+    {
+        _array_ptr = json::parser::parse(_raw_basic_data).second._array_ptr;
         return (*_array_ptr)[pos];
     }
     else
@@ -415,8 +426,13 @@ json::value &json::value::operator[](size_t pos)
 
 json::value &json::value::operator[](const std::string &key)
 {
-    if (_type == value_type::Object)
+    if (_type == value_type::Object && _object_ptr != nullptr)
     {
+        return (*_object_ptr)[key];
+    }
+    else if (_type == value_type::Object && !_raw_basic_data.empty())
+    {
+        _object_ptr = json::parser::parse(_raw_basic_data).second._object_ptr;
         return (*_object_ptr)[key];
     }
     else if (_type == value_type::Null)
@@ -433,9 +449,14 @@ json::value &json::value::operator[](const std::string &key)
 
 json::value &json::value::operator[](std::string &&key)
 {
-    if (_type == value_type::Object)
+    if (_type == value_type::Object && _object_ptr != nullptr)
     {
         return (*_object_ptr)[std::forward<std::string>(key)];
+    }
+    else if (_type == value_type::Object && !_raw_basic_data.empty())
+    {
+        _object_ptr = json::parser::parse(_raw_basic_data).second._object_ptr;
+        return (*_object_ptr)[key];
     }
     else if (_type == value_type::Null)
     {
