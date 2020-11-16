@@ -52,7 +52,7 @@
     sudo make install
     ```
 
-2. 在您的项目，添加`-lmeojson`编译选项中
+2. 在您的项目，添加`-lmeojson`编译选项
 3. 集成代码并使用
 
 ### 集成
