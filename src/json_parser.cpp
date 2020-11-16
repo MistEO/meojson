@@ -18,21 +18,21 @@ std::pair<bool, json::value> json::parser::parse(const std::string &content)
     if (!parse_whitespace(content, cur))
     {
         return std::make_pair(false, value::invalid_value());
-        ;
+       
     }
 
     auto &&[ret, result] = initial_parse(content, cur);
     if (!ret)
     {
         return std::make_pair(false, value::invalid_value());
-        ;
+       
     }
 
     // 解析完成后，后面不应再有除空格外的内容
     if (parse_whitespace(content, cur))
     {
         return std::make_pair(false, value::invalid_value());
-        ;
+       
     }
 
     return std::make_pair(true, std::forward<value>(result));
@@ -43,7 +43,7 @@ std::pair<bool, json::value> json::parser::initial_parse(const std::string &cont
     if (cur == content.cend())
     {
         return std::make_pair(false, value::invalid_value());
-        ;
+       
     }
     switch (*cur)
     {
@@ -58,7 +58,7 @@ std::pair<bool, json::value> json::parser::initial_parse(const std::string &cont
         else
         {
             return std::make_pair(false, value::invalid_value());
-            ;
+           
         }
     case 'n':
         return parse_null(content, cur);
@@ -85,7 +85,7 @@ std::pair<bool, json::value> json::parser::initial_parse(const std::string &cont
         return parse_object(content, cur);
     default:
         return std::make_pair(false, value::invalid_value());
-        ;
+       
     }
 }
 
@@ -102,7 +102,7 @@ std::pair<bool, json::value> json::parser::parse_null(const std::string &content
     else
     {
         return std::make_pair(false, value::invalid_value());
-        ;
+       
     }
 }
 
@@ -128,7 +128,7 @@ std::pair<bool, json::value> json::parser::parse_boolean(const std::string &cont
     else
     {
         return std::make_pair(false, value::invalid_value());
-        ;
+       
     }
 }
 
@@ -137,7 +137,7 @@ std::pair<bool, json::value> json::parser::parse_number(const std::string &conte
     if (cur == content.cend())
     {
         return std::make_pair(false, value::invalid_value());
-        ;
+       
     }
 
     static auto parse_digit = [&]() -> bool {
@@ -166,7 +166,7 @@ std::pair<bool, json::value> json::parser::parse_number(const std::string &conte
     if (!parse_digit())
     {
         return std::make_pair(false, value::invalid_value());
-        ;
+       
     }
 
     if (*cur == '.')
@@ -175,7 +175,7 @@ std::pair<bool, json::value> json::parser::parse_number(const std::string &conte
         if (!parse_digit())
         {
             return std::make_pair(false, value::invalid_value());
-            ;
+           
         }
     }
 
@@ -188,7 +188,7 @@ std::pair<bool, json::value> json::parser::parse_number(const std::string &conte
             if (!parse_digit())
             {
                 return std::make_pair(false, value::invalid_value());
-                ;
+               
             }
         }
     }
@@ -226,7 +226,7 @@ json::parser::parse_string(const std::string &content, std::string::const_iterat
     if (!ret)
     {
         return std::make_pair(false, value::invalid_value());
-        ;
+       
     }
     return std::make_pair(true, value(std::forward<std::string>(str)));
 }
