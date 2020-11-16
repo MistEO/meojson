@@ -34,3 +34,5 @@
 # IDE files
 .vscode
 build/rand.json
+test/parse/rapidjson
+test/parse/rapidjson_build

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <ctime>
 
 #include "json.h"
 
@@ -11,11 +12,11 @@ json::array rand_array(int depth);
 constexpr int max_key_length = 64;
 constexpr int max_string_length = 4096;
 constexpr int max_depth = 2;
-constexpr int max_element_length = 256;
+constexpr int max_element_length = 128;
 
 int main()
 {
-    srand(1024);
+    srand(time(NULL));
     json::object root = rand_object(0);
     std::cout << root.to_string() << std::endl;
 

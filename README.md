@@ -8,6 +8,16 @@
 
 `cppjson`是一个`非常快`的JSON解析/生成库，O(n)级复杂度，解析速度比腾讯RapidJson快12倍以上！
 
+![image](parse_test.png)
+
+### 测试方法
+
+```bash
+cd test/parse/
+chmod a+x test.sh
+./test.sh
+```
+
 ### 使用方法
 
 1. 生成动态库并安装
@@ -27,6 +37,16 @@ sudo make install
 ### Introduction
 
 `cppjson` is a `very fast` json parser and generator, O(n) Complexity, 1200% faster than Tecent's RapidJson parser.
+
+![image](parse_test.png)
+
+### Testing method
+
+```bash
+cd test/parse/
+chmod a+x test.sh
+./test.sh
+```
 
 ### Usage
 
