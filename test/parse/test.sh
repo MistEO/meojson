@@ -30,6 +30,6 @@ cd ../../build
 
 echo -e "\033[32m\n------------ all ready, start testing ------------\033[0m"
 echo -e "\033[32m------------ testing meojson ------------\033[0m"
-./meojson_test.out rand.json 10
+./meojson_test.out rand.json 100
 echo -e "\033[32m------------ testing rapidjson ------------\033[0m"
-./rapidjson_test.out rand.json 10
+./rapidjson_test.out rand.json 100
