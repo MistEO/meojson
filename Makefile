@@ -14,17 +14,15 @@ CXXDEBUG := $(CXX) -g -D_DEBUG $(CXXFLAGS)
 BUILD := build
 OBJS := $(patsubst %.cpp, $(BUILD)/%.o, $(notdir $(SRC_FILES) $(SAMPLE_FILE)))
 SAMPLE_OBJ := $(patsubst %.cpp,%.o,$(notdir $(SAMPLE_FILE)))
-TARGET := $(BUILD)/libjson.so
+TARGET := $(BUILD)/libmeojson.so
 DEMO := $(patsubst %.o,$(BUILD)/%.out,$(SAMPLE_OBJ))
 
 ### release
-release: $(BUILD) $(TARGET) $(DEMO)
+release: $(BUILD) $(TARGET)
+	$(CXXRELEASE) $(SAMPLE_FILE) -o $(DEMO) -I$(INC) $(LIBS) -L$(BUILD) -lmeojson
 
 $(TARGET): $(SRC_FILES) $(INC)/*.h
 	$(CXXRELEASE) $(SRC_FILES) -o $(TARGET) -I$(INC) $(LIBS) -fPIC -shared
-
-$(DEMO): $(SAMPLE_FILE) $(INC)/*.h
-	$(CXXRELEASE) $(SAMPLE_FILE) -o $(DEMO) -I$(INC) $(LIBS) -ljson
 
 install: $(TARGET)
 	cp $(TARGET) /usr/lib

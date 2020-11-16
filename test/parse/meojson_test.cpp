@@ -33,6 +33,6 @@ int main()
     auto e_time = get_time();
     long long avg_time = (e_time - b_time) / loop_times;
 
-    std::cout << "cppjson parse " << loop_times << " times, avg time: " << avg_time << " ns, about " << avg_time / 1000000.0 << " ms" << std::endl;
+    std::cout << "meojson parse " << loop_times << " times, avg time: " << avg_time << " ns, about " << avg_time / 1000000.0 << " ms" << std::endl;
     return 0;
 }

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-echo "------------ make cppjson test ------------"
+echo "------------ make meojson test ------------"
 make clean -C ../../
-make debug "SAMPLE_FILE=test/parse/cppjson_test.cpp" -C ../../
+make debug "SAMPLE_FILE=test/parse/meojson_test.cpp" -C ../../
 
 if [ ! -d "rapidjson" ];then
     echo "------------ git clone rapidjson ------------"
@@ -29,7 +29,7 @@ cd ../../build
 ./generate_test.out > rand.json
 
 echo "------------ all ready, start testing ------------"
-echo "------------ testing cppjson ------------"
-./cppjson_test.out
+echo "------------ testing meojson ------------"
+./meojson_test.out
 echo "------------ testing rapidjson ------------"
 ./rapidjson_test.out
