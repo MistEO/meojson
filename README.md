@@ -41,6 +41,21 @@
     std::cout << json.to_string() << std::endl;
     ```
 
+- `meojson`完全符合JSON标准
+
+    ```bash
+    # 测试方法
+    cd test/parse/
+    chmod a+x conformance_test.sh
+    ./conformance_test.sh
+    ```
+
+    ![image](test/parse/conformance_result_1.png)
+    ![image](test/parse/conformance_result_2.png)
+    其中`fail18.json`并不是一个错误的JSON，可以参考[这个链接](https://stackoverflow.com/questions/42116718/is-there-an-array-depth-limitation-in-json)
+
+    当然如果出现未发现的解析错误，也欢迎向我提ISSUE
+
 - `meojson`仅依赖于STL，但需要编译器支持C++17标准
 
 ### 安装
@@ -165,6 +180,21 @@ int main()
     // Output "{"obj_another":{"child":{"grand":"i am grand"}},"obj":{"obj_key3":true,"obj_key2":123,"obj_key1":"aaa"},"arr":["a","b","c"],"Pi":3.141600,"hello":"meojson"}"
     std::cout << json.to_string() << std::endl;
     ```
+
+- `meojson` is fully compliant with the JSON standard
+
+    ```bash
+    # How to test
+    cd test/parse/
+    chmod a+x conformance_test.sh
+    ./conformance_test.sh
+    ```
+
+    ![image](test/parse/conformance_result_1.png)
+    ![image](test/parse/conformance_result_2.png)
+    Among them, `fail18.json` is not a wrong JSON, you can refer to [this link](https://stackoverflow.com/questions/42116718/is-there-an-array-depth-limitation-in-json)
+
+    Of course, if there is an undiscovered parsing error, you are also welcome to mention ISSUE to me
 
 - `meojson` only depends on STL, but requires the compiler to support the C++17 standard
 
