@@ -7,11 +7,11 @@ make debug "SAMPLE_FILE=test/parse/conformance_test.cpp"
 
 cd build
 if [ ! -d "nativejson-benchmark" ];then
-    echo -e "\033[32m------------ git clone rapidjson ------------\033[0m"
+    echo -e "\033[32m------------ git clone nativejson-benchmark ------------\033[0m"
     git clone https://github.com/miloyip/nativejson-benchmark.git
 else
-    echo -e "\033[32m------------ git pull rapidjson ------------\033[0m"
-    cd rapidjson
+    echo -e "\033[32m------------ git pull nativejson-benchmark ------------\033[0m"
+    cd nativejson-benchmark
     git pull
     cd ..
 fi
