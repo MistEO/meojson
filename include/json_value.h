@@ -24,8 +24,6 @@ namespace json
 
     class value
     {
-        friend class parser;
-
     public:
         value() = default;
         value(const value &rhs) = default;
