@@ -37,13 +37,5 @@ namespace json
 
         static bool skip_whitespace(const std::string &content, std::string::const_iterator &cur) noexcept;
         static bool skip_digit(const std::string &content, std::string::const_iterator &cur) noexcept;
-
-        static bool skip_value(const std::string &content, std::string::const_iterator &cur) noexcept;
-        static bool skip_null(const std::string &content, std::string::const_iterator &cur) noexcept;
-        static bool skip_boolean(const std::string &content, std::string::const_iterator &cur) noexcept;
-        static bool skip_number(const std::string &content, std::string::const_iterator &cur) noexcept;
-        static bool skip_string(const std::string &content, std::string::const_iterator &cur) noexcept;
-        static bool skip_array(const std::string &content, std::string::const_iterator &cur) noexcept;
-        static bool skip_object(const std::string &content, std::string::const_iterator &cur) noexcept;
     };
 } // namespace json
