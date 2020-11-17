@@ -78,8 +78,8 @@ namespace json
         double as_double() const;
         long double as_long_double() const;
         std::string as_string() const;
-        array as_array() const;
-        object as_object() const;
+        array as_array();
+        object as_object();
 
         // return raw string
         std::string to_string() const;
@@ -87,7 +87,7 @@ namespace json
         value &operator=(const value &) = default;
         value &operator=(value &&) = default;
 
-        const value &operator[](size_t pos) const;
+        // const value &operator[](size_t pos) const;
         value &operator[](size_t pos);
         value &operator[](const std::string &key);
         value &operator[](std::string &&key);
@@ -97,8 +97,8 @@ namespace json
     private:
         value_type _type = value_type::Null;
         std::string _raw_data = "null"; // 非惰性解析时，Object或Array的该值为空
-        mutable std::shared_ptr<array> _array_ptr = nullptr;
-        mutable std::shared_ptr<object> _object_ptr = nullptr;
+        std::shared_ptr<array> _array_ptr = nullptr;
+        std::shared_ptr<object> _object_ptr = nullptr;
     };
 
     std::ostream &operator<<(std::ostream &out, const value &val);

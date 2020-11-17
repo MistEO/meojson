@@ -58,18 +58,6 @@ std::pair<bool, json::value> json::parser::parse_value(
 
     switch (*cur)
     {
-    case ' ':
-    case '\t':
-    case '\r':
-    case '\n':
-        if (skip_whitespace(content, cur))
-        {
-            return parse_value(content, cur, lazy_depth);
-        }
-        else
-        {
-            return std::make_pair(false, value());
-        }
     case 'n':
         return parse_null(content, cur);
     case 't':
@@ -86,9 +74,9 @@ std::pair<bool, json::value> json::parser::parse_value(
     case '7':
     case '8':
     case '9':
-        return parse_number(content, cur);
+        return parse_number(content, cur, lazy_depth);
     case '"':
-        return parse_string(content, cur);
+        return parse_string(content, cur, lazy_depth);
     case '[':
         return parse_array(content, cur, lazy_depth - 1);
     case '{':
@@ -171,7 +159,7 @@ std::pair<bool, json::value> json::parser::parse_boolean(
 }
 
 std::pair<bool, json::value> json::parser::parse_number(
-    const std::string &content, std::string::const_iterator &cur)
+    const std::string &content, std::string::const_iterator &cur, bool need_return)
 {
     if (cur == content.cend())
     {
@@ -213,17 +201,25 @@ std::pair<bool, json::value> json::parser::parse_number(
         }
     }
 
-    return std::make_pair(true, value(value_type::Number, std::string(first, cur)));
+    if (!need_return)
+    {
+        return std::make_pair(true, value());
+    }
+    else
+    {
+        return std::make_pair(true, value(value_type::Number, std::string(first, cur)));
+    }
 }
 
 std::pair<bool, json::value> json::parser::parse_string(
-    const std::string &content, std::string::const_iterator &cur)
+    const std::string &content, std::string::const_iterator &cur, bool need_return)
 {
-    auto &&[ret, str] = parse_str(content, cur);
+    auto &&[ret, str] = parse_str(content, cur, need_return);
     if (!ret)
     {
         return std::make_pair(false, value());
     }
+
     return std::make_pair(true, value(std::forward<std::string>(str)));
 }
 
@@ -333,7 +329,7 @@ std::pair<bool, json::value> json::parser::parse_object(
             return std::make_pair(false, value());
         }
 
-        auto &&[key_ret, key] = parse_str(content, cur);
+        auto &&[key_ret, key] = parse_str(content, cur, lazy_depth);
 
         if (key_ret && skip_whitespace(content, cur) && *cur == ':')
         {
@@ -388,7 +384,7 @@ std::pair<bool, json::value> json::parser::parse_object(
 }
 
 std::pair<bool, std::string> json::parser::parse_str(
-    const std::string &content, std::string::const_iterator &cur)
+    const std::string &content, std::string::const_iterator &cur, bool need_return)
 {
     if (cur != content.cend() && *cur == '"')
     {
@@ -440,7 +436,14 @@ std::pair<bool, std::string> json::parser::parse_str(
         }
         ++cur;
     }
-    return std::make_pair(true, std::string(first, last));
+    if (!need_return)
+    {
+        return std::make_pair(true, std::string());
+    }
+    else
+    {
+        return std::make_pair(true, std::string(first, last));
+    }
 }
 
 bool json::parser::skip_whitespace(
