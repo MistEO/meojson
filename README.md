@@ -11,11 +11,11 @@
     ```bash
     # 测试方法
     cd test/parse/
-    chmod a+x test.sh
-    ./test.sh
+    chmod a+x performance_test.sh
+    ./performance_test.sh
     ```
 
-    ![image](test/parse/parse_result.png)
+    ![image](test/parse/performance_result.png)
 
 - `meojson`也是一个使用方便的C++ JSON生成库，可以使用各种语法糖优雅地生成JSON
 
@@ -136,11 +136,11 @@ int main()
     ```bash
     # How to test
     cd test/parse/
-    chmod a+x test.sh
-    ./test.sh
+    chmod a+x performance_test.sh
+    ./performance_test.sh
     ```
 
-    ![image](test/parse/parse_result.png)
+    ![image](test/parse/performance_result.png)
 
 - `meojson` is also an easy-to-use json generator for C++ that can use various syntactic sugars to elegantly generate JSON
 
