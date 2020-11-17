@@ -20,8 +20,20 @@ std::pair<bool, json::value> json::parser::parse(const std::string &content)
         return std::make_pair(false, value::invalid_value());
     }
 
-    auto &&[ret, result] = parse_value(content, cur, SIZE_MAX);
-    if (!ret)
+    std::pair<bool, value> result_pair;
+    switch (*cur)
+    {
+    case '[':
+        result_pair = parse_array(content, cur, SIZE_MAX);
+        break;
+    case '{':
+        result_pair = parse_object(content, cur, SIZE_MAX);
+        break;
+    default:
+        return std::make_pair(false, value()); // A JSON payload should be an object or array
+    }
+
+    if (!result_pair.first)
     {
         return std::make_pair(false, value::invalid_value());
     }
@@ -32,7 +44,7 @@ std::pair<bool, json::value> json::parser::parse(const std::string &content)
         return std::make_pair(false, value::invalid_value());
     }
 
-    return std::make_pair(true, std::forward<value>(result));
+    return result_pair;
 }
 
 std::pair<bool, json::value> json::parser::lazy_parse(const std::string &content, size_t max_depth)
@@ -190,7 +202,10 @@ std::pair<bool, json::value> json::parser::parse_number(const std::string &conte
     {
         ++cur;
     }
-    if (!skip_digit(content, cur))
+    if (cur == content.cend() ||
+        // Numbers cannot have leading zeroes
+        (*cur == '0' && cur + 1 != content.cend() && *(cur + 1) >= '0' && *(cur + 1) <= '9') ||
+        !skip_digit(content, cur))
     {
         return std::make_pair(false, value());
     }
@@ -404,13 +419,34 @@ std::pair<bool, std::string> json::parser::parse_str(const std::string &content,
     auto last = cur;
     while (true)
     {
-        if (cur == content.cend())
+        if (cur == content.cend() || *cur == '\t' || *cur == '\r' || *cur == '\n')
         {
             return std::make_pair(false, std::string());
         }
-        else if (*cur == '\\') // 如果是转义，后面那个字符就不处理了
+        else if (*cur == '\\') // 如果是转义，检查后面那个字符是不是合法转义
         {
             ++cur;
+            if (cur == content.cend())
+            {
+                return std::make_pair(false, std::string());
+            }
+            switch (*cur)
+            {
+            case '"':
+            case '\\':
+            case '/':
+            case 'b':
+            case 'f':
+            case 'n':
+            case 'r':
+            case 't':
+            case 'u':
+                // do nothing
+                break;
+            default:
+                // ijson
+                return std::make_pair(false, std::string());
+            }
         }
         else if (*cur == '"')
         {
