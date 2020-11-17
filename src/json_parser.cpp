@@ -441,10 +441,10 @@ std::pair<bool, std::string> json::parser::parse_str(const std::string &content,
             case 'r':
             case 't':
             case 'u':
-                // do nothing
+                // Do nothing, after break, `cur` self-increasing
                 break;
             default:
-                // ijson
+                // Illegal backslash escape
                 return std::make_pair(false, std::string());
             }
         }
