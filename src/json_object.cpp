@@ -2,6 +2,18 @@
 
 #include "json_value.h"
 
+json::object::object(const raw_object &raw_obj)
+    : _object_data(raw_obj)
+{
+    ;
+}
+
+json::object::object(raw_object &&raw_obj)
+    : _object_data(std::forward<raw_object>(raw_obj))
+{
+    ;
+}
+
 json::object::object(std::initializer_list<raw_object::value_type> init_list)
 {
     for (auto &&[key, val] : init_list)

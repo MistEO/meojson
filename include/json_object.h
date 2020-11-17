@@ -18,6 +18,8 @@ namespace json
         object() = default;
         object(const object &rhs) = default;
         object(object &&rhs) = default;
+        object(const raw_object &raw_obj);
+        object(raw_object &&raw_obj);
         object(std::initializer_list<raw_object::value_type> init_list);
 
         ~object() = default;
