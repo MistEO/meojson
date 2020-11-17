@@ -11,7 +11,8 @@
  * Json     https://www.json.org/json-zh.html
 ***/
 
-std::pair<bool, json::value> json::parser::parse(const std::string &content)
+std::pair<bool, json::value> json::parser::parse(
+    const std::string &content, size_t lazy_depth)
 {
     auto cur = content.cbegin();
 
@@ -24,10 +25,10 @@ std::pair<bool, json::value> json::parser::parse(const std::string &content)
     switch (*cur)
     {
     case '[':
-        result_pair = parse_array(content, cur, SIZE_MAX);
+        result_pair = parse_array(content, cur, lazy_depth);
         break;
     case '{':
-        result_pair = parse_object(content, cur, SIZE_MAX);
+        result_pair = parse_object(content, cur, lazy_depth);
         break;
     default:
         return std::make_pair(false, value()); // A JSON payload should be an object or array
@@ -47,31 +48,8 @@ std::pair<bool, json::value> json::parser::parse(const std::string &content)
     return result_pair;
 }
 
-std::pair<bool, json::value> json::parser::lazy_parse(const std::string &content, size_t max_depth)
-{
-    auto cur = content.cbegin();
-
-    if (!skip_whitespace(content, cur))
-    {
-        return std::make_pair(false, value::invalid_value());
-    }
-
-    auto &&[ret, result] = parse_value(content, cur, max_depth);
-    if (!ret)
-    {
-        return std::make_pair(false, value::invalid_value());
-    }
-
-    // 解析完成后，后面不应再有除空格外的内容
-    if (skip_whitespace(content, cur))
-    {
-        return std::make_pair(false, value::invalid_value());
-    }
-
-    return std::make_pair(true, std::forward<value>(result));
-}
-
-std::pair<bool, json::value> json::parser::parse_value(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth)
+std::pair<bool, json::value> json::parser::parse_value(
+    const std::string &content, std::string::const_iterator &cur, size_t lazy_depth)
 {
     if (cur == content.cend())
     {
@@ -120,7 +98,8 @@ std::pair<bool, json::value> json::parser::parse_value(const std::string &conten
     }
 }
 
-std::pair<bool, json::value> json::parser::parse_null(const std::string &content, std::string::const_iterator &cur)
+std::pair<bool, json::value> json::parser::parse_null(
+    const std::string &content, std::string::const_iterator &cur)
 {
     if (cur == content.cend())
     {
@@ -144,7 +123,8 @@ std::pair<bool, json::value> json::parser::parse_null(const std::string &content
     return std::make_pair(true, value());
 }
 
-std::pair<bool, json::value> json::parser::parse_boolean(const std::string &content, std::string::const_iterator &cur)
+std::pair<bool, json::value> json::parser::parse_boolean(
+    const std::string &content, std::string::const_iterator &cur)
 {
     if (cur == content.cend())
     {
@@ -190,7 +170,8 @@ std::pair<bool, json::value> json::parser::parse_boolean(const std::string &cont
     }
 }
 
-std::pair<bool, json::value> json::parser::parse_number(const std::string &content, std::string::const_iterator &cur)
+std::pair<bool, json::value> json::parser::parse_number(
+    const std::string &content, std::string::const_iterator &cur)
 {
     if (cur == content.cend())
     {
@@ -235,8 +216,8 @@ std::pair<bool, json::value> json::parser::parse_number(const std::string &conte
     return std::make_pair(true, value(value_type::Number, std::string(first, cur)));
 }
 
-std::pair<bool, json::value>
-json::parser::parse_string(const std::string &content, std::string::const_iterator &cur)
+std::pair<bool, json::value> json::parser::parse_string(
+    const std::string &content, std::string::const_iterator &cur)
 {
     auto &&[ret, str] = parse_str(content, cur);
     if (!ret)
@@ -246,7 +227,8 @@ json::parser::parse_string(const std::string &content, std::string::const_iterat
     return std::make_pair(true, value(std::forward<std::string>(str)));
 }
 
-std::pair<bool, json::array> json::parser::parse_array(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth)
+std::pair<bool, json::value> json::parser::parse_array(
+    const std::string &content, std::string::const_iterator &cur, size_t lazy_depth)
 {
     const auto first = cur;
 
@@ -256,18 +238,18 @@ std::pair<bool, json::array> json::parser::parse_array(const std::string &conten
     }
     else
     {
-        return std::make_pair(false, array());
+        return std::make_pair(false, value());
     }
 
     if (!skip_whitespace(content, cur))
     {
-        return std::make_pair(false, array());
+        return std::make_pair(false, value());
     }
     else if (*cur == ']')
     {
         ++cur;
         // empty array
-        return std::make_pair(true, array());
+        return std::make_pair(true, value());
     }
 
     array result;
@@ -275,14 +257,14 @@ std::pair<bool, json::array> json::parser::parse_array(const std::string &conten
     {
         if (!skip_whitespace(content, cur))
         {
-            return std::make_pair(false, array());
+            return std::make_pair(false, value());
         }
 
         auto &&[ret, val] = parse_value(content, cur, lazy_depth);
 
         if (!ret || !skip_whitespace(content, cur))
         {
-            return std::make_pair(false, array());
+            return std::make_pair(false, value());
         }
 
         if (lazy_depth > 0)
@@ -306,19 +288,20 @@ std::pair<bool, json::array> json::parser::parse_array(const std::string &conten
     }
     else
     {
-        return std::make_pair(false, array());
+        return std::make_pair(false, value());
     }
     if (lazy_depth > 0)
     {
-        return std::make_pair(true, std::move(result));
+        return std::make_pair(true, value(std::move(result)));
     }
     else
     {
-        return std::make_pair(true, value(value_type::Array, std::string(first, cur)).as_array());
+        return std::make_pair(true, value(value_type::Array, std::string(first, cur)));
     }
 }
 
-std::pair<bool, json::object> json::parser::parse_object(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth)
+std::pair<bool, json::value> json::parser::parse_object(
+    const std::string &content, std::string::const_iterator &cur, size_t lazy_depth)
 {
     const auto first = cur;
 
@@ -328,18 +311,18 @@ std::pair<bool, json::object> json::parser::parse_object(const std::string &cont
     }
     else
     {
-        return std::make_pair(false, object());
+        return std::make_pair(false, value());
     }
 
     if (!skip_whitespace(content, cur))
     {
-        return std::make_pair(false, object());
+        return std::make_pair(false, value());
     }
     else if (*cur == '}')
     {
         ++cur;
         // empty object
-        return std::make_pair(true, object());
+        return std::make_pair(true, value());
     }
 
     object result;
@@ -347,7 +330,7 @@ std::pair<bool, json::object> json::parser::parse_object(const std::string &cont
     {
         if (!skip_whitespace(content, cur))
         {
-            return std::make_pair(false, object());
+            return std::make_pair(false, value());
         }
 
         auto &&[key_ret, key] = parse_str(content, cur);
@@ -358,19 +341,19 @@ std::pair<bool, json::object> json::parser::parse_object(const std::string &cont
         }
         else
         {
-            return std::make_pair(false, object());
+            return std::make_pair(false, value());
         }
 
         if (!skip_whitespace(content, cur))
         {
-            return std::make_pair(false, object());
+            return std::make_pair(false, value());
         }
 
         auto &&[val_ret, val] = parse_value(content, cur, lazy_depth);
 
         if (!val_ret || !skip_whitespace(content, cur))
         {
-            return std::make_pair(false, object());
+            return std::make_pair(false, value());
         }
         if (lazy_depth > 0)
         {
@@ -392,19 +375,20 @@ std::pair<bool, json::object> json::parser::parse_object(const std::string &cont
     }
     else
     {
-        return std::make_pair(false, object());
+        return std::make_pair(false, value());
     }
     if (lazy_depth > 0)
     {
-        return std::make_pair(true, std::move(result));
+        return std::make_pair(true, value(std::move(result)));
     }
     else
     {
-        return std::make_pair(true, value(value_type::Object, std::string(first, cur)).as_object());
+        return std::make_pair(true, value(value_type::Object, std::string(first, cur)));
     }
 }
 
-std::pair<bool, std::string> json::parser::parse_str(const std::string &content, std::string::const_iterator &cur)
+std::pair<bool, std::string> json::parser::parse_str(
+    const std::string &content, std::string::const_iterator &cur)
 {
     if (cur != content.cend() && *cur == '"')
     {
@@ -459,7 +443,8 @@ std::pair<bool, std::string> json::parser::parse_str(const std::string &content,
     return std::make_pair(true, std::string(first, last));
 }
 
-bool json::parser::skip_whitespace(const std::string &content, std::string::const_iterator &cur) noexcept
+bool json::parser::skip_whitespace(
+    const std::string &content, std::string::const_iterator &cur) noexcept
 {
     while (cur != content.cend() && (*cur == ' ' || *cur == '\t' || *cur == '\r' || *cur == '\n'))
     {
@@ -476,7 +461,8 @@ bool json::parser::skip_whitespace(const std::string &content, std::string::cons
     }
 }
 
-bool json::parser::skip_digit(const std::string &content, std::string::const_iterator &cur) noexcept
+bool json::parser::skip_digit(
+    const std::string &content, std::string::const_iterator &cur) noexcept
 {
     // 至少要有一个数字
     if (cur != content.cend() && *cur >= '0' && *cur <= '9')

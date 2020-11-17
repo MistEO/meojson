@@ -8,6 +8,7 @@ namespace json
 {
     class array;
     class object;
+    class parser;
 
     enum class value_type
     {
@@ -23,6 +24,8 @@ namespace json
 
     class value
     {
+        friend class parser;
+
     public:
         value() = default;
         value(const value &rhs) = default;

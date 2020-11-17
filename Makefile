@@ -7,9 +7,7 @@ SAMPLE_FILE := sample/sample.cpp
 
 CXX := g++
 OPT := -O2
-CXXFLAGS := -Wall $(OPT) -std=c++17
-CXXRELEASE := $(CXX) $(CXXFLAGS)
-CXXDEBUG := $(CXX) -g -D_DEBUG $(CXXFLAGS)
+CXXFLAGS :=
 
 BUILD := build
 OBJS := $(patsubst %.cpp, $(BUILD)/%.o, $(notdir $(SRC_FILES) $(SAMPLE_FILE)))
@@ -19,10 +17,10 @@ DEMO := $(patsubst %.o,$(BUILD)/%.out,$(SAMPLE_OBJ))
 
 ### release
 release: $(BUILD) $(TARGET)
-	$(CXXRELEASE) $(SAMPLE_FILE) -o $(DEMO) -I$(INC) $(LIBS) -L$(BUILD) -lmeojson
+	$(CXX) -Wall $(OPT) -std=c++17 $(CXXFLAGS) $(SAMPLE_FILE) -o $(DEMO) -I$(INC) $(LIBS) -L$(BUILD) -lmeojson
 
 $(TARGET): $(SRC_FILES) $(INC)/*.h
-	$(CXXRELEASE) $(SRC_FILES) -o $(TARGET) -I$(INC) $(LIBS) -fPIC -shared
+	$(CXX) -Wall $(OPT) -std=c++17 $(CXXFLAGS) $(SRC_FILES) -o $(TARGET) -I$(INC) $(LIBS) -fPIC -shared
 
 install: $(TARGET)
 	cp $(TARGET) /usr/lib
@@ -32,13 +30,13 @@ uninstall:
 
 ### debug
 debug: $(BUILD) $(OBJS)
-	$(CXXDEBUG) -o $(DEMO) $(OBJS) -I$(INC) $(LIBS)
+	$(CXX) -Wall $(OPT) -std=c++17 $(CXXFLAGS) -o $(DEMO) $(OBJS) -I$(INC) $(LIBS)
 
 $(BUILD)/$(SAMPLE_OBJ): $(SAMPLE_FILE) $(INC)/*.h
-	$(CXXDEBUG) -o $@ -c $< -I$(INC) $(LIBS)
+	$(CXX) -Wall $(OPT) -std=c++17 $(CXXFLAGS) -o $@ -c $< -I$(INC) $(LIBS)
 
 $(BUILD)/%.o: $(SRC)/%.cpp $(INC)/*.h
-	$(CXXDEBUG) -o $@ -c $< -I$(INC) $(LIBS)
+	$(CXX) -Wall $(OPT) -std=c++17 $(CXXFLAGS) -o $@ -c $< -I$(INC) $(LIBS)
 
 ### public
 $(BUILD):

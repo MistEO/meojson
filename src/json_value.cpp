@@ -364,7 +364,7 @@ json::array json::value::as_array() const
     }
     else if (_type == value_type::Array && !_raw_data.empty())
     {
-        auto &&[ret, val] = json::parser::parse(_raw_data);
+        auto &&[ret, val] = json::parser::parse(_raw_data, 1);
         if (ret)
         {
             _array_ptr = std::move(val._array_ptr);
@@ -389,7 +389,7 @@ json::object json::value::as_object() const
     }
     else if (_type == value_type::Object && !_raw_data.empty())
     {
-        auto &&[ret, val] = json::parser::parse(_raw_data);
+        auto &&[ret, val] = json::parser::parse(_raw_data, 1);
         if (ret)
         {
             _object_ptr = std::move(val._object_ptr);
@@ -432,7 +432,7 @@ const json::value &json::value::operator[](size_t pos) const
     }
     else if (_type == value_type::Array && !_raw_data.empty())
     {
-        auto &&[ret, val] = json::parser::parse(_raw_data);
+        auto &&[ret, val] = json::parser::parse(_raw_data, 1);
         if (ret)
         {
             _array_ptr = std::move(val._array_ptr);
@@ -457,7 +457,7 @@ json::value &json::value::operator[](size_t pos)
     }
     else if (_type == value_type::Array && !_raw_data.empty())
     {
-        auto &&[ret, val] = json::parser::parse(_raw_data);
+        auto &&[ret, val] = json::parser::parse(_raw_data, 1);
         if (ret)
         {
             _array_ptr = std::move(val._array_ptr);
@@ -482,7 +482,7 @@ json::value &json::value::operator[](const std::string &key)
     }
     else if (_type == value_type::Object && !_raw_data.empty())
     {
-        auto &&[ret, val] = json::parser::parse(_raw_data);
+        auto &&[ret, val] = json::parser::parse(_raw_data, 1);
         if (ret)
         {
             _object_ptr = std::move(val._object_ptr);
@@ -513,7 +513,7 @@ json::value &json::value::operator[](std::string &&key)
     }
     else if (_type == value_type::Object && !_raw_data.empty())
     {
-        auto &&[ret, val] = json::parser::parse(_raw_data);
+        auto &&[ret, val] = json::parser::parse(_raw_data, 1);
         if (ret)
         {
             _object_ptr = std::move(val._object_ptr);

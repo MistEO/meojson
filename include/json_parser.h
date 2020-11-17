@@ -17,9 +17,7 @@ namespace json
         parser() = delete;
         ~parser() noexcept = default;
 
-        static std::pair<bool, value> parse(const std::string &content);
-        // Using lazy evaluation, Parsing is faster, but the speed of obtaining values will be affected.
-        static std::pair<bool, value> lazy_parse(const std::string &content, size_t max_depth = 1);
+        static std::pair<bool, value> parse(const std::string &content, size_t lazy_depth = 1);
 
     private:
         static std::pair<bool, value> parse_value(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth);
@@ -29,8 +27,8 @@ namespace json
         static std::pair<bool, value> parse_number(const std::string &content, std::string::const_iterator &cur);
         // parse and return a json::value whose type is value_type::String
         static std::pair<bool, value> parse_string(const std::string &content, std::string::const_iterator &cur);
-        static std::pair<bool, array> parse_array(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth);
-        static std::pair<bool, object> parse_object(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth);
+        static std::pair<bool, value> parse_array(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth);
+        static std::pair<bool, value> parse_object(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth);
 
         // parse and return a std::string
         static std::pair<bool, std::string> parse_str(const std::string &content, std::string::const_iterator &cur);
