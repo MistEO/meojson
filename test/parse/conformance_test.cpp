@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
         ibuf << ifs.rdbuf();
         std::string content(ibuf.str());
         //std::cout << content << std::endl;
-        std::cout << "filename:\t" << filename << "\tsize:\t" << content.size();
+        std::cout << "filename: " << filename << "\t size: " << content.size();
 
         auto &&[ret, val] = json::parser::parse(content);
 
@@ -35,24 +35,10 @@ int main(int argc, char *argv[])
         }
         else
         {
-            std::cout << "\t**failed***🥵" << std::endl;
+            std::cout << "\tfailed🥵" << std::endl;
             failed_filenames.push_back(filename);
         }
     }
-
-    std::cout << "\nparse success file😁" << std::endl;
-    for (auto &&str : success_filenames)
-    {
-        std::cout << str << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "\nparse failed file🥵" << std::endl;
-    for (auto &&str : failed_filenames)
-    {
-        std::cout << str << " ";
-    }
-    std::cout << std::endl;
 
     return 0;
 }
