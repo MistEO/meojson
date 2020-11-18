@@ -51,11 +51,6 @@ std::pair<bool, json::value> json::parser::parse(
 std::pair<bool, json::value> json::parser::parse_value(
     const std::string &content, std::string::const_iterator &cur, size_t lazy_depth)
 {
-    if (cur == content.cend())
-    {
-        return std::make_pair(false, value());
-    }
-
     switch (*cur)
     {
     case 'n':
@@ -89,11 +84,6 @@ std::pair<bool, json::value> json::parser::parse_value(
 std::pair<bool, json::value> json::parser::parse_null(
     const std::string &content, std::string::const_iterator &cur)
 {
-    if (cur == content.cend())
-    {
-        return std::make_pair(false, value());
-    }
-
     static const std::string null_string = "null";
 
     for (auto &&iter : null_string)
@@ -114,11 +104,6 @@ std::pair<bool, json::value> json::parser::parse_null(
 std::pair<bool, json::value> json::parser::parse_boolean(
     const std::string &content, std::string::const_iterator &cur)
 {
-    if (cur == content.cend())
-    {
-        return std::make_pair(false, value());
-    }
-
     static const std::string true_string = "true";
     static const std::string false_string = "false";
 
@@ -161,11 +146,6 @@ std::pair<bool, json::value> json::parser::parse_boolean(
 std::pair<bool, json::value> json::parser::parse_number(
     const std::string &content, std::string::const_iterator &cur, bool need_return)
 {
-    if (cur == content.cend())
-    {
-        return std::make_pair(false, value());
-    }
-
     const auto first = cur;
     if (*cur == '-')
     {
@@ -228,7 +208,7 @@ std::pair<bool, json::value> json::parser::parse_array(
 {
     const auto first = cur;
 
-    if (cur != content.cend() && *cur == '[')
+    if (*cur == '[')
     {
         ++cur;
     }
@@ -301,7 +281,7 @@ std::pair<bool, json::value> json::parser::parse_object(
 {
     const auto first = cur;
 
-    if (cur != content.cend() && *cur == '{')
+    if (*cur == '{')
     {
         ++cur;
     }
@@ -386,7 +366,7 @@ std::pair<bool, json::value> json::parser::parse_object(
 std::pair<bool, std::string> json::parser::parse_str(
     const std::string &content, std::string::const_iterator &cur, bool need_return)
 {
-    if (cur != content.cend() && *cur == '"')
+    if (*cur == '"')
     {
         ++cur;
     }
