@@ -228,7 +228,7 @@ std::pair<bool, json::value> json::parser::parse_array(
         return std::make_pair(true, value());
     }
 
-    array result;
+    array::raw_array result;
     while (true)
     {
         if (!skip_whitespace(content, cur))
@@ -245,7 +245,7 @@ std::pair<bool, json::value> json::parser::parse_array(
 
         if (lazy_depth > 0)
         {
-            result.push_back(std::forward<value>(val));
+            result.emplace_back(std::forward<value>(val));
         }
 
         if (*cur == ',')
@@ -301,7 +301,7 @@ std::pair<bool, json::value> json::parser::parse_object(
         return std::make_pair(true, value());
     }
 
-    object result;
+    object::raw_object result;
     while (true)
     {
         if (!skip_whitespace(content, cur))
@@ -333,7 +333,7 @@ std::pair<bool, json::value> json::parser::parse_object(
         }
         if (lazy_depth > 0)
         {
-            result.insert(std::forward<std::string>(key), std::forward<value>(val));
+            result.emplace(std::forward<std::string>(key), std::forward<value>(val));
         }
         if (*cur == ',')
         {
