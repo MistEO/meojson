@@ -143,16 +143,23 @@ json::value::value(object &&obj)
 //     ;
 // }
 
-json::value::value(json::value_type type, const std::string &raw_data)
+json::value::value(json::value_type type, std::string &&raw_data)
     : _type(type),
-      _raw_data(raw_data)
+      _raw_data(std::forward<std::string>(raw_data))
 {
     ;
 }
 
-json::value::value(json::value_type type, std::string &&raw_data)
-    : _type(type),
-      _raw_data(std::forward<std::string>(raw_data))
+json::value::value(std::shared_ptr<json::array> &&arr_ptr)
+    : _type(value_type::Array),
+      _array_ptr(std::forward<std::shared_ptr<json::array>>(arr_ptr))
+{
+    ;
+}
+
+json::value::value(std::shared_ptr<json::object> &&obj_ptr)
+    : _type(value_type::Object),
+      _object_ptr(std::forward<std::shared_ptr<json::object>>(obj_ptr))
 {
     ;
 }

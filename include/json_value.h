@@ -24,6 +24,8 @@ namespace json
 
     class value
     {
+        friend class parser;
+
     public:
         value() = default;
         value(const value &rhs) = default;
@@ -53,11 +55,6 @@ namespace json
         value(object &&obj);
         // error: conversion from ‘<brace-enclosed initializer list>’ to ‘json::value’ is ambiguous
         // value(std::initializer_list<std::pair<std::string, value>> init_list); // for object
-
-        // Not recommended to call manually
-        value(value_type type, const std::string &raw_data);
-        // Not recommended to call manually
-        value(value_type type, std::string &&raw_data);
 
         ~value() = default;
 
@@ -95,6 +92,11 @@ namespace json
         static value invalid_value();
 
     private:
+        // for parser
+        value(value_type type, std::string &&raw_data);
+        value(std::shared_ptr<array> &&arr_ptr);
+        value(std::shared_ptr<object> &&obj_ptr);
+
         value_type _type = value_type::Null;
         std::string _raw_data = "null"; // 非惰性解析时，Object或Array的该值为空
         std::shared_ptr<array> _array_ptr = nullptr;
