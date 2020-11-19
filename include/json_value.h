@@ -28,7 +28,7 @@ namespace json
 
     public:
         value() = default;
-        value(const value &rhs) = default;
+        value(const value &rhs);
         value(value &&rhs) noexcept = default;
 
         value(bool b);
