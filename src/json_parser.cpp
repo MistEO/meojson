@@ -228,7 +228,7 @@ std::pair<bool, json::value> json::parser::parse_array(
         return std::make_pair(true, value());
     }
 
-    array::raw_array result;
+    auto result_ptr = std::make_unique<array>();
     while (true)
     {
         if (!skip_whitespace(content, cur))
@@ -245,7 +245,7 @@ std::pair<bool, json::value> json::parser::parse_array(
 
         if (lazy_depth > 0)
         {
-            result.emplace_back(std::forward<value>(val));
+            result_ptr->push_back(std::forward<value>(val));
         }
 
         if (*cur == ',')
@@ -268,7 +268,7 @@ std::pair<bool, json::value> json::parser::parse_array(
     }
     if (lazy_depth > 0)
     {
-        return std::make_pair(true, value(std::move(result)));
+        return std::make_pair(true, value(std::move(result_ptr)));
     }
     else
     {
@@ -301,7 +301,7 @@ std::pair<bool, json::value> json::parser::parse_object(
         return std::make_pair(true, value());
     }
 
-    object::raw_object result;
+    auto result_ptr = std::make_unique<object>();
     while (true)
     {
         if (!skip_whitespace(content, cur))
@@ -333,7 +333,7 @@ std::pair<bool, json::value> json::parser::parse_object(
         }
         if (lazy_depth > 0)
         {
-            result.emplace(std::forward<std::string>(key), std::forward<value>(val));
+            result_ptr->insert(std::forward<std::string>(key), std::forward<value>(val));
         }
         if (*cur == ',')
         {
@@ -355,7 +355,7 @@ std::pair<bool, json::value> json::parser::parse_object(
     }
     if (lazy_depth > 0)
     {
-        return std::make_pair(true, value(std::move(result)));
+        return std::make_pair(true, value(std::move(result_ptr)));
     }
     else
     {
