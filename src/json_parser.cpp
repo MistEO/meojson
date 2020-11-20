@@ -225,7 +225,7 @@ std::pair<bool, json::value> json::parser::parse_array(
     {
         ++cur;
         // empty array
-        return std::make_pair(true, value());
+        return std::make_pair(true, value(array()));
     }
 
     array::raw_array result;
@@ -298,7 +298,7 @@ std::pair<bool, json::value> json::parser::parse_object(
     {
         ++cur;
         // empty object
-        return std::make_pair(true, value());
+        return std::make_pair(true, value(object()));
     }
 
     object::raw_object result;
