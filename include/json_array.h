@@ -34,6 +34,8 @@ namespace json
         void clear() noexcept;
         void push_back(const value &val);
         void push_back(value &&val);
+        void emplace_back(const value &val);
+        void emplace_back(value &&val);
         // void earse(size_t pos);
 
         iterator begin() noexcept;

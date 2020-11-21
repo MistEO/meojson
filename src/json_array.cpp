@@ -50,6 +50,17 @@ void json::array::push_back(json::value &&val)
         std::forward<json::value>(val));
 }
 
+void json::array::emplace_back(const json::value &val)
+{
+    _array_data.emplace_back(val);
+}
+
+void json::array::emplace_back(json::value &&val)
+{
+    _array_data.emplace_back(
+        std::forward<json::value>(val));
+}
+
 std::string json::array::to_string() const
 {
     std::string str = "[";

@@ -32,6 +32,8 @@ namespace json
         void clear() noexcept;
         bool insert(const std::string &key, const value &val);
         bool insert(std::string &&key, value &&val);
+        bool emplace(const std::string &key, const value &val);
+        bool emplace(std::string &&key, value &&val);
         bool earse(const std::string &key);
 
         iterator begin() noexcept;

@@ -55,6 +55,19 @@ bool json::object::insert(std::string &&key, json::value &&val)
         .second;
 }
 
+bool json::object::emplace(const std::string &key, const json::value &value)
+{
+    return _object_data.emplace(key, value).second;
+}
+
+bool json::object::emplace(std::string &&key, json::value &&val)
+{
+    return _object_data.emplace(
+                           std::forward<std::string>(key),
+                           std::forward<json::value>(val))
+        .second;
+}
+
 bool json::object::earse(const std::string &key)
 {
     return _object_data.erase(key) > 0 ? true : false;
