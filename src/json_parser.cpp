@@ -171,6 +171,10 @@ json::value json::parser::parse_number(
     if (*cur == 'e' || *cur == 'E')
     {
         ++cur;
+        if (cur == content.cend())
+        {
+            return value::invalid_value();
+        }
         if (*cur == '+' || *cur == '-')
         {
             ++cur;
@@ -416,6 +420,10 @@ std::pair<bool, std::string> json::parser::parse_str(
         }
         ++cur;
     }
+    if (cur == content.cend())
+    {
+        return std::make_pair(false, std::string());
+    }
     if (!need_return)
     {
         return std::make_pair(true, std::string());
@@ -461,5 +469,13 @@ bool json::parser::skip_digit(
     {
         ++cur;
     }
-    return true;
+
+    if (cur != content.cend())
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
