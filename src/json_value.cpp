@@ -7,8 +7,8 @@
 json::value::value(const json::value &rhs)
     : _type(rhs._type),
       _raw_data(rhs._raw_data),
-      _array_ptr(std::make_shared<array>(*(rhs._array_ptr))),
-      _object_ptr(std::make_shared<object>(*(rhs._object_ptr)))
+      _array_ptr(rhs._array_ptr == nullptr ? nullptr : std::make_shared<array>(*(rhs._array_ptr))),
+      _object_ptr(rhs._array_ptr == nullptr ? nullptr : std::make_shared<object>(*(rhs._object_ptr)))
 {
     ;
 }
