@@ -95,21 +95,21 @@ json::value::value(long double num)
 
 json::value::value(const char *str)
     : _type(value_type::String),
-      _raw_data(std::string() + "\"" + str + "\"")
+      _raw_data(str)
 {
     ;
 }
 
 json::value::value(const std::string &str)
     : _type(value_type::String),
-      _raw_data("\"" + str + "\"")
+      _raw_data(str)
 {
     ;
 }
 
 json::value::value(std::string &&str)
     : _type(value_type::String),
-      _raw_data("\"" + std::forward<std::string>(str) + "\"")
+      _raw_data(std::forward<std::string>(str))
 {
     ;
 }
@@ -369,12 +369,9 @@ long double json::value::as_long_double() const
 
 std::string json::value::as_string() const
 {
-    if (_type == value_type::String &&
-        _raw_data.size() >= 2 &&
-        _raw_data.at(0) == '"' &&
-        _raw_data.at(_raw_data.size() - 1) == '"')
+    if (_type == value_type::String)
     {
-        return _raw_data.substr(1, _raw_data.size() - 2);
+        return _raw_data;
     }
     else
     {
