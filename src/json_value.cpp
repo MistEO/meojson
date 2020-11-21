@@ -4,11 +4,21 @@
 #include "json_parser.h"
 #include "json_exception.h"
 
+void json::object_deleter::operator()(json::object *p)
+{
+    delete p;
+}
+
+void json::array_deleter::operator()(json::array *p)
+{
+    delete p;
+}
+
 json::value::value(const json::value &rhs)
     : _type(rhs._type),
       _raw_data(rhs._raw_data),
-      _array_ptr(rhs._array_ptr == nullptr ? nullptr : std::make_unique<array>(*(rhs._array_ptr))),
-      _object_ptr(rhs._array_ptr == nullptr ? nullptr : std::make_shared<object>(*(rhs._object_ptr)))
+      _array_ptr(rhs._array_ptr == nullptr ? nullptr : new array(*(rhs._array_ptr))),
+      _object_ptr(rhs._array_ptr == nullptr ? nullptr : new object(*rhs._object_ptr))
 {
     ;
 }
@@ -107,7 +117,7 @@ json::value::value(std::string &&str)
 json::value::value(const array &arr)
     : _type(value_type::Array),
       _raw_data(std::string()),
-      _array_ptr(std::make_unique<array>(arr))
+      _array_ptr(new array(arr))
 {
     ;
 }
@@ -115,7 +125,7 @@ json::value::value(const array &arr)
 json::value::value(array &&arr)
     : _type(value_type::Array),
       _raw_data(std::string()),
-      _array_ptr(std::make_unique<array>(std::forward<array>(arr)))
+      _array_ptr(new array(std::forward<array>(arr)))
 {
     ;
 }
@@ -123,7 +133,7 @@ json::value::value(array &&arr)
 json::value::value(const object &obj)
     : _type(value_type::Object),
       _raw_data(std::string()),
-      _object_ptr(std::make_shared<object>(obj))
+      _object_ptr(new object(obj))
 {
     ;
 }
@@ -131,7 +141,7 @@ json::value::value(const object &obj)
 json::value::value(object &&obj)
     : _type(value_type::Object),
       _raw_data(std::string()),
-      _object_ptr(std::make_shared<object>(std::forward<object>(obj)))
+      _object_ptr(new object(std::forward<object>(obj)))
 {
     ;
 }
@@ -139,7 +149,7 @@ json::value::value(object &&obj)
 // json::value::value(std::initializer_list<value> init_list)
 //     : _type(value_type::Array),
 //       _raw_data(std::string()),
-//       _array_ptr(std::unique_ptr<array>(init_list))
+//       _array_ptr(unique_array(init_list))
 // {
 //     ;
 // }
@@ -147,7 +157,7 @@ json::value::value(object &&obj)
 // json::value::value(std::initializer_list<std::pair<std::string, value>> init_list)
 //     : _type(value_type::Object),
 //       _raw_data(std::string()),
-//       _object_ptr(std::make_shared<object>(init_list))
+//       _object_ptr(new object(init_list))
 // {
 //     ;
 // }
@@ -159,16 +169,16 @@ json::value::value(json::value_type type, std::string &&raw_data)
     ;
 }
 
-json::value::value(std::unique_ptr<json::array> &&arr_ptr)
+json::value::value(unique_array &&arr_ptr)
     : _type(value_type::Array),
-      _array_ptr(std::forward<std::unique_ptr<json::array>>(arr_ptr))
+      _array_ptr(std::forward<unique_array>(arr_ptr))
 {
     ;
 }
 
-json::value::value(std::shared_ptr<json::object> &&obj_ptr)
+json::value::value(unique_object &&obj_ptr)
     : _type(value_type::Object),
-      _object_ptr(std::forward<std::shared_ptr<json::object>>(obj_ptr))
+      _object_ptr(std::forward<unique_object>(obj_ptr))
 {
     ;
 }
@@ -518,7 +528,7 @@ json::value &json::value::operator[](const std::string &key)
     else if (_type == value_type::Null)
     {
         _type = value_type::Object;
-        _object_ptr = std::make_shared<object>();
+        _object_ptr = unique_object(new object());
         return (*_object_ptr)[key];
     }
     else
@@ -550,7 +560,7 @@ json::value &json::value::operator[](std::string &&key)
     else if (_type == value_type::Null)
     {
         _type = value_type::Object;
-        _object_ptr = std::make_shared<object>();
+        _object_ptr = unique_object(new object());
         return (*_object_ptr)[std::forward<std::string>(key)];
     }
     else

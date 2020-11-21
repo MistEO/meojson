@@ -4,13 +4,8 @@
 #include <ostream>
 #include <memory>
 
-#include "json_array.h"
-
 namespace json
 {
-    class object;
-    class parser;
-
     enum class value_type
     {
         Invalid,
@@ -22,6 +17,22 @@ namespace json
         Object,
         NUM_T
     };
+
+    class array;
+    class object;
+    class parser;
+
+    struct array_deleter final
+    {
+        void operator()(array *p);
+    };
+    struct object_deleter final
+    {
+        void operator()(object *p);
+    };
+
+    using unique_array = std::unique_ptr<array, array_deleter>;
+    using unique_object = std::unique_ptr<object, object_deleter>;
 
     class value
     {
@@ -95,13 +106,13 @@ namespace json
     private:
         // for parser
         value(value_type type, std::string &&raw_data);
-        value(std::unique_ptr<array> &&arr_ptr);
-        value(std::shared_ptr<object> &&obj_ptr);
+        value(unique_array &&arr_ptr);
+        value(unique_object &&obj_ptr);
 
         value_type _type = value_type::Null;
-        std::string _raw_data = "null"; // 非惰性解析时，Object或Array的该值为空
-        std::unique_ptr<array> _array_ptr = nullptr;
-        std::shared_ptr<object> _object_ptr = nullptr;
+        std::string _raw_data = "null"; // In non-lazy parsing, if the value_type is Object or Array, the _raw_data will be empty string.
+        unique_array _array_ptr = nullptr;
+        unique_object _object_ptr = nullptr;
     };
 
     std::ostream &operator<<(std::ostream &out, const value &val);
