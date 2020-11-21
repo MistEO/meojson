@@ -80,7 +80,10 @@ std::string json::object::to_string() const
     {
         str += "\"" + key + "\":" + val.to_string() + ",";
     }
-    str.pop_back();
+    if (str.back() == ',')
+    {
+        str.pop_back();
+    }
     str += "}";
     return str;
 }
@@ -98,7 +101,10 @@ std::string json::object::format(std::string shift_str, size_t basic_shift_count
     {
         str += "\n" + shift + "\"" + key + "\": " + val.format(shift_str, basic_shift_count + 1) + ",";
     }
-    str.pop_back(); // pop last ','
+    if (str.back() == ',')
+    {
+        str.pop_back(); // pop last ','
+    }
 
     str += '\n';
     for (size_t i = 0; i != basic_shift_count; ++i)
