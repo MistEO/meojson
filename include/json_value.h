@@ -92,6 +92,7 @@ namespace json
 
         // return raw string
         std::string to_string() const;
+        std::string format(std::string shift_str = "    ", size_t basic_shift_count = 0) const;
 
         value &operator=(const value &) = default;
         value &operator=(value &&) = default;

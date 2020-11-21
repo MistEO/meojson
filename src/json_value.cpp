@@ -437,13 +437,33 @@ std::string json::value::to_string() const
     {
     case value_type::Null:
     case value_type::Boolean:
-    case value_type::String:
     case value_type::Number:
         return _raw_data;
+    case value_type::String:
+        return '"' + _raw_data + '"';
     case value_type::Object:
         return _object_ptr->to_string();
     case value_type::Array:
         return _array_ptr->to_string();
+    default:
+        throw exception("Unknown Value Type");
+    }
+}
+
+std::string json::value::format(std::string shift_str, size_t basic_shift_count) const
+{
+    switch (_type)
+    {
+    case value_type::Null:
+    case value_type::Boolean:
+    case value_type::Number:
+        return _raw_data;
+    case value_type::String:
+        return '"' + _raw_data + '"';
+    case value_type::Object:
+        return _object_ptr->format(shift_str, basic_shift_count);
+    case value_type::Array:
+        return _array_ptr->format(shift_str, basic_shift_count);
     default:
         throw exception("Unknown Value Type");
     }

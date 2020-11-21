@@ -55,6 +55,8 @@ int main()
 
         // Output "{"obj_another":{"child":{"grand":"i am grand"}},"obj":{"obj_key3":true,"obj_key2":123,"obj_key1":"aaa"},"arr":["a","b","c"],"Pi":3.141600,"hello":"meojson"}"
         std::cout << json.to_string() << std::endl;
+
+        std::cout << json.format() << std::endl;
     }
 
     std::cout << std::endl;

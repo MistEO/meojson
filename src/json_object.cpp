@@ -76,15 +76,36 @@ bool json::object::earse(const std::string &key)
 std::string json::object::to_string() const
 {
     std::string str = "{";
-    for (auto iter = _object_data.cbegin(); iter != _object_data.cend(); ++iter)
+    for (auto &&[key, val] : _object_data)
     {
-        if (iter != _object_data.cbegin())
-        {
-            str += ",";
-        }
-        str += "\"" + iter->first + "\":" + iter->second.to_string();
+        str += "\"" + key + "\":" + val.to_string() + ",";
     }
+    str.pop_back();
     str += "}";
+    return str;
+}
+
+std::string json::object::format(std::string shift_str, size_t basic_shift_count) const
+{
+    std::string shift;
+    for (size_t i = 0; i != basic_shift_count + 1; ++i)
+    {
+        shift += shift_str;
+    }
+
+    std::string str = "{";
+    for (auto &&[key, val] : _object_data)
+    {
+        str += "\n" + shift + "\"" + key + "\": " + val.format(shift_str, basic_shift_count + 1) + ",";
+    }
+    str.pop_back(); // pop last ','
+
+    str += '\n';
+    for (size_t i = 0; i != basic_shift_count; ++i)
+    {
+        str += shift_str;
+    }
+    str += '}';
     return str;
 }
 

@@ -64,15 +64,36 @@ void json::array::emplace_back(json::value &&val)
 std::string json::array::to_string() const
 {
     std::string str = "[";
-    for (auto iter = _array_data.cbegin(); iter != _array_data.cend(); ++iter)
+    for (auto &&val : _array_data)
     {
-        if (iter != _array_data.cbegin())
-        {
-            str += ",";
-        }
-        str += iter->to_string();
+        str += val.to_string() + ",";
     }
+    str.pop_back();
     str += "]";
+    return str;
+}
+
+std::string json::array::format(std::string shift_str, size_t basic_shift_count) const
+{
+    std::string shift;
+    for (size_t i = 0; i != basic_shift_count + 1; ++i)
+    {
+        shift += shift_str;
+    }
+
+    std::string str = "[";
+    for (auto &&val : _array_data)
+    {
+        str += "\n" + shift + val.format(shift_str, basic_shift_count + 1) + ",";
+    }
+    str.pop_back(); // pop last ','
+
+    str += '\n';
+    for (size_t i = 0; i != basic_shift_count; ++i)
+    {
+        str += shift_str;
+    }
+    str += ']';
     return str;
 }
 

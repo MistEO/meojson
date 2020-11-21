@@ -30,6 +30,7 @@ namespace json
         const value &at(size_t pos) const;
         size_t size() const noexcept;
         std::string to_string() const;
+        std::string format(std::string shift_str = "    ", size_t basic_shift_count = 0) const;
 
         void clear() noexcept;
         void push_back(const value &val);

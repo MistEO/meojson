@@ -28,6 +28,7 @@ namespace json
         const value &at(const std::string &key) const;
         size_t size() const noexcept;
         std::string to_string() const;
+        std::string format(std::string shift_str = "    ", size_t basic_shift_count = 0) const;
 
         void clear() noexcept;
         bool insert(const std::string &key, const value &val);
