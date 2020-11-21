@@ -21,20 +21,20 @@ std::pair<bool, json::value> json::parser::parse(
         return std::make_pair(false, value::invalid_value());
     }
 
-    std::pair<bool, value> result_pair;
+    value result_value;
     switch (*cur)
     {
     case '[':
-        result_pair = parse_array(content, cur, lazy_depth);
+        result_value = parse_array(content, cur, lazy_depth);
         break;
     case '{':
-        result_pair = parse_object(content, cur, lazy_depth);
+        result_value = parse_object(content, cur, lazy_depth);
         break;
-    default:
-        return std::make_pair(false, value()); // A JSON payload should be an object or array
+    default: // A JSON payload should be an object or array
+        return std::make_pair(false, value::invalid_value());
     }
 
-    if (!result_pair.first)
+    if (!result_value.valid())
     {
         return std::make_pair(false, value::invalid_value());
     }
@@ -45,10 +45,10 @@ std::pair<bool, json::value> json::parser::parse(
         return std::make_pair(false, value::invalid_value());
     }
 
-    return result_pair;
+    return std::make_pair(true, std::move(result_value));
 }
 
-std::pair<bool, json::value> json::parser::parse_value(
+json::value json::parser::parse_value(
     const std::string &content, std::string::const_iterator &cur, size_t lazy_depth)
 {
     switch (*cur)
@@ -77,11 +77,11 @@ std::pair<bool, json::value> json::parser::parse_value(
     case '{':
         return parse_object(content, cur, lazy_depth - 1);
     default:
-        return std::make_pair(false, value());
+        return value::invalid_value();
     }
 }
 
-std::pair<bool, json::value> json::parser::parse_null(
+json::value json::parser::parse_null(
     const std::string &content, std::string::const_iterator &cur)
 {
     static const std::string null_string = "null";
@@ -94,14 +94,14 @@ std::pair<bool, json::value> json::parser::parse_null(
         }
         else
         {
-            return std::make_pair(false, value());
+            return value::invalid_value();
         }
     }
 
-    return std::make_pair(true, value());
+    return value();
 }
 
-std::pair<bool, json::value> json::parser::parse_boolean(
+json::value json::parser::parse_boolean(
     const std::string &content, std::string::const_iterator &cur)
 {
     static const std::string true_string = "true";
@@ -117,10 +117,10 @@ std::pair<bool, json::value> json::parser::parse_boolean(
             }
             else
             {
-                return std::make_pair(false, value());
+                return value::invalid_value();
             }
         }
-        return std::make_pair(true, value(true));
+        return value(true);
     }
     else if (*cur == 'f')
     {
@@ -132,18 +132,18 @@ std::pair<bool, json::value> json::parser::parse_boolean(
             }
             else
             {
-                return std::make_pair(false, value());
+                return value::invalid_value();
             }
         }
-        return std::make_pair(true, value(false));
+        return value(false);
     }
     else
     {
-        return std::make_pair(false, value());
+        return value::invalid_value();
     }
 }
 
-std::pair<bool, json::value> json::parser::parse_number(
+json::value json::parser::parse_number(
     const std::string &content, std::string::const_iterator &cur, bool need_return)
 {
     const auto first = cur;
@@ -156,7 +156,7 @@ std::pair<bool, json::value> json::parser::parse_number(
         (*cur == '0' && cur + 1 != content.cend() && *(cur + 1) >= '0' && *(cur + 1) <= '9') ||
         !skip_digit(content, cur))
     {
-        return std::make_pair(false, value());
+        return value::invalid_value();
     }
 
     if (*cur == '.')
@@ -164,7 +164,7 @@ std::pair<bool, json::value> json::parser::parse_number(
         ++cur;
         if (!skip_digit(content, cur))
         {
-            return std::make_pair(false, value());
+            return value::invalid_value();
         }
     }
 
@@ -177,33 +177,33 @@ std::pair<bool, json::value> json::parser::parse_number(
         }
         if (!skip_digit(content, cur))
         {
-            return std::make_pair(false, value());
+            return value::invalid_value();
         }
     }
 
     if (!need_return)
     {
-        return std::make_pair(true, value());
+        return value();
     }
     else
     {
-        return std::make_pair(true, value(value_type::Number, std::string(first, cur)));
+        return value(value_type::Number, std::string(first, cur));
     }
 }
 
-std::pair<bool, json::value> json::parser::parse_string(
+json::value json::parser::parse_string(
     const std::string &content, std::string::const_iterator &cur, bool need_return)
 {
     auto &&[ret, str] = parse_str(content, cur, need_return);
     if (!ret)
     {
-        return std::make_pair(false, value());
+        return value::invalid_value();
     }
 
-    return std::make_pair(true, value(std::forward<std::string>(str)));
+    return value(std::move(str));
 }
 
-std::pair<bool, json::value> json::parser::parse_array(
+json::value json::parser::parse_array(
     const std::string &content, std::string::const_iterator &cur, size_t lazy_depth)
 {
     const auto first = cur;
@@ -214,18 +214,18 @@ std::pair<bool, json::value> json::parser::parse_array(
     }
     else
     {
-        return std::make_pair(false, value());
+        return value::invalid_value();
     }
 
     if (!skip_whitespace(content, cur))
     {
-        return std::make_pair(false, value());
+        return value::invalid_value();
     }
     else if (*cur == ']')
     {
         ++cur;
         // empty array
-        return std::make_pair(true, value(array()));
+        return value(array());
     }
 
     array::raw_array result;
@@ -233,19 +233,19 @@ std::pair<bool, json::value> json::parser::parse_array(
     {
         if (!skip_whitespace(content, cur))
         {
-            return std::make_pair(false, value());
+            return value::invalid_value();
         }
 
-        auto &&[ret, val] = parse_value(content, cur, lazy_depth);
+        auto val = parse_value(content, cur, lazy_depth);
 
-        if (!ret || !skip_whitespace(content, cur))
+        if (!val.valid() || !skip_whitespace(content, cur))
         {
-            return std::make_pair(false, value());
+            return value::invalid_value();
         }
 
         if (lazy_depth > 0)
         {
-            result.emplace_back(std::forward<value>(val));
+            result.emplace_back(std::move(val));
         }
 
         if (*cur == ',')
@@ -264,19 +264,19 @@ std::pair<bool, json::value> json::parser::parse_array(
     }
     else
     {
-        return std::make_pair(false, value());
+        return value::invalid_value();
     }
     if (lazy_depth > 0)
     {
-        return std::make_pair(true, value(std::move(result)));
+        return value(std::move(result));
     }
     else
     {
-        return std::make_pair(true, value(value_type::Array, std::string(first, cur)));
+        return value(value_type::Array, std::string(first, cur));
     }
 }
 
-std::pair<bool, json::value> json::parser::parse_object(
+json::value json::parser::parse_object(
     const std::string &content, std::string::const_iterator &cur, size_t lazy_depth)
 {
     const auto first = cur;
@@ -287,18 +287,18 @@ std::pair<bool, json::value> json::parser::parse_object(
     }
     else
     {
-        return std::make_pair(false, value());
+        return value::invalid_value();
     }
 
     if (!skip_whitespace(content, cur))
     {
-        return std::make_pair(false, value());
+        return value::invalid_value();
     }
     else if (*cur == '}')
     {
         ++cur;
         // empty object
-        return std::make_pair(true, value(object()));
+        return value(object());
     }
 
     object::raw_object result;
@@ -306,7 +306,7 @@ std::pair<bool, json::value> json::parser::parse_object(
     {
         if (!skip_whitespace(content, cur))
         {
-            return std::make_pair(false, value());
+            return value::invalid_value();
         }
 
         auto &&[key_ret, key] = parse_str(content, cur, lazy_depth);
@@ -317,23 +317,23 @@ std::pair<bool, json::value> json::parser::parse_object(
         }
         else
         {
-            return std::make_pair(false, value());
+            return value::invalid_value();
         }
 
         if (!skip_whitespace(content, cur))
         {
-            return std::make_pair(false, value());
+            return value::invalid_value();
         }
 
-        auto &&[val_ret, val] = parse_value(content, cur, lazy_depth);
+        auto val = parse_value(content, cur, lazy_depth);
 
-        if (!val_ret || !skip_whitespace(content, cur))
+        if (!val.valid() || !skip_whitespace(content, cur))
         {
-            return std::make_pair(false, value());
+            return value::invalid_value();
         }
         if (lazy_depth > 0)
         {
-            result.emplace(std::forward<std::string>(key), std::forward<value>(val));
+            result.emplace(std::move(key), std::move(val));
         }
         if (*cur == ',')
         {
@@ -351,15 +351,15 @@ std::pair<bool, json::value> json::parser::parse_object(
     }
     else
     {
-        return std::make_pair(false, value());
+        return value::invalid_value();
     }
     if (lazy_depth > 0)
     {
-        return std::make_pair(true, value(std::move(result)));
+        return value(std::move(result));
     }
     else
     {
-        return std::make_pair(true, value(value_type::Object, std::string(first, cur)));
+        return value(value_type::Object, std::string(first, cur));
     }
 }
 
