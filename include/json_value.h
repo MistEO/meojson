@@ -97,7 +97,7 @@ namespace json
         value &operator=(const value &) = default;
         value &operator=(value &&) = default;
 
-        // const value &operator[](size_t pos) const;
+        const value &operator[](size_t pos) const;
         value &operator[](size_t pos);
         value &operator[](const std::string &key);
         value &operator[](std::string &&key);
@@ -110,10 +110,13 @@ namespace json
         value(unique_array &&arr_ptr);
         value(unique_object &&obj_ptr);
 
+        void parse_once() const;
+
         value_type _type = value_type::Null;
-        std::string _raw_data = "null"; // In non-lazy parsing, if the value_type is Object or Array, the _raw_data will be empty string.
-        unique_array _array_ptr = nullptr;
-        unique_object _object_ptr = nullptr;
+        std::string _raw_data = "null"; // If the value_type is Object or Array, the _raw_data will be empty string.
+        mutable std::string _lazy_data;
+        mutable unique_array _array_ptr = nullptr;
+        mutable unique_object _object_ptr = nullptr;
     };
 
     std::ostream &operator<<(std::ostream &out, const value &val);

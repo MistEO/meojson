@@ -17,6 +17,7 @@ void json::array_deleter::operator()(json::array *p)
 json::value::value(const json::value &rhs)
     : _type(rhs._type),
       _raw_data(rhs._raw_data),
+      _lazy_data(rhs._lazy_data),
       _array_ptr(rhs._array_ptr == nullptr ? nullptr : new array(*(rhs._array_ptr))),
       _object_ptr(rhs._array_ptr == nullptr ? nullptr : new object(*rhs._object_ptr))
 {
@@ -164,7 +165,8 @@ json::value::value(object &&obj)
 
 json::value::value(json::value_type type, std::string &&raw_data)
     : _type(type),
-      _raw_data(std::forward<std::string>(raw_data))
+      _raw_data((type == value_type::Array || type == value_type::Object) ? std::string() : std::forward<std::string>(raw_data)),
+      _lazy_data((type == value_type::Array || type == value_type::Object) ? std::forward<std::string>(raw_data) : std::string())
 {
     ;
 }
@@ -222,17 +224,36 @@ const json::value &json::value::at(size_t pos) const
     {
         throw exception("Wrong Type");
     }
+
+    if (_type == value_type::Array && _array_ptr != nullptr)
+    {
+        return _array_ptr->at(pos);
+    }
+    else if (_type == value_type::Array && !_lazy_data.empty())
+    {
+        return _array_ptr->at(pos);
+    }
+    // Array not support to create by operator[]
+    else
+    {
+        throw exception("Wrong Type");
+    }
 }
 
 const json::value &json::value::at(const std::string key) const
 {
-    if (_type == value_type::Object)
+    if (_type == value_type::Object && _object_ptr != nullptr)
     {
+        return _object_ptr->at(key);
+    }
+    else if (_type == value_type::Object && !_lazy_data.empty())
+    {
+        parse_once();
         return _object_ptr->at(key);
     }
     else
     {
-        throw exception("Wrong Type");
+        throw exception("Wrong Type or data empty");
     }
 }
 
@@ -385,19 +406,10 @@ json::array json::value::as_array()
     {
         return *_array_ptr;
     }
-    else if (_type == value_type::Array && !_raw_data.empty())
+    else if (_type == value_type::Array && !_lazy_data.empty())
     {
-        auto &&[ret, val] = json::parser::parse(_raw_data, 1);
-        _raw_data.clear();
-        if (ret)
-        {
-            _array_ptr = std::move(val._array_ptr);
-            return *_array_ptr;
-        }
-        else
-        {
-            throw exception("Raw data error");
-        }
+        parse_once();
+        return *_array_ptr;
     }
     else
     {
@@ -411,19 +423,10 @@ json::object json::value::as_object()
     {
         return *_object_ptr;
     }
-    else if (_type == value_type::Object && !_raw_data.empty())
+    else if (_type == value_type::Object && !_lazy_data.empty())
     {
-        auto &&[ret, val] = json::parser::parse(_raw_data, 1);
-        _raw_data.clear();
-        if (ret)
-        {
-            _object_ptr = std::move(val._object_ptr);
-            return *_object_ptr;
-        }
-        else
-        {
-            throw exception("Raw data error");
-        }
+        parse_once();
+        return *_object_ptr;
     }
     else
     {
@@ -442,8 +445,16 @@ std::string json::value::to_string() const
     case value_type::String:
         return '"' + _raw_data + '"';
     case value_type::Object:
+        if (_object_ptr == nullptr && !_lazy_data.empty())
+        {
+            parse_once();
+        }
         return _object_ptr->to_string();
     case value_type::Array:
+        if (_array_ptr == nullptr && !_lazy_data.empty())
+        {
+            parse_once();
+        }
         return _array_ptr->to_string();
     default:
         throw exception("Unknown Value Type");
@@ -461,39 +472,53 @@ std::string json::value::format(std::string shift_str, size_t basic_shift_count)
     case value_type::String:
         return '"' + _raw_data + '"';
     case value_type::Object:
+        if (_object_ptr == nullptr)
+        {
+            if (!_lazy_data.empty())
+            {
+                parse_once();
+            }
+            else
+            {
+                throw exception("object data error");
+            }
+        }
         return _object_ptr->format(shift_str, basic_shift_count);
     case value_type::Array:
+        if (_array_ptr == nullptr)
+        {
+            if (!_lazy_data.empty())
+            {
+                parse_once();
+            }
+            else
+            {
+                throw exception("Array data error");
+            }
+        }
         return _array_ptr->format(shift_str, basic_shift_count);
     default:
         throw exception("Unknown Value Type");
     }
 }
 
-// const json::value &json::value::operator[](size_t pos) const
-// {
-//     if (_type == value_type::Array && _array_ptr != nullptr)
-//     {
-//         return (*_array_ptr)[pos];
-//     }
-//     else if (_type == value_type::Array && !_raw_data.empty())
-//     {
-//         auto &&[ret, val] = json::parser::parse(_raw_data, 1);
-//         _raw_data.clear();
-//         if (ret)
-//         {
-//             _array_ptr = std::move(val._array_ptr);
-//             return (*_array_ptr)[pos];
-//         }
-//         else
-//         {
-//             throw exception("Raw data error");
-//         }
-//     }
-//     else
-//     {
-//         throw exception("Wrong Type");
-//     }
-// }
+const json::value &json::value::operator[](size_t pos) const
+{
+    if (_type == value_type::Array && _array_ptr != nullptr)
+    {
+        return (*_array_ptr)[pos];
+    }
+    else if (_type == value_type::Array && !_lazy_data.empty())
+    {
+        parse_once();
+        return (*_array_ptr)[pos];
+    }
+    // Array not support to create by operator[]
+    else
+    {
+        throw exception("Wrong Type");
+    }
+}
 
 json::value &json::value::operator[](size_t pos)
 {
@@ -501,19 +526,10 @@ json::value &json::value::operator[](size_t pos)
     {
         return (*_array_ptr)[pos];
     }
-    else if (_type == value_type::Array && !_raw_data.empty())
+    else if (_type == value_type::Array && !_lazy_data.empty())
     {
-        auto &&[ret, val] = json::parser::parse(_raw_data, 1);
-        _raw_data.clear();
-        if (ret)
-        {
-            _array_ptr = std::move(val._array_ptr);
-            return (*_array_ptr)[pos];
-        }
-        else
-        {
-            throw exception("Raw data error");
-        }
+        parse_once();
+        return (*_array_ptr)[pos];
     }
     // Array not support to create by operator[]
     else
@@ -528,19 +544,10 @@ json::value &json::value::operator[](const std::string &key)
     {
         return (*_object_ptr)[key];
     }
-    else if (_type == value_type::Object && !_raw_data.empty())
+    else if (_type == value_type::Object && !_lazy_data.empty())
     {
-        auto &&[ret, val] = json::parser::parse(_raw_data, 1);
-        _raw_data.clear();
-        if (ret)
-        {
-            _object_ptr = std::move(val._object_ptr);
-            return (*_object_ptr)[key];
-        }
-        else
-        {
-            throw exception("Raw data error");
-        }
+        parse_once();
+        return (*_object_ptr)[key];
     }
     else if (_type == value_type::Null)
     {
@@ -560,19 +567,10 @@ json::value &json::value::operator[](std::string &&key)
     {
         return (*_object_ptr)[std::forward<std::string>(key)];
     }
-    else if (_type == value_type::Object && !_raw_data.empty())
+    else if (_type == value_type::Object && !_lazy_data.empty())
     {
-        auto &&[ret, val] = json::parser::parse(_raw_data, 1);
-        _raw_data.clear();
-        if (ret)
-        {
-            _object_ptr = std::move(val._object_ptr);
-            return (*_object_ptr)[std::forward<std::string>(key)];
-        }
-        else
-        {
-            throw exception("Raw data error");
-        }
+        parse_once();
+        return (*_object_ptr)[std::forward<std::string>(key)];
     }
     else if (_type == value_type::Null)
     {
@@ -583,6 +581,33 @@ json::value &json::value::operator[](std::string &&key)
     else
     {
         throw exception("Wrong Type");
+    }
+}
+
+void json::value::parse_once() const
+{
+    auto &&[ret, val] = json::parser::parse(_lazy_data, 1);
+
+    if (ret)
+    {
+        if (_type == value_type::Object)
+        {
+            _object_ptr = std::move(val._object_ptr);
+            _lazy_data.clear();
+        }
+        else if (_type == value_type::Array)
+        {
+            _array_ptr = std::move(val._array_ptr);
+            _lazy_data.clear();
+        }
+        else
+        {
+            throw exception("Wrong internal call");
+        }
+    }
+    else
+    {
+        throw exception("Raw data error");
     }
 }
 
