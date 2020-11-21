@@ -7,7 +7,7 @@
 json::value::value(const json::value &rhs)
     : _type(rhs._type),
       _raw_data(rhs._raw_data),
-      _array_ptr(rhs._array_ptr == nullptr ? nullptr : std::make_shared<array>(*(rhs._array_ptr))),
+      _array_ptr(rhs._array_ptr == nullptr ? nullptr : std::make_unique<array>(*(rhs._array_ptr))),
       _object_ptr(rhs._array_ptr == nullptr ? nullptr : std::make_shared<object>(*(rhs._object_ptr)))
 {
     ;
@@ -107,7 +107,7 @@ json::value::value(std::string &&str)
 json::value::value(const array &arr)
     : _type(value_type::Array),
       _raw_data(std::string()),
-      _array_ptr(std::make_shared<array>(arr))
+      _array_ptr(std::make_unique<array>(arr))
 {
     ;
 }
@@ -115,7 +115,7 @@ json::value::value(const array &arr)
 json::value::value(array &&arr)
     : _type(value_type::Array),
       _raw_data(std::string()),
-      _array_ptr(std::make_shared<array>(std::forward<array>(arr)))
+      _array_ptr(std::make_unique<array>(std::forward<array>(arr)))
 {
     ;
 }
@@ -139,7 +139,7 @@ json::value::value(object &&obj)
 // json::value::value(std::initializer_list<value> init_list)
 //     : _type(value_type::Array),
 //       _raw_data(std::string()),
-//       _array_ptr(std::make_shared<array>(init_list))
+//       _array_ptr(std::unique_ptr<array>(init_list))
 // {
 //     ;
 // }
@@ -159,9 +159,9 @@ json::value::value(json::value_type type, std::string &&raw_data)
     ;
 }
 
-json::value::value(std::shared_ptr<json::array> &&arr_ptr)
+json::value::value(std::unique_ptr<json::array> &&arr_ptr)
     : _type(value_type::Array),
-      _array_ptr(std::forward<std::shared_ptr<json::array>>(arr_ptr))
+      _array_ptr(std::forward<std::unique_ptr<json::array>>(arr_ptr))
 {
     ;
 }
@@ -488,6 +488,7 @@ json::value &json::value::operator[](size_t pos)
             throw exception("Raw data error");
         }
     }
+    // Array not support to create by operator[]
     else
     {
         throw exception("Wrong Type");

@@ -4,9 +4,10 @@
 #include <ostream>
 #include <memory>
 
+#include "json_array.h"
+
 namespace json
 {
-    class array;
     class object;
     class parser;
 
@@ -94,12 +95,12 @@ namespace json
     private:
         // for parser
         value(value_type type, std::string &&raw_data);
-        value(std::shared_ptr<array> &&arr_ptr);
+        value(std::unique_ptr<array> &&arr_ptr);
         value(std::shared_ptr<object> &&obj_ptr);
 
         value_type _type = value_type::Null;
         std::string _raw_data = "null"; // 非惰性解析时，Object或Array的该值为空
-        std::shared_ptr<array> _array_ptr = nullptr;
+        std::unique_ptr<array> _array_ptr = nullptr;
         std::shared_ptr<object> _object_ptr = nullptr;
     };
 
