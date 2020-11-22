@@ -1,7 +1,5 @@
 #include "json_parser.h"
 
-#include <regex>
-
 #include "json_value.h"
 #include "json_object.h"
 #include "json_array.h"
@@ -107,8 +105,9 @@ json::value json::parser::parse_boolean(
     static const std::string true_string = "true";
     static const std::string false_string = "false";
 
-    if (*cur == 't')
+    switch (*cur)
     {
+    case 't':
         for (auto &&iter : true_string)
         {
             if (cur != content.end() && *cur == iter)
@@ -121,9 +120,7 @@ json::value json::parser::parse_boolean(
             }
         }
         return value(true);
-    }
-    else if (*cur == 'f')
-    {
+    case 'f':
         for (auto &&iter : false_string)
         {
             if (cur != content.end() && *cur == iter)
@@ -136,9 +133,7 @@ json::value json::parser::parse_boolean(
             }
         }
         return value(false);
-    }
-    else
-    {
+    default:
         return value::invalid_value();
     }
 }
@@ -381,13 +376,21 @@ std::pair<bool, std::string> json::parser::parse_str(
 
     const auto first = cur;
     auto last = cur;
-    while (true)
+    bool is_string_end = false;
+    while (!is_string_end)
     {
-        if (cur == content.cend() || *cur == '\t' || *cur == '\r' || *cur == '\n')
+        if (cur == content.cend())
         {
             return std::make_pair(false, std::string());
         }
-        else if (*cur == '\\') // 如果是转义，检查后面那个字符是不是合法转义
+
+        switch (*cur)
+        {
+        case '\t':
+        case '\r':
+        case '\n':
+            return std::make_pair(false, std::string());
+        case '\\':
         {
             ++cur;
             if (cur == content.cend())
@@ -405,20 +408,25 @@ std::pair<bool, std::string> json::parser::parse_str(
             case 'r':
             case 't':
             case 'u':
-                // Do nothing, after break, `cur` self-increasing
+                ++cur;
                 break;
             default:
                 // Illegal backslash escape
                 return std::make_pair(false, std::string());
             }
+            break;
         }
-        else if (*cur == '"')
+        case '"':
         {
             last = cur;
             ++cur;
+            is_string_end = true;
             break;
         }
-        ++cur;
+        default:
+            ++cur;
+            break;
+        }
     }
     if (cur == content.cend())
     {
@@ -437,25 +445,28 @@ std::pair<bool, std::string> json::parser::parse_str(
 bool json::parser::skip_whitespace(
     const std::string &content, std::string::const_iterator &cur) noexcept
 {
-    while (cur != content.cend() && (*cur == ' ' || *cur == '\t' || *cur == '\r' || *cur == '\n'))
+    while (true)
     {
-        ++cur;
-    }
-
-    if (cur != content.cend())
-    {
-        return true;
-    }
-    else
-    {
-        return false;
+        switch (*cur)
+        {
+        case ' ':
+        case '\t':
+        case '\r':
+        case '\n':
+            ++cur;
+            break;
+        case '\0': // string::end()
+            return false;
+        default:
+            return true;
+        }
     }
 }
 
 bool json::parser::skip_digit(
     const std::string &content, std::string::const_iterator &cur) noexcept
 {
-    // 至少要有一个数字
+    // At least one digit
     if (cur != content.cend() && *cur >= '0' && *cur <= '9')
     {
         ++cur;
