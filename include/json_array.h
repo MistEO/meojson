@@ -53,7 +53,7 @@ namespace json
         value &operator[](size_t pos);
 
         array &operator=(const array &) = default;
-        array &operator=(array &&) = default;
+        array &operator=(array &&) noexcept = default;
 
         // const raw_array &raw_data() const;
 

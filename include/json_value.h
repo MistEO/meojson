@@ -42,7 +42,7 @@ namespace json
     public:
         value() = default;
         value(const value &rhs);
-        value(value &&rhs) noexcept = default;
+        value(value &&rhs) noexcept;
 
         value(bool b);
 
@@ -95,8 +95,8 @@ namespace json
         std::string to_string() const;
         std::string format(std::string shift_str = "    ", size_t basic_shift_count = 0) const;
 
-        value &operator=(const value & rhs);
-        value &operator=(value &&) = default;
+        value &operator=(const value &rhs);
+        value &operator=(value &&) noexcept;
 
         const value &operator[](size_t pos) const;
         value &operator[](size_t pos);
