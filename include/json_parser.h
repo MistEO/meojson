@@ -9,7 +9,7 @@ namespace json
     class value;
     class object;
     class array;
-    enum class value_type;
+    enum class value_type: char;
 
     class parser
     {

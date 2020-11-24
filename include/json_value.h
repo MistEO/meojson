@@ -7,7 +7,7 @@
 
 namespace json
 {
-    enum class value_type
+    enum class value_type : char
     {
         Invalid,
         Null,

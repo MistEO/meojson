@@ -31,7 +31,7 @@ json::value::value(json::value &&rhs) noexcept
       _array_ptr(std::forward<unique_array>(rhs._array_ptr)),
       _object_ptr(std::forward<unique_object>(rhs._object_ptr))
 {
-    ;
+    rhs._type = value_type::Invalid;
 }
 
 json::value::value(bool b)
@@ -539,6 +539,8 @@ json::value &json::value::operator=(const value &rhs)
 json::value &json::value::operator=(value &&rhs) noexcept
 {
     _type = std::forward<value_type>(rhs._type);
+    rhs._type = value_type::Invalid;
+
     _raw_data = std::forward<std::string>(rhs._raw_data);
     _lazy_data = std::forward<std::string>(rhs._lazy_data);
     // _lazy_mutex;
