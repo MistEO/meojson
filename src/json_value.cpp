@@ -216,28 +216,20 @@ json::value_type json::value::type() const noexcept
 
 const json::value &json::value::at(size_t pos) const
 {
-    if (_type == value_type::Array)
-    {
-        return _array_ptr->at(pos);
-    }
-    else
-    {
-        throw exception("Wrong Type");
-    }
-
     if (_type == value_type::Array && _array_ptr != nullptr)
     {
         return _array_ptr->at(pos);
     }
-    else if (_type == value_type::Array && !_lazy_data.empty())
+
+    std::unique_lock<std::mutex> lazy_lock(_lazy_mutex);
+    if (_type == value_type::Array && !_lazy_data.empty())
     {
+        parse_once();
         return _array_ptr->at(pos);
     }
-    // Array not support to create by operator[]
-    else
-    {
-        throw exception("Wrong Type");
-    }
+    lazy_lock.unlock();
+
+    throw exception("Wrong Type or data empty");
 }
 
 const json::value &json::value::at(const std::string key) const
@@ -246,15 +238,16 @@ const json::value &json::value::at(const std::string key) const
     {
         return _object_ptr->at(key);
     }
-    else if (_type == value_type::Object && !_lazy_data.empty())
+
+    std::unique_lock<std::mutex> lazy_lock(_lazy_mutex);
+    if (_type == value_type::Object && !_lazy_data.empty())
     {
         parse_once();
         return _object_ptr->at(key);
     }
-    else
-    {
-        throw exception("Wrong Type or data empty");
-    }
+    lazy_lock.unlock();
+
+    throw exception("Wrong Type or data empty");
 }
 
 bool json::value::as_boolean() const
@@ -406,15 +399,16 @@ json::array json::value::as_array()
     {
         return *_array_ptr;
     }
-    else if (_type == value_type::Array && !_lazy_data.empty())
+
+    std::unique_lock<std::mutex> lazy_lock(_lazy_mutex);
+    if (_type == value_type::Array && !_lazy_data.empty())
     {
         parse_once();
         return *_array_ptr;
     }
-    else
-    {
-        throw exception("Wrong Type");
-    }
+    lazy_lock.unlock();
+
+    throw exception("Wrong Type");
 }
 
 json::object json::value::as_object()
@@ -423,15 +417,15 @@ json::object json::value::as_object()
     {
         return *_object_ptr;
     }
-    else if (_type == value_type::Object && !_lazy_data.empty())
+
+    std::unique_lock<std::mutex> lazy_lock(_lazy_mutex);
+    if (_type == value_type::Object && !_lazy_data.empty())
     {
         parse_once();
         return *_object_ptr;
     }
-    else
-    {
-        throw exception("Wrong Type or data empty");
-    }
+
+    throw exception("Wrong Type or data empty");
 }
 
 std::string json::value::to_string() const
@@ -445,15 +439,31 @@ std::string json::value::to_string() const
     case value_type::String:
         return '"' + _raw_data + '"';
     case value_type::Object:
-        if (_object_ptr == nullptr && !_lazy_data.empty())
+        if (_object_ptr == nullptr)
         {
-            parse_once();
+            std::unique_lock<std::mutex> lazy_lock(_lazy_mutex);
+            if (!_lazy_data.empty())
+            {
+                parse_once();
+            }
+            else
+            {
+                throw exception("Object data error");
+            }
         }
         return _object_ptr->to_string();
     case value_type::Array:
-        if (_array_ptr == nullptr && !_lazy_data.empty())
+        if (_array_ptr == nullptr)
         {
-            parse_once();
+            std::unique_lock<std::mutex> lazy_lock(_lazy_mutex);
+            if (!_lazy_data.empty())
+            {
+                parse_once();
+            }
+            else
+            {
+                throw exception("Array data error");
+            }
         }
         return _array_ptr->to_string();
     default:
@@ -474,19 +484,21 @@ std::string json::value::format(std::string shift_str, size_t basic_shift_count)
     case value_type::Object:
         if (_object_ptr == nullptr)
         {
+            std::unique_lock<std::mutex> lazy_lock(_lazy_mutex);
             if (!_lazy_data.empty())
             {
                 parse_once();
             }
             else
             {
-                throw exception("object data error");
+                throw exception("Object data error");
             }
         }
         return _object_ptr->format(shift_str, basic_shift_count);
     case value_type::Array:
         if (_array_ptr == nullptr)
         {
+            std::unique_lock<std::mutex> lazy_lock(_lazy_mutex);
             if (!_lazy_data.empty())
             {
                 parse_once();
@@ -502,22 +514,35 @@ std::string json::value::format(std::string shift_str, size_t basic_shift_count)
     }
 }
 
+json::value &json::value::operator=(const value &rhs)
+{
+    _type = rhs._type;
+    _raw_data = rhs._raw_data;
+    _lazy_data = rhs._lazy_data;
+    // _lazy_mutex;
+    _array_ptr = rhs._array_ptr == nullptr ? nullptr : unique_array(new array(*(rhs._array_ptr)));
+    _object_ptr = rhs._array_ptr == nullptr ? nullptr : unique_object(new object(*rhs._object_ptr));
+
+    return *this;
+}
+
 const json::value &json::value::operator[](size_t pos) const
 {
     if (_type == value_type::Array && _array_ptr != nullptr)
     {
         return (*_array_ptr)[pos];
     }
-    else if (_type == value_type::Array && !_lazy_data.empty())
+
+    std::unique_lock<std::mutex> lazy_lock(_lazy_mutex);
+    if (_type == value_type::Array && !_lazy_data.empty())
     {
         parse_once();
         return (*_array_ptr)[pos];
     }
+    lazy_lock.unlock();
     // Array not support to create by operator[]
-    else
-    {
-        throw exception("Wrong Type");
-    }
+
+    throw exception("Wrong Type");
 }
 
 json::value &json::value::operator[](size_t pos)
@@ -526,16 +551,17 @@ json::value &json::value::operator[](size_t pos)
     {
         return (*_array_ptr)[pos];
     }
-    else if (_type == value_type::Array && !_lazy_data.empty())
+    
+    std::unique_lock<std::mutex> lazy_lock(_lazy_mutex);
+    if (_type == value_type::Array && !_lazy_data.empty())
     {
         parse_once();
         return (*_array_ptr)[pos];
     }
+    lazy_lock.unlock();
     // Array not support to create by operator[]
-    else
-    {
-        throw exception("Wrong Type");
-    }
+
+    throw exception("Wrong Type");
 }
 
 json::value &json::value::operator[](const std::string &key)
@@ -544,21 +570,23 @@ json::value &json::value::operator[](const std::string &key)
     {
         return (*_object_ptr)[key];
     }
-    else if (_type == value_type::Object && !_lazy_data.empty())
+
+    std::unique_lock<std::mutex> lazy_lock(_lazy_mutex);
+    if (_type == value_type::Object && !_lazy_data.empty())
     {
         parse_once();
         return (*_object_ptr)[key];
     }
+    // Create a new value by operator[]
     else if (_type == value_type::Null)
     {
         _type = value_type::Object;
         _object_ptr = unique_object(new object());
         return (*_object_ptr)[key];
     }
-    else
-    {
-        throw exception("Wrong Type");
-    }
+    lazy_lock.unlock();
+
+    throw exception("Wrong Type");
 }
 
 json::value &json::value::operator[](std::string &&key)
@@ -567,21 +595,23 @@ json::value &json::value::operator[](std::string &&key)
     {
         return (*_object_ptr)[std::forward<std::string>(key)];
     }
-    else if (_type == value_type::Object && !_lazy_data.empty())
+
+    std::unique_lock<std::mutex> lazy_lock(_lazy_mutex);
+    if (_type == value_type::Object && !_lazy_data.empty())
     {
         parse_once();
         return (*_object_ptr)[std::forward<std::string>(key)];
     }
+    // Create a new value by operator[]
     else if (_type == value_type::Null)
     {
         _type = value_type::Object;
         _object_ptr = unique_object(new object());
         return (*_object_ptr)[std::forward<std::string>(key)];
     }
-    else
-    {
-        throw exception("Wrong Type");
-    }
+    lazy_lock.unlock();
+
+    throw exception("Wrong Type");
 }
 
 void json::value::parse_once() const

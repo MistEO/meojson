@@ -3,6 +3,7 @@
 #include <string>
 #include <ostream>
 #include <memory>
+#include <mutex>
 
 namespace json
 {
@@ -94,7 +95,7 @@ namespace json
         std::string to_string() const;
         std::string format(std::string shift_str = "    ", size_t basic_shift_count = 0) const;
 
-        value &operator=(const value &) = default;
+        value &operator=(const value & rhs);
         value &operator=(value &&) = default;
 
         const value &operator[](size_t pos) const;
@@ -113,8 +114,9 @@ namespace json
         void parse_once() const;
 
         value_type _type = value_type::Null;
-        std::string _raw_data = "null"; // If the value_type is Object or Array, the _raw_data will be empty string.
+        std::string _raw_data = "null"; // If the value_type is Object or Array, the _raw_data will be a empty string.
         mutable std::string _lazy_data;
+        mutable std::mutex _lazy_mutex;
         mutable unique_array _array_ptr = nullptr;
         mutable unique_object _object_ptr = nullptr;
     };
