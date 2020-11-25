@@ -26,12 +26,12 @@ namespace json
     struct array_deleter final
     {
         constexpr array_deleter() noexcept = default;
-        void operator()(array *p);
+        void operator()(array *p) const;
     };
     struct object_deleter final
     {
         constexpr object_deleter() noexcept = default;
-        void operator()(object *p);
+        void operator()(object *p) const;
     };
 
     using unique_array = std::unique_ptr<array, array_deleter>;

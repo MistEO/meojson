@@ -4,12 +4,12 @@
 #include "json_parser.h"
 #include "json_exception.h"
 
-void json::object_deleter::operator()(json::object *p)
+void json::object_deleter::operator()(json::object *p) const
 {
     delete p;
 }
 
-void json::array_deleter::operator()(json::array *p)
+void json::array_deleter::operator()(json::array *p) const
 {
     delete p;
 }
