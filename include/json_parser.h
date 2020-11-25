@@ -2,14 +2,14 @@
 
 #include <string>
 #include <utility>
-#include <limits>
+#include <optional>
 
 namespace json
 {
     class value;
     class object;
     class array;
-    enum class value_type: char;
+    enum class value_type : char;
 
     class parser
     {
@@ -17,7 +17,7 @@ namespace json
         parser() = delete;
         ~parser() noexcept = default;
 
-        static std::pair<bool, value> parse(const std::string &content, size_t lazy_depth = 1);
+        static std::optional<value> parse(const std::string &content, size_t lazy_depth = 1);
 
     private:
         static value parse_value(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth);
@@ -31,7 +31,7 @@ namespace json
         static value parse_object(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth);
 
         // parse and return a std::string
-        static std::pair<bool, std::string> parse_str(const std::string &content, std::string::const_iterator &cur, bool need_return);
+        static std::optional<std::string> parse_stdstring(const std::string &content, std::string::const_iterator &cur, bool need_return);
 
         static bool skip_whitespace(const std::string &content, std::string::const_iterator &cur) noexcept;
         static bool skip_digit(const std::string &content, std::string::const_iterator &cur) noexcept;

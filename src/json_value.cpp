@@ -640,18 +640,18 @@ json::value &json::value::operator[](std::string &&key)
 
 void json::value::parse_once() const
 {
-    auto &&[ret, val] = json::parser::parse(_lazy_data, 1);
+    auto value_opt = json::parser::parse(_lazy_data, 1);
 
-    if (ret)
+    if (value_opt)
     {
-        if (_type == value_type::Object)
+        if (_type == value_type::Array)
         {
-            _object_ptr = std::move(val._object_ptr);
+            _array_ptr = std::move(value_opt).value()._array_ptr;
             _lazy_data.clear();
         }
-        else if (_type == value_type::Array)
+        else if (_type == value_type::Object)
         {
-            _array_ptr = std::move(val._array_ptr);
+            _object_ptr = std::move(value_opt).value()._object_ptr;
             _lazy_data.clear();
         }
         else

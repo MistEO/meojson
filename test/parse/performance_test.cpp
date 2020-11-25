@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
     auto b_time = get_time();
     for (int i = 0; i != loop_times; ++i)
     {
-        val = json::parser::parse(content).second;
+        val = json::parser::parse(content).value();
     }
     auto e_time = get_time();
 

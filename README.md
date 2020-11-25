@@ -91,7 +91,7 @@ int main()
         {
             "prject": {
                 "name": "meojson",
-                "list": [ 
+                "list": [
                     1, 2, 3
                 ]
             }
@@ -99,10 +99,11 @@ int main()
         )";
         //std::cout << content << std::endl;
 
-        auto &&[ret, value] = json::parser::parse(content);
+        auto ret = json::parser::parse(content);
 
         if (ret)
         {
+            auto value = ret.value();  // As also, you can use rvalues, like `auto value = std::move(ret).value();`
             // Output "meojson"
             std::cout << value["prject"]["name"].as_string() << std::endl;
             // Output 2
@@ -231,7 +232,7 @@ int main()
         {
             "prject": {
                 "name": "meojson",
-                "list": [ 
+                "list": [
                     1, 2, 3
                 ]
             }
@@ -239,10 +240,11 @@ int main()
         )";
         //std::cout << content << std::endl;
 
-        auto &&[ret, value] = json::parser::parse(content);
+        auto ret = json::parser::parse(content);
 
         if (ret)
         {
+            auto value = ret.value();  // As also, you can use rvalues, like `auto value = std::move(ret).value();`
             // Output "meojson"
             std::cout << value["prject"]["name"].as_string() << std::endl;
             // Output 2

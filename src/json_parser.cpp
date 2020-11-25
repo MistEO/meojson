@@ -9,14 +9,14 @@
  * Json     https://www.json.org/json-zh.html
 ***/
 
-std::pair<bool, json::value> json::parser::parse(
+std::optional<json::value> json::parser::parse(
     const std::string &content, size_t lazy_depth)
 {
     auto cur = content.cbegin();
 
     if (!skip_whitespace(content, cur))
     {
-        return std::make_pair(false, value::invalid_value());
+        return std::nullopt;
     }
 
     value result_value;
@@ -29,21 +29,21 @@ std::pair<bool, json::value> json::parser::parse(
         result_value = parse_object(content, cur, lazy_depth);
         break;
     default: // A JSON payload should be an object or array
-        return std::make_pair(false, value::invalid_value());
+        return std::nullopt;
     }
 
     if (!result_value.valid())
     {
-        return std::make_pair(false, value::invalid_value());
+        return std::nullopt;
     }
 
     // 解析完成后，后面不应再有除空格外的内容
     if (skip_whitespace(content, cur))
     {
-        return std::make_pair(false, value::invalid_value());
+        return std::nullopt;
     }
 
-    return std::make_pair(true, std::move(result_value));
+    return result_value;
 }
 
 json::value json::parser::parse_value(
@@ -193,13 +193,13 @@ json::value json::parser::parse_number(
 json::value json::parser::parse_string(
     const std::string &content, std::string::const_iterator &cur, bool need_return)
 {
-    auto &&[ret, str] = parse_str(content, cur, need_return);
-    if (!ret)
+    auto string_opt = parse_stdstring(content, cur, need_return);
+    if (!string_opt)
     {
         return value::invalid_value();
     }
 
-    return value(std::move(str));
+    return value(std::move(string_opt).value());
 }
 
 json::value json::parser::parse_array(
@@ -308,9 +308,9 @@ json::value json::parser::parse_object(
             return value::invalid_value();
         }
 
-        auto &&[key_ret, key] = parse_str(content, cur, lazy_depth);
+        auto key_opt = parse_stdstring(content, cur, lazy_depth);
 
-        if (key_ret && skip_whitespace(content, cur) && *cur == ':')
+        if (key_opt && skip_whitespace(content, cur) && *cur == ':')
         {
             ++cur;
         }
@@ -332,7 +332,7 @@ json::value json::parser::parse_object(
         }
         if (lazy_depth > 0)
         {
-            result.emplace(std::move(key), std::move(val));
+            result.emplace(std::move(key_opt).value(), std::move(val));
         }
         if (*cur == ',')
         {
@@ -362,7 +362,7 @@ json::value json::parser::parse_object(
     }
 }
 
-std::pair<bool, std::string> json::parser::parse_str(
+std::optional<std::string> json::parser::parse_stdstring(
     const std::string &content, std::string::const_iterator &cur, bool need_return)
 {
     if (*cur == '"')
@@ -371,7 +371,7 @@ std::pair<bool, std::string> json::parser::parse_str(
     }
     else
     {
-        return std::make_pair(false, std::string());
+        return std::nullopt;
     }
 
     const auto first = cur;
@@ -381,7 +381,7 @@ std::pair<bool, std::string> json::parser::parse_str(
     {
         if (cur == content.cend())
         {
-            return std::make_pair(false, std::string());
+            return std::nullopt;
         }
 
         switch (*cur)
@@ -389,13 +389,13 @@ std::pair<bool, std::string> json::parser::parse_str(
         case '\t':
         case '\r':
         case '\n':
-            return std::make_pair(false, std::string());
+            return std::nullopt;
         case '\\':
         {
             ++cur;
             if (cur == content.cend())
             {
-                return std::make_pair(false, std::string());
+                return std::nullopt;
             }
             switch (*cur)
             {
@@ -412,7 +412,7 @@ std::pair<bool, std::string> json::parser::parse_str(
                 break;
             default:
                 // Illegal backslash escape
-                return std::make_pair(false, std::string());
+                return std::nullopt;
             }
             break;
         }
@@ -430,15 +430,15 @@ std::pair<bool, std::string> json::parser::parse_str(
     }
     if (cur == content.cend())
     {
-        return std::make_pair(false, std::string());
+        return std::nullopt;
     }
     if (!need_return)
     {
-        return std::make_pair(true, std::string());
+        return std::string();
     }
     else
     {
-        return std::make_pair(true, std::string(first, last));
+        return std::string(first, last);
     }
 }
 

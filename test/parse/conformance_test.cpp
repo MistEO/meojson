@@ -26,9 +26,9 @@ int main(int argc, char *argv[])
         //std::cout << content << std::endl;
         std::cout << "filename: " << filename << "\t size: " << content.size();
 
-        auto &&[ret, val] = json::parser::parse(content);
+        auto value_opt = json::parser::parse(content);
 
-        if (ret)
+        if (value_opt)
         {
             std::cout << "\tsuccess😁" << std::endl;
             success_filenames.push_back(filename);
