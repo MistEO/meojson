@@ -25,10 +25,12 @@ namespace json
 
     struct array_deleter final
     {
+        constexpr array_deleter() noexcept = default;
         void operator()(array *p);
     };
     struct object_deleter final
     {
+        constexpr object_deleter() noexcept = default;
         void operator()(object *p);
     };
 
