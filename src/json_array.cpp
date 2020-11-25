@@ -19,19 +19,19 @@ json::array::array(std::initializer_list<raw_array::value_type> init_list)
 {
 }
 
-bool json::array::empty() const noexcept
-{
-    return _array_data.empty();
-}
+// bool json::array::empty() const noexcept
+// {
+//     return _array_data.empty();
+// }
+
+// size_t json::array::size() const noexcept
+// {
+//     return _array_data.size();
+// }
 
 const json::value &json::array::at(size_t pos) const
 {
     return _array_data.at(pos);
-}
-
-size_t json::array::size() const noexcept
-{
-    return _array_data.size();
 }
 
 void json::array::clear() noexcept

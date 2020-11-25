@@ -18,7 +18,7 @@ json::value::value(const json::value &rhs)
     : _type(rhs._type),
       _raw_data(rhs._raw_data),
       _lazy_data(rhs._lazy_data),
-      _array_ptr(rhs._array_ptr == nullptr ? nullptr : new array(*(rhs._array_ptr))),
+      _array_ptr(rhs._array_ptr == nullptr ? nullptr : new array(*rhs._array_ptr)),
       _object_ptr(rhs._object_ptr == nullptr ? nullptr : new object(*rhs._object_ptr))
 {
     ;
@@ -195,34 +195,20 @@ json::value::value(unique_object &&obj_ptr)
     ;
 }
 
-bool json::value::valid() const noexcept
-{
-    if (_type != value_type::Invalid)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
+// bool json::value::valid() const noexcept
+// {
+//     return _type != value_type::Invalid ? true : false;
+// }
 
-bool json::value::empty() const noexcept
-{
-    if (_type == value_type::Null && _raw_data.compare("null") == 0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
+// bool json::value::empty() const noexcept
+// {
+//     return (_type == value_type::Null && _raw_data.compare("null") == 0) ? true : false;
+// }
 
-json::value_type json::value::type() const noexcept
-{
-    return _type;
-}
+// json::value_type json::value::type() const noexcept
+// {
+//     return _type;
+// }
 
 const json::value &json::value::at(size_t pos) const
 {
@@ -242,7 +228,7 @@ const json::value &json::value::at(size_t pos) const
     throw exception("Wrong Type or data empty");
 }
 
-const json::value &json::value::at(const std::string key) const
+const json::value &json::value::at(const std::string & key) const
 {
     if (_type == value_type::Object && _object_ptr != nullptr)
     {
@@ -530,7 +516,7 @@ json::value &json::value::operator=(const value &rhs)
     _raw_data = rhs._raw_data;
     _lazy_data = rhs._lazy_data;
     // _lazy_mutex;
-    _array_ptr = rhs._array_ptr == nullptr ? nullptr : unique_array(new array(*(rhs._array_ptr)));
+    _array_ptr = rhs._array_ptr == nullptr ? nullptr : unique_array(new array(*rhs._array_ptr));
     _object_ptr = rhs._object_ptr == nullptr ? nullptr : unique_object(new object(*rhs._object_ptr));
 
     return *this;

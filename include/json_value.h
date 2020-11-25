@@ -73,11 +73,11 @@ namespace json
 
         ~value() = default;
 
-        bool valid() const noexcept;
-        bool empty() const noexcept;
-        value_type type() const noexcept;
+        bool valid() const noexcept { return _type != value_type::Invalid ? true : false; }
+        bool empty() const noexcept { return (_type == value_type::Null && _raw_data.compare("null") == 0) ? true : false; }
+        value_type type() const noexcept { return _type; }
         const value &at(size_t pos) const;
-        const value &at(const std::string key) const;
+        const value &at(const std::string& key) const;
 
         bool as_boolean() const;
         int as_integer() const;

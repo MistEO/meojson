@@ -26,9 +26,9 @@ namespace json
 
         ~array() noexcept = default;
 
-        bool empty() const noexcept;
+        bool empty() const noexcept { return _array_data.empty(); }
+        size_t size() const noexcept { return _array_data.size(); }
         const value &at(size_t pos) const;
-        size_t size() const noexcept;
         std::string to_string() const;
         std::string format(std::string shift_str = "    ", size_t basic_shift_count = 0) const;
 
