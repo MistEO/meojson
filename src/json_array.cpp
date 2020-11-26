@@ -17,6 +17,7 @@ json::array::array(raw_array &&arr) noexcept
 json::array::array(std::initializer_list<raw_array::value_type> init_list)
     : _array_data(init_list)
 {
+    ;
 }
 
 // bool json::array::empty() const noexcept

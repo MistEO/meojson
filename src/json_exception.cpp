@@ -3,6 +3,7 @@
 json::exception::exception(const std::string &msg)
     : m_msg(msg)
 {
+    ;
 }
 
 const char *json::exception::what() const noexcept
