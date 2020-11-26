@@ -4,16 +4,6 @@
 #include "json_parser.h"
 #include "json_exception.h"
 
-void json::object_deleter::operator()(json::object *p) const
-{
-    delete p;
-}
-
-void json::array_deleter::operator()(json::array *p) const
-{
-    delete p;
-}
-
 json::value::value(const json::value &rhs)
     : _type(rhs._type),
       _raw_data(rhs._raw_data),
@@ -228,7 +218,7 @@ const json::value &json::value::at(size_t pos) const
     throw exception("Wrong Type or data empty");
 }
 
-const json::value &json::value::at(const std::string & key) const
+const json::value &json::value::at(const std::string &key) const
 {
     if (_type == value_type::Object && _object_ptr != nullptr)
     {
@@ -654,6 +644,16 @@ void json::value::parse_once() const
 json::value json::value::invalid_value()
 {
     return value(value_type::Invalid, std::string());
+}
+
+void json::value::object_deleter::operator()(json::object *p) const
+{
+    delete p;
+}
+
+void json::value::array_deleter::operator()(json::array *p) const
+{
+    delete p;
 }
 
 std::ostream &operator<<(std::ostream &out, const json::value &val)

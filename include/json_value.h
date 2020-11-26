@@ -23,20 +23,6 @@ namespace json
     class object;
     class parser;
 
-    struct array_deleter final
-    {
-        constexpr array_deleter() noexcept = default;
-        void operator()(array *p) const;
-    };
-    struct object_deleter final
-    {
-        constexpr object_deleter() noexcept = default;
-        void operator()(object *p) const;
-    };
-
-    using unique_array = std::unique_ptr<array, array_deleter>;
-    using unique_object = std::unique_ptr<object, object_deleter>;
-
     class value
     {
         friend class parser;
@@ -77,7 +63,7 @@ namespace json
         bool empty() const noexcept { return (_type == value_type::Null && _raw_data.compare("null") == 0) ? true : false; }
         value_type type() const noexcept { return _type; }
         const value &at(size_t pos) const;
-        const value &at(const std::string& key) const;
+        const value &at(const std::string &key) const;
 
         bool as_boolean() const;
         int as_integer() const;
@@ -108,6 +94,20 @@ namespace json
         static value invalid_value();
 
     private:
+        struct array_deleter final
+        {
+            constexpr array_deleter() noexcept = default;
+            void operator()(array *p) const;
+        };
+        struct object_deleter final
+        {
+            constexpr object_deleter() noexcept = default;
+            void operator()(object *p) const;
+        };
+
+        using unique_array = std::unique_ptr<array, array_deleter>;
+        using unique_object = std::unique_ptr<object, object_deleter>;
+
         // for parser
         value(value_type type, std::string &&raw_data);
         value(unique_array &&arr_ptr);
