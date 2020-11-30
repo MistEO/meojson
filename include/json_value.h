@@ -27,8 +27,11 @@ namespace json
     {
         friend class parser;
 
+        using unique_array = std::unique_ptr<array>;
+        using unique_object = std::unique_ptr<object>;
+
     public:
-        value() = default;
+        value();
         value(const value &rhs);
         value(value &&rhs) noexcept;
 
@@ -57,7 +60,7 @@ namespace json
         // error: conversion from ‘<brace-enclosed initializer list>’ to ‘json::value’ is ambiguous
         // value(std::initializer_list<std::pair<std::string, value>> init_list); // for object
 
-        ~value() = default;
+        ~value();
 
         bool valid() const noexcept { return _type != value_type::Invalid ? true : false; }
         bool empty() const noexcept { return (_type == value_type::Null && _raw_data.compare("null") == 0) ? true : false; }
@@ -76,8 +79,8 @@ namespace json
         double as_double() const;
         long double as_long_double() const;
         std::string as_string() const;
-        array as_array();
-        object as_object();
+        array as_array() const;
+        object as_object() const;
 
         // return raw string
         std::string to_string() const;
@@ -94,33 +97,19 @@ namespace json
         static value invalid_value();
 
     private:
-        struct array_deleter final
-        {
-            constexpr array_deleter() noexcept = default;
-            void operator()(array *p) const;
-        };
-        struct object_deleter final
-        {
-            constexpr object_deleter() noexcept = default;
-            void operator()(object *p) const;
-        };
-
-        using unique_array = std::unique_ptr<array, array_deleter>;
-        using unique_object = std::unique_ptr<object, object_deleter>;
-
         // for parser
         value(value_type type, std::string &&raw_data);
-        value(unique_array &&arr_ptr);
-        value(unique_object &&obj_ptr);
+        // value(unique_array &&arr_ptr);
+        // value(unique_object &&obj_ptr);
 
-        void parse_once() const;
+        void parse_lazy_data() const;
 
         value_type _type = value_type::Null;
         std::string _raw_data = "null"; // If the value_type is Object or Array, the _raw_data will be a empty string.
         mutable std::string _lazy_data;
         mutable std::mutex _lazy_mutex;
-        mutable unique_array _array_ptr = nullptr;
-        mutable unique_object _object_ptr = nullptr;
+        mutable unique_array _array_ptr;
+        mutable unique_object _object_ptr;
     };
 
     std::ostream &operator<<(std::ostream &out, const value &val);
