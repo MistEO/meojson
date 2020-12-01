@@ -33,8 +33,11 @@
 
 # IDE files
 .vscode
+.vs
 
 # build files
 build/
 test/parse/rapidjson
 test/parse/rapidjson_build
+test/vsproj/meojson/**/Debug
+test/vsproj/meojson/**/Release
