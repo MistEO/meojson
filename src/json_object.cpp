@@ -9,7 +9,7 @@ json::object::object(const raw_object &raw_obj)
 }
 
 json::object::object(raw_object &&raw_obj)
-    : _object_data(std::forward<raw_object>(raw_obj))
+    : _object_data(std::move(raw_obj))
 {
     ;
 }
@@ -49,9 +49,7 @@ bool json::object::insert(const std::string &key, const json::value &value)
 
 bool json::object::insert(std::string &&key, json::value &&val)
 {
-    return _object_data.emplace(
-                           std::forward<std::string>(key),
-                           std::forward<json::value>(val))
+    return _object_data.emplace(std::move(key), std::move(val))
         .second;
 }
 
@@ -62,9 +60,7 @@ bool json::object::emplace(const std::string &key, const json::value &value)
 
 bool json::object::emplace(std::string &&key, json::value &&val)
 {
-    return _object_data.emplace(
-                           std::forward<std::string>(key),
-                           std::forward<json::value>(val))
+    return _object_data.emplace(std::move(key), std::move(val))
         .second;
 }
 
@@ -142,7 +138,7 @@ json::value &json::object::operator[](const std::string &key)
 
 json::value &json::object::operator[](std::string &&key)
 {
-    return _object_data[std::forward<std::string>(key)];
+    return _object_data[std::move(key)];
 }
 
 // const raw_object &json::object::raw_data() const

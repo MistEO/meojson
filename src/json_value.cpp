@@ -18,11 +18,11 @@ json::value::value(const json::value &rhs)
 }
 
 json::value::value(json::value &&rhs) noexcept
-    : _type(std::forward<value_type>(rhs._type)),
-      _raw_data(std::forward<std::string>(rhs._raw_data)),
-      _lazy_data(std::forward<std::string>(rhs._lazy_data)),
-      _array_ptr(std::forward<unique_array>(rhs._array_ptr)),
-      _object_ptr(std::forward<unique_object>(rhs._object_ptr))
+    : _type(std::move(rhs._type)),
+      _raw_data(std::move(rhs._raw_data)),
+      _lazy_data(std::move(rhs._lazy_data)),
+      _array_ptr(std::move(rhs._array_ptr)),
+      _object_ptr(std::move(rhs._object_ptr))
 {
     rhs._type = value_type::Invalid;
 }
@@ -113,7 +113,7 @@ json::value::value(const std::string &str)
 
 json::value::value(std::string &&str)
     : _type(value_type::String),
-      _raw_data(std::forward<std::string>(str))
+      _raw_data(std::move(str))
 {
     ;
 }
@@ -129,7 +129,7 @@ json::value::value(const array &arr)
 json::value::value(array &&arr)
     : _type(value_type::Array),
       _raw_data(std::string()),
-      _array_ptr(std::make_unique<array>(std::forward<array>(arr)))
+      _array_ptr(std::make_unique<array>(std::move(arr)))
 {
     ;
 }
@@ -145,7 +145,7 @@ json::value::value(const object &obj)
 json::value::value(object &&obj)
     : _type(value_type::Object),
       _raw_data(std::string()),
-      _object_ptr(std::make_unique<object>(std::forward<object>(obj)))
+      _object_ptr(std::make_unique<object>(std::move(obj)))
 {
     ;
 }
@@ -168,22 +168,22 @@ json::value::value(object &&obj)
 
 json::value::value(json::value_type type, std::string &&raw_data)
     : _type(type),
-      _raw_data((type == value_type::Array || type == value_type::Object) ? std::string() : std::forward<std::string>(raw_data)),
-      _lazy_data((type == value_type::Array || type == value_type::Object) ? std::forward<std::string>(raw_data) : std::string())
+      _raw_data((type == value_type::Array || type == value_type::Object) ? std::string() : std::move(raw_data)),
+      _lazy_data((type == value_type::Array || type == value_type::Object) ? std::move(raw_data) : std::string())
 {
     ;
 }
 
 // json::value::value(unique_array &&arr_ptr)
 //     : _type(value_type::Array),
-//       _array_ptr(std::forward<unique_array>(arr_ptr))
+//       _array_ptr(std::move(arr_ptr))
 // {
 //     ;
 // }
 
 // json::value::value(unique_object &&obj_ptr)
 //     : _type(value_type::Object),
-//       _object_ptr(std::forward<unique_object>(obj_ptr))
+//       _object_ptr(std::move(obj_ptr))
 // {
 //     ;
 // }
@@ -520,14 +520,14 @@ json::value &json::value::operator=(const value &rhs)
 
 json::value &json::value::operator=(value &&rhs) noexcept
 {
-    _type = std::forward<value_type>(rhs._type);
+    _type = std::move(rhs._type);
     rhs._type = value_type::Invalid;
 
-    _raw_data = std::forward<std::string>(rhs._raw_data);
-    _lazy_data = std::forward<std::string>(rhs._lazy_data);
+    _raw_data = std::move(rhs._raw_data);
+    _lazy_data = std::move(rhs._lazy_data);
     // _lazy_mutex;
-    _array_ptr = std::forward<unique_array>(rhs._array_ptr);
-    _object_ptr = std::forward<unique_object>(rhs._object_ptr);
+    _array_ptr = std::move(rhs._array_ptr);
+    _object_ptr = std::move(rhs._object_ptr);
 
     return *this;
 }
@@ -599,21 +599,21 @@ json::value &json::value::operator[](std::string &&key)
 {
     if (_type == value_type::Object && _object_ptr != nullptr)
     {
-        return (*_object_ptr)[std::forward<std::string>(key)];
+        return (*_object_ptr)[std::move(key)];
     }
 
     std::unique_lock<std::mutex> lazy_lock(_lazy_mutex);
     if (_type == value_type::Object && !_lazy_data.empty())
     {
         parse_lazy_data();
-        return (*_object_ptr)[std::forward<std::string>(key)];
+        return (*_object_ptr)[std::move(key)];
     }
     // Create a new value by operator[]
     else if (_type == value_type::Null)
     {
         _type = value_type::Object;
         _object_ptr = std::make_unique<object>();
-        return (*_object_ptr)[std::forward<std::string>(key)];
+        return (*_object_ptr)[std::move(key)];
     }
     lazy_lock.unlock();
 

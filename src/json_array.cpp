@@ -9,7 +9,7 @@ json::array::array(const raw_array &arr)
 }
 
 json::array::array(raw_array &&arr) noexcept
-    : _array_data(std::forward<raw_array>(arr))
+    : _array_data(std::move(arr))
 {
     ;
 }
@@ -47,8 +47,7 @@ void json::array::push_back(const json::value &val)
 
 void json::array::push_back(json::value &&val)
 {
-    _array_data.emplace_back(
-        std::forward<json::value>(val));
+    _array_data.emplace_back(std::move(val));
 }
 
 void json::array::emplace_back(const json::value &val)
@@ -58,8 +57,7 @@ void json::array::emplace_back(const json::value &val)
 
 void json::array::emplace_back(json::value &&val)
 {
-    _array_data.emplace_back(
-        std::forward<json::value>(val));
+    _array_data.emplace_back(std::move(val));
 }
 
 std::string json::array::to_string() const
