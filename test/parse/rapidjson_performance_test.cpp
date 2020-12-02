@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 
     long long total_time = e_time - b_time;
     long long avg_time = total_time / loop_times;
-    const double ns_to_s = 1000 * 1000 * 1000;
+    const double ns_to_s = 1000.0 * 1000.0 * 1000.0;
     std::cout << "RapidJson parse finished\n"
               << "total time:\t" << total_time << " ns,\tabout\t" << total_time / ns_to_s << " s\n"
               << "avg time:\t" << avg_time << " ns,\tabout\t" << avg_time / ns_to_s << " s" << std::endl;
