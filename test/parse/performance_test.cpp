@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
     std::ifstream ifs(filename);
     std::stringstream ibuf;
     ibuf << ifs.rdbuf();
+    ifs.close();
     std::string content(ibuf.str());
     //std::cout << content << std::endl;
 
