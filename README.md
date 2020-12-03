@@ -10,9 +10,7 @@
 
     ```bash
     # 测试方法
-    cd test/parse/
-    chmod a+x performance_test.sh
-    ./performance_test.sh
+    sh test/parse/performance_test.sh
     ```
 
     ![image](test/parse/performance_result.png)
@@ -45,9 +43,7 @@
 
     ```bash
     # 测试方法
-    cd test/parse/
-    chmod a+x conformance_test.sh
-    ./conformance_test.sh
+    sh test/parse/conformance_test.sh
     ```
 
     测试数据来自 <https://github.com/miloyip/nativejson-benchmark>
@@ -151,9 +147,7 @@ int main()
 
     ```bash
     # How to test
-    cd test/parse/
-    chmod a+x performance_test.sh
-    ./performance_test.sh
+    sh test/parse/performance_test.sh
     ```
 
     ![image](test/parse/performance_result.png)
@@ -186,9 +180,7 @@ int main()
 
     ```bash
     # How to test
-    cd test/parse/
-    chmod a+x conformance_test.sh
-    ./conformance_test.sh
+    sh test/parse/conformance_test.sh
     ```
 
     Test data from <https://github.com/miloyip/nativejson-benchmark>
