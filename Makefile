@@ -18,13 +18,17 @@ STATIC_LIB := $(BUILD_DIR)/libmeojson.a
 SAMPLE_OBJ := $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(notdir $(SAMPLE_FILE)))
 SAMPLE_OUT := $(patsubst %.o, $(BUILD_DIR)/%.out, $(notdir $(SAMPLE_OBJ)))
 
-static: $(OBJS)
-	$(AR) $(ARFLAGS) $(STATIC_LIB) $(OBJS)
+static: $(STATIC_LIB)
 	$(CXX) -Wall $(OPT) -std=c++17 $(CXXFLAGS) -o $(SAMPLE_OUT) $(SAMPLE_FILE) $(STATIC_LIB) -I$(INC) $(LIBS)
 
-shared:
-	$(CXX) -Wall $(OPT) -std=c++17 $(CXXFLAGS) -o $(SHARED_LIB) $(SRC_FILES) -I$(INC) $(LIBS) -fPIC -shared
+$(STATIC_LIB): $(OBJS)
+	$(AR) $(ARFLAGS) $(STATIC_LIB) $(OBJS)
+
+shared: $(SHARED_LIB)
 	$(CXX) -Wall $(OPT) -std=c++17 $(CXXFLAGS) -o $(SAMPLE_OUT) $(SAMPLE_FILE) -I$(INC) $(LIBS) -L$(BUILD_DIR) -lmeojson
+
+$(SHARED_LIB):
+	$(CXX) -Wall $(OPT) -std=c++17 $(CXXFLAGS) -o $(SHARED_LIB) $(SRC_FILES) -I$(INC) $(LIBS) -fPIC -shared
 
 debug: $(OBJS) $(SAMPLE_OBJ)
 	$(CXX) -Wall $(OPT) -std=c++17 $(CXXFLAGS) -o $(SAMPLE_OUT) $(OBJS) $(SAMPLE_OBJ) -I$(INC) $(LIBS)
@@ -38,4 +42,4 @@ $(SAMPLE_OBJ): $(SAMPLE_FILE) $(INC)/*.h
 .PHONY: clean
 
 clean:
-	rm -f $(OBJS) $(SHARED_LIB) $(STATIC_LIB) $(SAMPLE_OBJ) $(SAMPLE_OUT) 
+	rm -f $(OBJS) $(SHARED_LIB) $(STATIC_LIB) $(SAMPLE_OBJ) $(SAMPLE_OUT) $(BUILD_DIR)/*.out $(BUILD_DIR)/*.o

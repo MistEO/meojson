@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 CurDir=`pwd`
 ScriptPath=`realpath $0`
 ScriptDir=`dirname $ScriptPath`
@@ -7,7 +7,7 @@ BuildDir=$ProjectDir/build
 
 echo "\033[32m------------ make meojson conformance test ------------\033[0m"
 make clean -C $ProjectDir
-make debug "SAMPLE_FILE=test/parse/conformance_test.cpp" -C $ProjectDir
+make static "SAMPLE_FILE=test/parse/conformance_test.cpp" -C $ProjectDir
 
 NativejsonDir=$BuildDir/nativejson-benchmark
 if [ ! -d $NativejsonDir ];then

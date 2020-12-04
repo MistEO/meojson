@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 CurDir=`pwd`
 ScriptPath=`realpath $0`
 ScriptDir=`dirname $ScriptPath`
@@ -7,7 +7,7 @@ BuildDir=$ProjectDir/build
 
 echo "\033[32m------------ make meojson performance test ------------\033[0m"
 make clean -C $ProjectDir
-make debug "SAMPLE_FILE=test/parse/performance_test.cpp" -C $ProjectDir
+make static "SAMPLE_FILE=test/parse/performance_test.cpp" -C $ProjectDir
 
 RapidSrcDir=$ScriptDir/rapidjson
 if [ ! -d $RapidSrcDir ];then
@@ -27,7 +27,7 @@ cmake $ScriptDir -B $RapidBuildDir
 make -C $RapidBuildDir
 
 echo "\033[32m------------ generate a random json file ------------\033[0m"
-make debug -j5 "SAMPLE_FILE=test/generate/generate_test.cpp" -C $ProjectDir
+make static -j5 "SAMPLE_FILE=test/generate/generate_test.cpp" -C $ProjectDir
 RandJsonPath=$BuildDir/rand.json
 $BuildDir/generate_test.out 2 256 > $RandJsonPath
 
