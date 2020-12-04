@@ -54,17 +54,23 @@
 
 - `meojson`仅依赖于STL，但需要编译器支持C++17标准
 
-### 安装
+### 使用
 
-1. 构建动态库并安装
+1. 构建静态库或共享库
 
     ```bash
-    make release
-    sudo make install
+    make static
+    # or
+    make shared
     ```
 
-2. 在您的项目，添加`-lmeojson`编译选项
-3. 集成代码并使用
+2. 在您的代码中添加头文件包含
+
+    ```c++
+    #include "json.h"
+    ```
+
+3. 尽情使用吧！
 
 ### 示例
 
@@ -191,17 +197,23 @@ int main()
 
 - `meojson` only depends on STL, but requires the compiler to support the C++17 standard
 
-### Installation
+### Usage
 
-1. Build dynamic library and install
+1. Build static library or shared library
 
     ```bash
-    make release
-    sudo make install
+    make static
+    # or
+    make shared
     ```
 
-2. Add `-lmeojson` compilation option to your project
-3. Integrate code and enjoy it!
+2. Add header file include in your code
+
+    ```c++
+    #inclued "json.h"
+    ```
+
+3. Enjoy it!
 
 ### Sample
 
