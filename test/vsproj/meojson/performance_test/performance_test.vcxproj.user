@@ -3,6 +3,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerCommand>$(TargetPath)</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>$(TargetDir)\test-json\twitter.json 1</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>$(TargetDir)\test-json\canada.json 1</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>

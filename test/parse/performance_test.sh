@@ -1,35 +1,38 @@
 #!/bin/bash
+CurDir=`pwd`
+ScriptPath=`realpath $0`
+ScriptDir=`dirname $ScriptPath`
+ProjectDir=`realpath $ScriptDir/../../`
+BuildDir=$ProjectDir/build
 
-echo -e "\033[32m------------ make meojson performance test ------------\033[0m"
-make clean -C ../../
-make debug "SAMPLE_FILE=test/parse/performance_test.cpp" -C ../../
+echo "\033[32m------------ make meojson performance test ------------\033[0m"
+make clean -C $ProjectDir
+make debug "SAMPLE_FILE=test/parse/performance_test.cpp" -C $ProjectDir
 
-if [ ! -d "rapidjson" ];then
-    echo -e "\033[32m------------ git clone rapidjson ------------\033[0m"
-    git clone https://github.com/Tencent/rapidjson.git
-else
-    echo -e "\033[32m------------ git pull rapidjson ------------\033[0m"
-    cd rapidjson
-    git pull
-    cd ..
+RapidSrcDir=$ScriptDir/rapidjson
+if [ ! -d $RapidSrcDir ];then
+    echo "\033[32m------------ git clone rapidjson ------------\033[0m"
+    git clone https://github.com/Tencent/rapidjson.git $RapidSrcDir
+# else
+#     echo "\033[32m------------ git pull rapidjson ------------\033[0m"
+#     cd $RapidSrcDir
+#     git pull
+#     cd $CurDir
 fi
-echo -e "\033[32m------------ make rapidjson performance test ------------\033[0m"
-mkdir rapidjson_build
-cd rapidjson_build
-cmake ..
-make
-cd ..
 
-echo -e "\033[32m------------ copy rapidjson_performance_test.out to meojson build directory ------------\033[0m"
-cp rapidjson_build/rapidjson_performance_test.out ../../build
+echo "\033[32m------------ make rapidjson performance test ------------\033[0m"
+RapidBuildDir=$BuildDir/rapidjson_build
+mkdir -p $RapidBuildDir
+cmake $ScriptDir -B $RapidBuildDir
+make -C $RapidBuildDir
 
-echo -e "\033[32m------------ generate a random json file ------------\033[0m"
-make debug -j5 "SAMPLE_FILE=test/generate/generate_test.cpp" -C ../../
-cd ../../build
-./generate_test.out 2 256 > rand.json
+echo "\033[32m------------ generate a random json file ------------\033[0m"
+make debug -j5 "SAMPLE_FILE=test/generate/generate_test.cpp" -C $ProjectDir
+RandJsonPath=$BuildDir/rand.json
+$BuildDir/generate_test.out 2 256 > $RandJsonPath
 
-echo -e "\033[32m\n------------ all ready, start testing ------------\n\033[0m"
-echo -e "\033[32m------------ testing meojson performance------------\033[0m"
-./performance_test.out rand.json 100
-echo -e "\033[32m------------ testing rapidjson performance------------\033[0m"
-./rapidjson_performance_test.out rand.json 100
+echo "\033[32m\n------------ all ready, start testing ------------\n\033[0m"
+echo "\033[32m------------ testing meojson performance------------\033[0m"
+$BuildDir/performance_test.out $RandJsonPath 100
+echo "\033[32m------------ testing rapidjson performance------------\033[0m"
+$RapidBuildDir/rapidjson_performance_test.out $RandJsonPath 100
