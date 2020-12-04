@@ -104,6 +104,9 @@ namespace json
               _raw_data((type == value_type::Array || type == value_type::Object) ? std::string() : std::forward<T>(raw_data)),
               _lazy_data((type == value_type::Array || type == value_type::Object) ? std::forward<T>(raw_data) : std::string())
         {
+            static_assert(
+                std::is_constructible<std::string, T>::value,
+                "Parameter n can't be used to construct a std::string");
         }
 
         void parse_lazy_data() const;
