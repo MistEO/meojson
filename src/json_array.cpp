@@ -20,16 +20,6 @@ json::array::array(std::initializer_list<raw_array::value_type> init_list)
     ;
 }
 
-// bool json::array::empty() const noexcept
-// {
-//     return _array_data.empty();
-// }
-
-// size_t json::array::size() const noexcept
-// {
-//     return _array_data.size();
-// }
-
 const json::value &json::array::at(size_t pos) const
 {
     return _array_data.at(pos);
@@ -38,26 +28,6 @@ const json::value &json::array::at(size_t pos) const
 void json::array::clear() noexcept
 {
     _array_data.clear();
-}
-
-void json::array::push_back(const json::value &val)
-{
-    _array_data.emplace_back(val);
-}
-
-void json::array::push_back(json::value &&val)
-{
-    _array_data.emplace_back(std::move(val));
-}
-
-void json::array::emplace_back(const json::value &val)
-{
-    _array_data.emplace_back(val);
-}
-
-void json::array::emplace_back(json::value &&val)
-{
-    _array_data.emplace_back(std::move(val));
 }
 
 std::string json::array::to_string() const

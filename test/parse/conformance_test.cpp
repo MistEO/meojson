@@ -32,12 +32,12 @@ int main(int argc, char *argv[])
         if (value_opt)
         {
             std::cout << "\tsuccess😁" << std::endl;
-            success_filenames.push_back(filename);
+            success_filenames.emplace_back(filename);
         }
         else
         {
             std::cout << "\tfailed🥵" << std::endl;
-            failed_filenames.push_back(filename);
+            failed_filenames.emplace_back(filename);
         }
     }
 

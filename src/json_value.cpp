@@ -166,13 +166,13 @@ json::value::value(object &&obj)
 //     ;
 // }
 
-json::value::value(json::value_type type, std::string &&raw_data)
-    : _type(type),
-      _raw_data((type == value_type::Array || type == value_type::Object) ? std::string() : std::move(raw_data)),
-      _lazy_data((type == value_type::Array || type == value_type::Object) ? std::move(raw_data) : std::string())
-{
-    ;
-}
+// json::value::value(json::value_type type, std::string &&raw_data)
+//     : _type(type),
+//       _raw_data((type == value_type::Array || type == value_type::Object) ? std::string() : std::move(raw_data)),
+//       _lazy_data((type == value_type::Array || type == value_type::Object) ? std::move(raw_data) : std::string())
+// {
+//     ;
+// }
 
 // json::value::value(unique_array &&arr_ptr)
 //     : _type(value_type::Array),

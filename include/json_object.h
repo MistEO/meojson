@@ -30,11 +30,13 @@ namespace json
         std::string to_string() const;
         std::string format(std::string shift_str = "    ", size_t basic_shift_count = 0) const;
 
+        template <typename... Args>
+        decltype(auto) emplace(Args &&... args)
+        {
+            return _object_data.emplace(std::forward<Args>(args)...);
+        }
+
         void clear() noexcept;
-        bool insert(const std::string &key, const value &val);
-        bool insert(std::string &&key, value &&val);
-        bool emplace(const std::string &key, const value &val);
-        bool emplace(std::string &&key, value &&val);
         bool earse(const std::string &key);
 
         iterator begin() noexcept;

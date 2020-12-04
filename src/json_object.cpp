@@ -18,19 +18,9 @@ json::object::object(std::initializer_list<raw_object::value_type> init_list)
 {
     for (auto &&[key, val] : init_list)
     {
-        insert(key, val);
+        emplace(key, val);
     }
 }
-
-// bool json::object::empty() const noexcept
-// {
-//     return _object_data.empty();
-// }
-
-// size_t json::object::size() const noexcept
-// {
-//     return _object_data.size();
-// }
 
 const json::value &json::object::at(const std::string &key) const
 {
@@ -40,28 +30,6 @@ const json::value &json::object::at(const std::string &key) const
 void json::object::clear() noexcept
 {
     _object_data.clear();
-}
-
-bool json::object::insert(const std::string &key, const json::value &value)
-{
-    return _object_data.emplace(key, value).second;
-}
-
-bool json::object::insert(std::string &&key, json::value &&val)
-{
-    return _object_data.emplace(std::move(key), std::move(val))
-        .second;
-}
-
-bool json::object::emplace(const std::string &key, const json::value &value)
-{
-    return _object_data.emplace(key, value).second;
-}
-
-bool json::object::emplace(std::string &&key, json::value &&val)
-{
-    return _object_data.emplace(std::move(key), std::move(val))
-        .second;
 }
 
 bool json::object::earse(const std::string &key)

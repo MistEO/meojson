@@ -98,9 +98,13 @@ namespace json
 
     private:
         // for parser
-        value(value_type type, std::string &&raw_data);
-        // value(unique_array &&arr_ptr);
-        // value(unique_object &&obj_ptr);
+        template <typename T>
+        value(value_type type, T &&raw_data)
+            : _type(type),
+              _raw_data((type == value_type::Array || type == value_type::Object) ? std::string() : std::forward<T>(raw_data)),
+              _lazy_data((type == value_type::Array || type == value_type::Object) ? std::forward<T>(raw_data) : std::string())
+        {
+        }
 
         void parse_lazy_data() const;
 

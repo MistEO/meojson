@@ -67,7 +67,7 @@ json::object rand_object(int depth)
     {
         std::string key = rand_string(max_key_length);
         json::value value = rand_value(depth);
-        obj.insert(std::move(key), std::move(value));
+        obj.emplace(std::move(key), std::move(value));
     }
     return obj;
 }
@@ -83,7 +83,7 @@ json::array rand_array(int depth)
     for (int i = 0; i != times; ++i)
     {
         json::value value = rand_value(depth);
-        arr.push_back(std::move(value));
+        arr.emplace_back(std::move(value));
     }
     return arr;
 }

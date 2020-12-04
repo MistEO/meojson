@@ -32,11 +32,13 @@ namespace json
         std::string to_string() const;
         std::string format(std::string shift_str = "    ", size_t basic_shift_count = 0) const;
 
+        template <typename... Args>
+        decltype(auto) emplace_back(Args &&... args)
+        {
+            return _array_data.emplace_back(std::forward<Args>(args)...);
+        }
+
         void clear() noexcept;
-        void push_back(const value &val);
-        void push_back(value &&val);
-        void emplace_back(const value &val);
-        void emplace_back(value &&val);
         // void earse(size_t pos);
 
         iterator begin() noexcept;
