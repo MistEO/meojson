@@ -107,6 +107,16 @@ namespace json
                 "Parameter n can't be used to construct a std::string");
         }
 
+        template <typename T>
+        std::unique_ptr<T> copy_unique_ptr(const std::unique_ptr<T> &t) const
+        {
+            return std::make_unique<T>(*t);
+        }
+        std::nullptr_t copy_unique_ptr(std::nullptr_t) const noexcept
+        {
+            return nullptr;
+        }
+
         value_type _type = value_type::Null;
         std::string _raw_data = "null"; // If the value_type is Object or Array, the _raw_data will be a empty string.
         mutable unique_array _array_ptr;

@@ -12,8 +12,8 @@ json::value::value() = default;
 json::value::value(const json::value &rhs)
     : _type(rhs._type),
       _raw_data(rhs._raw_data),
-      _array_ptr(rhs._array_ptr == nullptr ? nullptr : std::make_unique<array>(*rhs._array_ptr)),
-      _object_ptr(rhs._object_ptr == nullptr ? nullptr : std::make_unique<object>(*rhs._object_ptr))
+      _array_ptr(copy_unique_ptr(rhs._array_ptr)),
+      _object_ptr(copy_unique_ptr(rhs._object_ptr))
 {
     ;
 }
@@ -371,8 +371,8 @@ json::value &json::value::operator=(const value &rhs)
 {
     _type = rhs._type;
     _raw_data = rhs._raw_data;
-    _array_ptr = rhs._array_ptr == nullptr ? nullptr : std::make_unique<array>(*rhs._array_ptr);
-    _object_ptr = rhs._object_ptr == nullptr ? nullptr : std::make_unique<object>(*rhs._object_ptr);
+    _array_ptr = copy_unique_ptr(rhs._array_ptr);
+    _object_ptr = copy_unique_ptr(rhs._object_ptr);
 
     return *this;
 }
