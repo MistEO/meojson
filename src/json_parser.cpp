@@ -84,9 +84,9 @@ json::value json::parser::parse_null(
 {
     static const std::string null_string = "null";
 
-    for (auto &&iter : null_string)
+    for (auto &&ch : null_string)
     {
-        if (cur != content.end() && *cur == iter)
+        if (*cur == ch)
         {
             ++cur;
         }
@@ -108,9 +108,9 @@ json::value json::parser::parse_boolean(
     switch (*cur)
     {
     case 't':
-        for (auto &&iter : true_string)
+        for (auto &&ch : true_string)
         {
-            if (cur != content.end() && *cur == iter)
+            if (*cur == ch)
             {
                 ++cur;
             }
@@ -119,11 +119,11 @@ json::value json::parser::parse_boolean(
                 return value::invalid_value();
             }
         }
-        return value(true);
+        return true;
     case 'f':
-        for (auto &&iter : false_string)
+        for (auto &&ch : false_string)
         {
-            if (cur != content.end() && *cur == iter)
+            if (*cur == ch)
             {
                 ++cur;
             }
@@ -132,7 +132,7 @@ json::value json::parser::parse_boolean(
                 return value::invalid_value();
             }
         }
-        return value(false);
+        return false;
     default:
         return value::invalid_value();
     }
@@ -146,10 +146,14 @@ json::value json::parser::parse_number(
     {
         ++cur;
     }
-    if (cur == content.cend() ||
-        // Numbers cannot have leading zeroes
-        (*cur == '0' && cur + 1 != content.cend() && isdigit(*(cur + 1))) ||
-        !skip_digit(content, cur))
+
+    // Numbers cannot have leading zeroes
+    if (*cur == '0' && isdigit(*(cur + 1)))
+    {
+        return value::invalid_value();
+    }
+
+    if (!skip_digit(content, cur))
     {
         return value::invalid_value();
     }
@@ -166,10 +170,6 @@ json::value json::parser::parse_number(
     if (*cur == 'e' || *cur == 'E')
     {
         ++cur;
-        if (cur == content.cend())
-        {
-            return value::invalid_value();
-        }
         if (*cur == '+' || *cur == '-')
         {
             ++cur;
@@ -215,7 +215,7 @@ json::value json::parser::parse_array(
     {
         ++cur;
         // empty array
-        return value(array());
+        return array();
     }
 
     array result;
@@ -232,7 +232,7 @@ json::value json::parser::parse_array(
         {
             return value::invalid_value();
         }
-            
+
         result.emplace_back(std::move(val));
 
         if (*cur == ',')
@@ -253,7 +253,7 @@ json::value json::parser::parse_array(
     {
         return value::invalid_value();
     }
-    
+
     return result;
 }
 
@@ -277,7 +277,7 @@ json::value json::parser::parse_object(
     {
         ++cur;
         // empty object
-        return value(object());
+        return object();
     }
 
     object result;
@@ -352,24 +352,16 @@ std::optional<std::string> json::parser::parse_stdstring(
     bool is_string_end = false;
     while (!is_string_end)
     {
-        if (cur == content.cend())
-        {
-            return std::nullopt;
-        }
-
         switch (*cur)
         {
         case '\t':
         case '\r':
         case '\n':
+        case '\0': // std::string::end();
             return std::nullopt;
         case '\\':
         {
             ++cur;
-            if (cur == content.cend())
-            {
-                return std::nullopt;
-            }
             switch (*cur)
             {
             case '"':
@@ -383,6 +375,7 @@ std::optional<std::string> json::parser::parse_stdstring(
             case 'u':
                 ++cur;
                 break;
+            case '\0':
             default:
                 // Illegal backslash escape
                 return std::nullopt;
@@ -405,7 +398,7 @@ std::optional<std::string> json::parser::parse_stdstring(
     {
         return std::nullopt;
     }
-    
+
     return std::string(first, last);
 }
 
@@ -422,7 +415,7 @@ bool json::parser::skip_whitespace(
         case '\n':
             ++cur;
             break;
-        case '\0': // string::end()
+        case '\0': // std::string::end()
             return false;
         default:
             return true;
@@ -434,7 +427,7 @@ bool json::parser::skip_digit(
     const std::string &content, std::string::const_iterator &cur) noexcept
 {
     // At least one digit
-    if (cur != content.cend() && isdigit(*cur))
+    if (isdigit(*cur))
     {
         ++cur;
     }
@@ -443,7 +436,7 @@ bool json::parser::skip_digit(
         return false;
     }
 
-    while (cur != content.cend() && isdigit(*cur))
+    while (isdigit(*cur))
     {
         ++cur;
     }
