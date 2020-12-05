@@ -98,14 +98,14 @@ namespace json
 
     private:
         // for parser
-        template <typename T>
-        value(value_type type, T &&raw_data)
+        template <typename... Args>
+        value(value_type type, Args &&... args)
             : _type(type),
-              _raw_data((type == value_type::Array || type == value_type::Object) ? std::string() : std::forward<T>(raw_data)),
-              _lazy_data((type == value_type::Array || type == value_type::Object) ? std::forward<T>(raw_data) : std::string())
+              _raw_data(std::forward<Args>(args)...) ,
+              _lazy_data(std::forward<Args>(args)...)
         {
             static_assert(
-                std::is_constructible<std::string, T>::value,
+                std::is_constructible<std::string, Args...>::value,
                 "Parameter n can't be used to construct a std::string");
         }
 

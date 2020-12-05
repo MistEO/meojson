@@ -150,59 +150,6 @@ json::value::value(object &&obj)
     ;
 }
 
-// json::value::value(std::initializer_list<value> init_list)
-//     : _type(value_type::Array),
-//       _raw_data(std::string()),
-//       _array_ptr(std::make_unique<array>(init_list))
-// {
-//     ;
-// }
-
-// json::value::value(std::initializer_list<std::pair<std::string, value>> init_list)
-//     : _type(value_type::Object),
-//       _raw_data(std::string()),
-//       _object_ptr(std::make_unique<object>(init_list))
-// {
-//     ;
-// }
-
-// json::value::value(json::value_type type, std::string &&raw_data)
-//     : _type(type),
-//       _raw_data((type == value_type::Array || type == value_type::Object) ? std::string() : std::move(raw_data)),
-//       _lazy_data((type == value_type::Array || type == value_type::Object) ? std::move(raw_data) : std::string())
-// {
-//     ;
-// }
-
-// json::value::value(unique_array &&arr_ptr)
-//     : _type(value_type::Array),
-//       _array_ptr(std::move(arr_ptr))
-// {
-//     ;
-// }
-
-// json::value::value(unique_object &&obj_ptr)
-//     : _type(value_type::Object),
-//       _object_ptr(std::move(obj_ptr))
-// {
-//     ;
-// }
-
-// bool json::value::valid() const noexcept
-// {
-//     return _type != value_type::Invalid ? true : false;
-// }
-
-// bool json::value::empty() const noexcept
-// {
-//     return (_type == value_type::Null && _raw_data.compare("null") == 0) ? true : false;
-// }
-
-// json::value_type json::value::type() const noexcept
-// {
-//     return _type;
-// }
-
 // for Pimpl
 json::value::~value() = default;
 

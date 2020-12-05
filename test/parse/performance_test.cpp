@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 #ifdef _MSC_VER
         json::parser::parse(content);
 #else
-        val = json::parser::parse(content).value();
+        val = json::parser::parse(content, SIZE_MAX).value();
 #endif // _MSC_VER
     }
     auto e_time = get_time();

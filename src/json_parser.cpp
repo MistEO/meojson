@@ -148,7 +148,7 @@ json::value json::parser::parse_number(
     }
     if (cur == content.cend() ||
         // Numbers cannot have leading zeroes
-        (*cur == '0' && cur + 1 != content.cend() && *(cur + 1) >= '0' && *(cur + 1) <= '9') ||
+        (*cur == '0' && cur + 1 != content.cend() && isdigit(*(cur + 1))) ||
         !skip_digit(content, cur))
     {
         return value::invalid_value();
@@ -186,7 +186,7 @@ json::value json::parser::parse_number(
     }
     else
     {
-        return value(value_type::Number, std::string(first, cur));
+        return value(value_type::Number, first, cur);
     }
 }
 
@@ -227,7 +227,7 @@ json::value json::parser::parse_array(
         return value(array());
     }
 
-    array::raw_array result;
+    array result;
     while (true)
     {
         if (!skip_whitespace(content, cur))
@@ -267,11 +267,11 @@ json::value json::parser::parse_array(
     }
     if (lazy_depth > 0)
     {
-        return value(std::move(result));
+        return result;
     }
     else
     {
-        return value(value_type::Array, std::string(first, cur));
+        return value(value_type::Array, first, cur);
     }
 }
 
@@ -300,7 +300,7 @@ json::value json::parser::parse_object(
         return value(object());
     }
 
-    object::raw_object result;
+    object result;
     while (true)
     {
         if (!skip_whitespace(content, cur))
@@ -354,11 +354,11 @@ json::value json::parser::parse_object(
     }
     if (lazy_depth > 0)
     {
-        return value(std::move(result));
+        return result;
     }
     else
     {
-        return value(value_type::Object, std::string(first, cur));
+        return value(value_type::Object, first, cur);
     }
 }
 
@@ -467,7 +467,7 @@ bool json::parser::skip_digit(
     const std::string &content, std::string::const_iterator &cur) noexcept
 {
     // At least one digit
-    if (cur != content.cend() && *cur >= '0' && *cur <= '9')
+    if (cur != content.cend() && isdigit(*cur))
     {
         ++cur;
     }
@@ -476,7 +476,7 @@ bool json::parser::skip_digit(
         return false;
     }
 
-    while (cur != content.cend() && *cur >= '0' && *cur <= '9')
+    while (cur != content.cend() && isdigit(*cur))
     {
         ++cur;
     }

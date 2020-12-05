@@ -35,6 +35,9 @@ namespace json
         template <typename... Args>
         decltype(auto) emplace_back(Args &&... args)
         {
+            static_assert(
+                std::is_constructible<raw_array::value_type, Args...>::value,
+                "Parameter n can't be used to construct a raw_array::value_type");
             return _array_data.emplace_back(std::forward<Args>(args)...);
         }
 
