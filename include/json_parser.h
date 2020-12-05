@@ -16,21 +16,21 @@ namespace json
         parser() = delete;
         ~parser() noexcept = default;
 
-        static std::optional<value> parse(const std::string &content, size_t lazy_depth = 1);
+        static std::optional<value> parse(const std::string &content);
 
     private:
-        static value parse_value(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth);
+        static value parse_value(const std::string &content, std::string::const_iterator &cur);
 
         static value parse_null(const std::string &content, std::string::const_iterator &cur);
         static value parse_boolean(const std::string &content, std::string::const_iterator &cur);
-        static value parse_number(const std::string &content, std::string::const_iterator &cur, bool need_return);
+        static value parse_number(const std::string &content, std::string::const_iterator &cur);
         // parse and return a json::value whose type is value_type::String
-        static value parse_string(const std::string &content, std::string::const_iterator &cur, bool need_return);
-        static value parse_array(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth);
-        static value parse_object(const std::string &content, std::string::const_iterator &cur, size_t lazy_depth);
+        static value parse_string(const std::string &content, std::string::const_iterator &cur);
+        static value parse_array(const std::string &content, std::string::const_iterator &cur);
+        static value parse_object(const std::string &content, std::string::const_iterator &cur);
 
         // parse and return a std::string
-        static std::optional<std::string> parse_stdstring(const std::string &content, std::string::const_iterator &cur, bool need_return);
+        static std::optional<std::string> parse_stdstring(const std::string &content, std::string::const_iterator &cur);
 
         static bool skip_whitespace(const std::string &content, std::string::const_iterator &cur) noexcept;
         static bool skip_digit(const std::string &content, std::string::const_iterator &cur) noexcept;

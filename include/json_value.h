@@ -3,7 +3,6 @@
 #include <string>
 #include <ostream>
 #include <memory>
-#include <mutex>
 
 namespace json
 {
@@ -101,20 +100,15 @@ namespace json
         template <typename... Args>
         value(value_type type, Args &&... args)
             : _type(type),
-              _raw_data(std::forward<Args>(args)...) ,
-              _lazy_data(std::forward<Args>(args)...)
+              _raw_data(std::forward<Args>(args)...)
         {
             static_assert(
                 std::is_constructible<std::string, Args...>::value,
                 "Parameter n can't be used to construct a std::string");
         }
 
-        void parse_lazy_data() const;
-
         value_type _type = value_type::Null;
         std::string _raw_data = "null"; // If the value_type is Object or Array, the _raw_data will be a empty string.
-        mutable std::string _lazy_data;
-        mutable std::mutex _lazy_mutex;
         mutable unique_array _array_ptr;
         mutable unique_object _object_ptr;
     };

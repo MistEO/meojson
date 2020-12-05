@@ -10,7 +10,7 @@
 ***/
 
 std::optional<json::value> json::parser::parse(
-    const std::string &content, size_t lazy_depth)
+    const std::string &content)
 {
     auto cur = content.cbegin();
 
@@ -23,10 +23,10 @@ std::optional<json::value> json::parser::parse(
     switch (*cur)
     {
     case '[':
-        result_value = parse_array(content, cur, lazy_depth);
+        result_value = parse_array(content, cur);
         break;
     case '{':
-        result_value = parse_object(content, cur, lazy_depth);
+        result_value = parse_object(content, cur);
         break;
     default: // A JSON payload should be an object or array
         return std::nullopt;
@@ -47,7 +47,7 @@ std::optional<json::value> json::parser::parse(
 }
 
 json::value json::parser::parse_value(
-    const std::string &content, std::string::const_iterator &cur, size_t lazy_depth)
+    const std::string &content, std::string::const_iterator &cur)
 {
     switch (*cur)
     {
@@ -67,13 +67,13 @@ json::value json::parser::parse_value(
     case '7':
     case '8':
     case '9':
-        return parse_number(content, cur, lazy_depth);
+        return parse_number(content, cur);
     case '"':
-        return parse_string(content, cur, lazy_depth);
+        return parse_string(content, cur);
     case '[':
-        return parse_array(content, cur, lazy_depth - 1);
+        return parse_array(content, cur);
     case '{':
-        return parse_object(content, cur, lazy_depth - 1);
+        return parse_object(content, cur);
     default:
         return value::invalid_value();
     }
@@ -139,7 +139,7 @@ json::value json::parser::parse_boolean(
 }
 
 json::value json::parser::parse_number(
-    const std::string &content, std::string::const_iterator &cur, bool need_return)
+    const std::string &content, std::string::const_iterator &cur)
 {
     const auto first = cur;
     if (*cur == '-')
@@ -180,33 +180,24 @@ json::value json::parser::parse_number(
         }
     }
 
-    if (!need_return)
-    {
-        return value();
-    }
-    else
-    {
-        return value(value_type::Number, first, cur);
-    }
+    return value(value_type::Number, first, cur);
 }
 
 json::value json::parser::parse_string(
-    const std::string &content, std::string::const_iterator &cur, bool need_return)
+    const std::string &content, std::string::const_iterator &cur)
 {
-    auto string_opt = parse_stdstring(content, cur, need_return);
+    auto string_opt = parse_stdstring(content, cur);
     if (!string_opt)
     {
         return value::invalid_value();
     }
 
-    return value(std::move(string_opt).value());
+    return std::move(string_opt).value();
 }
 
 json::value json::parser::parse_array(
-    const std::string &content, std::string::const_iterator &cur, size_t lazy_depth)
+    const std::string &content, std::string::const_iterator &cur)
 {
-    const auto first = cur;
-
     if (*cur == '[')
     {
         ++cur;
@@ -235,17 +226,14 @@ json::value json::parser::parse_array(
             return value::invalid_value();
         }
 
-        auto val = parse_value(content, cur, lazy_depth);
+        auto val = parse_value(content, cur);
 
         if (!val.valid() || !skip_whitespace(content, cur))
         {
             return value::invalid_value();
         }
-
-        if (lazy_depth > 0)
-        {
-            result.emplace_back(std::move(val));
-        }
+            
+        result.emplace_back(std::move(val));
 
         if (*cur == ',')
         {
@@ -265,21 +253,13 @@ json::value json::parser::parse_array(
     {
         return value::invalid_value();
     }
-    if (lazy_depth > 0)
-    {
-        return result;
-    }
-    else
-    {
-        return value(value_type::Array, first, cur);
-    }
+    
+    return result;
 }
 
 json::value json::parser::parse_object(
-    const std::string &content, std::string::const_iterator &cur, size_t lazy_depth)
+    const std::string &content, std::string::const_iterator &cur)
 {
-    const auto first = cur;
-
     if (*cur == '{')
     {
         ++cur;
@@ -308,7 +288,7 @@ json::value json::parser::parse_object(
             return value::invalid_value();
         }
 
-        auto key_opt = parse_stdstring(content, cur, lazy_depth);
+        auto key_opt = parse_stdstring(content, cur);
 
         if (key_opt && skip_whitespace(content, cur) && *cur == ':')
         {
@@ -324,16 +304,15 @@ json::value json::parser::parse_object(
             return value::invalid_value();
         }
 
-        auto val = parse_value(content, cur, lazy_depth);
+        auto val = parse_value(content, cur);
 
         if (!val.valid() || !skip_whitespace(content, cur))
         {
             return value::invalid_value();
         }
-        if (lazy_depth > 0)
-        {
-            result.emplace(std::move(key_opt).value(), std::move(val));
-        }
+
+        result.emplace(std::move(key_opt).value(), std::move(val));
+
         if (*cur == ',')
         {
             ++cur;
@@ -352,18 +331,12 @@ json::value json::parser::parse_object(
     {
         return value::invalid_value();
     }
-    if (lazy_depth > 0)
-    {
-        return result;
-    }
-    else
-    {
-        return value(value_type::Object, first, cur);
-    }
+
+    return result;
 }
 
 std::optional<std::string> json::parser::parse_stdstring(
-    const std::string &content, std::string::const_iterator &cur, bool need_return)
+    const std::string &content, std::string::const_iterator &cur)
 {
     if (*cur == '"')
     {
@@ -432,14 +405,8 @@ std::optional<std::string> json::parser::parse_stdstring(
     {
         return std::nullopt;
     }
-    if (!need_return)
-    {
-        return std::string();
-    }
-    else
-    {
-        return std::string(first, last);
-    }
+    
+    return std::string(first, last);
 }
 
 bool json::parser::skip_whitespace(
