@@ -159,8 +159,6 @@
     <ClInclude Include="..\..\..\..\include\json_object.h" />
     <ClInclude Include="..\..\..\..\include\json_parser.h" />
     <ClInclude Include="..\..\..\..\include\json_value.h" />
-    <ClInclude Include="framework.h" />
-    <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\src\json_array.cpp" />
@@ -168,8 +166,6 @@
     <ClCompile Include="..\..\..\..\src\json_object.cpp" />
     <ClCompile Include="..\..\..\..\src\json_parser.cpp" />
     <ClCompile Include="..\..\..\..\src\json_value.cpp" />
-    <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="pch.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
