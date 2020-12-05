@@ -119,8 +119,8 @@ namespace json
 
         value_type _type = value_type::Null;
         std::string _raw_data = "null"; // If the value_type is Object or Array, the _raw_data will be a empty string.
-        mutable unique_array _array_ptr;
-        mutable unique_object _object_ptr;
+        unique_array _array_ptr;
+        unique_object _object_ptr;
     };
 
     std::ostream &operator<<(std::ostream &out, const value &val);
