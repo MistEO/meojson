@@ -42,4 +42,4 @@ $(SAMPLE_OBJ): $(SAMPLE_FILE) $(INC)/*.h
 .PHONY: clean
 
 clean:
-	rm -f $(OBJS) $(SHARED_LIB) $(STATIC_LIB) $(SAMPLE_OBJ) $(SAMPLE_OUT) $(BUILD_DIR)/*.out $(BUILD_DIR)/*.o
+	rm -f $(OBJS) $(SHARED_LIB) $(STATIC_LIB) $(SAMPLE_OBJ) $(SAMPLE_OUT) $(BUILD_DIR)/*.o
