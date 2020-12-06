@@ -35,7 +35,7 @@ namespace json
         {
             static_assert(
                 std::is_constructible<raw_object::value_type, Args...>::value,
-                "Parameter n can't be used to construct a raw_object::value_type");
+                "Parameter can't be used to construct a raw_object::value_type");
             return _object_data.emplace(std::forward<Args>(args)...);
         }
 

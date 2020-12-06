@@ -104,7 +104,7 @@ namespace json
         {
             static_assert(
                 std::is_constructible<std::string, Args...>::value,
-                "Parameter n can't be used to construct a std::string");
+                "Parameter can't be used to construct a std::string");
         }
 
         template <typename T>

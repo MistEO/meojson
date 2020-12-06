@@ -1,5 +1,7 @@
 #include "json_parser.h"
 
+#include <cctype>
+
 #include "json_value.h"
 #include "json_object.h"
 #include "json_array.h"
@@ -148,7 +150,7 @@ json::value json::parser::parse_number(
     }
 
     // Numbers cannot have leading zeroes
-    if (*cur == '0' && isdigit(*(cur + 1)))
+    if (*cur == '0' && std::isdigit(*(cur + 1)))
     {
         return value::invalid_value();
     }
@@ -375,7 +377,7 @@ std::optional<std::string> json::parser::parse_stdstring(
             case 'u':
                 ++cur;
                 break;
-            case '\0':
+            case '\0': // std::string::end();
             default:
                 // Illegal backslash escape
                 return std::nullopt;
@@ -427,7 +429,7 @@ bool json::parser::skip_digit(
     const std::string &content, std::string::const_iterator &cur) noexcept
 {
     // At least one digit
-    if (isdigit(*cur))
+    if (std::isdigit(*cur))
     {
         ++cur;
     }
@@ -436,7 +438,7 @@ bool json::parser::skip_digit(
         return false;
     }
 
-    while (isdigit(*cur))
+    while (std::isdigit(*cur))
     {
         ++cur;
     }
