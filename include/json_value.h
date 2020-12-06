@@ -108,13 +108,9 @@ namespace json
         }
 
         template <typename T>
-        std::unique_ptr<T> copy_unique_ptr(const std::unique_ptr<T> &t) const
+        static std::unique_ptr<T> copy_unique_ptr(const std::unique_ptr<T> &t)
         {
-            return std::make_unique<T>(*t);
-        }
-        std::nullptr_t copy_unique_ptr(std::nullptr_t) const noexcept
-        {
-            return nullptr;
+            return t == nullptr ? nullptr : std::make_unique<T>(*t);
         }
 
         value_type _type = value_type::Null;
