@@ -426,7 +426,7 @@ bool json::parser::skip_whitespace(
 }
 
 bool json::parser::skip_digit(
-    const std::string &content, std::string::const_iterator &cur) noexcept
+    const std::string &content, std::string::const_iterator &cur) noexcept(noexcept(std::isdigit(*cur)))
 {
     // At least one digit
     if (std::isdigit(*cur))
