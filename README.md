@@ -56,21 +56,20 @@
 
 ### 使用
 
-1. 构建静态库或共享库
+1. 构建生成静态库
 
     ```bash
-    make static
-    # or
-    make shared
+    make
     ```
 
-2. 在您的代码中添加头文件包含
+2. 将`build/libmeojson.a`添加到您的项目中
+3. 在您的代码中添加头文件包含
 
     ```c++
     #include "json.h"
     ```
 
-3. 尽情使用吧！
+4. 尽情使用吧！
 
 ### 示例
 
@@ -199,21 +198,20 @@ int main()
 
 ### Usage
 
-1. Build static library or shared library
+1. Build static library
 
     ```bash
-    make static
-    # or
-    make shared
+    make
     ```
 
-2. Add header file include in your code
+2. Add `build/libmeojson.a` to your project
+3. Add header file include in your code
 
     ```c++
     #inclued "json.h"
     ```
 
-3. Enjoy it!
+4. Enjoy it!
 
 ### Sample
 

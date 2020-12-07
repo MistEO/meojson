@@ -1,6 +1,6 @@
 INC := include
 SRC := src
-# LIBS := -lpthread
+LIBS := -lpthread
 
 CXX := g++
 OPT := -O2
@@ -30,14 +30,8 @@ shared: $(SHARED_LIB)
 $(SHARED_LIB):
 	$(CXX) -Wall $(OPT) -std=c++17 $(CXXFLAGS) -o $(SHARED_LIB) $(SRC_FILES) -I$(INC) $(LIBS) -fPIC -shared
 
-debug: $(OBJS) $(SAMPLE_OBJ)
-	$(CXX) -Wall $(OPT) -std=c++17 $(CXXFLAGS) -o $(SAMPLE_OUT) $(OBJS) $(SAMPLE_OBJ) -I$(INC) $(LIBS)
-
 $(BUILD_DIR)/%.o: $(SRC)/%.cpp $(INC)/*.h
-	$(CXX) -Wall $(OPT) -std=c++17 $(CXXFLAGS) -o $@ -c $< -I$(INC) $(LIBS)
-
-$(SAMPLE_OBJ): $(SAMPLE_FILE) $(INC)/*.h
-	$(CXX) -Wall $(OPT) -std=c++17 $(CXXFLAGS) -o $@ -c $< -I$(INC) $(LIBS)
+	$(CXX) -Wall $(OPT) -std=c++17 $(CXXFLAGS) -o $@ -c $< -I$(INC)
 
 .PHONY: clean
 
