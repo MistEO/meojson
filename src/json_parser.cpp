@@ -14,21 +14,24 @@
 std::optional<json::value> json::parser::parse(
     const std::string &content)
 {
-    auto cur = content.cbegin();
+    return parser(content.cbegin(), content.cend()).parse();
+}
 
-    if (!skip_whitespace(content, cur))
+std::optional<json::value> json::parser::parse()
+{
+    if (!skip_whitespace())
     {
         return std::nullopt;
     }
 
     value result_value;
-    switch (*cur)
+    switch (*_cur)
     {
     case '[':
-        result_value = parse_array(content, cur);
+        result_value = parse_array();
         break;
     case '{':
-        result_value = parse_object(content, cur);
+        result_value = parse_object();
         break;
     default: // A JSON payload should be an object or array
         return std::nullopt;
@@ -40,7 +43,7 @@ std::optional<json::value> json::parser::parse(
     }
 
     // After the parsing is complete, there should be no more content other than spaces behind
-    if (skip_whitespace(content, cur))
+    if (skip_whitespace())
     {
         return std::nullopt;
     }
@@ -48,16 +51,15 @@ std::optional<json::value> json::parser::parse(
     return result_value;
 }
 
-json::value json::parser::parse_value(
-    const std::string &content, std::string::const_iterator &cur)
+json::value json::parser::parse_value()
 {
-    switch (*cur)
+    switch (*_cur)
     {
     case 'n':
-        return parse_null(content, cur);
+        return parse_null();
     case 't':
     case 'f':
-        return parse_boolean(content, cur);
+        return parse_boolean();
     case '-':
     case '0':
     case '1':
@@ -69,28 +71,27 @@ json::value json::parser::parse_value(
     case '7':
     case '8':
     case '9':
-        return parse_number(content, cur);
+        return parse_number();
     case '"':
-        return parse_string(content, cur);
+        return parse_string();
     case '[':
-        return parse_array(content, cur);
+        return parse_array();
     case '{':
-        return parse_object(content, cur);
+        return parse_object();
     default:
         return value::invalid_value();
     }
 }
 
-json::value json::parser::parse_null(
-    const std::string &content, std::string::const_iterator &cur)
+json::value json::parser::parse_null()
 {
     static const std::string null_string = "null";
 
     for (auto &&ch : null_string)
     {
-        if (*cur == ch)
+        if (*_cur == ch)
         {
-            ++cur;
+            ++_cur;
         }
         else
         {
@@ -101,20 +102,19 @@ json::value json::parser::parse_null(
     return value();
 }
 
-json::value json::parser::parse_boolean(
-    const std::string &content, std::string::const_iterator &cur)
+json::value json::parser::parse_boolean()
 {
     static const std::string true_string = "true";
     static const std::string false_string = "false";
 
-    switch (*cur)
+    switch (*_cur)
     {
     case 't':
         for (auto &&ch : true_string)
         {
-            if (*cur == ch)
+            if (*_cur == ch)
             {
-                ++cur;
+                ++_cur;
             }
             else
             {
@@ -125,9 +125,9 @@ json::value json::parser::parse_boolean(
     case 'f':
         for (auto &&ch : false_string)
         {
-            if (*cur == ch)
+            if (*_cur == ch)
             {
-                ++cur;
+                ++_cur;
             }
             else
             {
@@ -140,55 +140,53 @@ json::value json::parser::parse_boolean(
     }
 }
 
-json::value json::parser::parse_number(
-    const std::string &content, std::string::const_iterator &cur)
+json::value json::parser::parse_number()
 {
-    const auto first = cur;
-    if (*cur == '-')
+    const auto first = _cur;
+    if (*_cur == '-')
     {
-        ++cur;
+        ++_cur;
     }
 
     // Numbers cannot have leading zeroes
-    if (*cur == '0' && std::isdigit(*(cur + 1)))
+    if (*_cur == '0' && std::isdigit(*(_cur + 1)))
     {
         return value::invalid_value();
     }
 
-    if (!skip_digit(content, cur))
+    if (!skip_digit())
     {
         return value::invalid_value();
     }
 
-    if (*cur == '.')
+    if (*_cur == '.')
     {
-        ++cur;
-        if (!skip_digit(content, cur))
+        ++_cur;
+        if (!skip_digit())
         {
             return value::invalid_value();
         }
     }
 
-    if (*cur == 'e' || *cur == 'E')
+    if (*_cur == 'e' || *_cur == 'E')
     {
-        ++cur;
-        if (*cur == '+' || *cur == '-')
+        ++_cur;
+        if (*_cur == '+' || *_cur == '-')
         {
-            ++cur;
+            ++_cur;
         }
-        if (!skip_digit(content, cur))
+        if (!skip_digit())
         {
             return value::invalid_value();
         }
     }
 
-    return value(value_type::Number, first, cur);
+    return value(value_type::Number, first, _cur);
 }
 
-json::value json::parser::parse_string(
-    const std::string &content, std::string::const_iterator &cur)
+json::value json::parser::parse_string()
 {
-    auto string_opt = parse_stdstring(content, cur);
+    auto string_opt = parse_stdstring();
     if (!string_opt)
     {
         return value::invalid_value();
@@ -197,25 +195,24 @@ json::value json::parser::parse_string(
     return std::move(string_opt).value();
 }
 
-json::value json::parser::parse_array(
-    const std::string &content, std::string::const_iterator &cur)
+json::value json::parser::parse_array()
 {
-    if (*cur == '[')
+    if (*_cur == '[')
     {
-        ++cur;
+        ++_cur;
     }
     else
     {
         return value::invalid_value();
     }
 
-    if (!skip_whitespace(content, cur))
+    if (!skip_whitespace())
     {
         return value::invalid_value();
     }
-    else if (*cur == ']')
+    else if (*_cur == ']')
     {
-        ++cur;
+        ++_cur;
         // empty array
         return array();
     }
@@ -223,23 +220,23 @@ json::value json::parser::parse_array(
     array result;
     while (true)
     {
-        if (!skip_whitespace(content, cur))
+        if (!skip_whitespace())
         {
             return value::invalid_value();
         }
 
-        auto val = parse_value(content, cur);
+        auto val = parse_value();
 
-        if (!val.valid() || !skip_whitespace(content, cur))
+        if (!val.valid() || !skip_whitespace())
         {
             return value::invalid_value();
         }
 
         result.emplace_back(std::move(val));
 
-        if (*cur == ',')
+        if (*_cur == ',')
         {
-            ++cur;
+            ++_cur;
         }
         else
         {
@@ -247,9 +244,9 @@ json::value json::parser::parse_array(
         }
     }
 
-    if (skip_whitespace(content, cur) && *cur == ']')
+    if (skip_whitespace() && *_cur == ']')
     {
-        ++cur;
+        ++_cur;
     }
     else
     {
@@ -259,25 +256,24 @@ json::value json::parser::parse_array(
     return result;
 }
 
-json::value json::parser::parse_object(
-    const std::string &content, std::string::const_iterator &cur)
+json::value json::parser::parse_object()
 {
-    if (*cur == '{')
+    if (*_cur == '{')
     {
-        ++cur;
+        ++_cur;
     }
     else
     {
         return value::invalid_value();
     }
 
-    if (!skip_whitespace(content, cur))
+    if (!skip_whitespace())
     {
         return value::invalid_value();
     }
-    else if (*cur == '}')
+    else if (*_cur == '}')
     {
-        ++cur;
+        ++_cur;
         // empty object
         return object();
     }
@@ -285,39 +281,39 @@ json::value json::parser::parse_object(
     object result;
     while (true)
     {
-        if (!skip_whitespace(content, cur))
+        if (!skip_whitespace())
         {
             return value::invalid_value();
         }
 
-        auto key_opt = parse_stdstring(content, cur);
+        auto key_opt = parse_stdstring();
 
-        if (key_opt && skip_whitespace(content, cur) && *cur == ':')
+        if (key_opt && skip_whitespace() && *_cur == ':')
         {
-            ++cur;
+            ++_cur;
         }
         else
         {
             return value::invalid_value();
         }
 
-        if (!skip_whitespace(content, cur))
+        if (!skip_whitespace())
         {
             return value::invalid_value();
         }
 
-        auto val = parse_value(content, cur);
+        auto val = parse_value();
 
-        if (!val.valid() || !skip_whitespace(content, cur))
+        if (!val.valid() || !skip_whitespace())
         {
             return value::invalid_value();
         }
 
         result.emplace(std::move(key_opt).value(), std::move(val));
 
-        if (*cur == ',')
+        if (*_cur == ',')
         {
-            ++cur;
+            ++_cur;
         }
         else
         {
@@ -325,9 +321,9 @@ json::value json::parser::parse_object(
         }
     }
 
-    if (skip_whitespace(content, cur) && *cur == '}')
+    if (skip_whitespace() && *_cur == '}')
     {
-        ++cur;
+        ++_cur;
     }
     else
     {
@@ -337,24 +333,23 @@ json::value json::parser::parse_object(
     return result;
 }
 
-std::optional<std::string> json::parser::parse_stdstring(
-    const std::string &content, std::string::const_iterator &cur)
+std::optional<std::string> json::parser::parse_stdstring()
 {
-    if (*cur == '"')
+    if (*_cur == '"')
     {
-        ++cur;
+        ++_cur;
     }
     else
     {
         return std::nullopt;
     }
 
-    const auto first = cur;
-    auto last = cur;
+    const auto first = _cur;
+    auto last = _cur;
     bool is_string_end = false;
     while (!is_string_end)
     {
-        switch (*cur)
+        switch (*_cur)
         {
         case '\t':
         case '\r':
@@ -363,8 +358,8 @@ std::optional<std::string> json::parser::parse_stdstring(
             return std::nullopt;
         case '\\':
         {
-            ++cur;
-            switch (*cur)
+            ++_cur;
+            switch (*_cur)
             {
             case '"':
             case '\\':
@@ -375,7 +370,7 @@ std::optional<std::string> json::parser::parse_stdstring(
             case 'r':
             case 't':
             case 'u':
-                ++cur;
+                ++_cur;
                 break;
             case '\0': // std::string::end();
             default:
@@ -386,17 +381,17 @@ std::optional<std::string> json::parser::parse_stdstring(
         }
         case '"':
         {
-            last = cur;
-            ++cur;
+            last = _cur;
+            ++_cur;
             is_string_end = true;
             break;
         }
         default:
-            ++cur;
+            ++_cur;
             break;
         }
     }
-    if (cur == content.cend())
+    if (_cur == _end)
     {
         return std::nullopt;
     }
@@ -404,18 +399,17 @@ std::optional<std::string> json::parser::parse_stdstring(
     return std::string(first, last);
 }
 
-bool json::parser::skip_whitespace(
-    const std::string &content, std::string::const_iterator &cur) noexcept
+bool json::parser::skip_whitespace() noexcept
 {
     while (true)
     {
-        switch (*cur)
+        switch (*_cur)
         {
         case ' ':
         case '\t':
         case '\r':
         case '\n':
-            ++cur;
+            ++_cur;
             break;
         case '\0': // std::string::end()
             return false;
@@ -425,25 +419,24 @@ bool json::parser::skip_whitespace(
     }
 }
 
-bool json::parser::skip_digit(
-    const std::string &content, std::string::const_iterator &cur) noexcept(noexcept(std::isdigit(*cur)))
+bool json::parser::skip_digit() noexcept(noexcept(std::isdigit(*_cur)))
 {
     // At least one digit
-    if (std::isdigit(*cur))
+    if (std::isdigit(*_cur))
     {
-        ++cur;
+        ++_cur;
     }
     else
     {
         return false;
     }
 
-    while (std::isdigit(*cur))
+    while (std::isdigit(*_cur))
     {
-        ++cur;
+        ++_cur;
     }
 
-    if (cur != content.cend())
+    if (_cur != _end)
     {
         return true;
     }

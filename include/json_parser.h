@@ -13,26 +13,35 @@ namespace json
     class parser
     {
     public:
-        parser() = delete;
         ~parser() noexcept = default;
 
         static std::optional<value> parse(const std::string &content);
 
     private:
-        static value parse_value(const std::string &content, std::string::const_iterator &cur);
+        parser(
+            const std::string::const_iterator &cbegin,
+            const std::string::const_iterator &cend) noexcept
+            : _cur(cbegin), _end(cend) {}
 
-        static value parse_null(const std::string &content, std::string::const_iterator &cur);
-        static value parse_boolean(const std::string &content, std::string::const_iterator &cur);
-        static value parse_number(const std::string &content, std::string::const_iterator &cur);
+        std::optional<value> parse();
+        value parse_value();
+
+        value parse_null();
+        value parse_boolean();
+        value parse_number();
         // parse and return a json::value whose type is value_type::String
-        static value parse_string(const std::string &content, std::string::const_iterator &cur);
-        static value parse_array(const std::string &content, std::string::const_iterator &cur);
-        static value parse_object(const std::string &content, std::string::const_iterator &cur);
+        value parse_string();
+        value parse_array();
+        value parse_object();
 
         // parse and return a std::string
-        static std::optional<std::string> parse_stdstring(const std::string &content, std::string::const_iterator &cur);
+        std::optional<std::string> parse_stdstring();
 
-        static bool skip_whitespace(const std::string &content, std::string::const_iterator &cur) noexcept;
-        static bool skip_digit(const std::string &content, std::string::const_iterator &cur) noexcept;
+        bool skip_whitespace() noexcept;
+        bool skip_digit() noexcept;
+
+    private:
+        std::string::const_iterator _cur;
+        std::string::const_iterator _end;
     };
 } // namespace json
