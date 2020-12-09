@@ -13,7 +13,7 @@
     sh test/parse/performance_test.sh
     ```
 
-    ![image](test/parse/performance_result.png)
+    ![image](test/parse/result/performance_result.png)
 
 - `meojson`也是一个使用方便的C++ JSON生成库，可以使用各种语法糖优雅地生成JSON
 
@@ -48,8 +48,8 @@
 
     测试数据来自 <https://github.com/miloyip/nativejson-benchmark>
 
-    ![image](test/parse/conformance_result_1.png)
-    ![image](test/parse/conformance_result_2.png)
+    ![image](test/parse/result/conformance_result_1.png)
+    ![image](test/parse/result/conformance_result_2.png)
     其中`fail18.json`并不是一个错误的JSON，可以参考 <https://stackoverflow.com/questions/42116718/is-there-an-array-depth-limitation-in-json>。当然如果出现未发现的解析错误，也欢迎向我提ISSUE
 
 - `meojson`仅依赖于STL，但需要编译器支持C++17标准
@@ -155,7 +155,7 @@ int main()
     sh test/parse/performance_test.sh
     ```
 
-    ![image](test/parse/performance_result.png)
+    ![image](test/parse/result/performance_result.png)
 
 - `meojson` is also an easy-to-use json generator for C++ that can use various syntactic sugars to elegantly generate JSON
 
@@ -190,8 +190,8 @@ int main()
 
     Test data from <https://github.com/miloyip/nativejson-benchmark>
 
-    ![image](test/parse/conformance_result_1.png)
-    ![image](test/parse/conformance_result_2.png)
+    ![image](test/parse/result/conformance_result_1.png)
+    ![image](test/parse/result/conformance_result_2.png)
     Among them, `fail18.json` is not a wrong JSON, you can refer to <https://stackoverflow.com/questions/42116718/is-there-an-array-depth-limitation-in-json>. Of course, if there is an undiscovered parsing error, you are also welcome to mention ISSUE to me
 
 - `meojson` only depends on STL, but requires the compiler to support the C++17 standard
