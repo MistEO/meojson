@@ -383,7 +383,7 @@ const json::value &json::value::operator[](size_t pos) const
 {
     if (_type == value_type::Array && _array_ptr != nullptr)
     {
-        return (*_array_ptr)[pos];
+        return _array_ptr->operator[](pos);
     }
     // Array not support to create by operator[]
 
@@ -394,7 +394,7 @@ json::value &json::value::operator[](size_t pos)
 {
     if (_type == value_type::Array && _array_ptr != nullptr)
     {
-        return (*_array_ptr)[pos];
+        return _array_ptr->operator[](pos);
     }
     // Array not support to create by operator[]
 
@@ -409,7 +409,7 @@ json::value &json::value::operator[](const std::string &key)
     if (_type == value_type::Object && _object_ptr != nullptr)
     {
         cretate_lock.unlock();
-        return (*_object_ptr)[key];
+        return _object_ptr->operator[](key);
     }
     // Create a new value by operator[]
     else if (_type == value_type::Null)
@@ -417,7 +417,7 @@ json::value &json::value::operator[](const std::string &key)
         _type = value_type::Object;
         _object_ptr = std::make_unique<object>();
         cretate_lock.unlock();
-        return (*_object_ptr)[key];
+        return _object_ptr->operator[](key);
     }
     cretate_lock.unlock();
 
@@ -432,7 +432,7 @@ json::value &json::value::operator[](std::string &&key)
     if (_type == value_type::Object && _object_ptr != nullptr)
     {
         cretate_lock.unlock();
-        return (*_object_ptr)[std::move(key)];
+        return _object_ptr->operator[](std::move(key));
     }
     // Create a new value by operator[]
     else if (_type == value_type::Null)
@@ -440,7 +440,7 @@ json::value &json::value::operator[](std::string &&key)
         _type = value_type::Object;
         _object_ptr = std::make_unique<object>();
         cretate_lock.unlock();
-        return (*_object_ptr)[std::move(key)];
+        return _object_ptr->operator[](std::move(key));
     }
     cretate_lock.unlock();
 

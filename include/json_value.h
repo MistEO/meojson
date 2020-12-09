@@ -92,6 +92,7 @@ namespace json
         value &operator[](size_t pos);
         value &operator[](const std::string &key);
         value &operator[](std::string &&key);
+        explicit operator bool() const noexcept { return valid(); }
 
         static value invalid_value();
 

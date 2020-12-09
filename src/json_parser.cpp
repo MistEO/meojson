@@ -34,12 +34,12 @@ std::optional<json::value> json::parser::parse(
         return std::nullopt;
     }
 
-    if (!result_value.valid())
+    if (!result_value)
     {
         return std::nullopt;
     }
 
-    // 解析完成后，后面不应再有除空格外的内容
+    // After the parsing is complete, there should be no more content other than spaces behind
     if (skip_whitespace(content, cur))
     {
         return std::nullopt;

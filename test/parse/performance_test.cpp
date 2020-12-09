@@ -34,12 +34,7 @@ int main(int argc, char *argv[])
     auto b_time = get_time();
     for (int i = 0; i != loop_times; ++i)
     {
-        // VS2019 has an exception here, the return value `std::optional<json::value>` cannot be assigned normally
-#ifdef _MSC_VER
-        json::parser::parse(content);
-#else
         val = json::parser::parse(content).value();
-#endif // _MSC_VER
     }
     auto e_time = get_time();
 
