@@ -149,7 +149,8 @@ json::value json::parser::parse_number()
     }
 
     // Numbers cannot have leading zeroes
-    if (*_cur == '0' && std::isdigit(*(_cur + 1)))
+    if (_cur != _end && *_cur == '0' &&
+        _cur + 1 != _end && std::isdigit(*(_cur + 1)))
     {
         return value::invalid_value();
     }
@@ -170,7 +171,10 @@ json::value json::parser::parse_number()
 
     if (*_cur == 'e' || *_cur == 'E')
     {
-        ++_cur;
+        if (++_cur == _end)
+        {
+            return value::invalid_value();
+        }
         if (*_cur == '+' || *_cur == '-')
         {
             ++_cur;
@@ -347,18 +351,20 @@ std::optional<std::string> json::parser::parse_stdstring()
     const auto first = _cur;
     auto last = _cur;
     bool is_string_end = false;
-    while (!is_string_end)
+    while (!is_string_end && _cur != _end)
     {
         switch (*_cur)
         {
         case '\t':
         case '\r':
         case '\n':
-        case '\0': // std::string::end();
             return std::nullopt;
         case '\\':
         {
-            ++_cur;
+            if (++_cur == _end)
+            {
+                return std::nullopt;
+            }
             switch (*_cur)
             {
             case '"':
@@ -401,7 +407,7 @@ std::optional<std::string> json::parser::parse_stdstring()
 
 bool json::parser::skip_whitespace() noexcept
 {
-    while (true)
+    while (_cur != _end)
     {
         switch (*_cur)
         {
@@ -417,12 +423,13 @@ bool json::parser::skip_whitespace() noexcept
             return true;
         }
     }
+    return false;
 }
 
 bool json::parser::skip_digit() noexcept(noexcept(std::isdigit(*_cur)))
 {
     // At least one digit
-    if (std::isdigit(*_cur))
+    if (_cur != _end && std::isdigit(*_cur))
     {
         ++_cur;
     }
@@ -431,7 +438,7 @@ bool json::parser::skip_digit() noexcept(noexcept(std::isdigit(*_cur)))
         return false;
     }
 
-    while (std::isdigit(*_cur))
+    while (_cur != _end && std::isdigit(*_cur))
     {
         ++_cur;
     }
