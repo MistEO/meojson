@@ -166,7 +166,7 @@ const json::value &json::value::at(const std::string &key) const
     throw exception("Wrong Type or data empty");
 }
 
-bool json::value::as_boolean() const
+const bool json::value::as_boolean() const
 {
     if (_type == value_type::Boolean)
     {
@@ -189,7 +189,7 @@ bool json::value::as_boolean() const
     }
 }
 
-int json::value::as_integer() const
+const int json::value::as_integer() const
 {
     if (_type == value_type::Number)
     {
@@ -201,7 +201,7 @@ int json::value::as_integer() const
     }
 }
 
-// unsigned json::value::as_unsigned() const
+// const unsigned json::value::as_unsigned() const
 // {
 //     if (_type == value_type::Number)
 //     {
@@ -213,7 +213,7 @@ int json::value::as_integer() const
 //     }
 // }
 
-long json::value::as_long() const
+const long json::value::as_long() const
 {
     if (_type == value_type::Number)
     {
@@ -225,7 +225,7 @@ long json::value::as_long() const
     }
 }
 
-unsigned long json::value::as_unsigned_long() const
+const unsigned long json::value::as_unsigned_long() const
 {
     if (_type == value_type::Number)
     {
@@ -237,7 +237,7 @@ unsigned long json::value::as_unsigned_long() const
     }
 }
 
-long long json::value::as_long_long() const
+const long long json::value::as_long_long() const
 {
     if (_type == value_type::Number)
     {
@@ -249,7 +249,7 @@ long long json::value::as_long_long() const
     }
 }
 
-unsigned long long json::value::as_unsigned_long_long() const
+const unsigned long long json::value::as_unsigned_long_long() const
 {
     if (_type == value_type::Number)
     {
@@ -261,7 +261,7 @@ unsigned long long json::value::as_unsigned_long_long() const
     }
 }
 
-float json::value::as_float() const
+const float json::value::as_float() const
 {
     if (_type == value_type::Number)
     {
@@ -273,7 +273,7 @@ float json::value::as_float() const
     }
 }
 
-double json::value::as_double() const
+const double json::value::as_double() const
 {
     if (_type == value_type::Number)
     {
@@ -285,7 +285,7 @@ double json::value::as_double() const
     }
 }
 
-long double json::value::as_long_double() const
+const long double json::value::as_long_double() const
 {
     if (_type == value_type::Number)
     {
@@ -297,7 +297,7 @@ long double json::value::as_long_double() const
     }
 }
 
-std::string json::value::as_string() const
+const std::string json::value::as_string() const
 {
     if (_type == value_type::String)
     {
@@ -309,7 +309,7 @@ std::string json::value::as_string() const
     }
 }
 
-json::array json::value::as_array() const
+const json::array json::value::as_array() const
 {
     if (_type == value_type::Array && _array_ptr != nullptr)
     {
@@ -319,7 +319,7 @@ json::array json::value::as_array() const
     throw exception("Wrong Type");
 }
 
-json::object json::value::as_object() const
+const json::object json::value::as_object() const
 {
     if (_type == value_type::Object && _object_ptr != nullptr)
     {
@@ -329,7 +329,7 @@ json::object json::value::as_object() const
     throw exception("Wrong Type or data empty");
 }
 
-std::string json::value::to_string() const
+const std::string json::value::to_string() const
 {
     switch (_type)
     {
@@ -348,7 +348,7 @@ std::string json::value::to_string() const
     }
 }
 
-std::string json::value::format(std::string shift_str, size_t basic_shift_count) const
+const std::string json::value::format(std::string shift_str, size_t basic_shift_count) const
 {
     switch (_type)
     {

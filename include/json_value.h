@@ -67,23 +67,23 @@ namespace json
         const value &at(size_t pos) const;
         const value &at(const std::string &key) const;
 
-        bool as_boolean() const;
-        int as_integer() const;
-        // unsigned as_unsigned() const;
-        long as_long() const;
-        unsigned long as_unsigned_long() const;
-        long long as_long_long() const;
-        unsigned long long as_unsigned_long_long() const;
-        float as_float() const;
-        double as_double() const;
-        long double as_long_double() const;
-        std::string as_string() const;
-        array as_array() const;
-        object as_object() const;
+        const bool as_boolean() const;
+        const int as_integer() const;
+        // const unsigned as_unsigned() const;
+        const long as_long() const;
+        const unsigned long as_unsigned_long() const;
+        const long long as_long_long() const;
+        const unsigned long long as_unsigned_long_long() const;
+        const float as_float() const;
+        const double as_double() const;
+        const long double as_long_double() const;
+        const std::string as_string() const;
+        const array as_array() const;
+        const object as_object() const;
 
         // return raw string
-        std::string to_string() const;
-        std::string format(std::string shift_str = "    ", size_t basic_shift_count = 0) const;
+        const std::string to_string() const;
+        const std::string format(std::string shift_str = "    ", size_t basic_shift_count = 0) const;
 
         value &operator=(const value &rhs);
         value &operator=(value &&) noexcept;

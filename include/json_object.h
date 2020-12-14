@@ -27,8 +27,8 @@ namespace json
         bool empty() const noexcept { return _object_data.empty(); }
         size_t size() const noexcept { return _object_data.size(); }
         const value &at(const std::string &key) const;
-        std::string to_string() const;
-        std::string format(std::string shift_str = "    ", size_t basic_shift_count = 0) const;
+        const std::string to_string() const;
+        const std::string format(std::string shift_str = "    ", size_t basic_shift_count = 0) const;
 
         template <typename... Args>
         decltype(auto) emplace(Args &&... args)

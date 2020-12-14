@@ -37,7 +37,7 @@ bool json::object::earse(const std::string &key)
     return _object_data.erase(key) > 0 ? true : false;
 }
 
-std::string json::object::to_string() const
+const std::string json::object::to_string() const
 {
     std::string str = "{";
     for (auto &&[key, val] : _object_data)
@@ -52,7 +52,7 @@ std::string json::object::to_string() const
     return str;
 }
 
-std::string json::object::format(std::string shift_str, size_t basic_shift_count) const
+const std::string json::object::format(std::string shift_str, size_t basic_shift_count) const
 {
     std::string shift;
     for (size_t i = 0; i != basic_shift_count + 1; ++i)
