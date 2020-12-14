@@ -378,7 +378,6 @@ std::optional<std::string> json::parser::parse_stdstring()
             case 'u':
                 ++_cur;
                 break;
-            case '\0': // std::string::end();
             default:
                 // Illegal backslash escape
                 return std::nullopt;
@@ -417,8 +416,6 @@ bool json::parser::skip_whitespace() noexcept
         case '\n':
             ++_cur;
             break;
-        case '\0': // std::string::end()
-            return false;
         default:
             return true;
         }
