@@ -68,6 +68,10 @@ namespace json
                 "Parameter can't be used to construct a std::string");
         }
 
+        // Prohibit conversion of other types to value
+        template <typename T>
+        value(T) = delete;
+
         ~value();
 
         bool valid() const noexcept { return _type != value_type::Invalid ? true : false; }
