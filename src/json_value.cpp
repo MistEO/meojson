@@ -5,6 +5,7 @@
 #include "json_object.h"
 #include "json_array.h"
 #include "json_exception.h"
+// #include "json_parser.h"
 
 // for Pimpl
 json::value::value() = default;
@@ -404,11 +405,11 @@ json::value &json::value::operator[](size_t pos)
 json::value &json::value::operator[](const std::string &key)
 {
     static std::mutex create_mutex;
-    std::unique_lock<std::mutex> cretate_lock(create_mutex);
+    std::unique_lock<std::mutex> create_lock(create_mutex);
 
     if (_type == value_type::Object && _object_ptr != nullptr)
     {
-        cretate_lock.unlock();
+        create_lock.unlock();
         return _object_ptr->operator[](key);
     }
     // Create a new value by operator[]
@@ -416,10 +417,10 @@ json::value &json::value::operator[](const std::string &key)
     {
         _type = value_type::Object;
         _object_ptr = std::make_unique<object>();
-        cretate_lock.unlock();
+        create_lock.unlock();
         return _object_ptr->operator[](key);
     }
-    cretate_lock.unlock();
+    create_lock.unlock();
 
     throw exception("Wrong Type");
 }
@@ -427,11 +428,11 @@ json::value &json::value::operator[](const std::string &key)
 json::value &json::value::operator[](std::string &&key)
 {
     static std::mutex create_mutex;
-    std::unique_lock<std::mutex> cretate_lock(create_mutex);
+    std::unique_lock<std::mutex> create_lock(create_mutex);
 
     if (_type == value_type::Object && _object_ptr != nullptr)
     {
-        cretate_lock.unlock();
+        create_lock.unlock();
         return _object_ptr->operator[](std::move(key));
     }
     // Create a new value by operator[]
@@ -439,15 +440,15 @@ json::value &json::value::operator[](std::string &&key)
     {
         _type = value_type::Object;
         _object_ptr = std::make_unique<object>();
-        cretate_lock.unlock();
+        create_lock.unlock();
         return _object_ptr->operator[](std::move(key));
     }
-    cretate_lock.unlock();
+    create_lock.unlock();
 
     throw exception("Wrong Type");
 }
 
-json::value json::value::invalid_value()
+const json::value json::invalid_value()
 {
     return value(value_type::Invalid, std::string());
 }
@@ -459,3 +460,8 @@ std::ostream &operator<<(std::ostream &out, const json::value &val)
     out << val.to_string();
     return out;
 }
+
+// std::istream &operator>>(std::istream &in, json::value &val)
+// {
+//     return in;
+// }

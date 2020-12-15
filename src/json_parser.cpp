@@ -79,7 +79,7 @@ json::value json::parser::parse_value()
     case '{':
         return parse_object();
     default:
-        return value::invalid_value();
+        return invalid_value();
     }
 }
 
@@ -95,7 +95,7 @@ json::value json::parser::parse_null()
         }
         else
         {
-            return value::invalid_value();
+            return invalid_value();
         }
     }
 
@@ -118,7 +118,7 @@ json::value json::parser::parse_boolean()
             }
             else
             {
-                return value::invalid_value();
+                return invalid_value();
             }
         }
         return true;
@@ -131,12 +131,12 @@ json::value json::parser::parse_boolean()
             }
             else
             {
-                return value::invalid_value();
+                return invalid_value();
             }
         }
         return false;
     default:
-        return value::invalid_value();
+        return invalid_value();
     }
 }
 
@@ -152,12 +152,12 @@ json::value json::parser::parse_number()
     if (_cur != _end && *_cur == '0' &&
         _cur + 1 != _end && std::isdigit(*(_cur + 1)))
     {
-        return value::invalid_value();
+        return invalid_value();
     }
 
     if (!skip_digit())
     {
-        return value::invalid_value();
+        return invalid_value();
     }
 
     if (*_cur == '.')
@@ -165,7 +165,7 @@ json::value json::parser::parse_number()
         ++_cur;
         if (!skip_digit())
         {
-            return value::invalid_value();
+            return invalid_value();
         }
     }
 
@@ -173,7 +173,7 @@ json::value json::parser::parse_number()
     {
         if (++_cur == _end)
         {
-            return value::invalid_value();
+            return invalid_value();
         }
         if (*_cur == '+' || *_cur == '-')
         {
@@ -181,7 +181,7 @@ json::value json::parser::parse_number()
         }
         if (!skip_digit())
         {
-            return value::invalid_value();
+            return invalid_value();
         }
     }
 
@@ -193,7 +193,7 @@ json::value json::parser::parse_string()
     auto string_opt = parse_stdstring();
     if (!string_opt)
     {
-        return value::invalid_value();
+        return invalid_value();
     }
 
     return std::move(string_opt).value();
@@ -207,12 +207,12 @@ json::value json::parser::parse_array()
     }
     else
     {
-        return value::invalid_value();
+        return invalid_value();
     }
 
     if (!skip_whitespace())
     {
-        return value::invalid_value();
+        return invalid_value();
     }
     else if (*_cur == ']')
     {
@@ -226,14 +226,14 @@ json::value json::parser::parse_array()
     {
         if (!skip_whitespace())
         {
-            return value::invalid_value();
+            return invalid_value();
         }
 
         auto val = parse_value();
 
         if (!val.valid() || !skip_whitespace())
         {
-            return value::invalid_value();
+            return invalid_value();
         }
 
         result.emplace_back(std::move(val));
@@ -254,7 +254,7 @@ json::value json::parser::parse_array()
     }
     else
     {
-        return value::invalid_value();
+        return invalid_value();
     }
 
     return result;
@@ -268,12 +268,12 @@ json::value json::parser::parse_object()
     }
     else
     {
-        return value::invalid_value();
+        return invalid_value();
     }
 
     if (!skip_whitespace())
     {
-        return value::invalid_value();
+        return invalid_value();
     }
     else if (*_cur == '}')
     {
@@ -287,7 +287,7 @@ json::value json::parser::parse_object()
     {
         if (!skip_whitespace())
         {
-            return value::invalid_value();
+            return invalid_value();
         }
 
         auto key_opt = parse_stdstring();
@@ -298,19 +298,19 @@ json::value json::parser::parse_object()
         }
         else
         {
-            return value::invalid_value();
+            return invalid_value();
         }
 
         if (!skip_whitespace())
         {
-            return value::invalid_value();
+            return invalid_value();
         }
 
         auto val = parse_value();
 
         if (!val.valid() || !skip_whitespace())
         {
-            return value::invalid_value();
+            return invalid_value();
         }
 
         result.emplace(std::move(key_opt).value(), std::move(val));
@@ -331,7 +331,7 @@ json::value json::parser::parse_object()
     }
     else
     {
-        return value::invalid_value();
+        return invalid_value();
     }
 
     return result;

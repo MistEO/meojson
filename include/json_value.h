@@ -2,6 +2,7 @@
 
 #include <string>
 #include <ostream>
+// #include <iostream>
 #include <memory>
 
 namespace json
@@ -20,12 +21,9 @@ namespace json
 
     class array;
     class object;
-    class parser;
 
     class value
     {
-        friend class parser;
-
         using unique_array = std::unique_ptr<array>;
         using unique_object = std::unique_ptr<object>;
 
@@ -58,6 +56,17 @@ namespace json
         value(object &&obj);
         // error: conversion from ‘<brace-enclosed initializer list>’ to ‘json::value’ is ambiguous
         // value(std::initializer_list<std::pair<std::string, value>> init_list); // for object
+
+        // Constructed from raw data
+        template <typename... Args>
+        value(value_type type, Args &&... args)
+            : _type(type),
+              _raw_data(std::forward<Args>(args)...)
+        {
+            static_assert(
+                std::is_constructible<std::string, Args...>::value,
+                "Parameter can't be used to construct a std::string");
+        }
 
         ~value();
 
@@ -94,20 +103,7 @@ namespace json
         value &operator[](std::string &&key);
         explicit operator bool() const noexcept { return valid(); }
 
-        static value invalid_value();
-
     private:
-        // for parser
-        template <typename... Args>
-        value(value_type type, Args &&... args)
-            : _type(type),
-              _raw_data(std::forward<Args>(args)...)
-        {
-            static_assert(
-                std::is_constructible<std::string, Args...>::value,
-                "Parameter can't be used to construct a std::string");
-        }
-
         template <typename T>
         static std::unique_ptr<T> copy_unique_ptr(const std::unique_ptr<T> &t)
         {
@@ -120,6 +116,8 @@ namespace json
         unique_object _object_ptr;
     };
 
+    const value invalid_value();
     std::ostream &operator<<(std::ostream &out, const value &val);
+    // std::istream &operator>>(std::istream &in, value &val);
 
 } // namespace json
