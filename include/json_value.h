@@ -76,6 +76,12 @@ namespace json
 
         bool valid() const noexcept { return _type != value_type::Invalid ? true : false; }
         bool empty() const noexcept { return (_type == value_type::Null && _raw_data.compare("null") == 0) ? true : false; }
+        bool is_null() const noexcept { return empty(); }
+        bool is_number() const noexcept { return _type == value_type::Number; }
+        bool is_boolean() const noexcept { return _type == value_type::Boolean; }
+        bool is_string() const noexcept { return _type == value_type::String; }
+        bool is_array() const noexcept { return _type == value_type::Array; }
+        bool is_object() const noexcept { return _type == value_type::Object; }
         value_type type() const noexcept { return _type; }
         const value &at(size_t pos) const;
         const value &at(const std::string &key) const;
