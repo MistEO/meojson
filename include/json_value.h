@@ -82,6 +82,8 @@ namespace json
         bool is_string() const noexcept { return _type == value_type::String; }
         bool is_array() const noexcept { return _type == value_type::Array; }
         bool is_object() const noexcept { return _type == value_type::Object; }
+        bool exist(const std::string& key) const;
+        bool exist(int index) const;
         value_type type() const noexcept { return _type; }
         const value &at(size_t pos) const;
         const value &at(const std::string &key) const;
