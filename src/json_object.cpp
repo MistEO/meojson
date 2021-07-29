@@ -79,6 +79,182 @@ const std::string json::object::format(std::string shift_str, size_t basic_shift
     return str;
 }
 
+const bool json::object::get(const std::string& key, bool default_value) const
+{
+    if (exist(key)) {
+        json::value value = _object_data.at(key);
+        if (value.is_boolean()) {
+            return value.as_boolean();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const int json::object::get(const std::string& key, int default_value) const
+{
+    if (exist(key)) {
+        json::value value = _object_data.at(key);
+        if (value.is_number()) {
+            return value.as_integer();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const long json::object::get(const std::string& key, long default_value) const
+{
+    if (exist(key)) {
+        json::value value = _object_data.at(key);
+        if (value.is_number()) {
+            return value.as_long();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const unsigned long json::object::get(const std::string& key, unsigned default_value) const
+{
+    if (exist(key)) {
+        json::value value = _object_data.at(key);
+        if (value.is_number()) {
+            return value.as_unsigned_long();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const long long json::object::get(const std::string& key, long long default_value) const
+{
+    if (exist(key)) {
+        json::value value = _object_data.at(key);
+        if (value.is_number()) {
+            return value.as_long_long();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const unsigned long long json::object::get(const std::string& key, unsigned long long default_value) const
+{
+    if (exist(key)) {
+        json::value value = _object_data.at(key);
+        if (value.is_number()) {
+            return value.as_unsigned_long_long();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const float json::object::get(const std::string& key, float default_value) const
+{
+    if (exist(key)) {
+        json::value value = _object_data.at(key);
+        if (value.is_number()) {
+            return value.as_float();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const double json::object::get(const std::string& key, double default_value) const
+{
+    if (exist(key)) {
+        json::value value = _object_data.at(key);
+        if (value.is_number()) {
+            return value.as_double();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const long double json::object::get(const std::string& key, long double default_value) const
+{
+    if (exist(key)) {
+        json::value value = _object_data.at(key);
+        if (value.is_number()) {
+            return value.as_long_double();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const std::string json::object::get(const std::string& key, std::string default_value) const
+{
+    if (exist(key)) {
+        json::value value = _object_data.at(key);
+        if (value.is_string()) {
+            return value.as_string();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const std::string json::object::get(const std::string& key, const char* default_value) const
+{
+    if (exist(key)) {
+        json::value value = _object_data.at(key);
+        if (value.is_string()) {
+            return value.as_string();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
 json::object::iterator json::object::begin() noexcept
 {
     return _object_data.begin();

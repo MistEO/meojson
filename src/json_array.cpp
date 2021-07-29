@@ -72,6 +72,183 @@ const std::string json::array::format(std::string shift_str, size_t basic_shift_
     return str;
 }
 
+
+const bool json::array::get(size_t pos, bool default_value) const
+{
+    if (exist(pos)) {
+        json::value value = _array_data.at(pos);
+        if (value.is_boolean()) {
+            return value.as_boolean();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const int json::array::get(size_t pos, int default_value) const
+{
+    if (exist(pos)) {
+        json::value value = _array_data.at(pos);
+        if (value.is_number()) {
+            return value.as_integer();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const long json::array::get(size_t pos, long default_value) const
+{
+    if (exist(pos)) {
+        json::value value = _array_data.at(pos);
+        if (value.is_number()) {
+            return value.as_long();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const unsigned long json::array::get(size_t pos, unsigned default_value) const
+{
+    if (exist(pos)) {
+        json::value value = _array_data.at(pos);
+        if (value.is_number()) {
+            return value.as_unsigned_long();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const long long json::array::get(size_t pos, long long default_value) const
+{
+    if (exist(pos)) {
+        json::value value = _array_data.at(pos);
+        if (value.is_number()) {
+            return value.as_long_long();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const unsigned long long json::array::get(size_t pos, unsigned long long default_value) const
+{
+    if (exist(pos)) {
+        json::value value = _array_data.at(pos);
+        if (value.is_number()) {
+            return value.as_unsigned_long_long();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const float json::array::get(size_t pos, float default_value) const
+{
+    if (exist(pos)) {
+        json::value value = _array_data.at(pos);
+        if (value.is_number()) {
+            return value.as_float();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const double json::array::get(size_t pos, double default_value) const
+{
+    if (exist(pos)) {
+        json::value value = _array_data.at(pos);
+        if (value.is_number()) {
+            return value.as_double();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const long double json::array::get(size_t pos, long double default_value) const
+{
+    if (exist(pos)) {
+        json::value value = _array_data.at(pos);
+        if (value.is_number()) {
+            return value.as_long_double();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const std::string json::array::get(size_t pos, std::string default_value) const
+{
+    if (exist(pos)) {
+        json::value value = _array_data.at(pos);
+        if (value.is_string()) {
+            return value.as_string();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
+const std::string json::array::get(size_t pos, const char* default_value) const
+{
+    if (exist(pos)) {
+        json::value value = _array_data.at(pos);
+        if (value.is_string()) {
+            return value.as_string();
+        }
+        else {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
 json::array::iterator json::array::begin() noexcept
 {
     return _array_data.begin();

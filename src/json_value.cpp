@@ -152,9 +152,9 @@ bool json::value::exist(const std::string & key) const
 	return _type == value_type::Object && as_object().exist(key);
 }
 
-bool json::value::exist(int index) const
+bool json::value::exist(size_t pos) const
 {
-	return _type == value_type::Array && as_array().size() < index;
+	return _type == value_type::Array && as_array().exist(pos);
 }
 
 const json::value& json::value::at(size_t pos) const
