@@ -108,8 +108,11 @@ namespace json
         const double as_double() const;
         const long double as_long_double() const;
         const std::string as_string() const;
-        const array as_array() const;
-        const object as_object() const;
+        const array & as_array() const;
+        const object & as_object() const;
+
+        array& as_array();
+        object& as_object();
 
         // return raw string
         const std::string to_string() const;

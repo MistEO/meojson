@@ -320,7 +320,7 @@ const std::string json::value::as_string() const
 	}
 }
 
-const json::array json::value::as_array() const
+const json::array & json::value::as_array() const
 {
 	if (_type == value_type::Array && _array_ptr != nullptr)
 	{
@@ -330,7 +330,27 @@ const json::array json::value::as_array() const
 	throw exception("Wrong Type");
 }
 
-const json::object json::value::as_object() const
+const json::object & json::value::as_object() const
+{
+	if (_type == value_type::Object && _object_ptr != nullptr)
+	{
+		return *_object_ptr;
+	}
+
+	throw exception("Wrong Type or data empty");
+}
+
+json::array& json::value::as_array()
+{
+	if (_type == value_type::Array && _array_ptr != nullptr)
+	{
+		return *_array_ptr;
+	}
+
+	throw exception("Wrong Type");
+}
+
+json::object& json::value::as_object()
 {
 	if (_type == value_type::Object && _object_ptr != nullptr)
 	{
