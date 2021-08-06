@@ -37,7 +37,7 @@ std::optional<json::value> json::parser::parse()
         return std::nullopt;
     }
 
-    if (!result_value)
+    if (!result_value.valid())
     {
         return std::nullopt;
     }
