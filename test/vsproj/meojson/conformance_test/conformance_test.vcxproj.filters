@@ -19,9 +19,4 @@
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
-  <ItemGroup>
-    <Library Include="..\x64\Debug\libmeojson.lib">
-      <Filter>资源文件</Filter>
-    </Library>
-  </ItemGroup>
 </Project>
