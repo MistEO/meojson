@@ -44,4 +44,7 @@ namespace json
         std::string::const_iterator _cur;
         std::string::const_iterator _end;
     };
+
+    std::optional<value> parse(const std::string& content);
+
 } // namespace json

@@ -1,6 +1,8 @@
 #include "json_object.h"
 
 #include "json_value.h"
+#include "json_aux.h"
+
 
 json::object::object(const raw_object& raw_obj)
     : _object_data(raw_obj)
@@ -42,7 +44,7 @@ const std::string json::object::to_string() const
     std::string str = "{";
     for (const auto& [key, val] : _object_data)
     {
-        str += "\"" + key + "\":" + val.to_string() + ",";
+        str += "\"" + unescape_string(key) + "\":" + val.to_string() + ",";
     }
     if (str.back() == ',')
     {
@@ -63,7 +65,7 @@ const std::string json::object::format(std::string shift_str, size_t basic_shift
     std::string str = "{";
     for (const auto& [key, val] : _object_data)
     {
-        str += "\n" + shift + "\"" + key + "\": " + val.format(shift_str, basic_shift_count + 1) + ",";
+        str += "\n" + shift + "\"" + unescape_string(key) + "\": " + val.format(shift_str, basic_shift_count + 1) + ",";
     }
     if (str.back() == ',')
     {

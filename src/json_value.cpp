@@ -6,6 +6,7 @@
 #include "json_array.h"
 #include "json_exception.h"
 // #include "json_parser.h"
+#include "json_aux.h"
 
 // for Pimpl
 json::value::value() = default;
@@ -93,21 +94,21 @@ json::value::value(long double num)
 
 json::value::value(const char* str)
 	: _type(value_type::String),
-	_raw_data(str)
+	_raw_data(unescape_string(str))
 {
 	;
 }
 
 json::value::value(const std::string & str)
 	: _type(value_type::String),
-	_raw_data(str)
+	_raw_data(unescape_string(str))
 {
 	;
 }
 
 json::value::value(std::string && str)
 	: _type(value_type::String),
-	_raw_data(std::move(str))
+	_raw_data(unescape_string(std::move(str)))
 {
 	;
 }
@@ -312,7 +313,7 @@ const std::string json::value::as_string() const
 {
 	if (_type == value_type::String)
 	{
-		return _raw_data;
+		return escape_string(_raw_data);
 	}
 	else
 	{

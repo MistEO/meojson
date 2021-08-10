@@ -59,7 +59,7 @@ namespace json
 
         // Constructed from raw data
         template <typename... Args>
-        value(value_type type, Args &&... args)
+        value(value_type type, Args &&...args)
             : _type(type),
             _raw_data(std::forward<Args>(args)...)
         {
@@ -88,12 +88,14 @@ namespace json
         const value& at(size_t pos) const;
         const value& at(const std::string& key) const;
 
-        template<typename Type>
-        decltype(auto) get(const std::string& key, Type default_value) const {
+        template <typename Type>
+        decltype(auto) get(const std::string& key, Type default_value) const
+        {
             return is_object() ? as_object().get(key, default_value) : default_value;
         }
-        template<typename Type>
-        decltype(auto) get(size_t pos, Type default_value) const {
+        template <typename Type>
+        decltype(auto) get(size_t pos, Type default_value) const
+        {
             return is_array() ? as_array().get(pos, default_value) : default_value;
         }
 
