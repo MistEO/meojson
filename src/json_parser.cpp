@@ -6,13 +6,13 @@
 #include "json_object.h"
 #include "json_array.h"
 
-/*** 
+/***
  * Reference
  * Json     https://www.json.org/json-zh.html
 ***/
 
 std::optional<json::value> json::parser::parse(
-    const std::string &content)
+    const std::string& content)
 {
     return parser(content.cbegin(), content.cend()).parse();
 }
@@ -87,7 +87,7 @@ json::value json::parser::parse_null()
 {
     static const std::string null_string = "null";
 
-    for (auto &&ch : null_string)
+    for (const char& ch : null_string)
     {
         if (*_cur == ch)
         {
@@ -110,7 +110,7 @@ json::value json::parser::parse_boolean()
     switch (*_cur)
     {
     case 't':
-        for (auto &&ch : true_string)
+        for (const char& ch : true_string)
         {
             if (*_cur == ch)
             {
@@ -123,7 +123,7 @@ json::value json::parser::parse_boolean()
         }
         return true;
     case 'f':
-        for (auto &&ch : false_string)
+        for (const char& ch : false_string)
         {
             if (*_cur == ch)
             {
@@ -229,7 +229,7 @@ json::value json::parser::parse_array()
             return invalid_value();
         }
 
-        auto val = parse_value();
+        json::value val = parse_value();
 
         if (!val.valid() || !skip_whitespace())
         {
@@ -306,7 +306,7 @@ json::value json::parser::parse_object()
             return invalid_value();
         }
 
-        auto val = parse_value();
+        json::value val = parse_value();
 
         if (!val.valid() || !skip_whitespace())
         {

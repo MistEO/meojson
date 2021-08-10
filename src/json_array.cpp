@@ -2,13 +2,13 @@
 
 #include "json_value.h"
 
-json::array::array(const raw_array &arr)
+json::array::array(const raw_array& arr)
     : _array_data(arr)
 {
     ;
 }
 
-json::array::array(raw_array &&arr) noexcept
+json::array::array(raw_array&& arr) noexcept
     : _array_data(std::move(arr))
 {
     ;
@@ -20,7 +20,7 @@ json::array::array(std::initializer_list<raw_array::value_type> init_list)
     ;
 }
 
-const json::value &json::array::at(size_t pos) const
+const json::value& json::array::at(size_t pos) const
 {
     return _array_data.at(pos);
 }
@@ -33,7 +33,7 @@ void json::array::clear() noexcept
 const std::string json::array::to_string() const
 {
     std::string str = "[";
-    for (auto &&val : _array_data)
+    for (const json::value& val : _array_data)
     {
         str += val.to_string() + ",";
     }
@@ -54,7 +54,7 @@ const std::string json::array::format(std::string shift_str, size_t basic_shift_
     }
 
     std::string str = "[";
-    for (auto &&val : _array_data)
+    for (const json::value& val : _array_data)
     {
         str += "\n" + shift + val.format(shift_str, basic_shift_count + 1) + ",";
     }
@@ -288,12 +288,12 @@ json::array::const_reverse_iterator json::array::crend() const noexcept
     return _array_data.crend();
 }
 
-json::value &json::array::operator[](size_t pos)
+json::value& json::array::operator[](size_t pos)
 {
     return _array_data[pos];
 }
 
-const json::value &json::array::operator[](size_t pos) const
+const json::value& json::array::operator[](size_t pos) const
 {
     return _array_data[pos];
 }
@@ -303,7 +303,7 @@ const json::value &json::array::operator[](size_t pos) const
 //     return _array_data;
 // }
 
-std::ostream &operator<<(std::ostream &out, const json::array &arr)
+std::ostream& operator<<(std::ostream& out, const json::array& arr)
 {
     // TODO: format output
 

@@ -2,13 +2,13 @@
 
 #include "json_value.h"
 
-json::object::object(const raw_object &raw_obj)
+json::object::object(const raw_object& raw_obj)
     : _object_data(raw_obj)
 {
     ;
 }
 
-json::object::object(raw_object &&raw_obj)
+json::object::object(raw_object&& raw_obj)
     : _object_data(std::move(raw_obj))
 {
     ;
@@ -16,13 +16,13 @@ json::object::object(raw_object &&raw_obj)
 
 json::object::object(std::initializer_list<raw_object::value_type> init_list)
 {
-    for (auto &&[key, val] : init_list)
+    for (const auto& [key, val] : init_list)
     {
         emplace(key, val);
     }
 }
 
-const json::value &json::object::at(const std::string &key) const
+const json::value& json::object::at(const std::string& key) const
 {
     return _object_data.at(key);
 }
@@ -32,7 +32,7 @@ void json::object::clear() noexcept
     _object_data.clear();
 }
 
-bool json::object::earse(const std::string &key)
+bool json::object::earse(const std::string& key)
 {
     return _object_data.erase(key) > 0 ? true : false;
 }
@@ -40,7 +40,7 @@ bool json::object::earse(const std::string &key)
 const std::string json::object::to_string() const
 {
     std::string str = "{";
-    for (auto &&[key, val] : _object_data)
+    for (const auto& [key, val] : _object_data)
     {
         str += "\"" + key + "\":" + val.to_string() + ",";
     }
@@ -61,7 +61,7 @@ const std::string json::object::format(std::string shift_str, size_t basic_shift
     }
 
     std::string str = "{";
-    for (auto &&[key, val] : _object_data)
+    for (const auto& [key, val] : _object_data)
     {
         str += "\n" + shift + "\"" + key + "\": " + val.format(shift_str, basic_shift_count + 1) + ",";
     }
@@ -275,12 +275,12 @@ json::object::const_iterator json::object::cend() const noexcept
     return _object_data.cend();
 }
 
-json::value &json::object::operator[](const std::string &key)
+json::value& json::object::operator[](const std::string& key)
 {
     return _object_data[key];
 }
 
-json::value &json::object::operator[](std::string &&key)
+json::value& json::object::operator[](std::string&& key)
 {
     return _object_data[std::move(key)];
 }
@@ -290,7 +290,7 @@ json::value &json::object::operator[](std::string &&key)
 //     return _object_data;
 // }
 
-std::ostream &operator<<(std::ostream &out, const json::object &obj)
+std::ostream& operator<<(std::ostream& out, const json::object& obj)
 {
     // TODO: format output
 
