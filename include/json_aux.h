@@ -53,7 +53,7 @@ namespace json
 	{
 		std::string escape_str = std::move(str);
 
-		for (size_t pos = 0; pos < escape_str.size() - 1; ++pos)
+		for (size_t pos = 0; pos + 1 < escape_str.size(); ++pos)
 		{
 			if (escape_str[pos] != '\\') {
 				continue;
