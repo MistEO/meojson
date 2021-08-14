@@ -33,6 +33,9 @@
     <ClInclude Include="..\..\..\..\include\json_value.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\include\json_aux.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\src\json_array.cpp">

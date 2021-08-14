@@ -162,6 +162,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\..\include\json.h" />
     <ClInclude Include="..\..\..\..\include\json_array.h" />
+    <ClInclude Include="..\..\..\..\include\json_aux.h" />
     <ClInclude Include="..\..\..\..\include\json_exception.h" />
     <ClInclude Include="..\..\..\..\include\json_object.h" />
     <ClInclude Include="..\..\..\..\include\json_parser.h" />
