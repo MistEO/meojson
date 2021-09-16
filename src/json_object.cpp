@@ -267,6 +267,16 @@ json::object::iterator json::object::end() noexcept
     return _object_data.end();
 }
 
+json::object::const_iterator json::object::begin() const noexcept
+{
+    return _object_data.begin();
+}
+
+json::object::const_iterator json::object::end() const noexcept
+{
+    return _object_data.end();
+}
+
 json::object::const_iterator json::object::cbegin() const noexcept
 {
     return _object_data.cbegin();

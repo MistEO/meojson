@@ -259,6 +259,16 @@ json::array::iterator json::array::end() noexcept
     return _array_data.end();
 }
 
+json::array::const_iterator json::array::begin() const noexcept
+{
+    return _array_data.begin();
+}
+
+json::array::const_iterator json::array::end() const noexcept
+{
+    return _array_data.end();
+}
+
 json::array::const_iterator json::array::cbegin() const noexcept
 {
     return _array_data.cbegin();
@@ -274,6 +284,15 @@ json::array::reverse_iterator json::array::rbegin() noexcept
     return _array_data.rbegin();
 }
 json::array::reverse_iterator json::array::rend() noexcept
+{
+    return _array_data.rend();
+}
+
+json::array::const_reverse_iterator json::array::rbegin() const noexcept
+{
+    return _array_data.rbegin();
+}
+json::array::const_reverse_iterator json::array::rend() const noexcept
 {
     return _array_data.rend();
 }

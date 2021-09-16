@@ -21,7 +21,16 @@ namespace json
 		object(const raw_object& raw_obj);
 		object(raw_object&& raw_obj);
 		object(std::initializer_list<raw_object::value_type> init_list);
-
+		template<typename MapType>
+		object(MapType map) {
+			static_assert(
+				std::is_constructible<raw_object::value_type, typename MapType::value_type>::value,
+				"Parameter can't be used to construct a json::object::raw_object::value_type");
+			for (auto&& ele : map) {
+				_object_data.emplace(std::move(ele));
+			}
+		}
+		
 		~object() = default;
 
 		bool empty() const noexcept { return _object_data.empty(); }
@@ -57,6 +66,8 @@ namespace json
 
 		iterator begin() noexcept;
 		iterator end() noexcept;
+		const_iterator begin() const noexcept;
+		const_iterator end() const noexcept;
 		const_iterator cbegin() const noexcept;
 		const_iterator cend() const noexcept;
 

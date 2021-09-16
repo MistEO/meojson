@@ -23,12 +23,12 @@ namespace json
         array(const raw_array& arr);
         array(raw_array&& arr) noexcept;
         array(std::initializer_list<raw_array::value_type> init_list);
-        template<typename EleType>
-        array(std::vector<EleType> vec) {
+        template<typename ArrayType>
+        array(ArrayType arr) {
             static_assert(
-                std::is_constructible<json::value, EleType>::value,
+                std::is_constructible<json::value, typename ArrayType::value_type>::value,
                 "Parameter can't be used to construct a json::value");
-            for (auto&& ele : vec) {
+            for (auto&& ele : arr) {
                 _array_data.emplace_back(std::move(ele));
             }
         }
@@ -68,11 +68,15 @@ namespace json
 
         iterator begin() noexcept;
         iterator end() noexcept;
+        const_iterator begin() const noexcept;
+        const_iterator end() const noexcept;
         const_iterator cbegin() const noexcept;
         const_iterator cend() const noexcept;
 
         reverse_iterator rbegin() noexcept;
         reverse_iterator rend() noexcept;
+        const_reverse_iterator rbegin() const noexcept;
+        const_reverse_iterator rend() const noexcept;
         const_reverse_iterator crbegin() const noexcept;
         const_reverse_iterator crend() const noexcept;
 
