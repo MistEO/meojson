@@ -6,16 +6,7 @@
 
 ### 简介
 
-- `meojson`是一个`非常快`的C++ JSON解析库，O(n)级复杂度，解析巨型JSON的速度比腾讯RapidJson快70%以上！
-
-    ```bash
-    # 测试方法
-    sh test/parse/performance_test.sh
-    ```
-
-    ![image](test/parse/result/performance_result.png)
-
-- `meojson`也是一个使用方便的C++ JSON生成库，可以使用各种语法糖优雅地生成JSON
+- `meojson`是一个使用方便的C++ JSON生成库，可以使用各种语法糖优雅地生成JSON
 
     ```c++
     json::value json;
@@ -148,16 +139,7 @@ int main()
 
 ### Introduction
 
-- `meojson` is a `very fast` json parser for C++, O(n) Complexity, pasing huge json will be 70% faster than Tecent's RapidJson.
-
-    ```bash
-    # How to test
-    sh test/parse/performance_test.sh
-    ```
-
-    ![image](test/parse/result/performance_result.png)
-
-- `meojson` is also an easy-to-use json generator for C++ that can use various syntactic sugars to elegantly generate JSON
+- `meojson` is an easy-to-use json generator for C++ that can use various syntactic sugars to elegantly generate JSON
 
     ```c++
     json::value json;
