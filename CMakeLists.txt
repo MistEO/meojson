@@ -11,11 +11,11 @@ find_package(Threads)
 set(CMAKE_BUILD_TYPE Release) # 自带-O2选项
 set(CMAKE_CXX_STANDARD 17)    # std=c++17
 
-add_library(meojson STATIC ${SRC})
+# add_library(meojson STATIC ${SRC})
 
 if (BUILD_SAMPLE)
   set(SAMPLE_SRC sample/sample.cpp)
   add_executable(sample.out ${SAMPLE_SRC})
 endif()
 
-target_link_libraries(sample.out meojson ${CMAKE_THREAD_LIBS_INIT})
+# target_link_libraries(sample.out meojson ${CMAKE_THREAD_LIBS_INIT})

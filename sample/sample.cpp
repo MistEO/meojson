@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "json.h"
+#include "json.hpp"
 
 int main() {
   /*** Parse ***/
