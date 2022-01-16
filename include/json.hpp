@@ -11,6 +11,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <sstream>
 
 namespace json {
 
@@ -1738,17 +1739,41 @@ std::optional<value> parse(const std::string& content) {
 class parser5 {
   using u8char = uint64_t;
 
+ public:
+  class exception : public std::exception {
+   public:
+    exception(int line, int col, std::string& msg)
+        : _line(line), _col(col), _msg("JSON5: " + msg) {}
+    exception(const exception&) = default;
+    exception& operator=(const exception&) = default;
+    exception(exception&&)                 = default;
+    exception& operator=(exception&&) = default;
+
+    virtual ~exception() noexcept override = default;
+
+    virtual const char* what() const noexcept override {
+      std::stringstream ss;
+      ss << _msg << '\n' << '\t' << "at line " << _line << ", column " << _col << '\n';
+      return ss.str().c_str();
+    }
+
+   protected:
+    int         _line, _col;
+    std::string _msg;
+  };
+
+  class InvalidChar : public exception {
+   public:
+    InvalidChar(int line, int col, std::string& msg)
+        : exception(line, col, "JSON5: [Invalid Char] " + msg) {}
+  };
+
  private:
   class unicode {
    public:
     static const std::regex space_separator;
     static const std::regex id_start;
     static const std::regex id_continue;
-  };
-  struct Token {
-    std::string type;
-    value       value;
-    size_t      col, line;
   };
 
   enum class LexState {
@@ -1783,6 +1808,33 @@ class parser5 {
     end
   };
 
+  enum class ParseState {
+    start = 0,
+    beforePropertyName,
+    afterPropertyName,
+    beforePropertyValue,
+    afterPropertyValue,
+    afterPropertyValue,
+    beforeArrayValue,
+    afterArrayValue,
+    end
+  };
+
+  enum class TokenType {
+    punctuator = 0,
+    null,
+    boolean,
+    numeric,
+    string,
+    eof,
+  };
+
+  struct Token {
+    TokenType type;
+    value     value;
+    size_t    col, line;
+  };
+
  public:
   ~parser5() noexcept = default;
   static std::optional<value> parse(const std::string& content);
@@ -1804,7 +1856,7 @@ class parser5 {
     return str;
   }
 
-  Token lex();
+  std::optional<Token> lex();
 
   Token newToken(std::string type, value value);
 
@@ -1813,7 +1865,7 @@ class parser5 {
   void read();
 
   // lex state functions
-  void lex_default() {
+  std::optional<Token> lex_default() {
     static const std::vector<u8char> continue_chars = {};
 
     switch (_current_char) {
@@ -1899,13 +1951,12 @@ class parser5 {
   }
 
   void lex_value() {
-    switch(_current_char) {
+    switch (_current_char) {
       case '{':
       case '[':
         // return newToken('punctuator', read());
       case 'n':
         read();
-        
     }
   }
 
