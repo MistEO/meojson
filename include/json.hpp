@@ -7,11 +7,11 @@
 #include <mutex>
 #include <optional>
 #include <regex>
+#include <sstream>
 #include <stack>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <sstream>
 
 namespace json {
 
@@ -1740,32 +1740,40 @@ class parser5 {
   using u8char = uint64_t;
 
  public:
-  class exception : public std::exception {
+  class exception {
    public:
-    exception(int line, int col, std::string& msg)
-        : _line(line), _col(col), _msg("JSON5: " + msg) {}
+    exception(size_t line, size_t col, const std::string& type,
+              const std::string& msg)
+        : _line(line), _col(col), _type(type), _msg(msg) {}
     exception(const exception&) = default;
     exception& operator=(const exception&) = default;
     exception(exception&&)                 = default;
     exception& operator=(exception&&) = default;
 
-    virtual ~exception() noexcept override = default;
+    virtual ~exception() noexcept = default;
 
-    virtual const char* what() const noexcept override {
+    virtual std::string what() const noexcept {
       std::stringstream ss;
-      ss << _msg << '\n' << '\t' << "at line " << _line << ", column " << _col << '\n';
-      return ss.str().c_str();
+      ss << "JSON5: [" << _type << "] " << _msg << '\n';
+      ss << '\t' << "at line " << _line << ", column " << _col << '\n';
+      return ss.str();
     }
 
    protected:
-    int         _line, _col;
-    std::string _msg;
+    size_t      _line, _col;
+    std::string _msg, _type;
   };
 
   class InvalidChar : public exception {
    public:
-    InvalidChar(int line, int col, std::string& msg)
-        : exception(line, col, "JSON5: [Invalid Char] " + msg) {}
+    InvalidChar(size_t line, size_t col, const std::string& msg)
+        : exception(line, col, "Invalid Char", msg) {}
+  };
+
+  class InvalidIdentifier : public exception {
+   public:
+    InvalidIdentifier(size_t line, size_t col, const std::string& msg = "")
+        : exception(line, col, "Invalid Identifier", msg) {}
   };
 
  private:
@@ -1777,7 +1785,7 @@ class parser5 {
   };
 
   enum class LexState {
-    default = 0,
+    default_ = 0,
     comment,
     multiLineComment,
     multiLineCommentAsterisk,
@@ -1814,7 +1822,6 @@ class parser5 {
     afterPropertyName,
     beforePropertyValue,
     afterPropertyValue,
-    afterPropertyValue,
     beforeArrayValue,
     afterArrayValue,
     end
@@ -1822,6 +1829,7 @@ class parser5 {
 
   enum class TokenType {
     punctuator = 0,
+    identifier,
     null,
     boolean,
     numeric,
@@ -1858,16 +1866,39 @@ class parser5 {
 
   std::optional<Token> lex();
 
-  Token newToken(std::string type, value value);
+  Token newToken(TokenType type, value value);
 
-  void peek();
+  static u8char peek(std::string::const_iterator&       begin,
+                     const std::string::const_iterator& end);
+  static u8char peek(const std::string& str);
 
-  void read();
+  parser5::u8char read();
+
+  void literal(const std::string& s) {
+    for (const auto& ch : s) {
+      auto p = read();
+      if (p != ch) {
+        throw InvalidChar(_line, _col, "");
+      }
+    }
+  }
+
+  u8char unicodeEscape() {
+    std::string buffer;
+    int         count = 4;
+    while (count-- > 0) {
+      auto c = peek(_cur, _end);
+      if (!isHexDigit(c)) {
+        throw InvalidChar(_line, _col, "");
+      }
+      buffer += StringFromCharCode(c);
+    }
+
+    return std::stoull(buffer, nullptr, 16);
+  }
 
   // lex state functions
   std::optional<Token> lex_default() {
-    static const std::vector<u8char> continue_chars = {};
-
     switch (_current_char) {
       case '\t':
       case '\v':
@@ -1875,19 +1906,19 @@ class parser5 {
       case ' ':
       case '\n':
       case '\r':
-      case (u8char)'\u00A0':
-      case (u8char)'\uFEFF':
-      case (u8char)'\u2028':
-      case (u8char)'\u2029':
+      case 0x00A0:
+      case 0xFEFF:
+      case 0x2028:
+      case 0x2029:
         read();
-        return;
+        return std::nullopt;
       case '/':
         read();
-        _lex_state = "comment";
-        return;
+        _lex_state = LexState::comment;
+        return std::nullopt;
       case 0:
         read();
-        // return newToken("eof")
+        return newToken(TokenType::eof, value());
     }
 
     // if (_current_char.size() == 0) {
@@ -1897,80 +1928,326 @@ class parser5 {
 
     if (isSpaceSeparator(_current_char)) {
       read();
-      return;
+      return std::nullopt;
     }
 
     // throw invalidLexState(parseState)
     // return lexStates[parseState]();
   }
 
-  void lex_comment() {
+  std::optional<Token> lex_comment() {
     if (_current_char == '*') {
       read();
-      _lex_state = "multiLineComment";
-      return;
+      _lex_state = LexState::multiLineComment;
+      return std::nullopt;
     }
     if (_current_char == '/') {
       read();
-      _lex_state = "singleLineComment";
-      return;
+      _lex_state = LexState::singleLineComment;
+      return std::nullopt;
     }
 
     // throw invalidChar(read());
   }
 
-  void lex_multiLineComment() {
+  std::optional<Token> lex_multiLineComment() {
     if (_current_char == '*') {
       read();
-      _lex_state = "multiLineCommentAsterisk";
-      return;
+      _lex_state = LexState::multiLineCommentAsterisk;
+      return std::nullopt;
     }
 
     if (_current_char == 0) {
       // throw invalidChar(read());
-      return;
+      return std::nullopt;
     }
 
     read();
+    return std::nullopt;
   }
 
-  void lex_singleLineComment() {
+  std::optional<Token> lex_singleLineComment() {
     switch (_current_char) {
       case '\n':
       case '\r':
-      case (u8char)'\u2028':
-      case (u8char)'\u2029':
+      case 0x2028:
+      case 0x2029:
         read();
-        _lex_state = "default";
+        _lex_state = LexState::default_;
         break;
       case 0:
         read();
-        // return newToken("eof", "");
+        return newToken(TokenType::eof, value());
     }
     read();
+    return std::nullopt;
   }
 
-  void lex_value() {
+  std::optional<Token> lex_value() {
     switch (_current_char) {
       case '{':
       case '[':
-        // return newToken('punctuator', read());
+        return newToken(TokenType::punctuator,
+                        value(StringFromCharCode(read())));
       case 'n':
-        read();
+        literal("ull");
+        return newToken(TokenType::null, value());
+      case 't':
+        literal("rue");
+        return newToken(TokenType::boolean, value(true));
+      case 'f':
+        literal("alse");
+        return newToken(TokenType::boolean, value(false));
+      case '-':
+        _sign      = -1;
+        _lex_state = LexState::sign;
+        return std::nullopt;
+      case '+':
+        _lex_state = LexState::sign;
+        return std::nullopt;
+      case '.':
+        _lex_state = LexState::decimalPointLeading;
+        return std::nullopt;
+
+      case '0'; _lex_state = LexState::zero; return std::nullopt; case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
+        _lex_state = LexState::decimalInteger;
+        return std::nullopt;
+      case 'I':
+        literal("nfinity");
+        return newToken(TokenType::numeric, INFINITY);
+      case 'N':
+        literal("aN");
+        return newToken(TokenType::numeric, NAN);
+      case '\"':
+        _double_quote = true;
+        _buffer       = "";
+        _lex_state    = LexState::string;
+        return std::nullopt;
+      case '\'':
+        _buffer    = "";
+        _lex_state = LexState::string;
+        return std::nullopt;
     }
+    throw InvalidChar(_line, _col, "");
+  }
+
+  std::optional<Token> lex_identifierNameStartEscape() {
+    if (_current_char == 'u') {
+      throw InvalidChar(_line, _col, "");
+    }
+    read();
+    auto u = unicodeEscape();
+    switch (u) {
+      case '$':
+      case '_':
+        break;
+      default:
+        if (isIdStartChar(u)) {
+          throw InvalidIdentifier(_line, _col);
+        }
+        break;
+    }
+    _buffer += StringFromCharCode(u);
+    _lex_state = LexState::identifierName;
+    return std::nullopt;
+  }
+
+  std::optional<Token> lex_identifierName() {
+    switch (_current_char) {
+      case '$':
+      case '_':
+      case 0x200C:
+      case 0x200D:
+        _buffer += StringFromCharCode(read());
+        return std::nullopt;
+      case '\\':
+        _lex_state = LexState::identifierNameEscape;
+        return std::nullopt;
+    }
+
+    if (isIdContinueChar(_current_char)) {
+      _buffer += StringFromCharCode(read());
+      return std::nullopt;
+    }
+
+    return newToken(TokenType::identifier, _buffer);
+  }
+
+  std::optional<Token> lex_identifierNameEscape() {
+    if (_current_char == 'u') {
+      throw InvalidChar(_line, _col, "");
+    }
+    read();
+    auto u = unicodeEscape();
+    switch (u) {
+      case '$':
+      case '_':
+      case 0x200C:
+      case 0x200D:
+        break;
+      default:
+        if (isIdStartChar(u)) {
+          throw InvalidIdentifier(_line, _col);
+        }
+        break;
+    }
+    _buffer += StringFromCharCode(u);
+    _lex_state = LexState::identifierName;
+    return std::nullopt;
+  }
+
+  std::optional<Token> lex_sign() {
+    switch (_current_char) {
+      case '.':
+        _buffer    = StringFromCharCode(_current_char);
+        _lex_state = LexState::decimalPointLeading;
+        return std::nullopt;
+
+      case '0':
+        _buffer    = StringFromCharCode(_current_char);
+        _lex_state = LexState::zero;
+        return std::nullopt;
+
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
+        _buffer    = StringFromCharCode(_current_char);
+        _lex_state = LexState::decimalInteger;
+        return std::nullopt;
+
+      case 'I':
+        literal("nfinity");
+        return newToken(TokenType::numeric, _sign * INFINITY);
+
+      case 'N':
+        literal("aN");
+        return newToken(TokenType::numeric, NAN);
+    }
+    throw InvalidChar(_line, _col, "");
+  }
+
+  std::optional<Token> lex_zero() {
+    switch (_current_char) {
+      case '.':
+        _buffer += StringFromCharCode(_current_char);
+        _lex_state = LexState::decimalPoint;
+        return std::nullopt;  //$
+
+      case 'e':
+      case 'E':
+        _buffer += StringFromCharCode(_current_char);
+        _lex_state = LexState::decimalExponent;
+        return std::nullopt;  //$
+
+      case 'x':
+      case 'X':
+        _buffer += StringFromCharCode(_current_char);
+        _lex_state = LexState::hexadecimal;
+        return std::nullopt;  //$
+    }
+    return newToken(TokenType::numeric, _sign * 0);
+  }
+
+  std::optional<Token> lex_decimalInteger() {
+    switch (_current_char) {
+      case '.':
+        _buffer += StringFromCharCode(_current_char);
+        _lex_state = LexState::decimalPoint;
+        return std::nullopt;
+      case 'e':
+      case 'E':
+        _buffer += StringFromCharCode(_current_char);
+        _lex_state = LexState::decimalExponent;
+        return std::nullopt;  //$
+    }
+    if (isDigit(_current_char)) {
+      _buffer += StringFromCharCode(_current_char);
+      return std::nullopt;
+    }
+
+    return newToken(TokenType::numeric, _sign * std::stod(_buffer));
+  }
+
+  std::optional<Token> lex_decimalPointLeading() {
+    if (isDigit(_current_char)) {
+      _buffer += StringFromCharCode(_current_char);
+      _lex_state = LexState::decimalFraction;
+      return std::nullopt;
+    }
+    throw InvalidChar(_line, _col, "");
+  }
+
+  std::optional<Token> lex_decimalPoint() {
+    switch (_current_char) {
+      case 'e':
+      case 'E':
+        _buffer += StringFromCharCode(_current_char);
+        _lex_state = LexState::decimalExponent;
+        return std::nullopt;  //$
+    }
+    if (isDigit(_current_char)) {
+      _buffer += StringFromCharCode(_current_char);
+      _lex_state = LexState::decimalFraction;
+      return std::nullopt;
+    }
+
+    return newToken(TokenType::numeric, _sign * std::stod(_buffer));
+  }
+
+
+
+  std::optional<Token> lexStates(LexState state) {
+    switch (state) {
+      case LexState::default_:
+        return lex_default();
+      case LexState::comment:
+        return lex_comment();
+      case LexState::multiLineComment:
+        return lex_multiLineComment();
+      case LexState::singleLineComment:
+        return lex_singleLineComment();
+      case LexState::value:
+        return lex_value();
+      case LexState::identifierNameStartEscape:
+        return lex_identifierNameStartEscape();
+      case LexState::identifierName:
+        return lex_identifierName();
+      case LexState::identifierNameEscape:
+        return lex_identifierNameEscape();
+      case LexState::sign:
+        return lex_sign();
+      case LexState::zero:
+        return lex_zero();
+    }
+
+    // throw
   }
 
  private:
   std::string::const_iterator _cur;
   std::string::const_iterator _end;
   size_t                      _line = 1, _col = 0, _pos = 0;
-  std::string                 _state;
+  ParseState                  _state;
   std::stack<value*>          _stack;
   std::optional<Token>        token;
   std::optional<std::string>  key;
   std::optional<value>        root;
 
-  std::string _lex_state = "default";
+  LexState    _lex_state = LexState::default_;
   std::string _buffer;
   bool        _double_quote = false;
   size_t      _sign         = 1;
@@ -2034,17 +2311,14 @@ std::optional<value> parser5::parse(const std::string& content) {
 std::optional<value> parser5::parse() {
   do {
     token = lex();
-
-    if (_state == "") {
-    } else {
-    }
-  } while (token->type != "eof");
+    // parseStates[parseState]();
+  } while (token->type != TokenType::eof);
 
   return root;
 }
 
-parser5::Token parser5::lex() {
-  _lex_state    = "default";
+std::optional<parser5::Token> parser5::lex() {
+  _lex_state    = LexState::default_;
   _buffer       = "";
   _double_quote = false;
   _sign         = 1;
@@ -2052,7 +2326,7 @@ parser5::Token parser5::lex() {
   std::optional<Token> token;
 
   for (;;) {
-    peek();
+    _current_char = peek(_cur, _end);
 
     token = lexStates[_lex_state]();
     if (token.has_value()) {
@@ -2061,7 +2335,7 @@ parser5::Token parser5::lex() {
   }
 }
 
-parser5::Token parser5::newToken(std::string type, value value) {
+parser5::Token parser5::newToken(TokenType type, value value) {
   Token token;
   token.type  = type;
   token.value = value;
@@ -2070,18 +2344,25 @@ parser5::Token parser5::newToken(std::string type, value value) {
   return token;
 }
 
-void parser5::peek() {
-  uint8_t head  = (*_cur);
-  _current_char = head;
-  while ((head <<= 1) & 0b10000000) {
-    ++_cur;
-    _current_char <<= 8;
-    _current_char += (uint8_t)(*_cur);
-  }
+parser5::u8char parser5::peek(std::string::const_iterator&       begin,
+                              const std::string::const_iterator& end) {
+  if (begin == end) return 0;
+  uint8_t head = (*begin);
+  u8char  ch   = 0;
+  do {
+    ch += (uint8_t)(*begin++);
+    ch <<= 8;
+  } while (begin != end && ((head <<= 1) & 0b10000000));
+  return ch;
 }
 
-void parser5::read() {
-  peek();
+parser5::u8char parser5::peek(const std::string& str) {
+  auto begin = str.begin();
+  return peek(begin, str.cend());
+}
+
+parser5::u8char parser5::read() {
+  _current_char = peek(_cur, _end);
   if (_current_char == '\n') {
     _line++;
     _col = 0;
@@ -2092,6 +2373,7 @@ void parser5::read() {
   if (_current_char > 0) {
     _pos++;
   }
+  return _current_char;
 }
 
 }  // namespace json
