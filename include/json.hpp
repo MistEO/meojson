@@ -1776,6 +1776,18 @@ class parser5 {
         : exception(line, col, "Invalid Identifier", msg) {}
   };
 
+  class InvalidEOF : public exception {
+   public:
+    InvalidEOF(size_t line, size_t col, const std::string& msg = "")
+        : exception(line, col, "Invalid EOF", msg) {}
+  };
+    
+    class InvalidLexState : public exception {
+     public:
+      InvalidLexState(size_t line, size_t col, const std::string& msg = "")
+          : exception(line, col, "Invalid LexState", msg) {}
+    };
+
  private:
   class unicode {
    public:
@@ -1817,7 +1829,7 @@ class parser5 {
   };
 
   enum class ParseState {
-    start = 0,
+    start = 21,
     beforePropertyName,
     afterPropertyName,
     beforePropertyValue,
@@ -1864,7 +1876,7 @@ class parser5 {
     return str;
   }
 
-  std::optional<Token> lex();
+  Token lex();
 
   Token newToken(TokenType type, value value);
 
@@ -1881,6 +1893,102 @@ class parser5 {
         throw InvalidChar(_line, _col, "");
       }
     }
+  }
+
+  std::optional<u8char> escape() {
+    auto c = peek(_cur, _end);
+    switch (c) {
+      case 'b':
+        read();
+        return '\b';
+
+      case 'f':
+        read();
+        return '\f';
+
+      case 'n':
+        read();
+        return '\n';
+
+      case 'r':
+        read();
+        return '\r';
+
+      case 't':
+        read();
+        return '\t';
+
+      case 'v':
+        read();
+        return '\v';
+
+      case '0':
+        read();
+        if (isDigit(peek(_cur, _end))) {
+          throw InvalidChar(_line, _col, "");
+        }
+
+        return '\u0000';
+
+      case 'x':
+        read();
+        return hexEscape();
+
+      case 'u':
+        read();
+        return unicodeEscape();
+
+      case '\n':
+      case 0x2028:
+      case 0x2029:
+        read();
+        return 0;
+
+      case '\r':
+        read();
+        if (peek(_cur, _end) == '\n') {
+          read();
+        }
+
+        return std::nullopt;
+
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
+        throw InvalidChar(_line, _col, "");
+      default:
+        if (c == 0) {
+          throw InvalidChar(_line, _col, "");
+        }
+    }
+
+    return read();
+  }
+
+  u8char hexEscape() {
+    std::string buffer = "";
+    auto        c      = peek(_cur, _end);
+
+    if (!isHexDigit(c)) {
+      throw InvalidChar(_line, _col, "");
+    }
+
+    buffer += read();
+
+    c = peek(_cur, _end);
+    if (!isHexDigit(c)) {
+      throw InvalidChar(_line, _col, "");
+    }
+
+    buffer += read();
+
+    return std::stoi(buffer, nullptr, 16);
   }
 
   u8char unicodeEscape() {
@@ -1910,14 +2018,14 @@ class parser5 {
       case 0xFEFF:
       case 0x2028:
       case 0x2029:
-        read();
+//        read();
         return std::nullopt;
       case '/':
-        read();
+//        read();
         _lex_state = LexState::comment;
         return std::nullopt;
       case 0:
-        read();
+//        read();
         return newToken(TokenType::eof, value());
     }
 
@@ -1931,8 +2039,8 @@ class parser5 {
       return std::nullopt;
     }
 
-    // throw invalidLexState(parseState)
-    // return lexStates[parseState]();
+//      throw InvalidLexState(_line, _col);
+     return lexStates((LexState)_state);
   }
 
   std::optional<Token> lex_comment() {
@@ -1947,7 +2055,7 @@ class parser5 {
       return std::nullopt;
     }
 
-    // throw invalidChar(read());
+     throw InvalidChar(_line, _col, "");
   }
 
   std::optional<Token> lex_multiLineComment() {
@@ -1963,6 +2071,28 @@ class parser5 {
     }
 
     read();
+    return std::nullopt;
+  }
+
+  std::optional<Token> lex_multiLineCommentAsterisk() {
+    switch (_current_char) {
+      case '*':
+         read();
+        return std::nullopt;
+
+      case '/':
+         read();
+        _lex_state = LexState::default_;
+        return std::nullopt;  //$
+
+      default:
+        if (_current_char) {
+          throw InvalidChar(_line, _col, "");
+        }
+    }
+
+    read();
+    _lex_state = LexState::multiLineComment;
     return std::nullopt;
   }
 
@@ -2009,7 +2139,10 @@ class parser5 {
         _lex_state = LexState::decimalPointLeading;
         return std::nullopt;
 
-      case '0'; _lex_state = LexState::zero; return std::nullopt; case '1':
+      case '0':
+        _lex_state = LexState::zero;
+        return std::nullopt;
+      case '1':
       case '2':
       case '3':
       case '4':
@@ -2208,9 +2341,192 @@ class parser5 {
     return newToken(TokenType::numeric, _sign * std::stod(_buffer));
   }
 
+  std::optional<Token> lex_decimalFraction() {
+    switch (_current_char) {
+      case 'e':
+      case 'E':
+        _buffer += StringFromCharCode(_current_char);
+        _lex_state = LexState::decimalExponent;
+        return std::nullopt;  //$
+    }
+    if (isDigit(_current_char)) {
+      _buffer += StringFromCharCode(_current_char);
+      return std::nullopt;
+    }
 
+    return newToken(TokenType::numeric, _sign * std::stod(_buffer));
+  }
+
+  std::optional<Token> lex_decimalExponent() {
+    switch (_current_char) {
+      case '+':
+      case '-':
+        _buffer += StringFromCharCode(_current_char);
+        _lex_state = LexState::decimalExponentSign;
+        return std::nullopt;  //$
+    }
+
+    if (isDigit(_current_char)) {
+      _buffer += StringFromCharCode(_current_char);
+      _lex_state = LexState::decimalExponentInteger;
+      return std::nullopt;
+    }
+    throw InvalidChar(_line, _col, "");
+  }
+
+  std::optional<Token> lex_decimalExponentSign() {
+    if (isDigit(_current_char)) {
+      _buffer += StringFromCharCode(_current_char);
+      _lex_state = LexState::decimalExponentInteger;
+      return std::nullopt;
+    }
+    throw InvalidChar(_line, _col, "");
+  }
+
+  std::optional<Token> lex_decimalExponentInteger() {
+    if (isDigit(_current_char)) {
+      _buffer += StringFromCharCode(_current_char);
+      return std::nullopt;
+    }
+    return newToken(TokenType::numeric, _sign * std::stod(_buffer));
+  }
+
+  std::optional<Token> lex_hexadecimal() {
+    if (isHexDigit(_current_char)) {
+      _buffer += StringFromCharCode(_current_char);
+      _lex_state = LexState::hexadecimalInteger;
+      return std::nullopt;
+    }
+    throw InvalidChar(_line, _col, "");
+  }
+
+  std::optional<Token> lex_hexdecimalInteger() {
+    if (isHexDigit(_current_char)) {
+      _buffer += StringFromCharCode(_current_char);
+      return std::nullopt;
+    }
+    return newToken(TokenType::numeric, _sign * std::stod(_buffer));
+  }
+
+  std::optional<Token> lex_string() {
+    switch (_current_char) {
+      case '\\':
+        _buffer += StringFromCharCode(escape().value_or(0));
+        return std::nullopt;
+      case '\"':
+        if (_double_quote) {
+          return newToken(TokenType::string, _buffer);
+        }
+        _buffer += StringFromCharCode(_current_char);
+        return std::nullopt;
+      case '\'':
+        if (!_double_quote) {
+          return newToken(TokenType::string, _buffer);
+        }
+        _buffer += StringFromCharCode(_current_char);
+        return std::nullopt;
+      case '\n':
+      case '\r':
+        throw InvalidChar(_line, _col, "");
+      case 0x2028:
+      case 0x2029:
+        // throw separatorChar(_current_char);
+        break;
+      default:
+        if (_current_char == 0) {
+          throw InvalidChar(_line, _col, "");
+        }
+    }
+    _buffer += StringFromCharCode(_current_char);
+    return std::nullopt;
+  }
+
+  std::optional<Token> lex_start() {
+    switch (_current_char) {
+      case '{':
+      case '[':
+        return newToken(TokenType::punctuator, StringFromCharCode(_current_char));
+    }
+
+    _lex_state = LexState::value;
+    return std::nullopt;
+  }
+
+  std::optional<Token> lex_beforePropertyName() {
+    switch (_current_char) {
+      case '$':
+      case '_':
+        _buffer    = StringFromCharCode(read());
+        _lex_state = LexState::identifierName;
+        return std::nullopt;
+      case '\\':
+        read();
+        _lex_state = LexState::identifierNameStartEscape;
+        return std::nullopt;
+      case '}':
+        return newToken(TokenType::punctuator,
+                        StringFromCharCode(_current_char));
+      case '\"':
+      case '\'':
+        _double_quote = (read() == '\"');
+        _lex_state    = LexState::string;
+        return std::nullopt;
+    }
+
+    if (isIdStartChar(_current_char)) {
+      _buffer += StringFromCharCode(read());
+      _lex_state = LexState::identifierName;
+      return std::nullopt;
+    }
+
+    throw InvalidChar(_line, _col, "");
+  }
+
+  std::optional<Token> lex_afterPropertyName() {
+    if (_current_char == ':') {
+      return newToken(TokenType::punctuator, StringFromCharCode(_current_char));
+    }
+    throw InvalidChar(_line, _col, "");
+  }
+
+  std::optional<Token> lex_beforePropertyValue() {
+    _lex_state = LexState::value;
+    return std::nullopt;
+  }
+
+  std::optional<Token> lex_afterPropertyValue() {
+    switch (_current_char) {
+      case ',':
+      case '}':
+        return newToken(TokenType::punctuator,
+                        StringFromCharCode(_current_char));
+    }
+    throw InvalidChar(_line, _col, "");
+  }
+
+  std::optional<Token> lex_beforeArrayValue() {
+    if (_current_char == ']') {
+      return newToken(TokenType::punctuator, StringFromCharCode(_current_char));
+    }
+    _lex_state = LexState::value;
+    return std::nullopt;
+  }
+
+  std::optional<Token> lex_afterArrayValue() {
+    switch (_current_char) {
+      case ',':
+      case ']':
+        return newToken(TokenType::punctuator,
+                        StringFromCharCode(_current_char));
+    }
+
+    throw InvalidChar(_line, _col, "");
+  }
+
+  std::optional<Token> lex_end() { throw InvalidChar(_line, _col, ""); }
 
   std::optional<Token> lexStates(LexState state) {
+      std::cout << "lex state: " << (int)state << std::endl;
     switch (state) {
       case LexState::default_:
         return lex_default();
@@ -2218,6 +2534,8 @@ class parser5 {
         return lex_comment();
       case LexState::multiLineComment:
         return lex_multiLineComment();
+      case LexState::multiLineCommentAsterisk:
+        return lex_multiLineCommentAsterisk();
       case LexState::singleLineComment:
         return lex_singleLineComment();
       case LexState::value:
@@ -2232,19 +2550,220 @@ class parser5 {
         return lex_sign();
       case LexState::zero:
         return lex_zero();
+      case LexState::decimalInteger:
+        return lex_decimalInteger();
+      case LexState::decimalPointLeading:
+        return lex_decimalPointLeading();
+      case LexState::decimalPoint:
+        return lex_decimalPoint();
+      case LexState::decimalFraction:
+        return lex_decimalFraction();
+      case LexState::decimalExponent:
+        return lex_decimalExponent();
+      case LexState::decimalExponentSign:
+        return lex_decimalExponentSign();
+      case LexState::decimalExponentInteger:
+        return lex_decimalExponentInteger();
+      case LexState::hexadecimal:
+        return lex_hexadecimal();
+      case LexState::hexadecimalInteger:
+        return lex_hexdecimalInteger();
+      case LexState::string:
+        return lex_string();
+      case LexState::start:
+        return lex_start();
+      case LexState::beforePropertyName:
+        return lex_beforePropertyName();
+      case LexState::afterPropertyName:
+        return lex_afterPropertyName();
+      case LexState::beforePropertyValue:
+        return lex_beforePropertyValue();
+      case LexState::afterPropertyValue:
+        return lex_afterPropertyValue();
+      case LexState::beforeArrayValue:
+        return lex_beforeArrayValue();
+      case LexState::afterArrayValue:
+        return lex_afterPropertyValue();
+      case LexState::end:
+        return lex_end();
     }
 
     // throw
+  }
+
+  void push() {
+    value v;
+    switch (token->type) {
+      case TokenType::punctuator:
+        switch (token->value.as_string()[0]) {
+          case '{':
+            v = object();
+            break;
+          case '[':
+            v = array();
+        }
+        break;
+      case TokenType::null:
+      case TokenType::boolean:
+      case TokenType::numeric:
+      case TokenType::string:
+        v = token->value;
+        break;
+    }
+    if (!root.has_value()) {
+      root = v;
+    } else {
+      auto parent = _stack.top();
+      if (parent->is_array()) {
+        parent->as_array().emplace_back(v);
+      } else {
+        parent->as_object()[key] = v;
+      }
+    }
+
+    if (v.is_object()) {
+      _stack.emplace(&v);
+      if (v.is_array()) {
+        _state = ParseState::beforeArrayValue;
+      } else {
+        _state = ParseState::beforePropertyName;
+      }
+    } else {
+      if (_stack.empty()) {
+        _state = ParseState::end;
+      } else if (_stack.top()->is_array()) {
+        _state = ParseState::afterArrayValue;
+      } else {
+        _state = ParseState::afterPropertyValue;
+      }
+    }
+  }
+
+  void pop() {
+    _stack.pop();
+
+    if (_stack.empty()) {
+      _state = ParseState::end;
+    } else if (_stack.top()->is_array()) {
+      _state = ParseState::afterArrayValue;
+    } else {
+      _state = ParseState::afterPropertyValue;
+    }
+  }
+
+  void parse_start() {
+    if (token->type == TokenType::eof) {
+      throw InvalidEOF(_line, _col);
+    }
+
+    push();
+  }
+
+  void parse_beforePropertyName() {
+    switch (token->type) {
+      case TokenType::identifier:
+      case TokenType::string:
+        key    = token->value.as_string();
+        _state = ParseState::afterPropertyName;
+        break;
+      case TokenType::punctuator:
+        pop();
+        break;
+      case TokenType::eof:
+        throw InvalidEOF(_line, _col);
+    }
+  }
+
+  void parse_afterPropertyName() {
+    if (token->type == TokenType::eof) {
+      throw InvalidEOF(_line, _col);
+    }
+
+    _state = ParseState::beforePropertyValue;
+  }
+
+  void parse_beforePropertyValue() {
+    if (token->type == TokenType::eof) {
+      throw InvalidEOF(_line, _col);
+    }
+    push();
+  }
+
+  void parse_beforeArrayValue() {
+    if (token->type == TokenType::eof) {
+      throw InvalidEOF(_line, _col);
+    }
+
+    if (token->type == TokenType::punctuator &&
+        token->value.as_string()[0] == ']') {
+      pop();
+    }
+
+    push();
+  }
+
+  void parse_afterPropertyValue() {
+    if (token->type == TokenType::eof) {
+      throw InvalidEOF(_line, _col);
+    }
+
+    switch (token->value.as_string()[0]) {
+      case ',':
+        _state = ParseState::beforePropertyName;
+      case '}':
+        pop();
+    }
+  }
+
+  void parse_afterArrayValue() {
+    if (token->type == TokenType::eof) {
+      throw InvalidEOF(_line, _col);
+    }
+    switch (token->value.as_string()[0]) {
+      case ',':
+        _state = ParseState::beforeArrayValue;
+      case ']':
+        pop();
+    }
+  }
+
+  void parse_end() {}
+
+  void parseStates(ParseState state) {
+      std::cout << "parse state: " << (int)state << std::endl;
+    switch (state) {
+      case ParseState::start:
+        parse_start();
+            break;
+      case ParseState::beforePropertyName:
+        parse_beforePropertyName();
+            break;
+      case ParseState::afterPropertyName:
+        parse_afterPropertyName();
+            break;
+      case ParseState::beforePropertyValue:
+        parse_beforePropertyValue();
+            break;
+      case ParseState::beforeArrayValue:
+        parse_beforeArrayValue();
+            break;
+      case ParseState::afterPropertyValue:
+        parse_afterPropertyValue();
+            break;
+      case ParseState::afterArrayValue:
+        parse_afterArrayValue();
+            break;
+    }
   }
 
  private:
   std::string::const_iterator _cur;
   std::string::const_iterator _end;
   size_t                      _line = 1, _col = 0, _pos = 0;
-  ParseState                  _state;
+  ParseState                  _state = ParseState::start;
   std::stack<value*>          _stack;
   std::optional<Token>        token;
-  std::optional<std::string>  key;
+  std::string                 key;
   std::optional<value>        root;
 
   LexState    _lex_state = LexState::default_;
@@ -2311,13 +2830,13 @@ std::optional<value> parser5::parse(const std::string& content) {
 std::optional<value> parser5::parse() {
   do {
     token = lex();
-    // parseStates[parseState]();
+    parseStates(_state);
   } while (token->type != TokenType::eof);
 
   return root;
 }
 
-std::optional<parser5::Token> parser5::lex() {
+parser5::Token parser5::lex() {
   _lex_state    = LexState::default_;
   _buffer       = "";
   _double_quote = false;
@@ -2326,9 +2845,9 @@ std::optional<parser5::Token> parser5::lex() {
   std::optional<Token> token;
 
   for (;;) {
-    _current_char = peek(_cur, _end);
+    _current_char = read();
 
-    token = lexStates[_lex_state]();
+    token = lexStates(_lex_state);
     if (token.has_value()) {
       return token.value();
     }
@@ -2347,13 +2866,15 @@ parser5::Token parser5::newToken(TokenType type, value value) {
 parser5::u8char parser5::peek(std::string::const_iterator&       begin,
                               const std::string::const_iterator& end) {
   if (begin == end) return 0;
-  uint8_t head = (*begin);
-  u8char  ch   = 0;
-  do {
-    ch += (uint8_t)(*begin++);
-    ch <<= 8;
-  } while (begin != end && ((head <<= 1) & 0b10000000));
-  return ch;
+    uint8_t head  = (*begin);
+    uint64_t ch = head;
+    while (begin != end && (head & 0b10000000)) {
+      head <<= 1;
+      ++begin;
+      ch <<= 8;
+      ch += (uint8_t)(*begin);
+    }
+    return ch;
 }
 
 parser5::u8char parser5::peek(const std::string& str) {
@@ -2372,6 +2893,7 @@ parser5::u8char parser5::read() {
 
   if (_current_char > 0) {
     _pos++;
+    _cur++;
   }
   return _current_char;
 }
