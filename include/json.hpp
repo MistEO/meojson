@@ -2112,7 +2112,7 @@ class parser5 {
       case 0x2029:
         read();
         _lex_state = LexState::default_;
-        break;
+        return std::nullopt;
       case 0:
         read();
         return newToken(TokenType::eof, value());
