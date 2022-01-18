@@ -3137,11 +3137,11 @@ parser5::u8char parser5::peek(std::string::const_iterator       &begin,
   uint8_t  head = (*begin);
   uint64_t ch   = head;
   size_t   len  = 1;
-  while (begin != end && (head & 0b10000000)) {
+  while (begin != end && (head & 0b11000000) > 0b10000000) {
     head <<= 1;
     ++len;
     ch <<= 8;
-    ch += (uint8_t)(*(begin + len));
+    ch += (uint8_t)(*(begin + len - 1));
   }
   if (plen) {
     *plen = len;
