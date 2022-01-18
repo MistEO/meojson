@@ -1,3 +1,4 @@
+
 #include <iostream>
 
 #include "json.hpp"
@@ -12,7 +13,7 @@ int main() {
       /* 中文块注释
        * 第二行注释
        */
-     😊: ''
+     😊: '' // emoji key
 })";
     // std::cout << content << std::endl;
 
@@ -29,28 +30,6 @@ int main() {
       std::cout << "parse failed" << std::endl;
     }
   }
-
-  std::cout << std::endl;
-
-  /*** Generate ***/
-  // {
-  //   std::cout << "****** Generating ******" << std::endl;
-
-  //   json::value json;
-  //   json["hello"] = "meojson";
-  //   json["Pi"]    = 3.1416;
-
-  //   json["arr"] = json::array({"a", "b", "c"});
-  //   json["obj"] = json::object(
-  //       {{"obj_key1", "aaa"}, {"obj_key2", 123}, {"obj_key3", true}});
-  //   json["obj_another"]["child"]["grand"] = "i am grand";
-
-  //   // Output "{"obj_another":{"child":{"grand":"i am
-  //   // grand"}},"obj":{"obj_key3":true,"obj_key2":123,"obj_key1":"aaa"},"arr":["a","b","c"],"Pi":3.141600,"hello":"meojson"}"
-  //   std::cout << json.to_string() << std::endl;
-
-  //   std::cout << json.format() << std::endl;
-  // }
 
   std::cout << std::endl;
 
