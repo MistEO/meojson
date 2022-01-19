@@ -1531,8 +1531,6 @@ namespace json
         return out;
     }
 
-    std::ostream& operator<<(std::ostream& out, const value& val);
-
     template <typename... Args>
     value::value(value_type type, Args &&...args)
         : _type(type), _raw_data(std::forward<Args>(args)...)
