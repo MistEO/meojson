@@ -1,8 +1,0 @@
-cmake_minimum_required(VERSION 3.0.0)
-project(Test)
-include_directories(rapidjson/include)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
-set(SRC rapidjson_performance_test.cpp)
-link_directories(${PROJECT_SOURCE_DIR})
-add_executable(rapidjson_performance_test.out ${SRC})
