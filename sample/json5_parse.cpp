@@ -3,11 +3,12 @@
 
 #include "json.hpp"
 
-int main() {
-  /*** Parse ***/
+int main()
+{
+    /*** Parse ***/
 
-  std::cout << "****** Parsing ****** " << std::endl;
-  std::string content = R"(
+    std::cout << "****** Parsing ****** " << std::endl;
+    std::string content = R"(
 // 这是一段json5格式的信息
 {
   名字: "MistEO",                   /* key的引号可省略 */
@@ -20,26 +21,28 @@ int main() {
   light_speed: +3e8,               // 科学计数法
 }
 )";
-  try {
-    auto ret   = json::parser5::parse(content);
-    auto value = ret.value();  // As also, you can use rvalues, like `auto
-                               // value = std::move(ret).value();`
-    // Output "MistEO"
-    std::cout << value["名字"].as_string() << std::endl;
-    // Output "value"
-    std::cout << value["key"][0].as_string() << std::endl;
-  } catch (json::parser5::exception& ex) {
-    std::cout << "-------parse failed-------" << std::endl;
-    std::cerr << ex.what() << std::endl;
-  }
+    try {
+        auto ret = json::parser5::parse(content);
+        auto value = ret.value();  // As also, you can use rvalues, like `auto
+                                   // value = std::move(ret).value();`
+        // Output "MistEO"
+        std::cout << value["名字"].as_string() << std::endl;
+        // Output "value"
+        std::cout << value["key"][0].as_string() << std::endl;
+    }
+    catch (json::parser5::exception& ex) {
+        std::cout << "-------parse failed-------" << std::endl;
+        std::cerr << ex.what() << std::endl;
+    }
 
-  std::string error_content = "{ error }";
-  try {
-    json::parser5::parse(error_content);
-  } catch (json::parser5::exception& ex) {
-    std::cout << "-------parse failed-------" << std::endl;
-    std::cerr << ex.what() << std::endl;
-  }
+    std::string error_content = "{ error }";
+    try {
+        json::parser5::parse(error_content);
+    }
+    catch (json::parser5::exception& ex) {
+        std::cout << "-------parse failed-------" << std::endl;
+        std::cerr << ex.what() << std::endl;
+    }
 
-  return 0;
+    return 0;
 }

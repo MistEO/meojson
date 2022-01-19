@@ -5,12 +5,11 @@
 
 #include "rapidjson/document.h"
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    const char *filename = "rand.json";
+    const char* filename = "rand.json";
     int loop_times = 10;
-    if (argc == 3)
-    {
+    if (argc == 3) {
         filename = argv[1];
         loop_times = atoi(argv[2]);
     }
@@ -32,8 +31,7 @@ int main(int argc, char *argv[])
     rapidjson::Document d;
 
     auto b_time = get_time();
-    for (int i = 0; i != loop_times; ++i)
-    {
+    for (int i = 0; i != loop_times; ++i) {
         d.Parse(content.c_str());
     }
     auto e_time = get_time();
@@ -42,7 +40,7 @@ int main(int argc, char *argv[])
     long long avg_time = total_time / loop_times;
     const double ns_to_s = 1000.0 * 1000.0 * 1000.0;
     std::cout << "RapidJson parse finished\n"
-              << "total time:\t" << total_time << " ns,\tabout\t" << total_time / ns_to_s << " s\n"
-              << "avg time:\t" << avg_time << " ns,\tabout\t" << avg_time / ns_to_s << " s" << std::endl;
+        << "total time:\t" << total_time << " ns,\tabout\t" << total_time / ns_to_s << " s\n"
+        << "avg time:\t" << avg_time << " ns,\tabout\t" << avg_time / ns_to_s << " s" << std::endl;
     return 0;
 }

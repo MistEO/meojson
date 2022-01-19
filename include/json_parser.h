@@ -3,45 +3,49 @@
 #include <optional>
 #include <string>
 
-namespace json {
-class value;
-class object;
-class array;
-enum class value_type : char;
+namespace json
+{
+    class value;
+    class object;
+    class array;
+    enum class value_type : char;
 
-class parser {
- public:
-  ~parser() noexcept = default;
+    class parser
+    {
+    public:
+        ~parser() noexcept = default;
 
-  static std::optional<value> parse(const std::string& content);
+        static std::optional<value> parse(const std::string& content);
 
- private:
-  parser(const std::string::const_iterator& cbegin,
-         const std::string::const_iterator& cend) noexcept
-      : _cur(cbegin), _end(cend) {}
+    private:
+        parser(const std::string::const_iterator& cbegin,
+               const std::string::const_iterator& cend) noexcept
+            : _cur(cbegin), _end(cend)
+        {
+        }
 
-  std::optional<value> parse();
-  value                parse_value();
+        std::optional<value> parse();
+        value                parse_value();
 
-  value parse_null();
-  value parse_boolean();
-  value parse_number();
-  // parse and return a json::value whose type is value_type::String
-  value parse_string();
-  value parse_array();
-  value parse_object();
+        value parse_null();
+        value parse_boolean();
+        value parse_number();
+        // parse and return a json::value whose type is value_type::String
+        value parse_string();
+        value parse_array();
+        value parse_object();
 
-  // parse and return a std::string
-  std::optional<std::string> parse_stdstring();
+        // parse and return a std::string
+        std::optional<std::string> parse_stdstring();
 
-  bool skip_whitespace() noexcept;
-  bool skip_digit() noexcept(noexcept(std::isdigit(*_cur)));
+        bool skip_whitespace() noexcept;
+        bool skip_digit() noexcept(noexcept(std::isdigit(*_cur)));
 
- private:
-  std::string::const_iterator _cur;
-  std::string::const_iterator _end;
-};
+    private:
+        std::string::const_iterator _cur;
+        std::string::const_iterator _end;
+    };
 
-std::optional<value> parse(const std::string& content);
+    std::optional<value> parse(const std::string& content);
 
 }  // namespace json

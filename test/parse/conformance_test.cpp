@@ -6,18 +6,16 @@
 
 #include "json.h"
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    if (argc == 1)
-    {
+    if (argc == 1) {
         std::cout << "param error, please input filename" << std::endl;
     }
 
     std::vector<std::string> success_filenames;
     std::vector<std::string> failed_filenames;
 
-    for (int idx = 1; idx < argc; ++idx)
-    {
+    for (int idx = 1; idx < argc; ++idx) {
         std::string filename = argv[idx];
         std::ifstream ifs(filename);
         std::stringstream ibuf;
@@ -29,13 +27,11 @@ int main(int argc, char *argv[])
 
         auto value_opt = json::parser::parse(content);
 
-        if (value_opt)
-        {
+        if (value_opt) {
             std::cout << "\tsuccess😁" << std::endl;
             success_filenames.emplace_back(filename);
         }
-        else
-        {
+        else {
             std::cout << "\tfailed🥵" << std::endl;
             failed_filenames.emplace_back(filename);
         }

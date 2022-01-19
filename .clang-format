@@ -1,6 +1,0 @@
-Language: Cpp
-BasedOnStyle: Google
-AlignConsecutiveAssignments: true
-AlignConsecutiveDeclarations: true
-AlignConsecutiveMacros: true
-BreakStringLiterals: true
