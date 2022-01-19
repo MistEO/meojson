@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <clocale>
+#include <cmath>
 #include <initializer_list>
 #include <iomanip>
 #include <memory>
@@ -167,10 +168,7 @@ namespace json
         explicit operator long() const { return as_long(); }
         explicit operator unsigned long() const { return as_unsigned_long(); }
         explicit operator long long() const { return as_long_long(); }
-        explicit operator unsigned long long() const
-        {
-            return as_unsigned_long_long();
-        }
+        explicit operator unsigned long long() const { return as_unsigned_long_long(); }
         explicit operator float() const { return as_float(); }
         explicit operator double() const { return as_double(); }
         explicit operator long double() const { return as_long_double(); }
@@ -472,7 +470,7 @@ namespace json
         std::optional<std::string> parse_stdstring();
 
         bool skip_whitespace() noexcept;
-        bool skip_digit() noexcept(noexcept(std::isdigit(*_cur)));
+        bool skip_digit();
 
     private:
         std::string::const_iterator _cur;
@@ -1902,7 +1900,7 @@ namespace json
         return false;
     }
 
-    bool parser::skip_digit() noexcept(noexcept(std::isdigit(*_cur)))
+    bool parser::skip_digit()
     {
         // At least one digit
         if (_cur != _end && std::isdigit(*_cur)) {
@@ -1933,6 +1931,7 @@ namespace json
     // *      json5 parser     *
     // *************************
 
+#ifdef JSON5
     class parser5
     {
     private:
@@ -2088,7 +2087,7 @@ namespace json
         struct Token
         {
             TokenType type;
-            value     value;
+            value     _value;
             size_t    col, line;
         };
 
@@ -2710,7 +2709,7 @@ namespace json
     {
         Token token;
         token.type = type;
-        token.value = value;
+        token._value = value;
         token.line = _line;
         token.col = _col;
         return token;
@@ -3372,7 +3371,7 @@ namespace json
         switch (token->type) {
         case TokenType::identifier:
         case TokenType::string:
-            key = token->value.as_string();
+            key = token->_value.as_string();
             _parse_state = ParseState::afterPropertyName;
             break;
         case TokenType::punctuator:
@@ -3407,7 +3406,7 @@ namespace json
         }
 
         if (token->type == TokenType::punctuator &&
-            token->value.as_string()[0] == ']') {
+            token->_value.as_string()[0] == ']') {
             pop();
             return;
         }
@@ -3421,7 +3420,7 @@ namespace json
             throw InvalidEOF();
         }
 
-        switch (token->value.as_string()[0]) {
+        switch (token->_value.as_string()[0]) {
         case ',':
             _parse_state = ParseState::beforePropertyName;
             break;
@@ -3436,7 +3435,7 @@ namespace json
         if (token->type == TokenType::eof) {
             throw InvalidEOF();
         }
-        switch (token->value.as_string()[0]) {
+        switch (token->_value.as_string()[0]) {
         case ',':
             _parse_state = ParseState::beforeArrayValue;
             break;
@@ -3480,7 +3479,7 @@ namespace json
         value* v;
         switch (token->type) {
         case TokenType::punctuator:
-            switch (token->value.as_string()[0]) {
+            switch (token->_value.as_string()[0]) {
             case '{':
                 v = new value(object());
                 break;
@@ -3492,7 +3491,7 @@ namespace json
         case TokenType::boolean:
         case TokenType::numeric:
         case TokenType::string:
-            v = &token->value;
+            v = &token->_value;
             break;
         }
         if (!root.has_value()) {
@@ -3547,5 +3546,5 @@ namespace json
             _parse_state = ParseState::afterPropertyValue;
         }
     }
-
+#endif
 }  // namespace json
