@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <ostream>
 
 #ifdef JSON5
 
@@ -130,10 +131,16 @@ namespace json
         const value& at(const std::string& key) const;
 
         template <typename Type>
-        Type get(const std::string& key, const Type& default_value) const;
+        Type get(const std::string& key, const Type& default_value) const
+        {
+            return is_object() ? as_object().get(key, default_value) : default_value;
+        }
 
         template <typename Type>
-        Type get(size_t pos, const Type& default_value) const;
+        Type get(size_t pos, const Type& default_value) const
+        {
+            return is_array() ? as_array().get(pos, default_value) : default_value;
+        }
 
         const bool as_boolean() const;
         const int  as_integer() const;
@@ -270,8 +277,6 @@ namespace json
         raw_array _array_data;
     };
 
-    std::ostream& operator<<(std::ostream& out, const array& arr);
-
     // *************************
     // *     object declare    *
     // *************************
@@ -345,13 +350,11 @@ namespace json
         raw_object _object_data;
     };
 
-    std::ostream& operator<<(std::ostream& out, const object& obj);
-
     // *************************
     // *      aux declare      *
     // *************************
 
-    static std::string unescape_string(std::string&& str)
+    inline std::string unescape_string(std::string&& str)
     {
         std::string replace_str;
         std::string escape_str = std::move(str);
@@ -389,12 +392,12 @@ namespace json
         return escape_str;
     }
 
-    static std::string unescape_string(const std::string& str)
+    inline std::string unescape_string(const std::string& str)
     {
         return unescape_string(std::string(str));
     }
 
-    static std::string escape_string(std::string&& str)
+    inline std::string escape_string(std::string&& str)
     {
         std::string escape_str = std::move(str);
 
@@ -434,7 +437,7 @@ namespace json
         return escape_str;
     }
 
-    static std::string escape_string(const std::string& str)
+    inline std::string escape_string(const std::string& str)
     {
         return escape_string(std::string(str));
     }
@@ -790,7 +793,7 @@ namespace json
         return _object_data.emplace(std::forward<Args>(args)...);
     }
 
-    std::ostream& operator<<(std::ostream& out, const array& arr)
+    inline std::ostream& operator<<(std::ostream& out, const array& arr)
     {
         // TODO: format output
 
@@ -1077,7 +1080,7 @@ namespace json
     //     return _object_data;
     // }
 
-    std::ostream& operator<<(std::ostream& out, const object& obj)
+    inline std::ostream& operator<<(std::ostream& out, const object& obj)
     {
         // TODO: format output
 
@@ -1514,7 +1517,7 @@ namespace json
         return value(value_type::Invalid, std::string());
     }
 
-    std::ostream& operator<<(std::ostream& out, const value& val)
+    inline std::ostream& operator<<(std::ostream& out, const value& val)
     {
         // TODO: format output
 
