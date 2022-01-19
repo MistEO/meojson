@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cctype>
+#include <clocale>
 #include <initializer_list>
 #include <iomanip>
 #include <memory>
@@ -2224,8 +2225,8 @@ bool parser5::unicode::isSpaceSeparator(u8char ch) {
   auto                       str = StringFromCharCode(ch);
   auto                       len = str.size() + 1;
   std::unique_ptr<wchar_t[]> p(new wchar_t[len]);
-  setlocale(LC_CTYPE, "");
-  mbstowcs(p.get(), str.c_str(), len);
+  std::setlocale(LC_CTYPE, ".UTF8");
+  std::mbstowcs(p.get(), str.c_str(), len);
   std::wstring               wstr(p.get());
 #endif
   return std::regex_search(wstr, unicode::space_separator);
@@ -2238,8 +2239,8 @@ bool parser5::unicode::isIdStartChar(u8char ch) {
   auto                       str = StringFromCharCode(ch);
   auto                       len = str.size() + 1;
   std::unique_ptr<wchar_t[]> p(new wchar_t[len]);
-  setlocale(LC_CTYPE, "");
-  mbstowcs(p.get(), str.c_str(), len);
+  std::setlocale(LC_CTYPE, ".UTF8");
+  std::mbstowcs(p.get(), str.c_str(), len);
   std::wstring               wstr(p.get());
 #endif
   return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch == '$') ||
@@ -2253,8 +2254,8 @@ bool parser5::unicode::isIdContinueChar(u8char ch) {
   auto                       str = StringFromCharCode(ch);
   auto                       len = str.size() + 1;
   std::unique_ptr<wchar_t[]> p(new wchar_t[len]);
-  setlocale(LC_CTYPE, "");
-  mbstowcs(p.get(), str.c_str(), len);
+  std::setlocale(LC_CTYPE, ".UTF8");
+  std::mbstowcs(p.get(), str.c_str(), len);
   std::wstring wstr(p.get());
 #endif
   return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
@@ -2333,7 +2334,7 @@ std::optional<parser5::u8char> parser5::escape() {
         throw InvalidChar(_current_char, exceptionDetailInfo());
       }
 
-      return '\u0000';
+      return '\0';
 
     case 'x':
       read();
@@ -2404,7 +2405,7 @@ parser5::u8char parser5::unicodeEscape() {
     if (!unicode::isHexDigit(c)) {
       throw InvalidChar(_current_char, exceptionDetailInfo());
     }
-    buffer += StringFromCharCode(c);
+    buffer += StringFromCharCode(read());
   }
 
   return std::stoull(buffer, nullptr, 16);
@@ -2678,7 +2679,7 @@ std::optional<parser5::Token> parser5::lex_identifierNameStartEscape() {
     case '_':
       break;
     default:
-      if (unicode::isIdStartChar(u)) {
+      if (!unicode::isIdStartChar(u)) {
         throw InvalidIdentifier();
       }
       break;
@@ -2723,7 +2724,7 @@ std::optional<parser5::Token> parser5::lex_identifierNameEscape() {
     case 0x200D:
       break;
     default:
-      if (unicode::isIdStartChar(u)) {
+      if (!unicode::isIdStartChar(u)) {
         throw InvalidIdentifier();
       }
       break;

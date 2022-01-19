@@ -5,32 +5,41 @@
 
 int main() {
   /*** Parse ***/
-  {
-    std::cout << "****** Parsing ****** " << std::endl;
-    std::string content = R"({
-     // 中文注释
-     中文key: {name: 'meojson',"list": [1, 2, 3]},
-      /* 中文块注释
-       * 第二行注释
-       */
-     😊: '' // emoji key
-})";
-    // std::cout << content << std::endl;
-    try {
-      auto ret   = json::parser5::parse(content);
-      auto value = ret.value();  // As also, you can use rvalues, like `auto
-                                 // value = std::move(ret).value();`
-      // Output "meojson"
-      std::cout << value["中文key"]["name"].as_string() << std::endl;
-      // Output 2
-      std::cout << value["中文key"]["list"][1].as_integer() << std::endl;
-    } catch (json::parser5::exception& ex) {
-      std::cout << "-------parse failed-------" << std::endl;
-      std::cerr << ex.what() << std::endl;
-    }
+
+  std::cout << "****** Parsing ****** " << std::endl;
+  std::string content = R"(
+// 这是一段json5格式的信息
+{
+  名字: "MistEO",                   /* key的引号可省略 */
+  😊: '😄',                         // emoji为key
+  thanks: 'ありがとう',              /* 单引号也可以表示字符串 */
+  \u006Bey: ['value',],            // 普通字符和转义可以混用
+  inf: +Infinity, nan: NaN,        // 数字可以以"+"开头
+  fractional: .3, integer: 42.,    // 小数点作为起始/结尾
+  byte_max: 0xff,                  // 十六进制数
+  light_speed: +3e8,               // 科学计数法
+}
+)";
+  try {
+    auto ret   = json::parser5::parse(content);
+    auto value = ret.value();  // As also, you can use rvalues, like `auto
+                               // value = std::move(ret).value();`
+    // Output "MistEO"
+    std::cout << value["名字"].as_string() << std::endl;
+    // Output "value"
+    std::cout << value["key"][0].as_string() << std::endl;
+  } catch (json::parser5::exception& ex) {
+    std::cout << "-------parse failed-------" << std::endl;
+    std::cerr << ex.what() << std::endl;
   }
 
-  std::cout << std::endl;
+  std::string error_content = "{ error }";
+  try {
+    json::parser5::parse(error_content);
+  } catch (json::parser5::exception& ex) {
+    std::cout << "-------parse failed-------" << std::endl;
+    std::cerr << ex.what() << std::endl;
+  }
 
   return 0;
 }
