@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cctype>
-#include <codecvt>
 #include <initializer_list>
+#include <iomanip>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -12,12 +12,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#ifndef NDEBUG
-#define LOG_DEBUG(msg) (std::cout << msg << std::endl)
-#else
-#define LOG_DEBUG
-#endif
 
 namespace json {
 
@@ -141,10 +135,10 @@ class value {
   const double             as_double() const;
   const long double        as_long_double() const;
   const std::string        as_string() const;
-  const array             &as_array() const;
-  const object            &as_object() const;
+  const array &            as_array() const;
+  const object &           as_object() const;
 
-  array  &as_array();
+  array & as_array();
   object &as_object();
 
   // return raw string
@@ -156,9 +150,9 @@ class value {
   value &operator=(value &&) noexcept;
 
   const value &operator[](size_t pos) const;
-  value       &operator[](size_t pos);
-  value       &operator[](const std::string &key);
-  value       &operator[](std::string &&key);
+  value &      operator[](size_t pos);
+  value &      operator[](const std::string &key);
+  value &      operator[](std::string &&key);
   // explicit operator bool() const noexcept { return valid(); }
 
   explicit operator bool() const { return as_boolean(); }
@@ -215,7 +209,7 @@ class array {
   bool              empty() const noexcept { return _array_data.empty(); }
   size_t            size() const noexcept { return _array_data.size(); }
   bool              exist(size_t pos) const { return _array_data.size() < pos; }
-  const value      &at(size_t pos) const;
+  const value &     at(size_t pos) const;
   const std::string to_string() const;
   const std::string format(std::string shift_str         = "    ",
                            size_t      basic_shift_count = 0) const;
@@ -254,7 +248,7 @@ class array {
   const_reverse_iterator crend() const noexcept;
 
   const value &operator[](size_t pos) const;
-  value       &operator[](size_t pos);
+  value &      operator[](size_t pos);
 
   array &operator=(const array &) = default;
   array &operator=(array &&) noexcept = default;
@@ -292,7 +286,7 @@ class object {
   bool   exist(const std::string &key) const {
     return _object_data.find(key) != _object_data.cend();
   }
-  const value      &at(const std::string &key) const;
+  const value &     at(const std::string &key) const;
   const std::string to_string() const;
   const std::string format(std::string shift_str         = "    ",
                            size_t      basic_shift_count = 0) const;
@@ -311,7 +305,7 @@ class object {
   const std::string get(const std::string &key,
                         std::string        default_value) const;
   const std::string get(const std::string &key,
-                        const char        *default_value) const;
+                        const char *       default_value) const;
 
   template <typename... Args>
   decltype(auto) emplace(Args &&...args);
@@ -929,7 +923,7 @@ const std::string object::get(const std::string &key,
 }
 
 const std::string object::get(const std::string &key,
-                              const char        *default_value) const {
+                              const char *       default_value) const {
   if (exist(key)) {
     value value = _object_data.at(key);
     if (value.is_string()) {
@@ -1743,14 +1737,28 @@ std::optional<value> parse(const std::string &content) {
 // *************************
 
 class parser5 {
+ private:
   using u8char = uint64_t;
+  std::string exceptionDetailInfo() {
+    size_t            start_point  = _col;
+    auto              len          = _print_len;
+    auto              current_line = _line_begin_cur;
+    std::stringstream ss;
+    ss << "at line " << _line << ", column " << _col << '\n';
+
+    while (read() != '\n' && _cur != _end && (_col - start_point) < 5)
+      ;
+    ss << std::string(current_line, _cur) << '\n';
+    ss << std::setw(len - 1) << '^' << '\n';
+    return ss.str();
+  }
 
  public:
   class exception {
    public:
-    exception(size_t line, size_t col, const std::string &type,
-              const std::string &msg)
-        : _line(line), _col(col), _type(type), _msg(msg) {}
+    exception(const std::string &type, const std::string &msg,
+              const std::string &detail)
+        : _type(type), _msg(msg), _detail(detail) {}
     exception(const exception &) = default;
     exception &operator=(const exception &) = default;
     exception(exception &&)                 = default;
@@ -1761,37 +1769,31 @@ class parser5 {
     virtual std::string what() const noexcept {
       std::stringstream ss;
       ss << "JSON5: [" << _type << "] " << _msg << '\n';
-      ss << '\t' << "at line " << _line << ", column " << _col << '\n';
+      ss << _detail << std::endl;
       return ss.str();
     }
 
    protected:
-    size_t      _line, _col;
-    std::string _msg, _type;
+    std::string _msg, _type, _detail;
   };
 
   class InvalidChar : public exception {
    public:
-    InvalidChar(size_t line, size_t col, const std::string &msg)
-        : exception(line, col, "Invalid Char", msg) {}
+    InvalidChar(const std::string &msg = "", const std::string &detail = "")
+        : exception("Invalid Char", msg, detail) {}
   };
 
   class InvalidIdentifier : public exception {
    public:
-    InvalidIdentifier(size_t line, size_t col, const std::string &msg = "")
-        : exception(line, col, "Invalid Identifier", msg) {}
+    InvalidIdentifier(const std::string &msg    = "",
+                      const std::string &detail = "")
+        : exception("Invalid Identifier", msg, detail) {}
   };
 
   class InvalidEOF : public exception {
    public:
-    InvalidEOF(size_t line, size_t col, const std::string &msg = "")
-        : exception(line, col, "Invalid EOF", msg) {}
-  };
-
-  class InvalidLexState : public exception {
-   public:
-    InvalidLexState(size_t line, size_t col, const std::string &msg = "")
-        : exception(line, col, "Invalid LexState", msg) {}
+    InvalidEOF(const std::string &msg = "", const std::string &detail = "")
+        : exception("Invalid EOF", msg, detail) {}
   };
 
  private:
@@ -1868,7 +1870,7 @@ class parser5 {
  private:
   parser5(const std::string::const_iterator &cbegin,
           const std::string::const_iterator &cend) noexcept
-      : _cur(cbegin), _end(cend) {}
+      : _cur(cbegin), _end(cend), _line_begin_cur(cbegin) {}
   std::optional<value> parse();
 
  private:
@@ -1887,9 +1889,9 @@ class parser5 {
 
   Token newToken(TokenType type, value value);
 
-  static u8char peek(std::string::const_iterator       &begin,
+  static u8char peek(std::string::const_iterator &      begin,
                      const std::string::const_iterator &end,
-                     size_t                            *len = nullptr);
+                     size_t *                           len = nullptr);
   static u8char peek(const std::string &str);
 
   parser5::u8char read();
@@ -1898,7 +1900,7 @@ class parser5 {
     for (const auto &ch : s) {
       auto p = read();
       if (p != ch) {
-        throw InvalidChar(_line, _col, "");
+        throw InvalidChar("", exceptionDetailInfo());
       }
     }
   }
@@ -1933,7 +1935,7 @@ class parser5 {
       case '0':
         read();
         if (isDigit(peek(_cur, _end))) {
-          throw InvalidChar(_line, _col, "");
+          throw InvalidChar("", exceptionDetailInfo());
         }
 
         return '\u0000';
@@ -1969,10 +1971,10 @@ class parser5 {
       case '7':
       case '8':
       case '9':
-        throw InvalidChar(_line, _col, "");
+        throw InvalidChar("", exceptionDetailInfo());
       default:
         if (c == 0) {
-          throw InvalidChar(_line, _col, "");
+          throw InvalidChar("", exceptionDetailInfo());
         }
     }
 
@@ -1984,14 +1986,14 @@ class parser5 {
     auto        c      = peek(_cur, _end);
 
     if (!isHexDigit(c)) {
-      throw InvalidChar(_line, _col, "");
+      throw InvalidChar("", exceptionDetailInfo());
     }
 
     buffer += read();
 
     c = peek(_cur, _end);
     if (!isHexDigit(c)) {
-      throw InvalidChar(_line, _col, "");
+      throw InvalidChar("", exceptionDetailInfo());
     }
 
     buffer += read();
@@ -2005,7 +2007,7 @@ class parser5 {
     while (count-- > 0) {
       auto c = peek(_cur, _end);
       if (!isHexDigit(c)) {
-        throw InvalidChar(_line, _col, "");
+        throw InvalidChar("", exceptionDetailInfo());
       }
       buffer += StringFromCharCode(c);
     }
@@ -2047,7 +2049,7 @@ class parser5 {
       return std::nullopt;
     }
 
-    //      throw InvalidLexState(_line, _col);
+    //      throw InvalidLexState();
     return lexStates((LexState)_parse_state);
   }
 
@@ -2064,7 +2066,7 @@ class parser5 {
         return std::nullopt;
     }
 
-    throw InvalidChar(_line, _col, "");
+    throw InvalidChar("", exceptionDetailInfo());
   }
 
   std::optional<Token> lex_multiLineComment() {
@@ -2075,7 +2077,7 @@ class parser5 {
     }
 
     if (_current_char == 0) {
-      throw InvalidChar(_line, _col, "");
+      throw InvalidChar("", exceptionDetailInfo());
     }
 
     read();
@@ -2095,7 +2097,7 @@ class parser5 {
 
       default:
         if (_current_char == 0) {
-          throw InvalidChar(_line, _col, "");
+          throw InvalidChar("", exceptionDetailInfo());
         }
     }
 
@@ -2182,12 +2184,12 @@ class parser5 {
         _lex_state    = LexState::string;
         return std::nullopt;
     }
-    throw InvalidChar(_line, _col, "");
+    throw InvalidChar("", exceptionDetailInfo());
   }
 
   std::optional<Token> lex_identifierNameStartEscape() {
     if (_current_char != 'u') {
-      throw InvalidChar(_line, _col, "");
+      throw InvalidChar("", exceptionDetailInfo());
     }
     read();
     auto u = unicodeEscape();
@@ -2197,7 +2199,7 @@ class parser5 {
         break;
       default:
         if (isIdStartChar(u)) {
-          throw InvalidIdentifier(_line, _col);
+          throw InvalidIdentifier();
         }
         break;
     }
@@ -2230,7 +2232,7 @@ class parser5 {
 
   std::optional<Token> lex_identifierNameEscape() {
     if (_current_char != 'u') {
-      throw InvalidChar(_line, _col, "");
+      throw InvalidChar("", exceptionDetailInfo());
     }
     read();
     auto u = unicodeEscape();
@@ -2242,7 +2244,7 @@ class parser5 {
         break;
       default:
         if (isIdStartChar(u)) {
-          throw InvalidIdentifier(_line, _col);
+          throw InvalidIdentifier();
         }
         break;
     }
@@ -2286,7 +2288,7 @@ class parser5 {
         literal("aN");
         return newToken(TokenType::numeric, NAN);
     }
-    throw InvalidChar(_line, _col, "");
+    throw InvalidChar("", exceptionDetailInfo());
   }
 
   std::optional<Token> lex_zero() {
@@ -2337,7 +2339,7 @@ class parser5 {
       _lex_state = LexState::decimalFraction;
       return std::nullopt;
     }
-    throw InvalidChar(_line, _col, "");
+    throw InvalidChar("", exceptionDetailInfo());
   }
 
   std::optional<Token> lex_decimalPoint() {
@@ -2387,7 +2389,7 @@ class parser5 {
       _lex_state = LexState::decimalExponentInteger;
       return std::nullopt;
     }
-    throw InvalidChar(_line, _col, "");
+    throw InvalidChar("", exceptionDetailInfo());
   }
 
   std::optional<Token> lex_decimalExponentSign() {
@@ -2396,7 +2398,7 @@ class parser5 {
       _lex_state = LexState::decimalExponentInteger;
       return std::nullopt;
     }
-    throw InvalidChar(_line, _col, "");
+    throw InvalidChar("", exceptionDetailInfo());
   }
 
   std::optional<Token> lex_decimalExponentInteger() {
@@ -2413,7 +2415,7 @@ class parser5 {
       _lex_state = LexState::hexadecimalInteger;
       return std::nullopt;
     }
-    throw InvalidChar(_line, _col, "");
+    throw InvalidChar("", exceptionDetailInfo());
   }
 
   std::optional<Token> lex_hexdecimalInteger() {
@@ -2446,14 +2448,14 @@ class parser5 {
         return std::nullopt;
       case '\n':
       case '\r':
-        throw InvalidChar(_line, _col, "");
+        throw InvalidChar("", exceptionDetailInfo());
       case 0x2028:
       case 0x2029:
         // throw separatorChar(_current_char);
         break;
       default:
         if (_current_char == 0) {
-          throw InvalidChar(_line, _col, "");
+          throw InvalidChar("", exceptionDetailInfo());
         }
     }
     _buffer += StringFromCharCode(read());
@@ -2497,14 +2499,14 @@ class parser5 {
       return std::nullopt;
     }
 
-    throw InvalidChar(_line, _col, "");
+    throw InvalidChar("", exceptionDetailInfo());
   }
 
   std::optional<Token> lex_afterPropertyName() {
     if (_current_char == ':') {
       return newToken(TokenType::punctuator, StringFromCharCode(read()));
     }
-    throw InvalidChar(_line, _col, "");
+    throw InvalidChar("", exceptionDetailInfo());
   }
 
   std::optional<Token> lex_beforePropertyValue() {
@@ -2518,7 +2520,7 @@ class parser5 {
       case '}':
         return newToken(TokenType::punctuator, StringFromCharCode(read()));
     }
-    throw InvalidChar(_line, _col, "");
+    throw InvalidChar("", exceptionDetailInfo());
   }
 
   std::optional<Token> lex_beforeArrayValue() {
@@ -2536,14 +2538,14 @@ class parser5 {
         return newToken(TokenType::punctuator, StringFromCharCode(read()));
     }
 
-    throw InvalidChar(_line, _col, "");
+    throw InvalidChar("", exceptionDetailInfo());
   }
 
-  std::optional<Token> lex_end() { throw InvalidChar(_line, _col, ""); }
+  std::optional<Token> lex_end() {
+    throw InvalidChar("", exceptionDetailInfo());
+  }
 
   std::optional<Token> lexStates(LexState state) {
-    LOG_DEBUG("lex state: " << (int)state << ", current_char: "
-                            << StringFromCharCode(_current_char));
     switch (state) {
       case LexState::default_:
         return lex_default();
@@ -2609,7 +2611,6 @@ class parser5 {
   }
 
   void push() {
-    LOG_DEBUG("push, lexState: " << (int)_lex_state);
     value *v;
     switch (token->type) {
       case TokenType::punctuator:
@@ -2661,7 +2662,6 @@ class parser5 {
   }
 
   void pop() {
-    LOG_DEBUG("pop, lexState: " << (int)_lex_state);
     _stack.pop();
 
     if (_stack.empty()) {
@@ -2675,7 +2675,7 @@ class parser5 {
 
   void parse_start() {
     if (token->type == TokenType::eof) {
-      throw InvalidEOF(_line, _col);
+      throw InvalidEOF();
     }
 
     push();
@@ -2692,13 +2692,13 @@ class parser5 {
         pop();
         break;
       case TokenType::eof:
-        throw InvalidEOF(_line, _col);
+        throw InvalidEOF();
     }
   }
 
   void parse_afterPropertyName() {
     if (token->type == TokenType::eof) {
-      throw InvalidEOF(_line, _col);
+      throw InvalidEOF();
     }
 
     _parse_state = ParseState::beforePropertyValue;
@@ -2706,14 +2706,14 @@ class parser5 {
 
   void parse_beforePropertyValue() {
     if (token->type == TokenType::eof) {
-      throw InvalidEOF(_line, _col);
+      throw InvalidEOF();
     }
     push();
   }
 
   void parse_beforeArrayValue() {
     if (token->type == TokenType::eof) {
-      throw InvalidEOF(_line, _col);
+      throw InvalidEOF();
     }
 
     if (token->type == TokenType::punctuator &&
@@ -2727,7 +2727,7 @@ class parser5 {
 
   void parse_afterPropertyValue() {
     if (token->type == TokenType::eof) {
-      throw InvalidEOF(_line, _col);
+      throw InvalidEOF();
     }
 
     switch (token->value.as_string()[0]) {
@@ -2742,7 +2742,7 @@ class parser5 {
 
   void parse_afterArrayValue() {
     if (token->type == TokenType::eof) {
-      throw InvalidEOF(_line, _col);
+      throw InvalidEOF();
     }
     switch (token->value.as_string()[0]) {
       case ',':
@@ -2757,8 +2757,6 @@ class parser5 {
   void parse_end() {}
 
   void parseStates(ParseState state) {
-    LOG_DEBUG("parse state: " << (int)state << ", current_char: "
-                              << StringFromCharCode(_current_char));
     switch (state) {
       case ParseState::start:
         parse_start();
@@ -2785,9 +2783,9 @@ class parser5 {
   }
 
  private:
-  std::string::const_iterator _cur;
-  std::string::const_iterator _end;
-  size_t                      _line = 1, _col = 0, _pos = 0;
+  std::string::const_iterator _cur, _end;
+  std::string::const_iterator _line_begin_cur;
+  size_t                      _line = 1, _col = 0, _print_len = 0;
   ParseState                  _parse_state = ParseState::start;
   std::stack<value *>         _stack;
   std::optional<Token>        token;
@@ -3056,21 +3054,48 @@ const std::wregex parser5::unicode::id_continue = std::wregex(
     LR"(\uDFE0]|\uD87E[\uDC00-\uDE1D]|\uDB40[\uDD00-\uDDEF]|[\u200C\u200D])");
 
 bool parser5::isSpaceSeparator(u8char ch) {
-  std::wstring str = {(wchar_t)ch, 0};
-  return std::regex_search(str, unicode::space_separator);
+#ifdef _MSC_VER
+  std::wstring wstr = {(wchar_t)ch, 0};
+#else
+  auto                       str = StringFromCharCode(ch);
+  auto                       len = str.size() + 1;
+  std::unique_ptr<wchar_t[]> p(new wchar_t[len]);
+  setlocale(LC_CTYPE, "");
+  mbstowcs(p.get(), str.c_str(), len);
+  std::wstring               wstr(p.get());
+#endif
+  return std::regex_search(wstr, unicode::space_separator);
 }
 
 bool parser5::isIdStartChar(u8char ch) {
-  std::wstring str = {(wchar_t)ch, 0};
+#ifdef _MSC_VER
+  std::wstring wstr = {(wchar_t)ch, 0};
+#else
+  auto                       str = StringFromCharCode(ch);
+  auto                       len = str.size() + 1;
+  std::unique_ptr<wchar_t[]> p(new wchar_t[len]);
+  setlocale(LC_CTYPE, "");
+  mbstowcs(p.get(), str.c_str(), len);
+  std::wstring               wstr(p.get());
+#endif
   return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch == '$') ||
-         (ch == '_') || std::regex_search(str, unicode::id_start);
+         (ch == '_') || std::regex_search(wstr, unicode::id_start);
 }
 
 bool parser5::isIdContinueChar(u8char ch) {
-  std::wstring str = {(wchar_t)ch, 0};
+#ifdef _MSC_VER
+  std::wstring wstr = {(wchar_t)ch, 0};
+#else
+  auto                       str = StringFromCharCode(ch);
+  auto                       len = str.size() + 1;
+  std::unique_ptr<wchar_t[]> p(new wchar_t[len]);
+  setlocale(LC_CTYPE, "");
+  mbstowcs(p.get(), str.c_str(), len);
+  std::wstring wstr(p.get());
+#endif
   return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
          (ch >= '0' && ch <= '9') || (ch == '$') || (ch == '_') ||
-         std::regex_search(str, unicode::id_continue);
+         std::regex_search(wstr, unicode::id_continue);
 }
 
 bool parser5::isDigit(u8char ch) {
@@ -3127,9 +3152,9 @@ parser5::Token parser5::newToken(TokenType type, value value) {
   return token;
 }
 
-parser5::u8char parser5::peek(std::string::const_iterator       &begin,
+parser5::u8char parser5::peek(std::string::const_iterator &      begin,
                               const std::string::const_iterator &end,
-                              size_t                            *plen) {
+                              size_t *                           plen) {
   if (begin == end) {
     if (plen) *plen = 0;
     return 0;
@@ -3159,13 +3184,15 @@ parser5::u8char parser5::read() {
   _current_char = peek(_cur, _end, &len);
   if (_current_char == '\n') {
     _line++;
-    _col = 0;
+    _col            = 0;
+    _print_len      = 0;
+    _line_begin_cur = _cur + 1;
   } else if (_current_char > 0) {
     _col++;
   }
 
   if (len > 0) {
-    _pos++;
+    _print_len += std::min(len, 2ul);
     _cur += len;
   }
   return _current_char;
