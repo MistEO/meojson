@@ -8,18 +8,18 @@ A modern all-platform Json/Json5 parser/generator, Header-only, with lots of syn
 
 </div>
 
-[English](./README_en.md)
+[中文](./README.md)
 
-## 使用说明
+## Usage
 
-- 在您的项目中包含头文件即可使用  
+- Include the header file in your project  
 ```cpp
 #include "json.hpp"
 ```
-- meojson 仅依赖 STL, 但需要 c++17 标准
-- 若您需要使用 Json5 解析，请添加 `JSON5` 宏定义
+- meojson only depends on STL, but requires c++17 standard
+- If you need to use Json5, please add `JSON5` macro definition
 
-## 示例
+## Sample
 
 ```cpp
 /***
