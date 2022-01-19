@@ -1929,7 +1929,7 @@ namespace json
 
         /* exceptions */
     public:
-        class exception
+        class exception : public json::exception
         {
         public:
             exception(const std::string& type, const std::string& msg,
@@ -1944,12 +1944,12 @@ namespace json
 
             virtual ~exception() noexcept = default;
 
-            virtual std::string what() const noexcept
+            virtual const char* what() const noexcept override
             {
                 std::stringstream ss;
                 ss << "JSON5: [" << _type << "] " << _msg << '\n';
                 ss << _detail << std::endl;
-                return ss.str();
+                return ss.str().c_str();
             }
 
         protected:
