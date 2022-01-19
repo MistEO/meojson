@@ -17,7 +17,6 @@
 
 namespace json
 {
-
     // *************************
     // *   exception declare   *
     // *************************
@@ -452,8 +451,7 @@ namespace json
         parser(const std::string::const_iterator& cbegin,
                const std::string::const_iterator& cend) noexcept
             : _cur(cbegin), _end(cend)
-        {
-        }
+        {}
 
         std::optional<value> parse();
         value                parse_value();
@@ -1944,8 +1942,7 @@ namespace json
             exception(const std::string& type, const std::string& msg,
                       const std::string& detail)
                 : _type(type), _msg(msg), _detail(detail)
-            {
-            }
+            {}
             exception(const exception&) = default;
             exception& operator=(const exception&) = default;
             exception(exception&&) = default;
@@ -1972,8 +1969,7 @@ namespace json
                 : exception("Invalid Char",
                             "Unexpected token \'" + StringFromCharCode(ch) + "\'",
                             detail)
-            {
-            }
+            {}
         };
 
         class InvalidIdentifier : public exception
@@ -1982,8 +1978,7 @@ namespace json
             InvalidIdentifier(const std::string& msg = "",
                               const std::string& detail = "")
                 : exception("Invalid Identifier", msg, detail)
-            {
-            }
+            {}
         };
 
         class InvalidEOF : public exception
@@ -1991,8 +1986,7 @@ namespace json
         public:
             InvalidEOF(const std::string& msg = "", const std::string& detail = "")
                 : exception("Invalid EOF", msg, detail)
-            {
-            }
+            {}
         };
 
     private:
@@ -2099,8 +2093,7 @@ namespace json
         parser5(const std::string::const_iterator& cbegin,
                 const std::string::const_iterator& cend) noexcept
             : _cur(cbegin), _end(cend), _line_begin_cur(cbegin)
-        {
-        }
+        {}
         std::optional<value> parse();
 
     private:
@@ -2612,14 +2605,14 @@ namespace json
             throw InvalidChar(_current_char, exceptionDetailInfo());
         }
 
-        buffer += read();
+        buffer += static_cast<char>(read());
 
         c = peek(_cur, _end);
         if (!unicode::isHexDigit(c)) {
             throw InvalidChar(_current_char, exceptionDetailInfo());
         }
 
-        buffer += read();
+        buffer += static_cast<char>(read());
 
         return std::stoi(buffer, nullptr, 16);
     }
@@ -2668,7 +2661,10 @@ namespace json
         auto begin = str.begin();
         return peek(begin, str.cend());
     }
-
+    constexpr size_t operator "" _sz(unsigned long long size)
+    {
+        return size;
+    }
     parser5::u8char parser5::read()
     {
         size_t len = 0;
@@ -2684,7 +2680,7 @@ namespace json
         }
 
         if (len > 0) {
-            _print_len += std::min(len, 2ul);
+            _print_len += (std::min)(len, 2_sz);
             _cur += len;
         }
         return _current_char;
@@ -2696,7 +2692,7 @@ namespace json
         std::string str;
         for (auto i = 0; i < 8; ++i) {
             auto ch = (0xff & code);
-            if (ch) str.insert(0, 1, ch);
+            if (ch) str.insert(0, 1, static_cast<char>(ch));
             code >>= 8;
         }
         return str;
@@ -3548,5 +3544,4 @@ namespace json
     }
 
 #endif  // JSON5
-
 }  // namespace json
