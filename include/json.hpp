@@ -1,19 +1,23 @@
 #pragma once
 
-#include <cctype>
-#include <clocale>
-#include <cmath>
 #include <initializer_list>
-#include <iomanip>
 #include <memory>
-#include <mutex>
 #include <optional>
-#include <regex>
-#include <sstream>
-#include <stack>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#ifdef JSON5
+
+#include <cctype>
+#include <clocale>
+#include <cmath>
+#include <regex>
+#include <stack>
+#include <iomanip>
+#include <sstream>
+
+#endif  // JSON5
 
 namespace json
 {
@@ -451,7 +455,8 @@ namespace json
         parser(const std::string::const_iterator& cbegin,
                const std::string::const_iterator& cend) noexcept
             : _cur(cbegin), _end(cend)
-        {}
+        {
+        }
 
         std::optional<value> parse();
         value                parse_value();
@@ -1476,42 +1481,30 @@ namespace json
 
     value& value::operator[](const std::string& key)
     {
-        static std::mutex            create_mutex;
-        std::unique_lock<std::mutex> create_lock(create_mutex);
-
         if (_type == value_type::Object && _object_ptr != nullptr) {
-            create_lock.unlock();
             return _object_ptr->operator[](key);
         }
         // Create a new value by operator[]
         else if (_type == value_type::Null) {
             _type = value_type::Object;
             _object_ptr = std::make_unique<object>();
-            create_lock.unlock();
             return _object_ptr->operator[](key);
         }
-        create_lock.unlock();
 
         throw exception("Wrong Type");
     }
 
     value& value::operator[](std::string&& key)
     {
-        static std::mutex            create_mutex;
-        std::unique_lock<std::mutex> create_lock(create_mutex);
-
         if (_type == value_type::Object && _object_ptr != nullptr) {
-            create_lock.unlock();
             return _object_ptr->operator[](std::move(key));
         }
         // Create a new value by operator[]
         else if (_type == value_type::Null) {
             _type = value_type::Object;
             _object_ptr = std::make_unique<object>();
-            create_lock.unlock();
             return _object_ptr->operator[](std::move(key));
         }
-        create_lock.unlock();
 
         throw exception("Wrong Type");
     }
@@ -1942,7 +1935,8 @@ namespace json
             exception(const std::string& type, const std::string& msg,
                       const std::string& detail)
                 : _type(type), _msg(msg), _detail(detail)
-            {}
+            {
+            }
             exception(const exception&) = default;
             exception& operator=(const exception&) = default;
             exception(exception&&) = default;
@@ -1969,7 +1963,8 @@ namespace json
                 : exception("Invalid Char",
                             "Unexpected token \'" + StringFromCharCode(ch) + "\'",
                             detail)
-            {}
+            {
+            }
         };
 
         class InvalidIdentifier : public exception
@@ -1978,7 +1973,8 @@ namespace json
             InvalidIdentifier(const std::string& msg = "",
                               const std::string& detail = "")
                 : exception("Invalid Identifier", msg, detail)
-            {}
+            {
+            }
         };
 
         class InvalidEOF : public exception
@@ -1986,7 +1982,8 @@ namespace json
         public:
             InvalidEOF(const std::string& msg = "", const std::string& detail = "")
                 : exception("Invalid EOF", msg, detail)
-            {}
+            {
+            }
         };
 
     private:
@@ -2093,7 +2090,8 @@ namespace json
         parser5(const std::string::const_iterator& cbegin,
                 const std::string::const_iterator& cend) noexcept
             : _cur(cbegin), _end(cend), _line_begin_cur(cbegin)
-        {}
+        {
+        }
         std::optional<value> parse();
 
     private:
