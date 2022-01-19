@@ -22,7 +22,7 @@ int main()
 }
 )";
     try {
-        auto ret = json::parser5::parse(content);
+        auto ret = json::parse5(content);
         auto value = ret.value();  // As also, you can use rvalues, like `auto
                                    // value = std::move(ret).value();`
         // Output "MistEO"

@@ -1925,11 +1925,12 @@ namespace json
         return parser::parse(content);
     }
 
+#ifdef JSON5
+
     // *************************
     // *      json5 parser     *
     // *************************
 
-#ifdef JSON5
     class parser5
     {
     private:
@@ -3353,6 +3354,7 @@ namespace json
         }
 
         // throw
+        return std::nullopt;
     }
 
     void parser5::parse_start()
@@ -3544,5 +3546,7 @@ namespace json
             _parse_state = ParseState::afterPropertyValue;
         }
     }
-#endif
+
+#endif  // JSON5
+
 }  // namespace json
