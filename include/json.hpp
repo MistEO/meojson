@@ -335,13 +335,11 @@ namespace json
     // *      aux declare      *
     // *************************
 
-    inline std::string unescape_string(std::string&& str)
+    inline std::string unescape_string(std::string str)
     {
-        std::string replace_str;
-        std::string escape_str = std::move(str);
-
-        for (size_t pos = 0; pos < escape_str.size(); ++pos) {
-            switch (escape_str[pos]) {
+        for (size_t pos = 0; pos < str.size(); ++pos) {
+            std::string replace_str;
+            switch (str[pos]) {
             case '\"':
                 replace_str = R"(\")";
                 break;
@@ -367,27 +365,20 @@ namespace json
                 continue;
                 break;
             }
-            escape_str.replace(pos, 1, replace_str);
+            str.replace(pos, replace_str.size(), replace_str);
             ++pos;
         }
-        return escape_str;
+        return str;
     }
 
-    inline std::string unescape_string(const std::string& str)
+    inline std::string escape_string(std::string str)
     {
-        return unescape_string(std::string(str));
-    }
-
-    inline std::string escape_string(std::string&& str)
-    {
-        std::string escape_str = std::move(str);
-
-        for (size_t pos = 0; pos + 1 < escape_str.size(); ++pos) {
-            if (escape_str[pos] != '\\') {
+        for (size_t pos = 0; pos + 1 < str.size(); ++pos) {
+            if (str[pos] != '\\') {
                 continue;
             }
             std::string replace_str;
-            switch (escape_str[pos + 1]) {
+            switch (str[pos + 1]) {
             case '"':
                 replace_str = "\"";
                 break;
@@ -413,14 +404,9 @@ namespace json
                 return std::string();
                 break;
             }
-            escape_str.replace(pos, 2, replace_str);
+            str.replace(pos, replace_str.size(), replace_str);
         }
-        return escape_str;
-    }
-
-    inline std::string escape_string(const std::string& str)
-    {
-        return escape_string(std::string(str));
+        return str;
     }
 
     enum class value_type : char;
