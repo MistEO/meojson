@@ -204,7 +204,7 @@ namespace json
         array(raw_array&& arr) noexcept;
         array(std::initializer_list<raw_array::value_type> init_list);
 
-        template <typename ArrayType> array(ArrayType arr);
+        template<typename ArrayType> array(ArrayType arr);
 
         ~array() noexcept = default;
 
@@ -434,6 +434,17 @@ namespace json
         : _array_data(init_list)
     {
         ;
+    }
+
+    template<typename ArrayType>
+    MEOJSON_INLINE array::array(ArrayType arr)
+    {
+        static_assert(
+            std::is_constructible<json::value, typename ArrayType::value_type>::value,
+            "Parameter can't be used to construct a json::value");
+        for (auto&& ele : arr) {
+            _array_data.emplace_back(std::move(ele));
+        }
     }
 
     MEOJSON_INLINE const value& array::at(size_t pos) const
