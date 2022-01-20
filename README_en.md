@@ -4,7 +4,7 @@
 
 现代化的全平台 Json/Json5 解析/生成器，Header-only, 并附带大量语法糖！
 
-A modern all-platform Json/Json5 parser/generator, Header-only, with lots of syntactic sugar!
+A modern all-platform Json/Json5 parser/generator, with Header-only and lots of syntactic sugar!
 
 </div>
 
@@ -12,12 +12,19 @@ A modern all-platform Json/Json5 parser/generator, Header-only, with lots of syn
 
 ## Usage
 
-- Include the header file in your project  
+- Include the header file in your project, and enjoy it!  
+
 ```cpp
 #include "json.hpp"
 ```
+
+- If you need to parse Json5, please include `json5.hpp`
+
+```cpp
+#include "json5.hpp"
+```
+
 - meojson only depends on STL, but requires c++17 standard
-- If you need to use Json5, please add `JSON5` macro definition
 
 ## Sample
 

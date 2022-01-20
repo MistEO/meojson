@@ -8,8 +8,7 @@
 #include <sstream>
 #include <stack>
 
-#include "../common.h"
-#include "../json.hpp"
+#include "json.hpp"
 
 namespace json
 {

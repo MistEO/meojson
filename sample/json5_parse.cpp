@@ -1,7 +1,7 @@
 
 #include <iostream>
 
-#include "superset/json5.hpp"
+#include "json5.hpp"
 
 int main()
 {

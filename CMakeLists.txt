@@ -8,7 +8,6 @@ option(BUILD_SAMPLE "Build sample in sample/sample.cpp" ON)
 # add_compile_options(-Wall -std=c++17 -O2)
 # set(CMAKE_BUILD_TYPE Release) # 自带-O2选项
 set(CMAKE_CXX_STANDARD 17)    # std=c++17
-add_definitions(-D JSON5)
 
 if (WIN32)
     add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
