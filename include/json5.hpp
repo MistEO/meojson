@@ -29,8 +29,11 @@ namespace json
         public:
             exception(const std::string& type, const std::string& msg,
                       const std::string& detail)
-                : _type(type), _msg(msg), _detail(detail)
             {
+                std::stringstream ss;
+                ss << "JSON5: [" << type << "] " << msg << '\n';
+                ss << detail << std::endl;
+                _what = ss.str();
             }
             exception(const exception&) = default;
             exception& operator=(const exception&) = default;
@@ -41,14 +44,11 @@ namespace json
 
             virtual const char* what() const noexcept override
             {
-                std::stringstream ss;
-                ss << "JSON5: [" << _type << "] " << _msg << '\n';
-                ss << _detail << std::endl;
-                return ss.str().c_str();
+                return _what.c_str();
             }
 
         protected:
-            std::string _msg, _type, _detail;
+            std::string _what;
         };
 
         class InvalidChar : public exception
