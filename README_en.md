@@ -72,6 +72,8 @@ int main()
         std::cout << name << " 's homepage: " << homepage << std::endl;
     }
 
+    std::string str = value.get("not_exists", "not found");
+
     /*  Output:
         1
         2
@@ -92,9 +94,9 @@ int main()
         "a", "b", "c"
     };
     root["obj"] = json::object{
-        { "obj_key1", "aaa" },
-        { "obj_key2", 123 },
-        { "obj_key3", true }
+        {"obj_key1", "aaa"},
+        {"obj_key2", 123},
+        {"obj_key3", true}
     };
     root["obj"].as_object().emplace("key4", json::object{ { "key4 child", "lol" } });
     root["obj_another"]["child"]["grand"] = "i am grand";
@@ -103,5 +105,6 @@ int main()
 
     return 0;
 }
+
 
 ```

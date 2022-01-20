@@ -38,6 +38,8 @@ int main()
         std::cout << name << " 's homepage: " << homepage << std::endl;
     }
 
+    std::string str = value.get("not_exists", "not found");
+
     /*  Output:
         1
         2

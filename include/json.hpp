@@ -119,16 +119,10 @@ namespace json
         const value& at(const std::string& key) const;
 
         template <typename Type>
-        Type get(const std::string& key, const Type& default_value) const
-        {
-            return is_object() ? as_object().get(key, default_value) : default_value;
-        }
+        auto get(const std::string& key, const Type& default_value) const;
 
         template <typename Type>
-        Type get(size_t pos, const Type& default_value) const
-        {
-            return is_array() ? as_array().get(pos, default_value) : default_value;
-        }
+        auto get(size_t pos, const Type& default_value) const;
 
         const bool as_boolean() const;
         const int as_integer() const;
@@ -1244,6 +1238,18 @@ namespace json
         }
 
         throw exception("Wrong Type or data empty");
+    }
+
+    template <typename Type>
+    MEOJSON_INLINE auto value::get(const std::string& key, const Type& default_value) const
+    {
+        return is_object() ? as_object().get(key, default_value) : default_value;
+    }
+
+    template <typename Type>
+    MEOJSON_INLINE auto value::get(size_t pos, const Type& default_value) const
+    {
+        return is_array() ? as_array().get(pos, default_value) : default_value;
     }
 
     MEOJSON_INLINE const bool value::as_boolean() const
