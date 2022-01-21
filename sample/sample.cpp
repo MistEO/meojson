@@ -10,11 +10,11 @@ void generating();
 
 int main()
 {
-    std::cout << "*** 解析 | Parsing ***" << std::endl;
+    std::cout << "\n*** 解析 | Parsing ***\n" << std::endl;
 
     parsing();
 
-    std::cout << "*** 生成 | Generating ***" << std::endl;
+    std::cout << "\n*** 生成 | Generating ***\n" << std::endl;
 
     generating();
 
@@ -32,11 +32,13 @@ void parsing()
         },
         "list": [
             1, 2, 3
-        ]
+        ],
+        "str": "abc",
+        "num": 3.1416
     }
     )";
 
-    auto ret = json::parser::parse(content);
+    auto ret = json::parse(content);
 
     if (!ret) {
         std::cerr << "Parsing failed" << std::endl;
@@ -55,7 +57,17 @@ void parsing()
         std::cout << name << " 's homepage: " << homepage << std::endl;
     }
 
-    std::string str = value.get("not_exists", "default value");
+    // Output: abc
+    std::string str = (std::string)value["str"];    // As also, you can use `value["str"].as_string()`
+    std::cout << str << std::endl;
+
+    // Output: 3.141600
+    double num = value["num"].as_double();          // As also, you can use `(double)value["num"]`
+    std::cout << num << std::endl;
+
+    // Output: not found
+    std::string str_get = value.get("maybe_exists", "not found");
+    std::cout << str_get << std::endl;
 
     /*  Output:
         1
@@ -65,7 +77,7 @@ void parsing()
     // It's const!
     for (const auto& num : value.at("list").as_array()) {
         int x = num.as_integer();
-        std::ignore = x;
+        std::cout << x << std::endl;
     }
 }
 
