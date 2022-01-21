@@ -21,28 +21,22 @@ int main()
   light_speed: +3e8,               // 科学计数法
 }
 )";
-    try {
-        auto ret = json::parse5(content);
-        auto value = ret.value();  // As also, you can use rvalues, like `auto
-                                   // value = std::move(ret).value();`
-        // Output "MistEO"
-        std::cout << value["名字"].as_string() << std::endl;
-        // Output "value"
-        std::cout << value["key"][0].as_string() << std::endl;
-    }
-    catch (json::parser5::exception& ex) {
-        std::cout << "-------parse failed-------" << std::endl;
-        std::cerr << ex.what() << std::endl;
-    }
+    auto ret = json::parse5(content);
+    auto value = ret.value();  // As also, you can use rvalues, like `auto
+                               // value = std::move(ret).value();`
+    // Output "MistEO"
+    std::cout << value["名字"].as_string() << std::endl;
+    // Output "value"
+    std::cout << value["key"][0].as_string() << std::endl;
+
 
     std::string error_content = "{ error }";
-    try {
-        json::parser5::parse(error_content);
-    }
-    catch (json::parser5::exception& ex) {
-        std::cout << "-------parse failed-------" << std::endl;
-        std::cerr << ex.what() << std::endl;
-    }
+    std::string error_msg;
+    json::parse5(error_content, &error_msg);
+
+    std::cout << "-------parse failed-------" << std::endl;
+    std::cerr << error_msg << std::endl;
+
 
     return 0;
 }
