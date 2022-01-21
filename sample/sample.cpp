@@ -10,11 +10,11 @@ void generating();
 
 int main()
 {
-    std::cout << "\n*** 解析 | Parsing ***\n" << std::endl;
+    std::cout << "\n****** Parsing ******\n" << std::endl;
 
     parsing();
 
-    std::cout << "\n*** 生成 | Generating ***\n" << std::endl;
+    std::cout << "\n****** Generating ******\n" << std::endl;
 
     generating();
 
@@ -44,17 +44,17 @@ void parsing()
         std::cerr << "Parsing failed" << std::endl;
         return;
     }
-    auto value = ret.value();  // As also, you can use rvalues, like  
+    auto value = ret.value();  // As also, you can use rvalues, like
                                // `auto value = std::move(ret).value();`
     // Output: meojson
-    std::cout << value["repo"] << std::endl;
+    std::cout << value["repo"].as_string() << std::endl;
 
     /* Output:
-        ChingCdesu 's homepage: "https://github.com/ChingCdesu"
-        MistEO 's homepage: "https://github.com/MistEO"
+        ChingCdesu 's homepage: https://github.com/ChingCdesu
+        MistEO 's homepage: https://github.com/MistEO
     */
     for (auto&& [name, homepage] : value["author"].as_object()) {
-        std::cout << name << " 's homepage: " << homepage << std::endl;
+        std::cout << name << " 's homepage: " << homepage.as_string() << std::endl;
     }
 
     // Output: abc
@@ -75,8 +75,8 @@ void parsing()
         3
     */
     // It's const!
-    for (const auto& num : value.at("list").as_array()) {
-        int x = num.as_integer();
+    for (const auto& ele : value.at("list").as_array()) {
+        int x = (int)ele;
         std::cout << x << std::endl;
     }
 }

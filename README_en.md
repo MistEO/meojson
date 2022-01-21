@@ -60,17 +60,17 @@ void parsing()
         std::cerr << "Parsing failed" << std::endl;
         return;
     }
-    auto value = ret.value();  // As also, you can use rvalues, like  
+    auto value = ret.value();  // As also, you can use rvalues, like
                                // `auto value = std::move(ret).value();`
     // Output: meojson
-    std::cout << value["repo"] << std::endl;
+    std::cout << value["repo"].as_string() << std::endl;
 
     /* Output:
-        ChingCdesu 's homepage: "https://github.com/ChingCdesu"
-        MistEO 's homepage: "https://github.com/MistEO"
+        ChingCdesu 's homepage: https://github.com/ChingCdesu
+        MistEO 's homepage: https://github.com/MistEO
     */
     for (auto&& [name, homepage] : value["author"].as_object()) {
-        std::cout << name << " 's homepage: " << homepage << std::endl;
+        std::cout << name << " 's homepage: " << homepage.as_string() << std::endl;
     }
 
     // Output: abc
@@ -91,10 +91,52 @@ void parsing()
         3
     */
     // It's const!
-    for (const auto& num : value.at("list").as_array()) {
-        int x = num.as_integer();
+    for (const auto& ele : value.at("list").as_array()) {
+        int x = (int)ele;
         std::cout << x << std::endl;
     }
+}
+```
+
+### Parsing Json5
+
+```cpp
+/***
+ * from sample/json5_parse.cpp
+***/
+#include <iostream>
+#include "json5.hpp"
+
+void parsing()
+{
+    std::string content = R"(
+// It's a Json5 content
+{
+  名字: "MistEO",                  /* Key's quotes can be omitted */
+  😊: '😄',                       // Emoji can be used as a key
+  thanks: 'ありがとう',             /* Single quotes can also be used as strings */
+  \u006Bey: ['value',],            // Normal characters and escapes can be mixed
+  inf: +Infinity, nan: NaN,        // Numbers can start with '+'
+  fractional: .3, integer: 42.,    // Start or end with decimal point
+  byte_max: 0xff,                  // Supports hexadecimal number,
+  light_speed: +3e8,               // and scientific notation
+}
+)";
+    auto ret = json::parse5(content);
+    if (!ret) {
+        std::cerr << "Parsing failed" << std::endl;
+        return;
+    }
+    auto value = ret.value();  // As also, you can use rvalues, like
+                               // `auto value = std::move(ret).value();`
+
+    // Output: MistEO
+    std::cout << value["名字"] << std::endl;
+    // Output: value
+    std::string str = (std::string)value["key"][0];
+    std::cout << str << std::endl;
+    
+    // for more json::value usage, please refer to sample.cpp
 }
 ```
 
