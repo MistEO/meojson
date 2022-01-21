@@ -1567,43 +1567,44 @@ namespace json
     /* stack operation */
     MEOJSON_INLINE void parser5::push()
     {
-        value* v;
+        value v;
+        value *pv; // only for access
         switch (token->type) {
         case TokenType::punctuator:
             switch (token->_value.as_string()[0]) {
             case '{':
-                v = new value(object());
+                v = object();
                 break;
             case '[':
-                v = new value(array());
+                v = array();
             }
             break;
         case TokenType::null:
         case TokenType::boolean:
         case TokenType::numeric:
         case TokenType::string:
-            v = &token->_value;
+            v = std::move(token->_value);
             break;
         }
         if (!root.has_value()) {
-            root = std::move(*v);
-            v = &root.value();
+            root = std::move(v);
+            pv = &root.value();
         }
         else {
             auto parent = _stack.top();
             if (parent->is_array()) {
-                parent->as_array().emplace_back(std::move(*v));
-                v = &parent->as_array()[parent->as_array().size() - 1];
+                parent->as_array().emplace_back(std::move(v));
+                pv = &parent->as_array()[parent->as_array().size() - 1];
             }
             else {
-                parent->as_object()[key] = std::move(*v);
-                v = &parent->as_object()[key];
+                parent->as_object()[key] = std::move(v);
+                pv = &parent->as_object()[key];
             }
         }
 
-        if (v->is_object() || v->is_array()) {
-            _stack.emplace(v);
-            if (v->is_array()) {
+        if (pv->is_object() || pv->is_array()) {
+            _stack.emplace(pv);
+            if (pv->is_array()) {
                 _parse_state = ParseState::beforeArrayValue;
             }
             else {
