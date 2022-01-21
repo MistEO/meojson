@@ -74,7 +74,7 @@ namespace json
             }
         };
 
-    private:
+    public:
         std::string exceptionDetailInfo()
         {
             size_t start_point = _col;
@@ -173,7 +173,7 @@ namespace json
         /* constrators and callers */
     public:
         ~parser5() noexcept = default;
-        static std::optional<value> parse(const std::string& content);
+        static std::optional<value> parse(const std::string& content, std::string* error = nullptr);
 
     private:
         parser5(const std::string::const_iterator& cbegin,
@@ -577,14 +577,23 @@ namespace json
     }
 
     /* constrators and callers */
-    MEOJSON_INLINE std::optional<value> parse5(const std::string& content)
+    MEOJSON_INLINE std::optional<value> parse5(const std::string& content, std::string* error = nullptr)
     {
-        return parser5::parse(content);
+        return parser5::parse(content, error);
     }
 
-    MEOJSON_INLINE std::optional<value> parser5::parse(const std::string& content)
+    MEOJSON_INLINE std::optional<value> parser5::parse(const std::string& content, std::string* error)
     {
+        // try {
+        error;
         return parser5(content.cbegin(), content.cend()).parse();
+        // }
+        // catch (json::parser5::exception& ex) {
+        //     if (error) {
+        //         *error = ex.what();
+        //     }
+        // }
+        // return std::nullopt;
     }
 
     MEOJSON_INLINE std::optional<value> parser5::parse()
@@ -1007,7 +1016,7 @@ namespace json
             break;
         default:
             if (!unicode::isIdStartChar(u)) {
-                throw InvalidIdentifier();
+                throw InvalidIdentifier("", exceptionDetailInfo());
             }
             break;
         }
@@ -1054,7 +1063,7 @@ namespace json
             break;
         default:
             if (!unicode::isIdStartChar(u)) {
-                throw InvalidIdentifier();
+                throw InvalidIdentifier("", exceptionDetailInfo());
             }
             break;
         }
@@ -1445,7 +1454,7 @@ namespace json
     MEOJSON_INLINE void parser5::parse_start()
     {
         if (_token->type == TokenType::eof) {
-            throw InvalidEOF();
+            throw InvalidEOF("", exceptionDetailInfo());
         }
 
         push();
@@ -1463,10 +1472,10 @@ namespace json
             pop();
             break;
         case TokenType::eof:
-            throw InvalidEOF();
+            throw InvalidEOF("", exceptionDetailInfo());
             break;
         default:
-            throw exception();
+
             break;
         }
     }
@@ -1474,7 +1483,7 @@ namespace json
     MEOJSON_INLINE void parser5::parse_afterPropertyName()
     {
         if (_token->type == TokenType::eof) {
-            throw InvalidEOF();
+            throw InvalidEOF("", exceptionDetailInfo());
         }
 
         _parse_state = ParseState::beforePropertyValue;
@@ -1483,7 +1492,7 @@ namespace json
     MEOJSON_INLINE void parser5::parse_beforePropertyValue()
     {
         if (_token->type == TokenType::eof) {
-            throw InvalidEOF();
+            throw InvalidEOF("", exceptionDetailInfo());
         }
         push();
     }
@@ -1491,7 +1500,7 @@ namespace json
     MEOJSON_INLINE void parser5::parse_beforeArrayValue()
     {
         if (_token->type == TokenType::eof) {
-            throw InvalidEOF();
+            throw InvalidEOF("", exceptionDetailInfo());
         }
 
         if (_token->type == TokenType::punctuator &&
@@ -1506,7 +1515,7 @@ namespace json
     MEOJSON_INLINE void parser5::parse_afterPropertyValue()
     {
         if (_token->type == TokenType::eof) {
-            throw InvalidEOF();
+            throw InvalidEOF("", exceptionDetailInfo());
         }
 
         switch (_token->_value.as_string()[0]) {
@@ -1522,7 +1531,7 @@ namespace json
     MEOJSON_INLINE void parser5::parse_afterArrayValue()
     {
         if (_token->type == TokenType::eof) {
-            throw InvalidEOF();
+            throw InvalidEOF("", exceptionDetailInfo());
         }
         switch (_token->_value.as_string()[0]) {
         case ',':
@@ -1561,7 +1570,6 @@ namespace json
             parse_afterArrayValue();
             break;
         default:
-            throw exception();
             break;
         }
     }
@@ -1580,7 +1588,6 @@ namespace json
                 v = array();
                 break;
             default:
-                throw exception();
                 break;
             }
         } break;
@@ -1591,7 +1598,6 @@ namespace json
             std::swap(v, _token->_value);
             break;
         default:
-            throw exception();
             break;
         }
 
