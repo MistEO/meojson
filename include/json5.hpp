@@ -12,7 +12,6 @@
 
 namespace json
 {
-
     // *************************
     // *         declare       *
     // *************************
@@ -51,8 +50,7 @@ namespace json
                 : exception("Invalid Char",
                             "Unexpected token \'" + StringFromCharCode(ch) + "\'",
                             detail)
-            {
-            }
+            {}
         };
 
         class InvalidIdentifier : public exception
@@ -61,8 +59,7 @@ namespace json
             InvalidIdentifier(const std::string& msg = "",
                               const std::string& detail = "")
                 : exception("Invalid Identifier", msg, detail)
-            {
-            }
+            {}
         };
 
         class InvalidEOF : public exception
@@ -70,8 +67,7 @@ namespace json
         public:
             InvalidEOF(const std::string& msg = "", const std::string& detail = "")
                 : exception("Invalid EOF", msg, detail)
-            {
-            }
+            {}
         };
 
     public:
@@ -179,8 +175,7 @@ namespace json
         parser5(const std::string::const_iterator& cbegin,
                 const std::string::const_iterator& cend) noexcept
             : _cur(cbegin), _end(cend), _line_begin_cur(cbegin)
-        {
-        }
+        {}
         std::optional<value> parse();
 
     private:
@@ -584,16 +579,15 @@ namespace json
 
     MEOJSON_INLINE std::optional<value> parser5::parse(const std::string& content, std::string* error)
     {
-        // try {
-        error;
-        return parser5(content.cbegin(), content.cend()).parse();
-        // }
-        // catch (json::parser5::exception& ex) {
-        //     if (error) {
-        //         *error = ex.what();
-        //     }
-        // }
-        // return std::nullopt;
+        try {
+            return parser5(content.cbegin(), content.cend()).parse();
+        }
+        catch (json::parser5::exception& ex) {
+            if (error) {
+                *error = ex.what();
+            }
+        }
+        return std::nullopt;
     }
 
     MEOJSON_INLINE std::optional<value> parser5::parse()
@@ -1653,5 +1647,4 @@ namespace json
             _parse_state = ParseState::afterPropertyValue;
         }
     }
-
 } // namespace json
