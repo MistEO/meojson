@@ -1568,7 +1568,7 @@ namespace json
     MEOJSON_INLINE void parser5::push()
     {
         value v;
-        value *pv; // only for access
+        value *pv = nullptr; // only for access
         switch (token->type) {
         case TokenType::punctuator:
             switch (token->_value.as_string()[0]) {
@@ -1577,13 +1577,14 @@ namespace json
                 break;
             case '[':
                 v = array();
+                break;
             }
             break;
         case TokenType::null:
         case TokenType::boolean:
         case TokenType::numeric:
         case TokenType::string:
-            v = std::move(token->_value);
+            std::swap(v, token->_value);
             break;
         }
         if (!root.has_value()) {
