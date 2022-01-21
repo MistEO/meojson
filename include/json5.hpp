@@ -27,6 +27,7 @@ namespace json
         class exception : public json::exception
         {
         public:
+            exception() = default;
             exception(const std::string& type, const std::string& msg,
                       const std::string& detail)
             {
@@ -41,14 +42,6 @@ namespace json
             exception& operator=(exception&&) = default;
 
             virtual ~exception() noexcept = default;
-
-            virtual const char* what() const noexcept override
-            {
-                return _what.c_str();
-            }
-
-        protected:
-            std::string _what;
         };
 
         class InvalidChar : public exception
