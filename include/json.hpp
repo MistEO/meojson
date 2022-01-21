@@ -116,16 +116,16 @@ namespace json
         template <typename Type>
         auto get(size_t pos, const Type& default_value) const;
 
-        const bool as_boolean() const;
-        const int as_integer() const;
-        // const unsigned as_unsigned() const;
-        const long as_long() const;
-        const unsigned long as_unsigned_long() const;
-        const long long as_long_long() const;
-        const unsigned long long as_unsigned_long_long() const;
-        const float as_float() const;
-        const double as_double() const;
-        const long double as_long_double() const;
+        bool as_boolean() const;
+        int as_integer() const;
+        // unsigned as_unsigned() const;
+        long as_long() const;
+        unsigned long as_unsigned_long() const;
+        long long as_long_long() const;
+        unsigned long long as_unsigned_long_long() const;
+        float as_float() const;
+        double as_double() const;
+        long double as_long_double() const;
         const std::string as_string() const;
         const array& as_array() const;
         const object& as_object() const;
@@ -209,16 +209,16 @@ namespace json
         const std::string format(std::string shift_str = "    ",
                                  size_t basic_shift_count = 0) const;
 
-        const bool get(size_t pos, bool default_value) const;
-        const int get(size_t pos, int default_value) const;
-        const long get(size_t pos, long default_value) const;
-        const unsigned long get(size_t pos, unsigned default_value) const;
-        const long long get(size_t pos, long long default_value) const;
-        const unsigned long long get(size_t pos,
+        bool get(size_t pos, bool default_value) const;
+        int get(size_t pos, int default_value) const;
+        long get(size_t pos, long default_value) const;
+        unsigned long get(size_t pos, unsigned default_value) const;
+        long long get(size_t pos, long long default_value) const;
+        unsigned long long get(size_t pos,
                                      unsigned long long default_value) const;
-        const float get(size_t pos, float default_value) const;
-        const double get(size_t pos, double default_value) const;
-        const long double get(size_t pos, long double default_value) const;
+        float get(size_t pos, float default_value) const;
+        double get(size_t pos, double default_value) const;
+        long double get(size_t pos, long double default_value) const;
         const std::string get(size_t pos, std::string default_value) const;
         const std::string get(size_t pos, const char* default_value) const;
 
@@ -275,25 +275,22 @@ namespace json
 
         bool empty() const noexcept { return _object_data.empty(); }
         size_t size() const noexcept { return _object_data.size(); }
-        bool exist(const std::string& key) const
-        {
-            return _object_data.find(key) != _object_data.cend();
-        }
+        bool exist(const std::string& key) const { return _object_data.find(key) != _object_data.cend(); }
         const value& at(const std::string& key) const;
         const std::string to_string() const;
         const std::string format(std::string shift_str = "    ",
                                  size_t basic_shift_count = 0) const;
 
-        const bool get(const std::string& key, bool default_value) const;
-        const int get(const std::string& key, int default_value) const;
-        const long get(const std::string& key, long default_value) const;
-        const unsigned long get(const std::string& key, unsigned default_value) const;
-        const long long get(const std::string& key, long long default_value) const;
-        const unsigned long long get(const std::string& key,
+        bool get(const std::string& key, bool default_value) const;
+        int get(const std::string& key, int default_value) const;
+        long get(const std::string& key, long default_value) const;
+        unsigned long get(const std::string& key, unsigned default_value) const;
+        long long get(const std::string& key, long long default_value) const;
+        unsigned long long get(const std::string& key,
                                      unsigned long long default_value) const;
-        const float get(const std::string& key, float default_value) const;
-        const double get(const std::string& key, double default_value) const;
-        const long double get(const std::string& key,
+        float get(const std::string& key, float default_value) const;
+        double get(const std::string& key, double default_value) const;
+        long double get(const std::string& key,
                               long double default_value) const;
         const std::string get(const std::string& key,
                               std::string default_value) const;
@@ -484,7 +481,7 @@ namespace json
         return str;
     }
 
-    MEOJSON_INLINE const bool array::get(size_t pos, bool default_value) const
+    MEOJSON_INLINE bool array::get(size_t pos, bool default_value) const
     {
         if (exist(pos)) {
             value value = _array_data.at(pos);
@@ -500,7 +497,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const int array::get(size_t pos, int default_value) const
+    MEOJSON_INLINE int array::get(size_t pos, int default_value) const
     {
         if (exist(pos)) {
             value value = _array_data.at(pos);
@@ -516,7 +513,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const long array::get(size_t pos, long default_value) const
+    MEOJSON_INLINE long array::get(size_t pos, long default_value) const
     {
         if (exist(pos)) {
             value value = _array_data.at(pos);
@@ -532,7 +529,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const unsigned long array::get(size_t pos,
+    MEOJSON_INLINE unsigned long array::get(size_t pos,
                                                   unsigned default_value) const
     {
         if (exist(pos)) {
@@ -549,7 +546,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const long long array::get(size_t pos,
+    MEOJSON_INLINE long long array::get(size_t pos,
                                               long long default_value) const
     {
         if (exist(pos)) {
@@ -566,7 +563,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const unsigned long long
+    MEOJSON_INLINE unsigned long long
         array::get(size_t pos, unsigned long long default_value) const
     {
         if (exist(pos)) {
@@ -583,7 +580,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const float array::get(size_t pos, float default_value) const
+    MEOJSON_INLINE float array::get(size_t pos, float default_value) const
     {
         if (exist(pos)) {
             value value = _array_data.at(pos);
@@ -599,7 +596,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const double array::get(size_t pos, double default_value) const
+    MEOJSON_INLINE double array::get(size_t pos, double default_value) const
     {
         if (exist(pos)) {
             value value = _array_data.at(pos);
@@ -615,7 +612,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const long double array::get(size_t pos,
+    MEOJSON_INLINE long double array::get(size_t pos,
                                                 long double default_value) const
     {
         if (exist(pos)) {
@@ -827,7 +824,7 @@ namespace json
         return str;
     }
 
-    MEOJSON_INLINE const bool object::get(const std::string& key,
+    MEOJSON_INLINE bool object::get(const std::string& key,
                                           bool default_value) const
     {
         if (exist(key)) {
@@ -844,7 +841,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const int object::get(const std::string& key,
+    MEOJSON_INLINE int object::get(const std::string& key,
                                          int default_value) const
     {
         if (exist(key)) {
@@ -861,7 +858,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const long object::get(const std::string& key,
+    MEOJSON_INLINE long object::get(const std::string& key,
                                           long default_value) const
     {
         if (exist(key)) {
@@ -878,7 +875,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const unsigned long object::get(const std::string& key,
+    MEOJSON_INLINE unsigned long object::get(const std::string& key,
                                                    unsigned default_value) const
     {
         if (exist(key)) {
@@ -895,7 +892,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const long long object::get(const std::string& key,
+    MEOJSON_INLINE long long object::get(const std::string& key,
                                                long long default_value) const
     {
         if (exist(key)) {
@@ -912,7 +909,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const unsigned long long
+    MEOJSON_INLINE unsigned long long
         object::get(const std::string& key, unsigned long long default_value) const
     {
         if (exist(key)) {
@@ -929,7 +926,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const float object::get(const std::string& key,
+    MEOJSON_INLINE float object::get(const std::string& key,
                                            float default_value) const
     {
         if (exist(key)) {
@@ -946,7 +943,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const double object::get(const std::string& key,
+    MEOJSON_INLINE double object::get(const std::string& key,
                                             double default_value) const
     {
         if (exist(key)) {
@@ -963,7 +960,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const long double object::get(const std::string& key,
+    MEOJSON_INLINE long double object::get(const std::string& key,
                                                  long double default_value) const
     {
         if (exist(key)) {
@@ -1242,7 +1239,7 @@ namespace json
         return is_array() ? as_array().get(pos, default_value) : default_value;
     }
 
-    MEOJSON_INLINE const bool value::as_boolean() const
+    MEOJSON_INLINE bool value::as_boolean() const
     {
         if (_type == value_type::Boolean) {
             if (_raw_data == "true") {
@@ -1260,7 +1257,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const int value::as_integer() const
+    MEOJSON_INLINE int value::as_integer() const
     {
         if (_type == value_type::Number) {
             return std::stoi(_raw_data);
@@ -1282,7 +1279,7 @@ namespace json
     //     }
     // }
 
-    MEOJSON_INLINE const long value::as_long() const
+    MEOJSON_INLINE long value::as_long() const
     {
         if (_type == value_type::Number) {
             return std::stol(_raw_data);
@@ -1292,7 +1289,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const unsigned long value::as_unsigned_long() const
+    MEOJSON_INLINE unsigned long value::as_unsigned_long() const
     {
         if (_type == value_type::Number) {
             return std::stoul(_raw_data);
@@ -1302,7 +1299,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const long long value::as_long_long() const
+    MEOJSON_INLINE long long value::as_long_long() const
     {
         if (_type == value_type::Number) {
             return std::stoll(_raw_data);
@@ -1312,7 +1309,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const unsigned long long value::as_unsigned_long_long() const
+    MEOJSON_INLINE unsigned long long value::as_unsigned_long_long() const
     {
         if (_type == value_type::Number) {
             return std::stoull(_raw_data);
@@ -1322,7 +1319,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const float value::as_float() const
+    MEOJSON_INLINE float value::as_float() const
     {
         if (_type == value_type::Number) {
             return std::stof(_raw_data);
@@ -1332,7 +1329,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const double value::as_double() const
+    MEOJSON_INLINE double value::as_double() const
     {
         if (_type == value_type::Number) {
             return std::stod(_raw_data);
@@ -1342,7 +1339,7 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const long double value::as_long_double() const
+    MEOJSON_INLINE long double value::as_long_double() const
     {
         if (_type == value_type::Number) {
             return std::stold(_raw_data);

@@ -65,6 +65,7 @@ void parsing()
     // It's const!
     for (const auto& num : value.at("list").as_array()) {
         int x = num.as_integer();
+        std::ignore = x;
     }
 }
 

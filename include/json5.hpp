@@ -166,7 +166,8 @@ namespace json
         {
             TokenType type;
             value _value;
-            size_t col, line;
+            size_t col = 0;
+            size_t line = 0;
         };
 
         /* constrators and callers */
@@ -252,15 +253,15 @@ namespace json
         size_t _line = 1, _col = 0, _print_len = 0;
         ParseState _parse_state = ParseState::start;
         std::stack<value*> _stack;
-        std::optional<Token> token;
-        std::string key;
-        std::optional<value> root;
+        std::optional<Token> _token;
+        std::string _key;
+        std::optional<value> _root;
 
         LexState _lex_state = LexState::default_;
         std::string _buffer;
         bool _double_quote = false;
         size_t _sign = 1;
-        u8char _current_char;
+        u8char _current_char = 0;
     };
 
     // *************************
@@ -589,18 +590,18 @@ namespace json
     MEOJSON_INLINE std::optional<value> parser5::parse()
     {
         do {
-            token = lex();
+            _token = lex();
             parseStates(_parse_state);
-        } while (token->type != TokenType::eof);
+        } while (_token->type != TokenType::eof);
 
-        return root;
+        return _root;
     }
 
     /* escape and format */
     MEOJSON_INLINE void parser5::literal(const std::string& s)
     {
         for (const auto& ch : s) {
-            auto p = read();
+            char p = static_cast<char>(read());
             if (p != ch) {
                 throw InvalidChar(_current_char, exceptionDetailInfo());
             }
@@ -950,7 +951,7 @@ namespace json
         case '-':
         case '+':
             if (read() == '-') {
-                _sign = -1;
+                _sign = SIZE_MAX;
             }
             _lex_state = LexState::sign;
             return std::nullopt;
@@ -1443,7 +1444,7 @@ namespace json
 
     MEOJSON_INLINE void parser5::parse_start()
     {
-        if (token->type == TokenType::eof) {
+        if (_token->type == TokenType::eof) {
             throw InvalidEOF();
         }
 
@@ -1452,10 +1453,10 @@ namespace json
 
     MEOJSON_INLINE void parser5::parse_beforePropertyName()
     {
-        switch (token->type) {
+        switch (_token->type) {
         case TokenType::identifier:
         case TokenType::string:
-            key = token->_value.as_string();
+            _key = _token->_value.as_string();
             _parse_state = ParseState::afterPropertyName;
             break;
         case TokenType::punctuator:
@@ -1463,12 +1464,16 @@ namespace json
             break;
         case TokenType::eof:
             throw InvalidEOF();
+            break;
+        default:
+            throw exception();
+            break;
         }
     }
 
     MEOJSON_INLINE void parser5::parse_afterPropertyName()
     {
-        if (token->type == TokenType::eof) {
+        if (_token->type == TokenType::eof) {
             throw InvalidEOF();
         }
 
@@ -1477,7 +1482,7 @@ namespace json
 
     MEOJSON_INLINE void parser5::parse_beforePropertyValue()
     {
-        if (token->type == TokenType::eof) {
+        if (_token->type == TokenType::eof) {
             throw InvalidEOF();
         }
         push();
@@ -1485,12 +1490,12 @@ namespace json
 
     MEOJSON_INLINE void parser5::parse_beforeArrayValue()
     {
-        if (token->type == TokenType::eof) {
+        if (_token->type == TokenType::eof) {
             throw InvalidEOF();
         }
 
-        if (token->type == TokenType::punctuator &&
-            token->_value.as_string()[0] == ']') {
+        if (_token->type == TokenType::punctuator &&
+            _token->_value.as_string()[0] == ']') {
             pop();
             return;
         }
@@ -1500,11 +1505,11 @@ namespace json
 
     MEOJSON_INLINE void parser5::parse_afterPropertyValue()
     {
-        if (token->type == TokenType::eof) {
+        if (_token->type == TokenType::eof) {
             throw InvalidEOF();
         }
 
-        switch (token->_value.as_string()[0]) {
+        switch (_token->_value.as_string()[0]) {
         case ',':
             _parse_state = ParseState::beforePropertyName;
             break;
@@ -1516,10 +1521,10 @@ namespace json
 
     MEOJSON_INLINE void parser5::parse_afterArrayValue()
     {
-        if (token->type == TokenType::eof) {
+        if (_token->type == TokenType::eof) {
             throw InvalidEOF();
         }
-        switch (token->_value.as_string()[0]) {
+        switch (_token->_value.as_string()[0]) {
         case ',':
             _parse_state = ParseState::beforeArrayValue;
             break;
@@ -1555,34 +1560,44 @@ namespace json
         case ParseState::afterArrayValue:
             parse_afterArrayValue();
             break;
+        default:
+            throw exception();
+            break;
         }
     }
     /* stack operation */
     MEOJSON_INLINE void parser5::push()
     {
         value v;
-        value *pv = nullptr; // only for access
-        switch (token->type) {
-        case TokenType::punctuator:
-            switch (token->_value.as_string()[0]) {
+        value* pv = nullptr; // only for access
+        switch (_token->type) {
+        case TokenType::punctuator: {
+            switch (_token->_value.as_string()[0]) {
             case '{':
                 v = object();
                 break;
             case '[':
                 v = array();
                 break;
+            default:
+                throw exception();
+                break;
             }
-            break;
+        } break;
         case TokenType::null:
         case TokenType::boolean:
         case TokenType::numeric:
         case TokenType::string:
-            std::swap(v, token->_value);
+            std::swap(v, _token->_value);
+            break;
+        default:
+            throw exception();
             break;
         }
-        if (!root.has_value()) {
-            root = std::move(v);
-            pv = &root.value();
+
+        if (!_root.has_value()) {
+            _root = std::move(v);
+            pv = &_root.value();
         }
         else {
             auto parent = _stack.top();
@@ -1591,8 +1606,8 @@ namespace json
                 pv = &parent->as_array()[parent->as_array().size() - 1];
             }
             else {
-                parent->as_object()[key] = std::move(v);
-                pv = &parent->as_object()[key];
+                parent->as_object()[_key] = std::move(v);
+                pv = &parent->as_object()[_key];
             }
         }
 
