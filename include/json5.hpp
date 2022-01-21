@@ -584,15 +584,16 @@ namespace json
 
     MEOJSON_INLINE std::optional<value> parser5::parse(const std::string& content, std::string* error)
     {
-        try {
-            return parser5(content.cbegin(), content.cend()).parse();
-        }
-        catch (json::exception& ex) {
-            if (error) {
-                *error = ex.what();
-            }
-        }
-        return std::nullopt;
+        // try {
+        error;
+        return parser5(content.cbegin(), content.cend()).parse();
+        // }
+        // catch (json::parser5::exception& ex) {
+        //     if (error) {
+        //         *error = ex.what();
+        //     }
+        // }
+        // return std::nullopt;
     }
 
     MEOJSON_INLINE std::optional<value> parser5::parse()
@@ -1474,7 +1475,7 @@ namespace json
             throw InvalidEOF("", exceptionDetailInfo());
             break;
         default:
-            throw exception();
+
             break;
         }
     }
@@ -1569,7 +1570,6 @@ namespace json
             parse_afterArrayValue();
             break;
         default:
-            throw exception();
             break;
         }
     }
@@ -1588,7 +1588,6 @@ namespace json
                 v = array();
                 break;
             default:
-                throw exception();
                 break;
             }
         } break;
@@ -1599,7 +1598,6 @@ namespace json
             std::swap(v, _token->_value);
             break;
         default:
-            throw exception();
             break;
         }
 
