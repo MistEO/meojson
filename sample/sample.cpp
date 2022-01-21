@@ -1,11 +1,28 @@
 #include <iostream>
+#include <set>
+#include <vector>
+#include <map>
 
 #include "json.hpp"
+
+void parsing();
+void generating();
 
 int main()
 {
     std::cout << "*** 解析 | Parsing ***" << std::endl;
 
+    parsing();
+
+    std::cout << "*** 生成 | Generating ***" << std::endl;
+
+    generating();
+
+    return 0;
+}
+
+void parsing()
+{
     std::string content = R"(
     {
         "repo": "meojson",
@@ -23,12 +40,12 @@ int main()
 
     if (!ret) {
         std::cerr << "Parsing failed" << std::endl;
-        return -1;
+        return;
     }
     auto value = ret.value();  // As also, you can use rvalues, like  
                                // `auto value = std::move(ret).value();`
     // Output: meojson
-    std::cout << value["repo"].as_string() << std::endl;
+    std::cout << value["repo"] << std::endl;
 
     /* Output:
         ChingCdesu 's homepage: "https://github.com/ChingCdesu"
@@ -38,7 +55,7 @@ int main()
         std::cout << name << " 's homepage: " << homepage << std::endl;
     }
 
-    std::string str = value.get("not_exists", "not found");
+    std::string str = value.get("not_exists", "default value");
 
     /*  Output:
         1
@@ -49,9 +66,10 @@ int main()
     for (const auto& num : value.at("list").as_array()) {
         int x = num.as_integer();
     }
+}
 
-    std::cout << "*** 生成 | Generating ***" << std::endl;
-
+void generating()
+{
     json::value root;
     root["hello"] = "meojson";
     root["Pi"] = 3.1416;
@@ -64,10 +82,20 @@ int main()
         {"obj_key2", 123},
         {"obj_key3", true}
     };
-    root["obj"].as_object().emplace("key4", json::object{ { "key4 child", "lol" } });
+    root["obj"].object_emplace("key4", json::object{ { "key4 child", "lol" } });
     root["obj_another"]["child"]["grand"] = "i am grand";
 
-    std::cout << root.format() << std::endl;
+    std::vector<int> vec = { 1, 2, 3, 4, 5 };
+    root["arr from vec"] = json::array(vec);
+    root["arr from vec"].array_emplace(6);
 
-    return 0;
+    std::set<std::string> set = { "a", "bbb", "cc" };
+    root["arr from set"] = json::array(set);
+
+    std::map<std::string, int> map;
+    map.emplace("key1", 1);
+    map.emplace("key2", 2);
+    root["obj from map"] = json::object(map);
+
+    std::cout << root.format() << std::endl;
 }

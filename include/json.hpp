@@ -96,17 +96,9 @@ namespace json
 
         ~value();
 
-        bool valid() const noexcept
-        {
-            return _type != value_type::Invalid ? true : false;
-        }
-        bool empty() const noexcept
-        {
-            return (_type == value_type::Null && _raw_data.compare("null") == 0)
-                ? true
-                : false;
-        }
-        bool is_null() const noexcept { return empty(); }
+        bool valid() const noexcept { return _type != value_type::Invalid; }
+        bool empty() const noexcept { return is_null(); }
+        bool is_null() const noexcept { return _type == value_type::Null; }
         bool is_number() const noexcept { return _type == value_type::Number; }
         bool is_boolean() const noexcept { return _type == value_type::Boolean; }
         bool is_string() const noexcept { return _type == value_type::String; }
@@ -141,6 +133,10 @@ namespace json
         array& as_array();
         object& as_object();
 
+        template<typename... Args> decltype(auto) array_emplace(Args &&...args);
+        template<typename... Args> decltype(auto) object_emplace(Args &&...args);
+        void clear() noexcept;
+
         // return raw string
         const std::string to_string() const;
         const std::string format(std::string shift_str = "    ",
@@ -160,10 +156,7 @@ namespace json
         explicit operator long() const { return as_long(); }
         explicit operator unsigned long() const { return as_unsigned_long(); }
         explicit operator long long() const { return as_long_long(); }
-        explicit operator unsigned long long() const
-        {
-            return as_unsigned_long_long();
-        }
+        explicit operator unsigned long long() const { return as_unsigned_long_long(); }
         explicit operator float() const { return as_float(); }
         explicit operator double() const { return as_double(); }
         explicit operator long double() const { return as_long_double(); }
@@ -173,7 +166,7 @@ namespace json
         template <typename T>
         static std::unique_ptr<T> copy_unique_ptr(const std::unique_ptr<T>& t)
         {
-            return t == nullptr ? nullptr : std::make_unique<T>(*t);
+            return t ? std::make_unique<T>(*t) : nullptr;
         }
 
         value_type _type = value_type::Null;
@@ -1392,6 +1385,10 @@ namespace json
         if (_type == value_type::Array && _array_ptr != nullptr) {
             return *_array_ptr;
         }
+        else if (_type == value_type::Null) {
+            *this = array();
+            return *_array_ptr;
+        }
 
         throw exception("Wrong Type");
     }
@@ -1401,8 +1398,29 @@ namespace json
         if (_type == value_type::Object && _object_ptr != nullptr) {
             return *_object_ptr;
         }
+        else if (_type == value_type::Null) {
+            *this = object();
+            return *_object_ptr;
+        }
 
         throw exception("Wrong Type or data empty");
+    }
+
+    template<typename... Args>
+    MEOJSON_INLINE decltype(auto) value::array_emplace(Args &&...args)
+    {
+        return as_array().emplace_back(std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    MEOJSON_INLINE decltype(auto) value::object_emplace(Args &&...args)
+    {
+        return as_object().emplace(std::forward<Args>(args)...);
+    }
+
+    MEOJSON_INLINE void value::clear() noexcept
+    {
+        *this = json::value();
     }
 
     MEOJSON_INLINE const std::string value::to_string() const
