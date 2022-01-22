@@ -355,7 +355,7 @@ namespace json
                 continue;
                 break;
             }
-            str.replace(pos, replace_str.size(), replace_str);
+            str.replace(pos, 1, replace_str);
             ++pos;
         }
         return str;
@@ -394,7 +394,7 @@ namespace json
                 return std::string();
                 break;
             }
-            str.replace(pos, replace_str.size(), replace_str);
+            str.replace(pos, 2, replace_str);
         }
         return str;
     }
@@ -1559,8 +1559,7 @@ namespace json
         parser(const std::string::const_iterator& cbegin,
                const std::string::const_iterator& cend) noexcept
             : _cur(cbegin), _end(cend)
-        {
-        }
+        {}
 
         std::optional<value> parse();
         value parse_value();
@@ -1966,5 +1965,4 @@ namespace json
     {
         return parser::parse(content);
     }
-
 } // namespace json
