@@ -7,6 +7,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <tuple>
 
 #define MEOJSON_INLINE inline
 
@@ -110,11 +111,9 @@ namespace json
         const value& at(size_t pos) const;
         const value& at(const std::string& key) const;
 
-        template <typename Type>
-        auto get(const std::string& key, const Type& default_value) const;
-
-        template <typename Type>
-        auto get(size_t pos, const Type& default_value) const;
+        // usage: get(key, key_child, ..., default_value);
+        template <typename... KeysThenDefaultValue>
+        auto get(KeysThenDefaultValue &&... keys_then_default_value) const;
 
         bool as_boolean() const;
         int as_integer() const;
@@ -168,6 +167,18 @@ namespace json
         {
             return t ? std::make_unique<T>(*t) : nullptr;
         }
+        template <typename... KeysThenDefaultValue, size_t... KeysIndexes>
+        auto get(std::tuple<KeysThenDefaultValue...> keys_then_default_value, std::index_sequence<KeysIndexes...>) const;
+
+        template <typename T, typename FirstKey, typename... RestKeys>
+        auto get_aux(T&& default_value, FirstKey&& first, RestKeys &&... rest) const;
+        // template <typename KeyT, typename std::enable_if<std::is_integral<KeyT>::value>::type>
+        // value get_aux(KeyT&& key) const;
+        // template <typename KeyT, typename = void>
+        // value get_aux(KeyT&& key) const;
+        template <typename T, typename UniqueKey>
+        auto get_aux(T&& default_value, UniqueKey&& first) const;
+
 
         value_type _type = value_type::Null;
         std::string _raw_data = "null"; // If the value_type is Object or Array, the
@@ -203,7 +214,7 @@ namespace json
 
         bool empty() const noexcept { return _array_data.empty(); }
         size_t size() const noexcept { return _array_data.size(); }
-        bool exist(size_t pos) const { return _array_data.size() < pos; }
+        bool exist(size_t pos) const { return pos < _array_data.size(); }
         const value& at(size_t pos) const;
         const std::string to_string() const;
         const std::string format(std::string shift_str = "    ",
@@ -221,6 +232,7 @@ namespace json
         long double get(size_t pos, long double default_value) const;
         const std::string get(size_t pos, std::string default_value) const;
         const std::string get(size_t pos, const char* default_value) const;
+        const value& get(size_t pos) const;
 
         template <typename... Args> decltype(auto) emplace_back(Args &&...args);
 
@@ -296,6 +308,7 @@ namespace json
                               std::string default_value) const;
         const std::string get(const std::string& key,
                               const char* default_value) const;
+        const value& get(const std::string& key) const;
 
         template <typename... Args> decltype(auto) emplace(Args &&...args);
 
@@ -663,6 +676,17 @@ namespace json
         }
     }
 
+    MEOJSON_INLINE const value& array::get(size_t pos) const
+    {
+        if (exist(pos)) {
+            return _array_data.at(pos);
+        }
+        else {
+            static value null;
+            return null;
+        }
+    }
+
     MEOJSON_INLINE array::iterator array::begin() noexcept
     {
         return _array_data.begin();
@@ -1011,6 +1035,17 @@ namespace json
         }
     }
 
+    MEOJSON_INLINE const value& object::get(const std::string& key) const
+    {
+        if (exist(key)) {
+            return _object_data.at(key);
+        }
+        else {
+            static value null;
+            return null;
+        }
+    }
+
     MEOJSON_INLINE object::iterator object::begin() noexcept
     {
         return _object_data.begin();
@@ -1227,17 +1262,79 @@ namespace json
         throw exception("Wrong Type or data empty");
     }
 
-    template <typename Type>
-    MEOJSON_INLINE auto value::get(const std::string& key, const Type& default_value) const
+    template <typename... KeysThenDefaultValue>
+    MEOJSON_INLINE auto value::get(
+        KeysThenDefaultValue &&... keys_then_default_value) const
     {
-        return is_object() ? as_object().get(key, default_value) : default_value;
+        return get(
+            std::forward_as_tuple(keys_then_default_value...),
+            std::make_index_sequence<sizeof...(keys_then_default_value) - 1>{});
     }
 
-    template <typename Type>
-    MEOJSON_INLINE auto value::get(size_t pos, const Type& default_value) const
+    template <typename... KeysThenDefaultValue, size_t... KeysIndexes>
+    MEOJSON_INLINE auto value::get(
+        std::tuple<KeysThenDefaultValue...> keys_then_default_value,
+        std::index_sequence<KeysIndexes...>) const
     {
-        return is_array() ? as_array().get(pos, default_value) : default_value;
+        constexpr unsigned long DefaultValueIndex = sizeof...(KeysThenDefaultValue) - 1;
+        return get_aux(
+            std::get<DefaultValueIndex>(keys_then_default_value),
+            std::get<KeysIndexes>(keys_then_default_value)...);
     }
+
+    template <typename T, typename FirstKey, typename... RestKeys>
+    MEOJSON_INLINE auto value::get_aux(T&& default_value, FirstKey&& first, RestKeys &&... rest) const
+    {
+        if constexpr (std::is_constructible<std::string, FirstKey>::value) {
+            return is_object() ?
+                as_object().get(
+                    std::forward<FirstKey>(first)).get_aux(
+                        std::forward<T>(default_value), std::forward<RestKeys>(rest)...)
+                : default_value;
+        }
+        else if constexpr (std::is_integral<typename std::remove_reference<FirstKey>::type>::value) {
+            return is_array()
+                ? as_array().get(
+                    std::forward<FirstKey>(first)).get_aux(
+                        std::forward<T>(default_value), std::forward<RestKeys>(rest)...)
+                : default_value;
+        }
+        else {
+            static_assert(!sizeof(FirstKey), "Parameter must be integral or std::string constructible");
+        }
+    }
+
+    template <typename T, typename UniqueKey>
+    MEOJSON_INLINE auto value::get_aux(T&& default_value, UniqueKey&& first) const
+    {
+        if constexpr (std::is_constructible<std::string, UniqueKey>::value) {
+            return is_object() ?
+                as_object().get(std::forward<UniqueKey>(first), std::forward<T>(default_value))
+                : default_value;
+        }
+        else if constexpr (std::is_integral<typename std::remove_reference<UniqueKey>::type>::value) {
+            return is_array() ?
+                as_array().get(std::forward<UniqueKey>(first), std::forward<T>(default_value))
+                : default_value;
+        }
+        else {
+            static_assert(!sizeof(UniqueKey), "Parameter must be integral or std::string constructible");
+        }
+    }
+
+    // template <typename KeyT, typename std::enable_if<std::is_integral<KeyT>::value>::type>
+    // MEOJSON_INLINE value value::get_aux(KeyT&& key) const
+    // {
+
+    // }
+
+    // template <typename KeyT, typename _>
+    // MEOJSON_INLINE value value::get_aux(KeyT&& key) const
+    // {
+    //     static_assert(false, "Parameter must be integral or string");
+
+    //     return json::value();
+    // }
 
     MEOJSON_INLINE bool value::as_boolean() const
     {
@@ -1559,7 +1656,8 @@ namespace json
         parser(const std::string::const_iterator& cbegin,
                const std::string::const_iterator& cend) noexcept
             : _cur(cbegin), _end(cend)
-        {}
+        {
+        }
 
         std::optional<value> parse();
         value parse_value();

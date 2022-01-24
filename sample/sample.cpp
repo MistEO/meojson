@@ -24,18 +24,27 @@ int main()
 void parsing()
 {
     std::string content = R"(
-    {
-        "repo": "meojson",
-        "author": {
-            "MistEO": "https://github.com/MistEO",
-            "ChingCdesu": "https://github.com/ChingCdesu"
-        },
-        "list": [
-            1, 2, 3
-        ],
-        "str": "abc",
-        "num": 3.1416
+{
+    "repo": "meojson",
+    "author": {
+        "MistEO": "https://github.com/MistEO",
+        "ChingCdesu": "https://github.com/ChingCdesu"
+    },
+    "list": [
+        1,
+        2,
+        3
+    ],
+    "str": "abc",
+    "num": 3.1416,
+    "A_obj": {
+        "B_arr": [
+            {
+                "C_str": "you found me!"
+            }
+        ]
     }
+}
     )";
 
     auto ret = json::parse(content);
@@ -65,9 +74,13 @@ void parsing()
     double num = value["num"].as_double();          // As also, you can use `(double)value["num"]`
     std::cout << num << std::endl;
 
-    // Output: not found
-    std::string str_get = value.get("maybe_exists", "not found");
-    std::cout << str_get << std::endl;
+    // Output: default_value
+    std::string get = value.get("maybe_exists", "default_value");
+    std::cout << get << std::endl;
+
+    // Output: you found me!
+    std::string walk_get = value.get("A_obj", "B_arr", 0, "C_str", "default_value");
+    std::cout << walk_get << std::endl;
 
     /*  Output:
         1
