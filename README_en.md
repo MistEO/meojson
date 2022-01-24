@@ -2,9 +2,9 @@
 
 # meojson
 
-现代化的全平台 Json/Json5 解析/生成器，Header-only, 并附带大量语法糖！
+现代化的全平台 Json/Json5 解析/生成器，Header-only，并附带大量语法糖！
 
-A modern all-platform Json/Json5 parser/generator, with Header-only and lots of syntactic sugar!
+A modern all-platform Json/Json5 parser/generator, which is header-only and contains lots of syntactic sugar!
 
 </div>
 
@@ -12,13 +12,13 @@ A modern all-platform Json/Json5 parser/generator, with Header-only and lots of 
 
 ## Usage
 
-- Include the header file in your project, and enjoy it!  
+- Include the header file in your project, and enjoy it!
 
 ```cpp
 #include "json.hpp"
 ```
 
-- If you need to parse Json5, please include `json5.hpp`
+- If you want to parse JSON5, please include `json5.hpp`
 
 ```cpp
 #include "json5.hpp"
@@ -69,25 +69,25 @@ void parsing()
         std::cerr << "Parsing failed" << std::endl;
         return;
     }
-    auto value = ret.value();  // As also, you can use rvalues, like
+    auto value = ret.value();  // you can use rvalues if needed, like
                                // `auto value = std::move(ret).value();`
     // Output: meojson
     std::cout << value["repo"].as_string() << std::endl;
 
     /* Output:
-        ChingCdesu 's homepage: https://github.com/ChingCdesu
-        MistEO 's homepage: https://github.com/MistEO
+        ChingCdesu's homepage: https://github.com/ChingCdesu
+        MistEO's homepage: https://github.com/MistEO
     */
     for (auto&& [name, homepage] : value["author"].as_object()) {
-        std::cout << name << " 's homepage: " << homepage.as_string() << std::endl;
+        std::cout << name << "'s homepage: " << homepage.as_string() << std::endl;
     }
 
     // Output: abc
-    std::string str = (std::string)value["str"];    // As also, you can use `value["str"].as_string()`
+    std::string str = (std::string)value["str"];    // it is equivalent to `value["str"].as_string()`
     std::cout << str << std::endl;
 
     // Output: 3.141600
-    double num = value["num"].as_double();          // As also, you can use `(double)value["num"]`
+    double num = value["num"].as_double();          // similarly, you can use `(double)value["num"]`
     std::cout << num << std::endl;
 
     // Output: default_value
@@ -95,8 +95,8 @@ void parsing()
     std::cout << get << std::endl;
 
     // Output: you found me!
-    std::string walk_get = value.get("A_obj", "B_arr", 0, "C_str", "default_value");
-    std::cout << walk_get << std::endl;
+    std::string nested_get = value.get("A_obj", "B_arr", 0, "C_str", "default_value");
+    std::cout << nested_get << std::endl;
 
     /*  Output:
         1
@@ -130,7 +130,7 @@ void parsing()
   thanks: 'ありがとう',             /* Single quotes can also be used as strings */
   \u006Bey: ['value',],            // Normal characters and escapes can be mixed
   inf: +Infinity, nan: NaN,        // Numbers can start with '+'
-  fractional: .3, integer: 42.,    // Start or end with decimal point
+  fractional: .3, integer: 42.,    // Allowed to start or end with decimal point
   byte_max: 0xff,                  // Supports hexadecimal number,
   light_speed: +3e8,               // and scientific notation
 }
@@ -140,7 +140,7 @@ void parsing()
         std::cerr << "Parsing failed" << std::endl;
         return;
     }
-    auto value = ret.value();  // As also, you can use rvalues, like
+    auto value = ret.value();  // you can use rvalues if needed, like
                                // `auto value = std::move(ret).value();`
 
     // Output: MistEO
