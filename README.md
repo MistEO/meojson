@@ -40,18 +40,27 @@ A modern all-platform Json/Json5 parser/generator, with Header-only and lots of 
 void parsing()
 {
     std::string content = R"(
-    {
-        "repo": "meojson",
-        "author": {
-            "MistEO": "https://github.com/MistEO",
-            "ChingCdesu": "https://github.com/ChingCdesu"
-        },
-        "list": [
-            1, 2, 3
-        ],
-        "str": "abc",
-        "num": 3.1416
+{
+    "repo": "meojson",
+    "author": {
+        "MistEO": "https://github.com/MistEO",
+        "ChingCdesu": "https://github.com/ChingCdesu"
+    },
+    "list": [
+        1,
+        2,
+        3
+    ],
+    "str": "abc",
+    "num": 3.1416,
+    "A_obj": {
+        "B_arr": [
+            {
+                "C_str": "you found me!"
+            }
+        ]
     }
+}
     )";
 
     auto ret = json::parse(content);
