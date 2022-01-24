@@ -53,25 +53,25 @@ void parsing()
         std::cerr << "Parsing failed" << std::endl;
         return;
     }
-    auto value = ret.value();  // As also, you can use rvalues, like
+    auto value = ret.value();  // you can use rvalues if needed, like
                                // `auto value = std::move(ret).value();`
     // Output: meojson
     std::cout << value["repo"].as_string() << std::endl;
 
     /* Output:
-        ChingCdesu 's homepage: https://github.com/ChingCdesu
-        MistEO 's homepage: https://github.com/MistEO
+        ChingCdesu's homepage: https://github.com/ChingCdesu
+        MistEO's homepage: https://github.com/MistEO
     */
     for (auto&& [name, homepage] : value["author"].as_object()) {
-        std::cout << name << " 's homepage: " << homepage.as_string() << std::endl;
+        std::cout << name << "'s homepage: " << homepage.as_string() << std::endl;
     }
 
     // Output: abc
-    std::string str = (std::string)value["str"];    // As also, you can use `value["str"].as_string()`
+    std::string str = (std::string)value["str"];    // it is equivalent to `value["str"].as_string()`
     std::cout << str << std::endl;
 
     // Output: 3.141600
-    double num = value["num"].as_double();          // As also, you can use `(double)value["num"]`
+    double num = value["num"].as_double();          // similarly, you can use `(double)value["num"]`
     std::cout << num << std::endl;
 
     // Output: default_value
@@ -79,8 +79,8 @@ void parsing()
     std::cout << get << std::endl;
 
     // Output: you found me!
-    std::string walk_get = value.get("A_obj", "B_arr", 0, "C_str", "default_value");
-    std::cout << walk_get << std::endl;
+    std::string nested_get = value.get("A_obj", "B_arr", 0, "C_str", "default_value");
+    std::cout << nested_get << std::endl;
 
     /*  Output:
         1
