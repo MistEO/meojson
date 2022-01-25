@@ -83,8 +83,8 @@ namespace json
         bool is_string() const noexcept { return _type == value_type::String; }
         bool is_array() const noexcept { return _type == value_type::Array; }
         bool is_object() const noexcept { return _type == value_type::Object; }
-        bool exist(const std::string& key) const;
-        bool exist(size_t pos) const;
+        bool contains(const std::string& key) const;
+        bool contains(size_t pos) const;
         value_type type() const noexcept { return _type; }
         const value& at(size_t pos) const;
         const value& at(const std::string& key) const;
@@ -192,7 +192,7 @@ namespace json
 
         bool empty() const noexcept { return _array_data.empty(); }
         size_t size() const noexcept { return _array_data.size(); }
-        bool exist(size_t pos) const { return pos < _array_data.size(); }
+        bool contains(size_t pos) const { return pos < _array_data.size(); }
         const value& at(size_t pos) const;
         const std::string to_string() const;
         const std::string format(std::string shift_str = "    ",
@@ -265,7 +265,7 @@ namespace json
 
         bool empty() const noexcept { return _object_data.empty(); }
         size_t size() const noexcept { return _object_data.size(); }
-        bool exist(const std::string& key) const { return _object_data.find(key) != _object_data.cend(); }
+        bool contains(const std::string& key) const { return _object_data.find(key) != _object_data.cend(); }
         const value& at(const std::string& key) const;
         const std::string to_string() const;
         const std::string format(std::string shift_str = "    ",
@@ -464,14 +464,14 @@ namespace json
     // for Pimpl
     MEOJSON_INLINE value::~value() = default;
 
-    MEOJSON_INLINE bool value::exist(const std::string& key) const
+    MEOJSON_INLINE bool value::contains(const std::string& key) const
     {
-        return _type == value_type::Object && as_object().exist(key);
+        return _type == value_type::Object && as_object().contains(key);
     }
 
-    MEOJSON_INLINE bool value::exist(size_t pos) const
+    MEOJSON_INLINE bool value::contains(size_t pos) const
     {
-        return _type == value_type::Array && as_array().exist(pos);
+        return _type == value_type::Array && as_array().contains(pos);
     }
 
     MEOJSON_INLINE const value& value::at(size_t pos) const
@@ -598,7 +598,7 @@ namespace json
     // {
     //     if (_type == value_type::Number)
     //     {
-    //         return std::stou(_raw_data); // not exist
+    //         return std::stou(_raw_data); // not contains
     //     }
     //     else
     //     {
@@ -954,7 +954,7 @@ namespace json
 
     MEOJSON_INLINE bool array::get(size_t pos, bool default_value) const
     {
-        if (exist(pos)) {
+        if (contains(pos)) {
             value value = _array_data.at(pos);
             if (value.is_boolean()) {
                 return value.as_boolean();
@@ -970,7 +970,7 @@ namespace json
 
     MEOJSON_INLINE int array::get(size_t pos, int default_value) const
     {
-        if (exist(pos)) {
+        if (contains(pos)) {
             value value = _array_data.at(pos);
             if (value.is_number()) {
                 return value.as_integer();
@@ -986,7 +986,7 @@ namespace json
 
     MEOJSON_INLINE long array::get(size_t pos, long default_value) const
     {
-        if (exist(pos)) {
+        if (contains(pos)) {
             value value = _array_data.at(pos);
             if (value.is_number()) {
                 return value.as_long();
@@ -1003,7 +1003,7 @@ namespace json
     MEOJSON_INLINE unsigned long array::get(size_t pos,
                                                   unsigned default_value) const
     {
-        if (exist(pos)) {
+        if (contains(pos)) {
             value value = _array_data.at(pos);
             if (value.is_number()) {
                 return value.as_unsigned_long();
@@ -1020,7 +1020,7 @@ namespace json
     MEOJSON_INLINE long long array::get(size_t pos,
                                               long long default_value) const
     {
-        if (exist(pos)) {
+        if (contains(pos)) {
             value value = _array_data.at(pos);
             if (value.is_number()) {
                 return value.as_long_long();
@@ -1037,7 +1037,7 @@ namespace json
     MEOJSON_INLINE unsigned long long
         array::get(size_t pos, unsigned long long default_value) const
     {
-        if (exist(pos)) {
+        if (contains(pos)) {
             value value = _array_data.at(pos);
             if (value.is_number()) {
                 return value.as_unsigned_long_long();
@@ -1053,7 +1053,7 @@ namespace json
 
     MEOJSON_INLINE float array::get(size_t pos, float default_value) const
     {
-        if (exist(pos)) {
+        if (contains(pos)) {
             value value = _array_data.at(pos);
             if (value.is_number()) {
                 return value.as_float();
@@ -1069,7 +1069,7 @@ namespace json
 
     MEOJSON_INLINE double array::get(size_t pos, double default_value) const
     {
-        if (exist(pos)) {
+        if (contains(pos)) {
             value value = _array_data.at(pos);
             if (value.is_number()) {
                 return value.as_double();
@@ -1086,7 +1086,7 @@ namespace json
     MEOJSON_INLINE long double array::get(size_t pos,
                                                 long double default_value) const
     {
-        if (exist(pos)) {
+        if (contains(pos)) {
             value value = _array_data.at(pos);
             if (value.is_number()) {
                 return value.as_long_double();
@@ -1103,7 +1103,7 @@ namespace json
     MEOJSON_INLINE const std::string array::get(size_t pos,
                                                 std::string default_value) const
     {
-        if (exist(pos)) {
+        if (contains(pos)) {
             value value = _array_data.at(pos);
             if (value.is_string()) {
                 return value.as_string();
@@ -1120,7 +1120,7 @@ namespace json
     MEOJSON_INLINE const std::string array::get(size_t pos,
                                                 const char* default_value) const
     {
-        if (exist(pos)) {
+        if (contains(pos)) {
             value value = _array_data.at(pos);
             if (value.is_string()) {
                 return value.as_string();
@@ -1136,7 +1136,7 @@ namespace json
 
     MEOJSON_INLINE const value& array::get(size_t pos) const
     {
-        if (exist(pos)) {
+        if (contains(pos)) {
             return _array_data.at(pos);
         }
         else {
@@ -1309,7 +1309,7 @@ namespace json
     MEOJSON_INLINE bool object::get(const std::string& key,
                                           bool default_value) const
     {
-        if (exist(key)) {
+        if (contains(key)) {
             value value = _object_data.at(key);
             if (value.is_boolean()) {
                 return value.as_boolean();
@@ -1326,7 +1326,7 @@ namespace json
     MEOJSON_INLINE int object::get(const std::string& key,
                                          int default_value) const
     {
-        if (exist(key)) {
+        if (contains(key)) {
             value value = _object_data.at(key);
             if (value.is_number()) {
                 return value.as_integer();
@@ -1343,7 +1343,7 @@ namespace json
     MEOJSON_INLINE long object::get(const std::string& key,
                                           long default_value) const
     {
-        if (exist(key)) {
+        if (contains(key)) {
             value value = _object_data.at(key);
             if (value.is_number()) {
                 return value.as_long();
@@ -1360,7 +1360,7 @@ namespace json
     MEOJSON_INLINE unsigned long object::get(const std::string& key,
                                                    unsigned default_value) const
     {
-        if (exist(key)) {
+        if (contains(key)) {
             value value = _object_data.at(key);
             if (value.is_number()) {
                 return value.as_unsigned_long();
@@ -1377,7 +1377,7 @@ namespace json
     MEOJSON_INLINE long long object::get(const std::string& key,
                                                long long default_value) const
     {
-        if (exist(key)) {
+        if (contains(key)) {
             value value = _object_data.at(key);
             if (value.is_number()) {
                 return value.as_long_long();
@@ -1394,7 +1394,7 @@ namespace json
     MEOJSON_INLINE unsigned long long
         object::get(const std::string& key, unsigned long long default_value) const
     {
-        if (exist(key)) {
+        if (contains(key)) {
             value value = _object_data.at(key);
             if (value.is_number()) {
                 return value.as_unsigned_long_long();
@@ -1411,7 +1411,7 @@ namespace json
     MEOJSON_INLINE float object::get(const std::string& key,
                                            float default_value) const
     {
-        if (exist(key)) {
+        if (contains(key)) {
             value value = _object_data.at(key);
             if (value.is_number()) {
                 return value.as_float();
@@ -1428,7 +1428,7 @@ namespace json
     MEOJSON_INLINE double object::get(const std::string& key,
                                             double default_value) const
     {
-        if (exist(key)) {
+        if (contains(key)) {
             value value = _object_data.at(key);
             if (value.is_number()) {
                 return value.as_double();
@@ -1445,7 +1445,7 @@ namespace json
     MEOJSON_INLINE long double object::get(const std::string& key,
                                                  long double default_value) const
     {
-        if (exist(key)) {
+        if (contains(key)) {
             value value = _object_data.at(key);
             if (value.is_number()) {
                 return value.as_long_double();
@@ -1462,7 +1462,7 @@ namespace json
     MEOJSON_INLINE const std::string object::get(const std::string& key,
                                                  std::string default_value) const
     {
-        if (exist(key)) {
+        if (contains(key)) {
             value value = _object_data.at(key);
             if (value.is_string()) {
                 return value.as_string();
@@ -1479,7 +1479,7 @@ namespace json
     MEOJSON_INLINE const std::string object::get(const std::string& key,
                                                  const char* default_value) const
     {
-        if (exist(key)) {
+        if (contains(key)) {
             value value = _object_data.at(key);
             if (value.is_string()) {
                 return value.as_string();
@@ -1495,7 +1495,7 @@ namespace json
 
     MEOJSON_INLINE const value& object::get(const std::string& key) const
     {
-        if (exist(key)) {
+        if (contains(key)) {
             return _object_data.at(key);
         }
         else {
