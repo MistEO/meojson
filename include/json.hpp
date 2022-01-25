@@ -81,8 +81,8 @@ namespace json
         bool is_number() const noexcept { return _type == value_type::Number; }
         bool is_boolean() const noexcept { return _type == value_type::Boolean; }
         bool is_string() const noexcept { return _type == value_type::String; }
-        bool is_array() const noexcept { return _type == value_type::Array; }
-        bool is_object() const noexcept { return _type == value_type::Object; }
+        bool is_array() const noexcept { return _type == value_type::Array && _array_ptr; }
+        bool is_object() const noexcept { return _type == value_type::Object && _object_ptr; }
         bool contains(const std::string& key) const;
         bool contains(size_t pos) const;
         value_type type() const noexcept { return _type; }
@@ -110,8 +110,8 @@ namespace json
         array& as_array();
         object& as_object();
 
-        template<typename... Args> decltype(auto) array_emplace(Args &&...args);
-        template<typename... Args> decltype(auto) object_emplace(Args &&...args);
+        template<typename... Args> auto array_emplace(Args &&...args);
+        template<typename... Args> auto object_emplace(Args &&...args);
         void clear() noexcept;
 
         // return raw string
@@ -126,7 +126,6 @@ namespace json
         value& operator[](size_t pos);
         value& operator[](const std::string& key);
         value& operator[](std::string&& key);
-        // explicit operator bool() const noexcept { return valid(); }
 
         explicit operator bool() const { return as_boolean(); }
         explicit operator int() const { return as_integer(); }
@@ -150,17 +149,13 @@ namespace json
 
         template <typename T, typename FirstKey, typename... RestKeys>
         auto get_aux(T&& default_value, FirstKey&& first, RestKeys &&... rest) const;
-        // template <typename KeyT, typename std::enable_if<std::is_integral<KeyT>::value>::type>
-        // value get_aux(KeyT&& key) const;
-        // template <typename KeyT, typename = void>
-        // value get_aux(KeyT&& key) const;
         template <typename T, typename UniqueKey>
         auto get_aux(T&& default_value, UniqueKey&& first) const;
 
 
         value_type _type = value_type::Null;
-        std::string _raw_data = "null"; // If the value_type is Object or Array, the
-        // _raw_data will be a empty string.
+        // If the value_type is Object or Array, the _raw_data will be a empty string.
+        std::string _raw_data = "null";
         unique_array _array_ptr;
         unique_object _object_ptr;
     };
@@ -212,7 +207,7 @@ namespace json
         const std::string get(size_t pos, const char* default_value) const;
         const value& get(size_t pos) const;
 
-        template <typename... Args> decltype(auto) emplace_back(Args &&...args);
+        template <typename... Args> auto emplace_back(Args &&...args);
 
         void clear() noexcept;
         // void earse(size_t pos);
@@ -288,7 +283,7 @@ namespace json
                               const char* default_value) const;
         const value& get(const std::string& key) const;
 
-        template <typename... Args> decltype(auto) emplace(Args &&...args);
+        template <typename... Args> auto emplace(Args &&...args);
 
         void clear() noexcept;
         bool earse(const std::string& key);
@@ -466,17 +461,17 @@ namespace json
 
     MEOJSON_INLINE bool value::contains(const std::string& key) const
     {
-        return _type == value_type::Object && as_object().contains(key);
+        return is_object() && as_object().contains(key);
     }
 
     MEOJSON_INLINE bool value::contains(size_t pos) const
     {
-        return _type == value_type::Array && as_array().contains(pos);
+        return is_array() && as_array().contains(pos);
     }
 
     MEOJSON_INLINE const value& value::at(size_t pos) const
     {
-        if (_type == value_type::Array && _array_ptr != nullptr) {
+        if (is_array()) {
             return _array_ptr->at(pos);
         }
 
@@ -485,7 +480,7 @@ namespace json
 
     MEOJSON_INLINE const value& value::at(const std::string& key) const
     {
-        if (_type == value_type::Object && _object_ptr != nullptr) {
+        if (is_object()) {
             return _object_ptr->at(key);
         }
 
@@ -552,23 +547,9 @@ namespace json
         }
     }
 
-    // template <typename KeyT, typename std::enable_if<std::is_integral<KeyT>::value>::type>
-    // MEOJSON_INLINE value value::get_aux(KeyT&& key) const
-    // {
-
-    // }
-
-    // template <typename KeyT, typename _>
-    // MEOJSON_INLINE value value::get_aux(KeyT&& key) const
-    // {
-    //     static_assert(false, "Parameter must be integral or string");
-
-    //     return json::value();
-    // }
-
     MEOJSON_INLINE bool value::as_boolean() const
     {
-        if (_type == value_type::Boolean) {
+        if (is_boolean()) {
             if (_raw_data == "true") {
                 return true;
             }
@@ -586,7 +567,7 @@ namespace json
 
     MEOJSON_INLINE int value::as_integer() const
     {
-        if (_type == value_type::Number) {
+        if (is_number()) {
             return std::stoi(_raw_data);
         }
         else {
@@ -596,7 +577,7 @@ namespace json
 
     // const unsigned value::as_unsigned() const
     // {
-    //     if (_type == value_type::Number)
+    //     if (is_number())
     //     {
     //         return std::stou(_raw_data); // not contains
     //     }
@@ -608,7 +589,7 @@ namespace json
 
     MEOJSON_INLINE long value::as_long() const
     {
-        if (_type == value_type::Number) {
+        if (is_number()) {
             return std::stol(_raw_data);
         }
         else {
@@ -618,7 +599,7 @@ namespace json
 
     MEOJSON_INLINE unsigned long value::as_unsigned_long() const
     {
-        if (_type == value_type::Number) {
+        if (is_number()) {
             return std::stoul(_raw_data);
         }
         else {
@@ -628,7 +609,7 @@ namespace json
 
     MEOJSON_INLINE long long value::as_long_long() const
     {
-        if (_type == value_type::Number) {
+        if (is_number()) {
             return std::stoll(_raw_data);
         }
         else {
@@ -638,7 +619,7 @@ namespace json
 
     MEOJSON_INLINE unsigned long long value::as_unsigned_long_long() const
     {
-        if (_type == value_type::Number) {
+        if (is_number()) {
             return std::stoull(_raw_data);
         }
         else {
@@ -648,7 +629,7 @@ namespace json
 
     MEOJSON_INLINE float value::as_float() const
     {
-        if (_type == value_type::Number) {
+        if (is_number()) {
             return std::stof(_raw_data);
         }
         else {
@@ -658,7 +639,7 @@ namespace json
 
     MEOJSON_INLINE double value::as_double() const
     {
-        if (_type == value_type::Number) {
+        if (is_number()) {
             return std::stod(_raw_data);
         }
         else {
@@ -668,7 +649,7 @@ namespace json
 
     MEOJSON_INLINE long double value::as_long_double() const
     {
-        if (_type == value_type::Number) {
+        if (is_number()) {
             return std::stold(_raw_data);
         }
         else {
@@ -678,7 +659,7 @@ namespace json
 
     MEOJSON_INLINE const std::string value::as_string() const
     {
-        if (_type == value_type::String) {
+        if (is_string()) {
             return escape_string(_raw_data);
         }
         else {
@@ -688,7 +669,7 @@ namespace json
 
     MEOJSON_INLINE const array& value::as_array() const
     {
-        if (_type == value_type::Array && _array_ptr != nullptr) {
+        if (is_array()) {
             return *_array_ptr;
         }
 
@@ -697,7 +678,7 @@ namespace json
 
     MEOJSON_INLINE const object& value::as_object() const
     {
-        if (_type == value_type::Object && _object_ptr != nullptr) {
+        if (is_object()) {
             return *_object_ptr;
         }
 
@@ -706,10 +687,10 @@ namespace json
 
     MEOJSON_INLINE array& value::as_array()
     {
-        if (_type == value_type::Array && _array_ptr != nullptr) {
+        if (is_array()) {
             return *_array_ptr;
         }
-        else if (_type == value_type::Null) {
+        else if (empty()) {
             *this = array();
             return *_array_ptr;
         }
@@ -719,10 +700,10 @@ namespace json
 
     MEOJSON_INLINE object& value::as_object()
     {
-        if (_type == value_type::Object && _object_ptr != nullptr) {
+        if (is_object()) {
             return *_object_ptr;
         }
-        else if (_type == value_type::Null) {
+        else if (empty()) {
             *this = object();
             return *_object_ptr;
         }
@@ -731,13 +712,13 @@ namespace json
     }
 
     template<typename... Args>
-    MEOJSON_INLINE decltype(auto) value::array_emplace(Args &&...args)
+    MEOJSON_INLINE auto value::array_emplace(Args &&...args)
     {
         return as_array().emplace_back(std::forward<Args>(args)...);
     }
 
     template<typename... Args>
-    MEOJSON_INLINE decltype(auto) value::object_emplace(Args &&...args)
+    MEOJSON_INLINE auto value::object_emplace(Args &&...args)
     {
         return as_object().emplace(std::forward<Args>(args)...);
     }
@@ -798,7 +779,7 @@ namespace json
 
     MEOJSON_INLINE const value& value::operator[](size_t pos) const
     {
-        if (_type == value_type::Array && _array_ptr != nullptr) {
+        if (is_array()) {
             return _array_ptr->operator[](pos);
         }
         // Array not support to create by operator[]
@@ -808,7 +789,7 @@ namespace json
 
     MEOJSON_INLINE value& value::operator[](size_t pos)
     {
-        if (_type == value_type::Array && _array_ptr != nullptr) {
+        if (is_array()) {
             return _array_ptr->operator[](pos);
         }
         // Array not support to create by operator[]
@@ -818,11 +799,11 @@ namespace json
 
     MEOJSON_INLINE value& value::operator[](const std::string& key)
     {
-        if (_type == value_type::Object && _object_ptr != nullptr) {
+        if (is_object()) {
             return _object_ptr->operator[](key);
         }
         // Create a new value by operator[]
-        else if (_type == value_type::Null) {
+        else if (empty()) {
             _type = value_type::Object;
             _object_ptr = std::make_unique<object>();
             return _object_ptr->operator[](key);
@@ -833,11 +814,11 @@ namespace json
 
     MEOJSON_INLINE value& value::operator[](std::string&& key)
     {
-        if (_type == value_type::Object && _object_ptr != nullptr) {
+        if (is_object()) {
             return _object_ptr->operator[](std::move(key));
         }
         // Create a new value by operator[]
-        else if (_type == value_type::Null) {
+        else if (empty()) {
             _type = value_type::Object;
             _object_ptr = std::make_unique<object>();
             return _object_ptr->operator[](std::move(key));
@@ -875,7 +856,7 @@ namespace json
     // *************************
     // *       array impl      *
     // *************************
-    template <typename... Args> decltype(auto) array::emplace_back(Args &&...args)
+    template <typename... Args> auto array::emplace_back(Args &&...args)
     {
         static_assert(std::is_constructible<raw_array::value_type, Args...>::value,
                       "Parameter can't be used to construct a raw_array::value_type");
@@ -1220,7 +1201,7 @@ namespace json
     // *************************
     // *      object impl      *
     // *************************
-    template <typename... Args> decltype(auto) object::emplace(Args &&...args)
+    template <typename... Args> auto object::emplace(Args &&...args)
     {
         static_assert(
             std::is_constructible<raw_object::value_type, Args...>::value,
