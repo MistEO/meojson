@@ -13,28 +13,6 @@
 
 namespace json
 {
-    // *************************
-    // *   exception declare   *
-    // *************************
-    class exception : public std::exception
-    {
-    public:
-        exception() = default;
-        exception(const std::string& msg) : _what(msg) {}
-
-        exception(const exception&) = default;
-        exception& operator=(const exception&) = default;
-        exception(exception&&) = default;
-        exception& operator=(exception&&) = default;
-
-        virtual ~exception() noexcept override = default;
-
-        virtual const char* what() const noexcept override { return _what.empty() ? "Unknown exception" : _what.c_str(); }
-
-    protected:
-        std::string _what;
-    };
-
     class array;
     class object;
 
@@ -335,84 +313,564 @@ namespace json
     };
 
     // *************************
+    // *   exception declare   *
+    // *************************
+    class exception : public std::exception
+    {
+    public:
+        exception() = default;
+        exception(const std::string& msg) : _what(msg) {}
+
+        exception(const exception&) = default;
+        exception& operator=(const exception&) = default;
+        exception(exception&&) = default;
+        exception& operator=(exception&&) = default;
+
+        virtual ~exception() noexcept override = default;
+
+        virtual const char* what() const noexcept override { return _what.empty() ? "Unknown exception" : _what.c_str(); }
+
+    protected:
+        std::string _what;
+    };
+
+    // *************************
     // *      aux declare      *
     // *************************
+    std::string unescape_string(std::string str);
+    std::string escape_string(std::string str);
 
-    inline std::string unescape_string(std::string str)
+    // *************************
+    // *       value impl      *
+    // *************************
+    MEOJSON_INLINE value::value() = default;
+
+    MEOJSON_INLINE value::value(const value& rhs)
+        : _type(rhs._type), _raw_data(rhs._raw_data),
+        _array_ptr(copy_unique_ptr(rhs._array_ptr)),
+        _object_ptr(copy_unique_ptr(rhs._object_ptr))
     {
-        for (size_t pos = 0; pos < str.size(); ++pos) {
-            std::string replace_str;
-            switch (str[pos]) {
-            case '\"':
-                replace_str = R"(\")";
-                break;
-            case '\\':
-                replace_str = R"(\\)";
-                break;
-            case '\b':
-                replace_str = R"(\b)";
-                break;
-            case '\f':
-                replace_str = R"(\f)";
-                break;
-            case '\n':
-                replace_str = R"(\n)";
-                break;
-            case '\r':
-                replace_str = R"(\r)";
-                break;
-            case '\t':
-                replace_str = R"(\t)";
-                break;
-            default:
-                continue;
-                break;
-            }
-            str.replace(pos, 1, replace_str);
-            ++pos;
-        }
-        return str;
+        ;
     }
 
-    inline std::string escape_string(std::string str)
+    MEOJSON_INLINE value::value(value&& rhs) noexcept = default;
+
+    MEOJSON_INLINE value::value(bool b)
+        : _type(value_type::Boolean), _raw_data(b ? "true" : "false")
     {
-        for (size_t pos = 0; pos + 1 < str.size(); ++pos) {
-            if (str[pos] != '\\') {
-                continue;
-            }
-            std::string replace_str;
-            switch (str[pos + 1]) {
-            case '"':
-                replace_str = "\"";
-                break;
-            case '\\':
-                replace_str = "\\";
-                break;
-            case 'b':
-                replace_str = "\b";
-                break;
-            case 'f':
-                replace_str = "\f";
-                break;
-            case 'n':
-                replace_str = "\n";
-                break;
-            case 'r':
-                replace_str = "\r";
-                break;
-            case 't':
-                replace_str = "\t";
-                break;
-            default:
-                return std::string();
-                break;
-            }
-            str.replace(pos, 2, replace_str);
-        }
-        return str;
+        ;
     }
 
-    enum class value_type : char;
+    MEOJSON_INLINE value::value(int num)
+        : _type(value_type::Number), _raw_data(std::to_string(num))
+    {
+        ;
+    }
+
+    MEOJSON_INLINE value::value(unsigned num)
+        : _type(value_type::Number), _raw_data(std::to_string(num))
+    {
+        ;
+    }
+
+    MEOJSON_INLINE value::value(long num)
+        : _type(value_type::Number), _raw_data(std::to_string(num))
+    {
+        ;
+    }
+
+    MEOJSON_INLINE value::value(unsigned long num)
+        : _type(value_type::Number), _raw_data(std::to_string(num))
+    {
+        ;
+    }
+
+    MEOJSON_INLINE value::value(long long num)
+        : _type(value_type::Number), _raw_data(std::to_string(num))
+    {
+        ;
+    }
+
+    MEOJSON_INLINE value::value(unsigned long long num)
+        : _type(value_type::Number), _raw_data(std::to_string(num))
+    {
+        ;
+    }
+
+    MEOJSON_INLINE value::value(float num)
+        : _type(value_type::Number), _raw_data(std::to_string(num))
+    {
+        ;
+    }
+
+    MEOJSON_INLINE value::value(double num)
+        : _type(value_type::Number), _raw_data(std::to_string(num))
+    {
+        ;
+    }
+
+    MEOJSON_INLINE value::value(long double num)
+        : _type(value_type::Number), _raw_data(std::to_string(num))
+    {
+        ;
+    }
+
+    MEOJSON_INLINE value::value(const char* str)
+        : _type(value_type::String), _raw_data(unescape_string(str))
+    {
+        ;
+    }
+
+    MEOJSON_INLINE value::value(const std::string& str)
+        : _type(value_type::String), _raw_data(unescape_string(str))
+    {
+        ;
+    }
+
+    MEOJSON_INLINE value::value(std::string&& str)
+        : _type(value_type::String), _raw_data(unescape_string(std::move(str)))
+    {
+        ;
+    }
+
+    MEOJSON_INLINE value::value(const array& arr)
+        : _type(value_type::Array), _raw_data(std::string()),
+        _array_ptr(std::make_unique<array>(arr))
+    {
+        ;
+    }
+
+    MEOJSON_INLINE value::value(array&& arr)
+        : _type(value_type::Array), _raw_data(std::string()),
+        _array_ptr(std::make_unique<array>(std::move(arr)))
+    {
+        ;
+    }
+
+    MEOJSON_INLINE value::value(const object& obj)
+        : _type(value_type::Object), _raw_data(std::string()),
+        _object_ptr(std::make_unique<object>(obj))
+    {
+        ;
+    }
+
+    MEOJSON_INLINE value::value(object&& obj)
+        : _type(value_type::Object), _raw_data(std::string()),
+        _object_ptr(std::make_unique<object>(std::move(obj)))
+    {
+        ;
+    }
+
+    // for Pimpl
+    MEOJSON_INLINE value::~value() = default;
+
+    MEOJSON_INLINE bool value::exist(const std::string& key) const
+    {
+        return _type == value_type::Object && as_object().exist(key);
+    }
+
+    MEOJSON_INLINE bool value::exist(size_t pos) const
+    {
+        return _type == value_type::Array && as_array().exist(pos);
+    }
+
+    MEOJSON_INLINE const value& value::at(size_t pos) const
+    {
+        if (_type == value_type::Array && _array_ptr != nullptr) {
+            return _array_ptr->at(pos);
+        }
+
+        throw exception("Wrong Type or data empty");
+    }
+
+    MEOJSON_INLINE const value& value::at(const std::string& key) const
+    {
+        if (_type == value_type::Object && _object_ptr != nullptr) {
+            return _object_ptr->at(key);
+        }
+
+        throw exception("Wrong Type or data empty");
+    }
+
+    template <typename... KeysThenDefaultValue>
+    MEOJSON_INLINE auto value::get(
+        KeysThenDefaultValue &&... keys_then_default_value) const
+    {
+        return get(
+            std::forward_as_tuple(keys_then_default_value...),
+            std::make_index_sequence<sizeof...(keys_then_default_value) - 1>{});
+    }
+
+    template <typename... KeysThenDefaultValue, size_t... KeysIndexes>
+    MEOJSON_INLINE auto value::get(
+        std::tuple<KeysThenDefaultValue...> keys_then_default_value,
+        std::index_sequence<KeysIndexes...>) const
+    {
+        constexpr unsigned long DefaultValueIndex = sizeof...(KeysThenDefaultValue) - 1;
+        return get_aux(
+            std::get<DefaultValueIndex>(keys_then_default_value),
+            std::get<KeysIndexes>(keys_then_default_value)...);
+    }
+
+    template <typename T, typename FirstKey, typename... RestKeys>
+    MEOJSON_INLINE auto value::get_aux(T&& default_value, FirstKey&& first, RestKeys &&... rest) const
+    {
+        if constexpr (std::is_constructible<std::string, FirstKey>::value) {
+            return is_object() ?
+                as_object().get(
+                    std::forward<FirstKey>(first)).get_aux(
+                        std::forward<T>(default_value), std::forward<RestKeys>(rest)...)
+                : default_value;
+        }
+        else if constexpr (std::is_integral<typename std::remove_reference<FirstKey>::type>::value) {
+            return is_array()
+                ? as_array().get(
+                    std::forward<FirstKey>(first)).get_aux(
+                        std::forward<T>(default_value), std::forward<RestKeys>(rest)...)
+                : default_value;
+        }
+        else {
+            static_assert(!sizeof(FirstKey), "Parameter must be integral or std::string constructible");
+        }
+    }
+
+    template <typename T, typename UniqueKey>
+    MEOJSON_INLINE auto value::get_aux(T&& default_value, UniqueKey&& first) const
+    {
+        if constexpr (std::is_constructible<std::string, UniqueKey>::value) {
+            return is_object() ?
+                as_object().get(std::forward<UniqueKey>(first), std::forward<T>(default_value))
+                : default_value;
+        }
+        else if constexpr (std::is_integral<typename std::remove_reference<UniqueKey>::type>::value) {
+            return is_array() ?
+                as_array().get(std::forward<UniqueKey>(first), std::forward<T>(default_value))
+                : default_value;
+        }
+        else {
+            static_assert(!sizeof(UniqueKey), "Parameter must be integral or std::string constructible");
+        }
+    }
+
+    // template <typename KeyT, typename std::enable_if<std::is_integral<KeyT>::value>::type>
+    // MEOJSON_INLINE value value::get_aux(KeyT&& key) const
+    // {
+
+    // }
+
+    // template <typename KeyT, typename _>
+    // MEOJSON_INLINE value value::get_aux(KeyT&& key) const
+    // {
+    //     static_assert(false, "Parameter must be integral or string");
+
+    //     return json::value();
+    // }
+
+    MEOJSON_INLINE bool value::as_boolean() const
+    {
+        if (_type == value_type::Boolean) {
+            if (_raw_data == "true") {
+                return true;
+            }
+            else if (_raw_data == "false") {
+                return false;
+            }
+            else {
+                throw exception("Unknown Parse Error");
+            }
+        }
+        else {
+            throw exception("Wrong Type");
+        }
+    }
+
+    MEOJSON_INLINE int value::as_integer() const
+    {
+        if (_type == value_type::Number) {
+            return std::stoi(_raw_data);
+        }
+        else {
+            throw exception("Wrong Type");
+        }
+    }
+
+    // const unsigned value::as_unsigned() const
+    // {
+    //     if (_type == value_type::Number)
+    //     {
+    //         return std::stou(_raw_data); // not exist
+    //     }
+    //     else
+    //     {
+    //         throw exception("Wrong Type");
+    //     }
+    // }
+
+    MEOJSON_INLINE long value::as_long() const
+    {
+        if (_type == value_type::Number) {
+            return std::stol(_raw_data);
+        }
+        else {
+            throw exception("Wrong Type");
+        }
+    }
+
+    MEOJSON_INLINE unsigned long value::as_unsigned_long() const
+    {
+        if (_type == value_type::Number) {
+            return std::stoul(_raw_data);
+        }
+        else {
+            throw exception("Wrong Type");
+        }
+    }
+
+    MEOJSON_INLINE long long value::as_long_long() const
+    {
+        if (_type == value_type::Number) {
+            return std::stoll(_raw_data);
+        }
+        else {
+            throw exception("Wrong Type");
+        }
+    }
+
+    MEOJSON_INLINE unsigned long long value::as_unsigned_long_long() const
+    {
+        if (_type == value_type::Number) {
+            return std::stoull(_raw_data);
+        }
+        else {
+            throw exception("Wrong Type");
+        }
+    }
+
+    MEOJSON_INLINE float value::as_float() const
+    {
+        if (_type == value_type::Number) {
+            return std::stof(_raw_data);
+        }
+        else {
+            throw exception("Wrong Type");
+        }
+    }
+
+    MEOJSON_INLINE double value::as_double() const
+    {
+        if (_type == value_type::Number) {
+            return std::stod(_raw_data);
+        }
+        else {
+            throw exception("Wrong Type");
+        }
+    }
+
+    MEOJSON_INLINE long double value::as_long_double() const
+    {
+        if (_type == value_type::Number) {
+            return std::stold(_raw_data);
+        }
+        else {
+            throw exception("Wrong Type");
+        }
+    }
+
+    MEOJSON_INLINE const std::string value::as_string() const
+    {
+        if (_type == value_type::String) {
+            return escape_string(_raw_data);
+        }
+        else {
+            throw exception("Wrong Type");
+        }
+    }
+
+    MEOJSON_INLINE const array& value::as_array() const
+    {
+        if (_type == value_type::Array && _array_ptr != nullptr) {
+            return *_array_ptr;
+        }
+
+        throw exception("Wrong Type");
+    }
+
+    MEOJSON_INLINE const object& value::as_object() const
+    {
+        if (_type == value_type::Object && _object_ptr != nullptr) {
+            return *_object_ptr;
+        }
+
+        throw exception("Wrong Type or data empty");
+    }
+
+    MEOJSON_INLINE array& value::as_array()
+    {
+        if (_type == value_type::Array && _array_ptr != nullptr) {
+            return *_array_ptr;
+        }
+        else if (_type == value_type::Null) {
+            *this = array();
+            return *_array_ptr;
+        }
+
+        throw exception("Wrong Type");
+    }
+
+    MEOJSON_INLINE object& value::as_object()
+    {
+        if (_type == value_type::Object && _object_ptr != nullptr) {
+            return *_object_ptr;
+        }
+        else if (_type == value_type::Null) {
+            *this = object();
+            return *_object_ptr;
+        }
+
+        throw exception("Wrong Type or data empty");
+    }
+
+    template<typename... Args>
+    MEOJSON_INLINE decltype(auto) value::array_emplace(Args &&...args)
+    {
+        return as_array().emplace_back(std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    MEOJSON_INLINE decltype(auto) value::object_emplace(Args &&...args)
+    {
+        return as_object().emplace(std::forward<Args>(args)...);
+    }
+
+    MEOJSON_INLINE void value::clear() noexcept
+    {
+        *this = json::value();
+    }
+
+    MEOJSON_INLINE const std::string value::to_string() const
+    {
+        switch (_type) {
+        case value_type::Null:
+        case value_type::Boolean:
+        case value_type::Number:
+            return _raw_data;
+        case value_type::String:
+            return '"' + _raw_data + '"';
+        case value_type::Object:
+            return _object_ptr->to_string();
+        case value_type::Array:
+            return _array_ptr->to_string();
+        default:
+            throw exception("Unknown Value Type");
+        }
+    }
+
+    MEOJSON_INLINE const std::string value::format(std::string shift_str,
+                                                   size_t basic_shift_count) const
+    {
+        switch (_type) {
+        case value_type::Null:
+        case value_type::Boolean:
+        case value_type::Number:
+            return _raw_data;
+        case value_type::String:
+            return '"' + _raw_data + '"';
+        case value_type::Object:
+            return _object_ptr->format(shift_str, basic_shift_count);
+        case value_type::Array:
+            return _array_ptr->format(shift_str, basic_shift_count);
+        default:
+            throw exception("Unknown Value Type");
+        }
+    }
+
+    MEOJSON_INLINE value& value::operator=(const value& rhs)
+    {
+        _type = rhs._type;
+        _raw_data = rhs._raw_data;
+        _array_ptr = copy_unique_ptr(rhs._array_ptr);
+        _object_ptr = copy_unique_ptr(rhs._object_ptr);
+
+        return *this;
+    }
+
+    MEOJSON_INLINE value& value::operator=(value&& rhs) noexcept = default;
+
+    MEOJSON_INLINE const value& value::operator[](size_t pos) const
+    {
+        if (_type == value_type::Array && _array_ptr != nullptr) {
+            return _array_ptr->operator[](pos);
+        }
+        // Array not support to create by operator[]
+
+        throw exception("Wrong Type");
+    }
+
+    MEOJSON_INLINE value& value::operator[](size_t pos)
+    {
+        if (_type == value_type::Array && _array_ptr != nullptr) {
+            return _array_ptr->operator[](pos);
+        }
+        // Array not support to create by operator[]
+
+        throw exception("Wrong Type");
+    }
+
+    MEOJSON_INLINE value& value::operator[](const std::string& key)
+    {
+        if (_type == value_type::Object && _object_ptr != nullptr) {
+            return _object_ptr->operator[](key);
+        }
+        // Create a new value by operator[]
+        else if (_type == value_type::Null) {
+            _type = value_type::Object;
+            _object_ptr = std::make_unique<object>();
+            return _object_ptr->operator[](key);
+        }
+
+        throw exception("Wrong Type");
+    }
+
+    MEOJSON_INLINE value& value::operator[](std::string&& key)
+    {
+        if (_type == value_type::Object && _object_ptr != nullptr) {
+            return _object_ptr->operator[](std::move(key));
+        }
+        // Create a new value by operator[]
+        else if (_type == value_type::Null) {
+            _type = value_type::Object;
+            _object_ptr = std::make_unique<object>();
+            return _object_ptr->operator[](std::move(key));
+        }
+
+        throw exception("Wrong Type");
+    }
+
+    MEOJSON_INLINE const value invalid_value()
+    {
+        return value(value_type::Invalid, std::string());
+    }
+
+    MEOJSON_INLINE std::ostream& operator<<(std::ostream& out, const value& val)
+    {
+        // TODO: format output
+
+        out << val.to_string();
+        return out;
+    }
+
+    template <typename... Args>
+    value::value(value_type type, Args &&...args)
+        : _type(type), _raw_data(std::forward<Args>(args)...)
+    {
+        static_assert(std::is_constructible<std::string, Args...>::value,
+                      "Parameter can't be used to construct a std::string");
+    }
+
+    // std::istream &operator>>(std::istream &in, value &val)
+    // {
+    //     return in;
+    // }
 
     // *************************
     // *       array impl      *
@@ -1111,538 +1569,6 @@ namespace json
     }
 
     // *************************
-    // *       value impl      *
-    // *************************
-    MEOJSON_INLINE value::value() = default;
-
-    MEOJSON_INLINE value::value(const value& rhs)
-        : _type(rhs._type), _raw_data(rhs._raw_data),
-        _array_ptr(copy_unique_ptr(rhs._array_ptr)),
-        _object_ptr(copy_unique_ptr(rhs._object_ptr))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(value&& rhs) noexcept = default;
-
-    MEOJSON_INLINE value::value(bool b)
-        : _type(value_type::Boolean), _raw_data(b ? "true" : "false")
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(int num)
-        : _type(value_type::Number), _raw_data(std::to_string(num))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(unsigned num)
-        : _type(value_type::Number), _raw_data(std::to_string(num))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(long num)
-        : _type(value_type::Number), _raw_data(std::to_string(num))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(unsigned long num)
-        : _type(value_type::Number), _raw_data(std::to_string(num))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(long long num)
-        : _type(value_type::Number), _raw_data(std::to_string(num))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(unsigned long long num)
-        : _type(value_type::Number), _raw_data(std::to_string(num))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(float num)
-        : _type(value_type::Number), _raw_data(std::to_string(num))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(double num)
-        : _type(value_type::Number), _raw_data(std::to_string(num))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(long double num)
-        : _type(value_type::Number), _raw_data(std::to_string(num))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(const char* str)
-        : _type(value_type::String), _raw_data(unescape_string(str))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(const std::string& str)
-        : _type(value_type::String), _raw_data(unescape_string(str))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(std::string&& str)
-        : _type(value_type::String), _raw_data(unescape_string(std::move(str)))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(const array& arr)
-        : _type(value_type::Array), _raw_data(std::string()),
-        _array_ptr(std::make_unique<array>(arr))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(array&& arr)
-        : _type(value_type::Array), _raw_data(std::string()),
-        _array_ptr(std::make_unique<array>(std::move(arr)))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(const object& obj)
-        : _type(value_type::Object), _raw_data(std::string()),
-        _object_ptr(std::make_unique<object>(obj))
-    {
-        ;
-    }
-
-    MEOJSON_INLINE value::value(object&& obj)
-        : _type(value_type::Object), _raw_data(std::string()),
-        _object_ptr(std::make_unique<object>(std::move(obj)))
-    {
-        ;
-    }
-
-    // for Pimpl
-    MEOJSON_INLINE value::~value() = default;
-
-    MEOJSON_INLINE bool value::exist(const std::string& key) const
-    {
-        return _type == value_type::Object && as_object().exist(key);
-    }
-
-    MEOJSON_INLINE bool value::exist(size_t pos) const
-    {
-        return _type == value_type::Array && as_array().exist(pos);
-    }
-
-    MEOJSON_INLINE const value& value::at(size_t pos) const
-    {
-        if (_type == value_type::Array && _array_ptr != nullptr) {
-            return _array_ptr->at(pos);
-        }
-
-        throw exception("Wrong Type or data empty");
-    }
-
-    MEOJSON_INLINE const value& value::at(const std::string& key) const
-    {
-        if (_type == value_type::Object && _object_ptr != nullptr) {
-            return _object_ptr->at(key);
-        }
-
-        throw exception("Wrong Type or data empty");
-    }
-
-    template <typename... KeysThenDefaultValue>
-    MEOJSON_INLINE auto value::get(
-        KeysThenDefaultValue &&... keys_then_default_value) const
-    {
-        return get(
-            std::forward_as_tuple(keys_then_default_value...),
-            std::make_index_sequence<sizeof...(keys_then_default_value) - 1>{});
-    }
-
-    template <typename... KeysThenDefaultValue, size_t... KeysIndexes>
-    MEOJSON_INLINE auto value::get(
-        std::tuple<KeysThenDefaultValue...> keys_then_default_value,
-        std::index_sequence<KeysIndexes...>) const
-    {
-        constexpr unsigned long DefaultValueIndex = sizeof...(KeysThenDefaultValue) - 1;
-        return get_aux(
-            std::get<DefaultValueIndex>(keys_then_default_value),
-            std::get<KeysIndexes>(keys_then_default_value)...);
-    }
-
-    template <typename T, typename FirstKey, typename... RestKeys>
-    MEOJSON_INLINE auto value::get_aux(T&& default_value, FirstKey&& first, RestKeys &&... rest) const
-    {
-        if constexpr (std::is_constructible<std::string, FirstKey>::value) {
-            return is_object() ?
-                as_object().get(
-                    std::forward<FirstKey>(first)).get_aux(
-                        std::forward<T>(default_value), std::forward<RestKeys>(rest)...)
-                : default_value;
-        }
-        else if constexpr (std::is_integral<typename std::remove_reference<FirstKey>::type>::value) {
-            return is_array()
-                ? as_array().get(
-                    std::forward<FirstKey>(first)).get_aux(
-                        std::forward<T>(default_value), std::forward<RestKeys>(rest)...)
-                : default_value;
-        }
-        else {
-            static_assert(!sizeof(FirstKey), "Parameter must be integral or std::string constructible");
-        }
-    }
-
-    template <typename T, typename UniqueKey>
-    MEOJSON_INLINE auto value::get_aux(T&& default_value, UniqueKey&& first) const
-    {
-        if constexpr (std::is_constructible<std::string, UniqueKey>::value) {
-            return is_object() ?
-                as_object().get(std::forward<UniqueKey>(first), std::forward<T>(default_value))
-                : default_value;
-        }
-        else if constexpr (std::is_integral<typename std::remove_reference<UniqueKey>::type>::value) {
-            return is_array() ?
-                as_array().get(std::forward<UniqueKey>(first), std::forward<T>(default_value))
-                : default_value;
-        }
-        else {
-            static_assert(!sizeof(UniqueKey), "Parameter must be integral or std::string constructible");
-        }
-    }
-
-    // template <typename KeyT, typename std::enable_if<std::is_integral<KeyT>::value>::type>
-    // MEOJSON_INLINE value value::get_aux(KeyT&& key) const
-    // {
-
-    // }
-
-    // template <typename KeyT, typename _>
-    // MEOJSON_INLINE value value::get_aux(KeyT&& key) const
-    // {
-    //     static_assert(false, "Parameter must be integral or string");
-
-    //     return json::value();
-    // }
-
-    MEOJSON_INLINE bool value::as_boolean() const
-    {
-        if (_type == value_type::Boolean) {
-            if (_raw_data == "true") {
-                return true;
-            }
-            else if (_raw_data == "false") {
-                return false;
-            }
-            else {
-                throw exception("Unknown Parse Error");
-            }
-        }
-        else {
-            throw exception("Wrong Type");
-        }
-    }
-
-    MEOJSON_INLINE int value::as_integer() const
-    {
-        if (_type == value_type::Number) {
-            return std::stoi(_raw_data);
-        }
-        else {
-            throw exception("Wrong Type");
-        }
-    }
-
-    // const unsigned value::as_unsigned() const
-    // {
-    //     if (_type == value_type::Number)
-    //     {
-    //         return std::stou(_raw_data); // not exist
-    //     }
-    //     else
-    //     {
-    //         throw exception("Wrong Type");
-    //     }
-    // }
-
-    MEOJSON_INLINE long value::as_long() const
-    {
-        if (_type == value_type::Number) {
-            return std::stol(_raw_data);
-        }
-        else {
-            throw exception("Wrong Type");
-        }
-    }
-
-    MEOJSON_INLINE unsigned long value::as_unsigned_long() const
-    {
-        if (_type == value_type::Number) {
-            return std::stoul(_raw_data);
-        }
-        else {
-            throw exception("Wrong Type");
-        }
-    }
-
-    MEOJSON_INLINE long long value::as_long_long() const
-    {
-        if (_type == value_type::Number) {
-            return std::stoll(_raw_data);
-        }
-        else {
-            throw exception("Wrong Type");
-        }
-    }
-
-    MEOJSON_INLINE unsigned long long value::as_unsigned_long_long() const
-    {
-        if (_type == value_type::Number) {
-            return std::stoull(_raw_data);
-        }
-        else {
-            throw exception("Wrong Type");
-        }
-    }
-
-    MEOJSON_INLINE float value::as_float() const
-    {
-        if (_type == value_type::Number) {
-            return std::stof(_raw_data);
-        }
-        else {
-            throw exception("Wrong Type");
-        }
-    }
-
-    MEOJSON_INLINE double value::as_double() const
-    {
-        if (_type == value_type::Number) {
-            return std::stod(_raw_data);
-        }
-        else {
-            throw exception("Wrong Type");
-        }
-    }
-
-    MEOJSON_INLINE long double value::as_long_double() const
-    {
-        if (_type == value_type::Number) {
-            return std::stold(_raw_data);
-        }
-        else {
-            throw exception("Wrong Type");
-        }
-    }
-
-    MEOJSON_INLINE const std::string value::as_string() const
-    {
-        if (_type == value_type::String) {
-            return escape_string(_raw_data);
-        }
-        else {
-            throw exception("Wrong Type");
-        }
-    }
-
-    MEOJSON_INLINE const array& value::as_array() const
-    {
-        if (_type == value_type::Array && _array_ptr != nullptr) {
-            return *_array_ptr;
-        }
-
-        throw exception("Wrong Type");
-    }
-
-    MEOJSON_INLINE const object& value::as_object() const
-    {
-        if (_type == value_type::Object && _object_ptr != nullptr) {
-            return *_object_ptr;
-        }
-
-        throw exception("Wrong Type or data empty");
-    }
-
-    MEOJSON_INLINE array& value::as_array()
-    {
-        if (_type == value_type::Array && _array_ptr != nullptr) {
-            return *_array_ptr;
-        }
-        else if (_type == value_type::Null) {
-            *this = array();
-            return *_array_ptr;
-        }
-
-        throw exception("Wrong Type");
-    }
-
-    MEOJSON_INLINE object& value::as_object()
-    {
-        if (_type == value_type::Object && _object_ptr != nullptr) {
-            return *_object_ptr;
-        }
-        else if (_type == value_type::Null) {
-            *this = object();
-            return *_object_ptr;
-        }
-
-        throw exception("Wrong Type or data empty");
-    }
-
-    template<typename... Args>
-    MEOJSON_INLINE decltype(auto) value::array_emplace(Args &&...args)
-    {
-        return as_array().emplace_back(std::forward<Args>(args)...);
-    }
-
-    template<typename... Args>
-    MEOJSON_INLINE decltype(auto) value::object_emplace(Args &&...args)
-    {
-        return as_object().emplace(std::forward<Args>(args)...);
-    }
-
-    MEOJSON_INLINE void value::clear() noexcept
-    {
-        *this = json::value();
-    }
-
-    MEOJSON_INLINE const std::string value::to_string() const
-    {
-        switch (_type) {
-        case value_type::Null:
-        case value_type::Boolean:
-        case value_type::Number:
-            return _raw_data;
-        case value_type::String:
-            return '"' + _raw_data + '"';
-        case value_type::Object:
-            return _object_ptr->to_string();
-        case value_type::Array:
-            return _array_ptr->to_string();
-        default:
-            throw exception("Unknown Value Type");
-        }
-    }
-
-    MEOJSON_INLINE const std::string value::format(std::string shift_str,
-                                                   size_t basic_shift_count) const
-    {
-        switch (_type) {
-        case value_type::Null:
-        case value_type::Boolean:
-        case value_type::Number:
-            return _raw_data;
-        case value_type::String:
-            return '"' + _raw_data + '"';
-        case value_type::Object:
-            return _object_ptr->format(shift_str, basic_shift_count);
-        case value_type::Array:
-            return _array_ptr->format(shift_str, basic_shift_count);
-        default:
-            throw exception("Unknown Value Type");
-        }
-    }
-
-    MEOJSON_INLINE value& value::operator=(const value& rhs)
-    {
-        _type = rhs._type;
-        _raw_data = rhs._raw_data;
-        _array_ptr = copy_unique_ptr(rhs._array_ptr);
-        _object_ptr = copy_unique_ptr(rhs._object_ptr);
-
-        return *this;
-    }
-
-    MEOJSON_INLINE value& value::operator=(value&& rhs) noexcept = default;
-
-    MEOJSON_INLINE const value& value::operator[](size_t pos) const
-    {
-        if (_type == value_type::Array && _array_ptr != nullptr) {
-            return _array_ptr->operator[](pos);
-        }
-        // Array not support to create by operator[]
-
-        throw exception("Wrong Type");
-    }
-
-    MEOJSON_INLINE value& value::operator[](size_t pos)
-    {
-        if (_type == value_type::Array && _array_ptr != nullptr) {
-            return _array_ptr->operator[](pos);
-        }
-        // Array not support to create by operator[]
-
-        throw exception("Wrong Type");
-    }
-
-    MEOJSON_INLINE value& value::operator[](const std::string& key)
-    {
-        if (_type == value_type::Object && _object_ptr != nullptr) {
-            return _object_ptr->operator[](key);
-        }
-        // Create a new value by operator[]
-        else if (_type == value_type::Null) {
-            _type = value_type::Object;
-            _object_ptr = std::make_unique<object>();
-            return _object_ptr->operator[](key);
-        }
-
-        throw exception("Wrong Type");
-    }
-
-    MEOJSON_INLINE value& value::operator[](std::string&& key)
-    {
-        if (_type == value_type::Object && _object_ptr != nullptr) {
-            return _object_ptr->operator[](std::move(key));
-        }
-        // Create a new value by operator[]
-        else if (_type == value_type::Null) {
-            _type = value_type::Object;
-            _object_ptr = std::make_unique<object>();
-            return _object_ptr->operator[](std::move(key));
-        }
-
-        throw exception("Wrong Type");
-    }
-
-    MEOJSON_INLINE const value invalid_value()
-    {
-        return value(value_type::Invalid, std::string());
-    }
-
-    MEOJSON_INLINE std::ostream& operator<<(std::ostream& out, const value& val)
-    {
-        // TODO: format output
-
-        out << val.to_string();
-        return out;
-    }
-
-    template <typename... Args>
-    value::value(value_type type, Args &&...args)
-        : _type(type), _raw_data(std::forward<Args>(args)...)
-    {
-        static_assert(std::is_constructible<std::string, Args...>::value,
-                      "Parameter can't be used to construct a std::string");
-    }
-
-    // std::istream &operator>>(std::istream &in, value &val)
-    // {
-    //     return in;
-    // }
-
-    // *************************
     // *     parser declare    *
     // *************************
     class parser
@@ -2062,5 +1988,83 @@ namespace json
     MEOJSON_INLINE std::optional<value> parse(const std::string& content)
     {
         return parser::parse(content);
+    }
+
+    // *************************
+    // *      aux impl         *
+    // *************************
+
+    MEOJSON_INLINE std::string unescape_string(std::string str)
+    {
+        for (size_t pos = 0; pos < str.size(); ++pos) {
+            std::string replace_str;
+            switch (str[pos]) {
+            case '\"':
+                replace_str = R"(\")";
+                break;
+            case '\\':
+                replace_str = R"(\\)";
+                break;
+            case '\b':
+                replace_str = R"(\b)";
+                break;
+            case '\f':
+                replace_str = R"(\f)";
+                break;
+            case '\n':
+                replace_str = R"(\n)";
+                break;
+            case '\r':
+                replace_str = R"(\r)";
+                break;
+            case '\t':
+                replace_str = R"(\t)";
+                break;
+            default:
+                continue;
+                break;
+            }
+            str.replace(pos, 1, replace_str);
+            ++pos;
+        }
+        return str;
+    }
+
+    MEOJSON_INLINE std::string escape_string(std::string str)
+    {
+        for (size_t pos = 0; pos + 1 < str.size(); ++pos) {
+            if (str[pos] != '\\') {
+                continue;
+            }
+            std::string replace_str;
+            switch (str[pos + 1]) {
+            case '"':
+                replace_str = "\"";
+                break;
+            case '\\':
+                replace_str = "\\";
+                break;
+            case 'b':
+                replace_str = "\b";
+                break;
+            case 'f':
+                replace_str = "\f";
+                break;
+            case 'n':
+                replace_str = "\n";
+                break;
+            case 'r':
+                replace_str = "\r";
+                break;
+            case 't':
+                replace_str = "\t";
+                break;
+            default:
+                return std::string();
+                break;
+            }
+            str.replace(pos, 2, replace_str);
+        }
+        return str;
     }
 } // namespace json
