@@ -92,7 +92,7 @@ namespace json
 
         // usage: get(key, key_child, ..., default_value);
         template <typename... KeysThenDefaultValue>
-        auto get(KeysThenDefaultValue &&... keys_then_default_value) const;
+        decltype(auto) get(KeysThenDefaultValue &&... keys_then_default_value) const;
 
         bool as_boolean() const;
         int as_integer() const;
@@ -111,8 +111,8 @@ namespace json
         array& as_array();
         object& as_object();
 
-        template<typename... Args> auto array_emplace(Args &&...args);
-        template<typename... Args> auto object_emplace(Args &&...args);
+        template<typename... Args> decltype(auto) array_emplace(Args &&...args);
+        template<typename... Args> decltype(auto) object_emplace(Args &&...args);
         void clear() noexcept;
 
         // return raw string
@@ -142,12 +142,12 @@ namespace json
     private:
         static var_t deep_copy(const var_t& src);
         template <typename... KeysThenDefaultValue, size_t... KeysIndexes>
-        auto get(std::tuple<KeysThenDefaultValue...> keys_then_default_value, std::index_sequence<KeysIndexes...>) const;
+        decltype(auto) get(std::tuple<KeysThenDefaultValue...> keys_then_default_value, std::index_sequence<KeysIndexes...>) const;
 
         template <typename T, typename FirstKey, typename... RestKeys>
-        auto get_aux(T&& default_value, FirstKey&& first, RestKeys &&... rest) const;
+        decltype(auto) get_aux(T&& default_value, FirstKey&& first, RestKeys &&... rest) const;
         template <typename T, typename UniqueKey>
-        auto get_aux(T&& default_value, UniqueKey&& first) const;
+        decltype(auto) get_aux(T&& default_value, UniqueKey&& first) const;
 
 
         value_type _type = value_type::Null;
@@ -203,7 +203,7 @@ namespace json
         const std::string get(size_t pos, const char* default_value) const;
         const value& get(size_t pos) const;
 
-        template <typename... Args> auto emplace_back(Args &&...args);
+        template <typename... Args> decltype(auto) emplace_back(Args &&...args);
 
         void clear() noexcept;
         // void earse(size_t pos);
@@ -282,7 +282,7 @@ namespace json
                               const char* default_value) const;
         const value& get(const std::string& key) const;
 
-        template <typename... Args> auto emplace(Args &&...args);
+        template <typename... Args> decltype(auto) emplace(Args &&...args);
 
         void clear() noexcept;
         bool earse(const std::string& key);
@@ -471,7 +471,7 @@ namespace json
     }
 
     template <typename... KeysThenDefaultValue>
-    MEOJSON_INLINE auto value::get(
+    MEOJSON_INLINE decltype(auto) value::get(
         KeysThenDefaultValue &&... keys_then_default_value) const
     {
         return get(
@@ -480,7 +480,7 @@ namespace json
     }
 
     template <typename... KeysThenDefaultValue, size_t... KeysIndexes>
-    MEOJSON_INLINE auto value::get(
+    MEOJSON_INLINE decltype(auto) value::get(
         std::tuple<KeysThenDefaultValue...> keys_then_default_value,
         std::index_sequence<KeysIndexes...>) const
     {
@@ -491,7 +491,7 @@ namespace json
     }
 
     template <typename T, typename FirstKey, typename... RestKeys>
-    MEOJSON_INLINE auto value::get_aux(T&& default_value, FirstKey&& first, RestKeys &&... rest) const
+    MEOJSON_INLINE decltype(auto) value::get_aux(T&& default_value, FirstKey&& first, RestKeys &&... rest) const
     {
         if constexpr (std::is_constructible<std::string, FirstKey>::value) {
             return is_object() ?
@@ -513,7 +513,7 @@ namespace json
     }
 
     template <typename T, typename UniqueKey>
-    MEOJSON_INLINE auto value::get_aux(T&& default_value, UniqueKey&& first) const
+    MEOJSON_INLINE decltype(auto) value::get_aux(T&& default_value, UniqueKey&& first) const
     {
         if constexpr (std::is_constructible<std::string, UniqueKey>::value) {
             return is_object() ?
@@ -696,13 +696,13 @@ namespace json
     }
 
     template<typename... Args>
-    MEOJSON_INLINE auto value::array_emplace(Args &&...args)
+    MEOJSON_INLINE decltype(auto) value::array_emplace(Args &&...args)
     {
         return as_array().emplace_back(std::forward<Args>(args)...);
     }
 
     template<typename... Args>
-    MEOJSON_INLINE auto value::object_emplace(Args &&...args)
+    MEOJSON_INLINE decltype(auto) value::object_emplace(Args &&...args)
     {
         return as_object().emplace(std::forward<Args>(args)...);
     }
@@ -857,7 +857,7 @@ namespace json
     // *************************
     // *       array impl      *
     // *************************
-    template <typename... Args> auto array::emplace_back(Args &&...args)
+    template <typename... Args> decltype(auto) array::emplace_back(Args &&...args)
     {
         static_assert(std::is_constructible<raw_array::value_type, Args...>::value,
                       "Parameter can't be used to construct a raw_array::value_type");
@@ -1202,7 +1202,7 @@ namespace json
     // *************************
     // *      object impl      *
     // *************************
-    template <typename... Args> auto object::emplace(Args &&...args)
+    template <typename... Args> decltype(auto) object::emplace(Args &&...args)
     {
         static_assert(
             std::is_constructible<raw_object::value_type, Args...>::value,
