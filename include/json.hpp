@@ -885,6 +885,7 @@ namespace json
         static_assert(
             std::is_constructible<json::value, typename ArrayType::value_type>::value,
             "Parameter can't be used to construct a json::value");
+        _array_data.reserve(arr.size());
         for (auto&& ele : arr) {
             _array_data.emplace_back(std::move(ele));
         }
@@ -1233,6 +1234,7 @@ namespace json
     MEOJSON_INLINE
         object::object(std::initializer_list<raw_object::value_type> init_list)
     {
+        _object_data.reserve(init_list.size());
         for (const auto& [key, val] : init_list) {
             emplace(key, val);
         }
@@ -1545,6 +1547,7 @@ namespace json
                                             typename MapType::value_type>::value,
                       "Parameter can't be used to construct a "
                       "object::raw_object::value_type");
+        _object_data.reserve(map.size());
         for (auto&& ele : map) {
             _object_data.emplace(std::move(ele));
         }
@@ -1774,7 +1777,8 @@ namespace json
             return array();
         }
 
-        array result;
+        array::raw_array result;
+        result.reserve(4);
         while (true) {
             if (!skip_whitespace()) {
                 return invalid_value();
@@ -1803,7 +1807,7 @@ namespace json
             return invalid_value();
         }
 
-        return result;
+        return array(std::move(result));
     }
 
     MEOJSON_INLINE value parser::parse_object()
@@ -1824,7 +1828,8 @@ namespace json
             return object();
         }
 
-        object result;
+        object::raw_object result;
+        result.reserve(4);
         while (true) {
             if (!skip_whitespace()) {
                 return invalid_value();
@@ -1867,7 +1872,7 @@ namespace json
             return invalid_value();
         }
 
-        return result;
+        return object(std::move(result));
     }
 
     MEOJSON_INLINE std::optional<std::string> parser::parse_stdstring()
