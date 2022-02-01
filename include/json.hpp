@@ -141,14 +141,19 @@ namespace json
 
     private:
         static var_t deep_copy(const var_t& src);
+
         template <typename... KeysThenDefaultValue, size_t... KeysIndexes>
-        decltype(auto) get(std::tuple<KeysThenDefaultValue...> keys_then_default_value, std::index_sequence<KeysIndexes...>) const;
+        decltype(auto) get(
+            std::tuple<KeysThenDefaultValue...> keys_then_default_value,
+            std::index_sequence<KeysIndexes...>) const;
 
         template <typename T, typename FirstKey, typename... RestKeys>
         decltype(auto) get_aux(T&& default_value, FirstKey&& first, RestKeys &&... rest) const;
         template <typename T, typename UniqueKey>
         decltype(auto) get_aux(T&& default_value, UniqueKey&& first) const;
 
+        const std::string& as_basic_type_str() const;
+        std::string& as_basic_type_str();
 
         value_type _type = value_type::Null;
         var_t _raw_data;
@@ -454,20 +459,12 @@ namespace json
 
     MEOJSON_INLINE const value& value::at(size_t pos) const
     {
-        if (is_array()) {
-            return std::get<array_ptr>(_raw_data)->at(pos);
-        }
-
-        throw exception("Wrong Type or data empty");
+        return as_array().at(pos);
     }
 
     MEOJSON_INLINE const value& value::at(const std::string& key) const
     {
-        if (is_object()) {
-            return std::get<object_ptr>(_raw_data)->at(key);
-        }
-
-        throw exception("Wrong Type or data empty");
+        return as_object().at(key);
     }
 
     template <typename... KeysThenDefaultValue>
@@ -533,7 +530,7 @@ namespace json
     MEOJSON_INLINE bool value::as_boolean() const
     {
         if (is_boolean()) {
-            if (std::string b_str = std::get<std::string>(_raw_data);
+            if (const std::string& b_str = as_basic_type_str();
                 b_str == "true") {
                 return true;
             }
@@ -552,7 +549,7 @@ namespace json
     MEOJSON_INLINE int value::as_integer() const
     {
         if (is_number()) {
-            return std::stoi(std::get<std::string>(_raw_data));
+            return std::stoi(as_basic_type_str());
         }
         else {
             throw exception("Wrong Type");
@@ -574,7 +571,7 @@ namespace json
     MEOJSON_INLINE long value::as_long() const
     {
         if (is_number()) {
-            return std::stol(std::get<std::string>(_raw_data));
+            return std::stol(as_basic_type_str());
         }
         else {
             throw exception("Wrong Type");
@@ -584,7 +581,7 @@ namespace json
     MEOJSON_INLINE unsigned long value::as_unsigned_long() const
     {
         if (is_number()) {
-            return std::stoul(std::get<std::string>(_raw_data));
+            return std::stoul(as_basic_type_str());
         }
         else {
             throw exception("Wrong Type");
@@ -594,7 +591,7 @@ namespace json
     MEOJSON_INLINE long long value::as_long_long() const
     {
         if (is_number()) {
-            return std::stoll(std::get<std::string>(_raw_data));
+            return std::stoll(as_basic_type_str());
         }
         else {
             throw exception("Wrong Type");
@@ -604,7 +601,7 @@ namespace json
     MEOJSON_INLINE unsigned long long value::as_unsigned_long_long() const
     {
         if (is_number()) {
-            return std::stoull(std::get<std::string>(_raw_data));
+            return std::stoull(as_basic_type_str());
         }
         else {
             throw exception("Wrong Type");
@@ -614,7 +611,7 @@ namespace json
     MEOJSON_INLINE float value::as_float() const
     {
         if (is_number()) {
-            return std::stof(std::get<std::string>(_raw_data));
+            return std::stof(as_basic_type_str());
         }
         else {
             throw exception("Wrong Type");
@@ -624,7 +621,7 @@ namespace json
     MEOJSON_INLINE double value::as_double() const
     {
         if (is_number()) {
-            return std::stod(std::get<std::string>(_raw_data));
+            return std::stod(as_basic_type_str());
         }
         else {
             throw exception("Wrong Type");
@@ -634,7 +631,7 @@ namespace json
     MEOJSON_INLINE long double value::as_long_double() const
     {
         if (is_number()) {
-            return std::stold(std::get<std::string>(_raw_data));
+            return std::stold(as_basic_type_str());
         }
         else {
             throw exception("Wrong Type");
@@ -644,7 +641,7 @@ namespace json
     MEOJSON_INLINE const std::string value::as_string() const
     {
         if (is_string()) {
-            return escape_string(std::get<std::string>(_raw_data));
+            return escape_string(as_basic_type_str());
         }
         else {
             throw exception("Wrong Type");
@@ -671,11 +668,11 @@ namespace json
 
     MEOJSON_INLINE array& value::as_array()
     {
-        if (is_array()) {
-            return *std::get<array_ptr>(_raw_data);
-        }
-        else if (empty()) {
+        if (empty()) {
             *this = array();
+        }
+
+        if (is_array()) {
             return *std::get<array_ptr>(_raw_data);
         }
 
@@ -684,15 +681,24 @@ namespace json
 
     MEOJSON_INLINE object& value::as_object()
     {
-        if (is_object()) {
-            return *std::get<object_ptr>(_raw_data);
-        }
-        else if (empty()) {
+        if (empty()) {
             *this = object();
+        }
+
+        if (is_object()) {
             return *std::get<object_ptr>(_raw_data);
         }
 
         throw exception("Wrong Type or data empty");
+    }
+
+    MEOJSON_INLINE const std::string& value::as_basic_type_str() const
+    {
+        return std::get<std::string>(_raw_data);
+    }
+    MEOJSON_INLINE std::string& value::as_basic_type_str()
+    {
+        return std::get<std::string>(_raw_data);
     }
 
     template<typename... Args>
@@ -719,13 +725,13 @@ namespace json
             return "null";
         case value_type::Boolean:
         case value_type::Number:
-            return std::get<std::string>(_raw_data);
+            return as_basic_type_str();
         case value_type::String:
-            return '"' + std::get<std::string>(_raw_data) + '"';
+            return '"' + as_basic_type_str() + '"';
         case value_type::Array:
-            return std::get<array_ptr>(_raw_data)->to_string();
+            return as_array().to_string();
         case value_type::Object:
-            return std::get<object_ptr>(_raw_data)->to_string();
+            return as_object().to_string();
         default:
             throw exception("Unknown Value Type");
         }
@@ -739,13 +745,13 @@ namespace json
             return "null";
         case value_type::Boolean:
         case value_type::Number:
-            return std::get<std::string>(_raw_data);
+            return as_basic_type_str();
         case value_type::String:
-            return '"' + std::get<std::string>(_raw_data) + '"';
+            return '"' + as_basic_type_str() + '"';
         case value_type::Array:
-            return std::get<array_ptr>(_raw_data)->format(shift_str, basic_shift_count);
+            return as_array().format(shift_str, basic_shift_count);
         case value_type::Object:
-            return std::get<object_ptr>(_raw_data)->format(shift_str, basic_shift_count);
+            return as_object().format(shift_str, basic_shift_count);
         default:
             throw exception("Unknown Value Type");
         }
@@ -763,50 +769,34 @@ namespace json
 
     MEOJSON_INLINE const value& value::operator[](size_t pos) const
     {
-        if (is_array()) {
-            return std::get<array_ptr>(_raw_data)->operator[](pos);
-        }
         // Array not support to create by operator[]
 
-        throw exception("Wrong Type");
+        return as_array()[pos];
     }
 
     MEOJSON_INLINE value& value::operator[](size_t pos)
     {
-        if (is_array()) {
-            return std::get<array_ptr>(_raw_data)->operator[](pos);
-        }
         // Array not support to create by operator[]
 
-        throw exception("Wrong Type");
+        return as_array()[pos];
     }
 
     MEOJSON_INLINE value& value::operator[](const std::string& key)
     {
-        if (is_object()) {
-            return std::get<object_ptr>(_raw_data)->operator[](key);
-        }
-        // Create a new value by operator[]
-        else if (empty()) {
+        if (empty()) {
             *this = object();
-            return std::get<object_ptr>(_raw_data)->operator[](key);
         }
 
-        throw exception("Wrong Type");
+        return as_object()[key];
     }
 
     MEOJSON_INLINE value& value::operator[](std::string&& key)
     {
-        if (is_object()) {
-            return std::get<object_ptr>(_raw_data)->operator[](key);
-        }
-        // Create a new value by operator[]
-        else if (empty()) {
+        if (empty()) {
             *this = object();
-            return std::get<object_ptr>(_raw_data)->operator[](key);
         }
 
-        throw exception("Wrong Type");
+        return as_object()[std::move(key)];
     }
 
     template <typename... Args>
