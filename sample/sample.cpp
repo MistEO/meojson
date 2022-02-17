@@ -6,7 +6,7 @@
 #include "json.hpp"
 
 void parsing();
-void generating();
+void serializing();
 
 int main()
 {
@@ -14,9 +14,9 @@ int main()
 
     parsing();
 
-    std::cout << "\n****** Generating ******\n" << std::endl;
+    std::cout << "\n****** Serializing ******\n" << std::endl;
 
-    generating();
+    serializing();
 
     return 0;
 }
@@ -94,7 +94,7 @@ void parsing()
     }
 }
 
-void generating()
+void serializing()
 {
     json::value root;
     root["hello"] = "meojson";

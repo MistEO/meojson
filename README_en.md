@@ -4,7 +4,7 @@
 
 现代化的全平台 Json/Json5 解析/生成器，Header-only，并附带大量语法糖！
 
-A modern all-platform Json/Json5 parser/generator, which is header-only and contains lots of syntactic sugar!
+A modern all-platform Json/Json5 parser/serializer, which is header-only and contains lots of syntactic sugar!
 
 </div>
 
@@ -153,7 +153,7 @@ void parsing()
 }
 ```
 
-### Generating
+### Serializing
 
 ```cpp
 /***
@@ -162,7 +162,7 @@ void parsing()
 #include <iostream>
 #include "json.hpp"
 
-void generating()
+void serializing()
 {
     json::value root;
     root["hello"] = "meojson";
