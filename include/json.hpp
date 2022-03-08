@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <initializer_list>
 #include <memory>
 #include <optional>
@@ -128,6 +129,14 @@ namespace json
         value& operator[](const std::string& key);
         value& operator[](std::string&& key);
 
+        value operator|(const json::value& rhs) &;
+        value operator|(json::value&& rhs) &;
+        value operator|(const json::value& rhs) &&;
+        value operator|(json::value&& rhs) &&;
+
+        value& operator|=(const json::value& rhs);
+        value& operator|=(json::value&& rhs);
+
         explicit operator bool() const { return as_boolean(); }
         explicit operator int() const { return as_integer(); }
         explicit operator long() const { return as_long(); }
@@ -169,6 +178,7 @@ namespace json
     {
     public:
         using raw_array = std::vector<value>;
+        using value_type = raw_array::value_type;
         using iterator = raw_array::iterator;
         using const_iterator = raw_array::const_iterator;
         using reverse_iterator = raw_array::reverse_iterator;
@@ -248,13 +258,14 @@ namespace json
     {
     public:
         using raw_object = std::unordered_map<std::string, value>;
+        using value_type = raw_object::value_type;
         using iterator = raw_object::iterator;
         using const_iterator = raw_object::const_iterator;
 
     public:
         object() = default;
         object(const object& rhs) = default;
-        object(object&& rhs) = default;
+        object(object&& rhs) noexcept = default;
         object(const raw_object& raw_obj);
         object(raw_object&& raw_obj);
         object(std::initializer_list<raw_object::value_type> init_list);
@@ -288,6 +299,7 @@ namespace json
         const value& get(const std::string& key) const;
 
         template <typename... Args> decltype(auto) emplace(Args &&...args);
+        template <typename... Args> decltype(auto) insert(Args &&...args);
 
         void clear() noexcept;
         bool earse(const std::string& key);
@@ -301,6 +313,22 @@ namespace json
 
         value& operator[](const std::string& key);
         value& operator[](std::string&& key);
+
+        object operator|(const json::value& rhs) &;
+        object operator|(json::value&& rhs) &;
+        object operator|(const json::value& rhs) &&;
+        object operator|(json::value&& rhs) &&;
+
+        object& operator|=(const json::value& rhs);
+        object& operator|=(json::value&& rhs);
+
+        //object operator&(const json::object& rhs) &;
+        //object operator&(json::object&& rhs) &;
+        //object operator&(const json::object& rhs) &&;
+        //object operator&(json::object&& rhs) &&;
+
+        //object& operator&=(const json::object& rhs);
+        //object& operator&=(json::object&& rhs);
 
         object& operator=(const object&) = default;
         object& operator=(object&&) = default;
@@ -799,6 +827,38 @@ namespace json
         return as_object()[std::move(key)];
     }
 
+    MEOJSON_INLINE value value::operator|(const json::value& rhs) &
+    {
+        return as_object() | rhs;
+    }
+
+    MEOJSON_INLINE value value::operator|(json::value&& rhs) &
+    {
+        return as_object() | std::move(rhs);
+    }
+
+    MEOJSON_INLINE value value::operator|(const json::value& rhs) &&
+    {
+        return std::move(as_object()) | rhs;
+    }
+
+    MEOJSON_INLINE value value::operator|(json::value&& rhs) &&
+    {
+        return std::move(as_object()) | std::move(rhs);
+    }
+
+    MEOJSON_INLINE value& value::operator|=(const json::value& rhs)
+    {
+        as_object() |= rhs;
+        return *this;
+    }
+
+    MEOJSON_INLINE value& value::operator|=(json::value&& rhs)
+    {
+        as_object() |= std::move(rhs);
+        return *this;
+    }
+
     template <typename... Args>
     value::value(value_type type, Args &&...args)
         : _type(type), _raw_data(std::forward<Args>(args)...)
@@ -1201,6 +1261,11 @@ namespace json
         return _object_data.emplace(std::forward<Args>(args)...);
     }
 
+    template <typename... Args> decltype(auto) object::insert(Args &&...args)
+    {
+        return _object_data.insert(std::forward<Args>(args)...);
+    }
+
     MEOJSON_INLINE std::ostream& operator<<(std::ostream& out, const array& arr)
     {
         // TODO: format output
@@ -1516,6 +1581,58 @@ namespace json
     MEOJSON_INLINE value& object::operator[](std::string&& key)
     {
         return _object_data[std::move(key)];
+    }
+
+    MEOJSON_INLINE object object::operator|(const json::value& rhs) &
+    {
+        object temp = *this;
+        const auto& rhs_obj = rhs.as_object();
+        temp._object_data.insert(rhs_obj.begin(), rhs_obj.end());
+        return temp;
+    }
+
+    MEOJSON_INLINE object object::operator|(json::value&& rhs) &
+    {
+        object temp = *this;
+        //temp._object_data.merge(std::move(rhs._object_data));
+        auto& rhs_obj = rhs.as_object();
+        temp._object_data.insert(
+            std::make_move_iterator(rhs_obj.begin()),
+            std::make_move_iterator(rhs_obj.end()));
+        return temp;
+    }
+
+    MEOJSON_INLINE object object::operator|(const json::value& rhs) &&
+    {
+        const auto& rhs_obj = rhs.as_object();
+        _object_data.insert(rhs_obj.begin(), rhs_obj.end());
+        return std::move(*this);
+    }
+
+    MEOJSON_INLINE object object::operator|(json::value&& rhs) &&
+    {
+        //_object_data.merge(std::move(rhs._object_data));
+        auto& rhs_obj = rhs.as_object();
+        _object_data.insert(
+            std::make_move_iterator(rhs_obj.begin()),
+            std::make_move_iterator(rhs_obj.end()));
+        return std::move(*this);
+    }
+
+    MEOJSON_INLINE object& object::operator|=(const json::value& rhs)
+    {
+        const auto& rhs_obj = rhs.as_object();
+        _object_data.insert(rhs_obj.begin(), rhs_obj.end());
+        return *this;
+    }
+
+    MEOJSON_INLINE object& object::operator|=(json::value&& rhs)
+    {
+        auto& rhs_obj = rhs.as_object();
+        _object_data.insert(
+            std::make_move_iterator(rhs_obj.begin()),
+            std::make_move_iterator(rhs_obj.end()));
+        return *this;
     }
 
     // const raw_object &object::raw_data() const

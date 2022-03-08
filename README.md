@@ -191,6 +191,13 @@ void serializing()
     map.emplace("key2", 2);
     root["obj from map"] = json::object(map);
 
+    json::value other = json::object{
+        { "other_key", "lol" },
+        { "obj", "Existing key will not be overwritten"}
+    };
+    // take union
+    root |= other;
+
     std::cout << root.format() << std::endl;
 }
 ```
