@@ -182,7 +182,8 @@ void serializing()
     std::vector<int> vec = { 1, 2, 3, 4, 5 };
     root["arr from vec"] = json::array(vec);
     root["arr from vec"].array_emplace(6);
-    
+    root["arr from vec"] += json::array{ 7, 8, 9, 10 };
+
     std::set<std::string> set = { "a", "bbb", "cc" };
     root["arr from set"] = json::array(set);
 
