@@ -129,13 +129,13 @@ namespace json
         value& operator[](const std::string& key);
         value& operator[](std::string&& key);
 
-        value operator|(const json::value& rhs) &;
-        value operator|(json::value&& rhs) &;
-        value operator|(const json::value& rhs) &&;
-        value operator|(json::value&& rhs) &&;
+        value operator|(const json::object& rhs)&;
+        value operator|(json::object&& rhs)&;
+        value operator|(const json::object& rhs)&&;
+        value operator|(json::object&& rhs)&&;
 
-        value& operator|=(const json::value& rhs);
-        value& operator|=(json::value&& rhs);
+        value& operator|=(const json::object& rhs);
+        value& operator|=(json::object&& rhs);
 
         explicit operator bool() const { return as_boolean(); }
         explicit operator int() const { return as_integer(); }
@@ -314,13 +314,13 @@ namespace json
         value& operator[](const std::string& key);
         value& operator[](std::string&& key);
 
-        object operator|(const json::value& rhs) &;
-        object operator|(json::value&& rhs) &;
-        object operator|(const json::value& rhs) &&;
-        object operator|(json::value&& rhs) &&;
+        object operator|(const json::object& rhs)&;
+        object operator|(json::object&& rhs)&;
+        object operator|(const json::object& rhs)&&;
+        object operator|(json::object&& rhs)&&;
 
-        object& operator|=(const json::value& rhs);
-        object& operator|=(json::value&& rhs);
+        object& operator|=(const json::object& rhs);
+        object& operator|=(json::object&& rhs);
 
         //object operator&(const json::object& rhs) &;
         //object operator&(json::object&& rhs) &;
@@ -827,33 +827,33 @@ namespace json
         return as_object()[std::move(key)];
     }
 
-    MEOJSON_INLINE value value::operator|(const json::value& rhs) &
+    MEOJSON_INLINE value value::operator|(const json::object& rhs)&
     {
         return as_object() | rhs;
     }
 
-    MEOJSON_INLINE value value::operator|(json::value&& rhs) &
+    MEOJSON_INLINE value value::operator|(json::object&& rhs)&
     {
         return as_object() | std::move(rhs);
     }
 
-    MEOJSON_INLINE value value::operator|(const json::value& rhs) &&
+    MEOJSON_INLINE value value::operator|(const json::object& rhs)&&
     {
         return std::move(as_object()) | rhs;
     }
 
-    MEOJSON_INLINE value value::operator|(json::value&& rhs) &&
+    MEOJSON_INLINE value value::operator|(json::object&& rhs)&&
     {
         return std::move(as_object()) | std::move(rhs);
     }
 
-    MEOJSON_INLINE value& value::operator|=(const json::value& rhs)
+    MEOJSON_INLINE value& value::operator|=(const json::object& rhs)
     {
         as_object() |= rhs;
         return *this;
     }
 
-    MEOJSON_INLINE value& value::operator|=(json::value&& rhs)
+    MEOJSON_INLINE value& value::operator|=(json::object&& rhs)
     {
         as_object() |= std::move(rhs);
         return *this;
@@ -1583,55 +1583,49 @@ namespace json
         return _object_data[std::move(key)];
     }
 
-    MEOJSON_INLINE object object::operator|(const json::value& rhs) &
+    MEOJSON_INLINE object object::operator|(const json::object& rhs)&
     {
         object temp = *this;
-        const auto& rhs_obj = rhs.as_object();
-        temp._object_data.insert(rhs_obj.begin(), rhs_obj.end());
+        temp._object_data.insert(rhs.begin(), rhs.end());
         return temp;
     }
 
-    MEOJSON_INLINE object object::operator|(json::value&& rhs) &
+    MEOJSON_INLINE object object::operator|(json::object&& rhs)&
     {
         object temp = *this;
         //temp._object_data.merge(std::move(rhs._object_data));
-        auto& rhs_obj = rhs.as_object();
         temp._object_data.insert(
-            std::make_move_iterator(rhs_obj.begin()),
-            std::make_move_iterator(rhs_obj.end()));
+            std::make_move_iterator(rhs.begin()),
+            std::make_move_iterator(rhs.end()));
         return temp;
     }
 
-    MEOJSON_INLINE object object::operator|(const json::value& rhs) &&
+    MEOJSON_INLINE object object::operator|(const json::object& rhs)&&
     {
-        const auto& rhs_obj = rhs.as_object();
-        _object_data.insert(rhs_obj.begin(), rhs_obj.end());
+        _object_data.insert(rhs.begin(), rhs.end());
         return std::move(*this);
     }
 
-    MEOJSON_INLINE object object::operator|(json::value&& rhs) &&
+    MEOJSON_INLINE object object::operator|(json::object&& rhs)&&
     {
         //_object_data.merge(std::move(rhs._object_data));
-        auto& rhs_obj = rhs.as_object();
         _object_data.insert(
-            std::make_move_iterator(rhs_obj.begin()),
-            std::make_move_iterator(rhs_obj.end()));
+            std::make_move_iterator(rhs.begin()),
+            std::make_move_iterator(rhs.end()));
         return std::move(*this);
     }
 
-    MEOJSON_INLINE object& object::operator|=(const json::value& rhs)
+    MEOJSON_INLINE object& object::operator|=(const json::object& rhs)
     {
-        const auto& rhs_obj = rhs.as_object();
-        _object_data.insert(rhs_obj.begin(), rhs_obj.end());
+        _object_data.insert(rhs.begin(), rhs.end());
         return *this;
     }
 
-    MEOJSON_INLINE object& object::operator|=(json::value&& rhs)
+    MEOJSON_INLINE object& object::operator|=(json::object&& rhs)
     {
-        auto& rhs_obj = rhs.as_object();
         _object_data.insert(
-            std::make_move_iterator(rhs_obj.begin()),
-            std::make_move_iterator(rhs_obj.end()));
+            std::make_move_iterator(rhs.begin()),
+            std::make_move_iterator(rhs.end()));
         return *this;
     }
 
