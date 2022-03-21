@@ -69,7 +69,7 @@ void parsing()
         std::cerr << "Parsing failed" << std::endl;
         return;
     }
-    auto value = ret.value();  // you can use rvalues if needed, like
+    auto& value = ret.value(); // you can use rvalues if needed, like
                                // `auto value = std::move(ret).value();`
     // Output: meojson
     std::cout << value["repo"].as_string() << std::endl;
@@ -140,7 +140,7 @@ void parsing()
         std::cerr << "Parsing failed" << std::endl;
         return;
     }
-    auto value = ret.value();  // you can use rvalues if needed, like
+    auto& value = ret.value(); // you can use rvalues if needed, like
                                // `auto value = std::move(ret).value();`
 
     // Output: MistEO
