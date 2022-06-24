@@ -96,6 +96,17 @@ namespace json
         template <typename... KeysThenDefaultValue>
         decltype(auto) get(KeysThenDefaultValue &&... keys_then_default_value) const;
 
+        template <typename Type>
+        std::optional<Type> find(size_t pos) const
+        {
+            return is_array() ? as_array().find<Type>(pos) : std::nullopt;
+        }
+        template <typename Type>
+        std::optional<Type> find(const std::string& key) const
+        {
+            return is_object() ? as_object().find<Type>(key) : std::nullopt;
+        }
+
         bool as_boolean() const;
         int as_integer() const;
         // unsigned as_unsigned() const;
@@ -236,8 +247,8 @@ namespace json
         const std::string get(size_t pos, const char* default_value) const;
         const value& get(size_t pos) const;
 
-        iterator find(size_t pos);
-        const_iterator find(size_t pos) const;
+        template <typename Type>
+        std::optional<Type> find(size_t pos) const;
 
         template <typename... Args> decltype(auto) emplace_back(Args &&...args);
 
@@ -328,8 +339,8 @@ namespace json
                               const char* default_value) const;
         const value& get(const std::string& key) const;
 
-        iterator find(const std::string& key) { return _object_data.find(key); }
-        const_iterator find(const std::string& key) const { return _object_data.find(key); }
+        template <typename Type>
+        std::optional<Type> find(const std::string& key) const;
 
         template <typename... Args> decltype(auto) emplace(Args &&...args);
         template <typename... Args> decltype(auto) insert(Args &&...args);
@@ -1274,24 +1285,13 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE array::iterator array::find(size_t pos)
+    template <typename Type>
+    MEOJSON_INLINE std::optional<Type> array::find(size_t pos) const
     {
-        if (contains(pos)) {
-            return _array_data.begin() + pos;
+        if (!contains(pos)) {
+            return std::nullopt;
         }
-        else {
-            return _array_data.end();
-        }
-    }
-
-    MEOJSON_INLINE array::const_iterator array::find(size_t pos) const
-    {
-        if (contains(pos)) {
-            return _array_data.begin() + pos;
-        }
-        else {
-            return _array_data.end();
-        }
+        return static_cast<Type>(_array_data.at(pos));
     }
 
     MEOJSON_INLINE array::iterator array::begin() noexcept
@@ -1701,6 +1701,16 @@ namespace json
             static value null;
             return null;
         }
+    }
+
+    template <typename Type>
+    MEOJSON_INLINE std::optional<Type> object::find(const std::string& key) const
+    {
+        auto iter = _object_data.find(key);
+        if (iter == _object_data.end()) {
+            return std::nullopt;
+        }
+        return static_cast<Type>(iter->second);
     }
 
     MEOJSON_INLINE object::iterator object::begin() noexcept
