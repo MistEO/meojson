@@ -86,6 +86,8 @@ namespace json
         bool is_object() const noexcept { return _type == value_type::Object; }
         bool contains(const std::string& key) const;
         bool contains(size_t pos) const;
+        bool exists(const std::string& key) const { return contains(key); }
+        bool exists(size_t pos) const { return contains(pos); }
         value_type type() const noexcept { return _type; }
         const value& at(size_t pos) const;
         const value& at(const std::string& key) const;
@@ -214,6 +216,7 @@ namespace json
         bool empty() const noexcept { return _array_data.empty(); }
         size_t size() const noexcept { return _array_data.size(); }
         bool contains(size_t pos) const { return pos < _array_data.size(); }
+        bool exists(size_t pos) const { return contains(pos); }
         const value& at(size_t pos) const;
         const std::string to_string() const;
         const std::string format(std::string shift_str = "    ",
@@ -232,6 +235,9 @@ namespace json
         const std::string get(size_t pos, std::string default_value) const;
         const std::string get(size_t pos, const char* default_value) const;
         const value& get(size_t pos) const;
+
+        iterator find(size_t pos);
+        const_iterator find(size_t pos) const;
 
         template <typename... Args> decltype(auto) emplace_back(Args &&...args);
 
@@ -299,6 +305,7 @@ namespace json
         bool empty() const noexcept { return _object_data.empty(); }
         size_t size() const noexcept { return _object_data.size(); }
         bool contains(const std::string& key) const { return _object_data.find(key) != _object_data.cend(); }
+        bool exists(const std::string& key) const { return contains(key); }
         const value& at(const std::string& key) const;
         const std::string to_string() const;
         const std::string format(std::string shift_str = "    ",
@@ -320,6 +327,9 @@ namespace json
         const std::string get(const std::string& key,
                               const char* default_value) const;
         const value& get(const std::string& key) const;
+
+        iterator find(const std::string& key) { return _object_data.find(key); }
+        const_iterator find(const std::string& key) const { return _object_data.find(key); }
 
         template <typename... Args> decltype(auto) emplace(Args &&...args);
         template <typename... Args> decltype(auto) insert(Args &&...args);
@@ -1261,6 +1271,26 @@ namespace json
         else {
             static value null;
             return null;
+        }
+    }
+
+    MEOJSON_INLINE array::iterator array::find(size_t pos)
+    {
+        if (contains(pos)) {
+            return _array_data.begin() + pos;
+        }
+        else {
+            return _array_data.end();
+        }
+    }
+
+    MEOJSON_INLINE array::const_iterator array::find(size_t pos) const
+    {
+        if (contains(pos)) {
+            return _array_data.begin() + pos;
+        }
+        else {
+            return _array_data.end();
         }
     }
 
