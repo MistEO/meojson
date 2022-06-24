@@ -96,12 +96,12 @@ namespace json
         template <typename... KeysThenDefaultValue>
         decltype(auto) get(KeysThenDefaultValue &&... keys_then_default_value) const;
 
-        template <typename Type>
+        template <typename Type = value>
         std::optional<Type> find(size_t pos) const
         {
             return is_array() ? as_array().find<Type>(pos) : std::nullopt;
         }
-        template <typename Type>
+        template <typename Type = value>
         std::optional<Type> find(const std::string& key) const
         {
             return is_object() ? as_object().find<Type>(key) : std::nullopt;
@@ -247,7 +247,7 @@ namespace json
         const std::string get(size_t pos, const char* default_value) const;
         const value& get(size_t pos) const;
 
-        template <typename Type>
+        template <typename Type = value>
         std::optional<Type> find(size_t pos) const;
 
         template <typename... Args> decltype(auto) emplace_back(Args &&...args);
@@ -339,7 +339,7 @@ namespace json
                               const char* default_value) const;
         const value& get(const std::string& key) const;
 
-        template <typename Type>
+        template <typename Type = value>
         std::optional<Type> find(const std::string& key) const;
 
         template <typename... Args> decltype(auto) emplace(Args &&...args);
