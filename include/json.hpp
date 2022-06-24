@@ -1288,6 +1288,7 @@ namespace json
     template <typename Type>
     MEOJSON_INLINE std::optional<Type> array::find(size_t pos) const
     {
+        static_assert(std::is_constructible<Type, value>::value, "Type can NOT be constructed by value");
         if (!contains(pos)) {
             return std::nullopt;
         }
@@ -1706,6 +1707,7 @@ namespace json
     template <typename Type>
     MEOJSON_INLINE std::optional<Type> object::find(const std::string& key) const
     {
+        static_assert(std::is_constructible<Type, value>::value, "Type can NOT be constructed by value");
         auto iter = _object_data.find(key);
         if (iter == _object_data.end()) {
             return std::nullopt;
