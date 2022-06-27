@@ -219,7 +219,8 @@ namespace json
         array(const raw_array& arr);
         array(raw_array&& arr) noexcept;
         array(std::initializer_list<raw_array::value_type> init_list);
-
+        explicit array(const value& val);
+        explicit array(value&& val);
         template<typename ArrayType> array(ArrayType arr);
 
         ~array() noexcept = default;
@@ -309,6 +310,8 @@ namespace json
         object(const raw_object& raw_obj);
         object(raw_object&& raw_obj);
         object(std::initializer_list<raw_object::value_type> init_list);
+        explicit object(const value& val);
+        explicit object(value&& val);
         template <typename MapType> object(MapType map);
 
         ~object() = default;
@@ -787,7 +790,7 @@ namespace json
 
     MEOJSON_INLINE void value::clear() noexcept
     {
-        *this = json::value();
+        *this = value();
     }
 
     MEOJSON_INLINE const std::string value::to_string() const
@@ -1037,12 +1040,24 @@ namespace json
         ;
     }
 
+    MEOJSON_INLINE array::array(const value& val)
+        : array(val.as_array())
+    {
+        ;
+    }
+
+    MEOJSON_INLINE array::array(value&& val)
+        : array(std::move(val.as_array()))
+    {
+        ;
+    }
+
     template<typename ArrayType>
     MEOJSON_INLINE array::array(ArrayType arr)
     {
         static_assert(
-            std::is_constructible<json::value, typename ArrayType::value_type>::value,
-            "Parameter can't be used to construct a json::value");
+            std::is_constructible<value, typename ArrayType::value_type>::value,
+            "Parameter can't be used to construct a value");
         _array_data.assign(
             std::make_move_iterator(arr.begin()),
             std::make_move_iterator(arr.end()));
@@ -1454,6 +1469,18 @@ namespace json
         for (const auto& [key, val] : init_list) {
             emplace(key, val);
         }
+    }
+
+    MEOJSON_INLINE object::object(const value& val)
+        : object(val.as_object())
+    {
+        ;
+    }
+
+    MEOJSON_INLINE object::object(value&& val)
+        : object(std::move(val.as_object()))
+    {
+        ;
     }
 
     MEOJSON_INLINE const value& object::at(const std::string& key) const
@@ -1896,6 +1923,7 @@ namespace json
                const std::string::const_iterator& cend) noexcept
             : _cur(cbegin), _end(cend)
         {
+            ;
         }
 
         std::optional<value> parse();
