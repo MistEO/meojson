@@ -82,16 +82,23 @@ void parsing()
     std::string nested_get = value.get("A_obj", "B_arr", 0, "C_str", "default_value");
     std::cout << nested_get << std::endl;
 
-    /*  Output:
-        1
-        2
-        3
-    */
-    // It's const!
-    for (const auto& ele : value.at("list").as_array()) {
-        int x = (int)ele;
-        std::cout << x << std::endl;
+    // Output: 1, 2, 3
+    // If the "list" is not an array or not exists, it will be a invalid optional;
+    auto opt = value.find<json::array>("list");
+    if (opt) {
+        auto& arr = opt.value();
+        for (auto&& elem : arr) {
+            std::cout << elem.as_integer() << std::endl;
+        }
     }
+    // more examples, it will output 3.141600
+    auto opt_n = value.find<double>("num");
+    if (opt_n) {
+        std::cout << opt_n.value() << std::endl;
+    }
+    // If you use the `find` without template argument, it will return a `std::optional<json::value>`
+    auto opt_v = value.find("not_exists");
+    std::cout << "Did we find the \"not_exists\"? " << opt_v.has_value() << std::endl;
 }
 
 void serializing()
