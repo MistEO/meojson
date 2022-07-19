@@ -11,6 +11,8 @@
 #include <variant>
 #include <string_view>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
 
 #define MEOJSON_INLINE inline
 
@@ -998,24 +1000,6 @@ namespace json
         return dst;
     }
 
-    MEOJSON_INLINE const value invalid_value()
-    {
-        return value(value::value_type::Invalid, value::var_t());
-    }
-
-    MEOJSON_INLINE std::ostream& operator<<(std::ostream& out, const value& val)
-    {
-        // TODO: format output
-
-        out << val.to_string();
-        return out;
-    }
-
-    // std::istream &operator>>(std::istream &in, value &val)
-    // {
-    //     return in;
-    // }
-
     // *************************
     // *       array impl      *
     // *************************
@@ -1969,11 +1953,66 @@ namespace json
         std::string::const_iterator _end;
     };
 
-    std::optional<value> parse(const std::string& content);
+    // *************************
+    // *      utils impl       *
+    // *************************
+
+    MEOJSON_INLINE const value invalid_value()
+    {
+        return value(value::value_type::Invalid, value::var_t());
+    }
+
+    MEOJSON_INLINE std::optional<value> parse(const std::string& content)
+    {
+        return parser::parse(content);
+    }
+
+    MEOJSON_INLINE std::ostream& operator<<(std::ostream& out, const value& val)
+    {
+        // TODO: format output
+
+        out << val.to_string();
+        return out;
+    }
+
+    // TODO
+    //std::istream &operator>>(std::istream &in, value &val)
+    //{
+    //    return in;
+    //}
+
+    MEOJSON_INLINE std::optional<value> open(const std::string& filename, bool check_bom = false)
+    {
+        std::ifstream ifs(filename, std::ios::in);
+        if (!ifs.is_open()) {
+            return std::nullopt;
+        }
+        std::stringstream iss;
+        iss << ifs.rdbuf();
+        ifs.close();
+        std::string str = iss.str();
+
+        if (check_bom) {
+            using uchar = unsigned char;
+            static constexpr uchar Bom_0 = 0xEF;
+            static constexpr uchar Bom_1 = 0xBB;
+            static constexpr uchar Bom_2 = 0xBF;
+
+            if (str.size() >= 3 &&
+                static_cast<uchar>(str.at(0)) == Bom_0 &&
+                static_cast<uchar>(str.at(1)) == Bom_1 &&
+                static_cast<uchar>(str.at(2)) == Bom_2) {
+                str.assign(str.begin() + 3, str.end());
+            }
+        }
+
+        return parse(str);
+    }
 
     // *************************
     // *      parser impl      *
     // *************************
+
     MEOJSON_INLINE std::optional<value> parser::parse(const std::string& content)
     {
         return parser(content.cbegin(), content.cend()).parse();
@@ -2347,11 +2386,6 @@ namespace json
         else {
             return false;
         }
-    }
-
-    MEOJSON_INLINE std::optional<value> parse(const std::string& content)
-    {
-        return parser::parse(content);
     }
 
     // *************************
