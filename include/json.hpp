@@ -1981,15 +1981,13 @@ namespace json
     //    return in;
     //}
 
-    MEOJSON_INLINE std::optional<value> open(const std::string& filename, bool check_bom = false)
+    MEOJSON_INLINE std::optional<value> open(const std::ifstream& ifs, bool check_bom = false)
     {
-        std::ifstream ifs(filename, std::ios::in);
         if (!ifs.is_open()) {
             return std::nullopt;
         }
         std::stringstream iss;
         iss << ifs.rdbuf();
-        ifs.close();
         std::string str = iss.str();
 
         if (check_bom) {
@@ -2007,6 +2005,18 @@ namespace json
         }
 
         return parse(str);
+    }
+
+    template<typename InputFilename>
+    MEOJSON_INLINE std::optional<value> open(const InputFilename& filepath, bool check_bom = false)
+    {
+        static_assert(std::is_constructible<std::ifstream, InputFilename>::value,
+            "InputFilename can't be used to construct a std::ifstream");
+
+        std::ifstream ifs(filepath, std::ios::in);
+        auto opt = open(ifs, check_bom);
+        ifs.close();
+        return opt;
     }
 
     // *************************
