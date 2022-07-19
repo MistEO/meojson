@@ -10,6 +10,7 @@
 #include <tuple>
 #include <variant>
 #include <string_view>
+#include <algorithm>
 
 #define MEOJSON_INLINE inline
 
@@ -130,8 +131,8 @@ namespace json
 
         // return raw string
         const std::string to_string() const;
-        const std::string format(std::string shift_str = "    ",
-                                 size_t basic_shift_count = 0) const;
+        const std::string format(bool ordered = false,
+            std::string shift_str = "    ", size_t basic_shift_count = 0) const;
 
         value& operator=(const value& rhs);
         value& operator=(value&&) noexcept;
@@ -231,8 +232,8 @@ namespace json
         bool exists(size_t pos) const { return contains(pos); }
         const value& at(size_t pos) const;
         const std::string to_string() const;
-        const std::string format(std::string shift_str = "    ",
-                                 size_t basic_shift_count = 0) const;
+        const std::string format(bool ordered = false,
+            std::string shift_str = "    ", size_t basic_shift_count = 0) const;
 
         bool get(size_t pos, bool default_value) const;
         int get(size_t pos, int default_value) const;
@@ -322,8 +323,8 @@ namespace json
         bool exists(const std::string& key) const { return contains(key); }
         const value& at(const std::string& key) const;
         const std::string to_string() const;
-        const std::string format(std::string shift_str = "    ",
-                                 size_t basic_shift_count = 0) const;
+        const std::string format(bool ordered = false,
+            std::string shift_str = "    ", size_t basic_shift_count = 0) const;
 
         bool get(const std::string& key, bool default_value) const;
         int get(const std::string& key, int default_value) const;
@@ -812,8 +813,8 @@ namespace json
         }
     }
 
-    MEOJSON_INLINE const std::string value::format(std::string shift_str,
-                                                   size_t basic_shift_count) const
+    MEOJSON_INLINE const std::string value::format(bool ordered,
+        std::string shift_str, size_t basic_shift_count) const
     {
         switch (_type) {
         case value_type::Null:
@@ -824,9 +825,9 @@ namespace json
         case value_type::String:
             return '"' + as_basic_type_str() + '"';
         case value_type::Array:
-            return as_array().format(shift_str, basic_shift_count);
+            return as_array().format(ordered, shift_str, basic_shift_count);
         case value_type::Object:
-            return as_object().format(shift_str, basic_shift_count);
+            return as_object().format(ordered, shift_str, basic_shift_count);
         default:
             throw exception("Unknown Value Type");
         }
@@ -1083,8 +1084,8 @@ namespace json
         return str;
     }
 
-    MEOJSON_INLINE const std::string array::format(std::string shift_str,
-                                                   size_t basic_shift_count) const
+    MEOJSON_INLINE const std::string array::format(bool ordered,
+        std::string shift_str, size_t basic_shift_count) const
     {
         std::string shift;
         for (size_t i = 0; i != basic_shift_count + 1; ++i) {
@@ -1093,7 +1094,7 @@ namespace json
 
         std::string str = "[";
         for (const value& val : _array_data) {
-            str += "\n" + shift + val.format(shift_str, basic_shift_count + 1) + ",";
+            str += "\n" + shift + val.format(ordered, shift_str, basic_shift_count + 1) + ",";
         }
         if (str.back() == ',') {
             str.pop_back(); // pop last ','
@@ -1509,7 +1510,8 @@ namespace json
     }
 
     MEOJSON_INLINE const std::string
-        object::format(std::string shift_str, size_t basic_shift_count) const
+        object::format(bool ordered,
+        std::string shift_str, size_t basic_shift_count) const
     {
         std::string shift;
         for (size_t i = 0; i != basic_shift_count + 1; ++i) {
@@ -1517,9 +1519,28 @@ namespace json
         }
 
         std::string str = "{";
-        for (const auto& [key, val] : _object_data) {
+        auto append_kv = [&](const std::string& key, const value& val) {
             str += "\n" + shift + "\"" + unescape_string(key) +
-                "\": " + val.format(shift_str, basic_shift_count + 1) + ",";
+                "\": " + val.format(ordered, shift_str, basic_shift_count + 1) + ",";
+        };
+
+        if (ordered) {
+            std::vector<raw_object::const_iterator> ordered_data;
+            for (auto it = _object_data.cbegin(); it != _object_data.cend(); ++it) {
+                ordered_data.emplace_back(it);
+            }
+            std::sort(ordered_data.begin(), ordered_data.end(),
+                [](const auto& lhs, const auto& rhs) {
+                    return lhs->first < rhs->first;
+                });
+            for (const auto& it : ordered_data) {
+                append_kv(it->first, it->second);
+            }
+        }
+        else {
+            for (const auto& [key, val] : _object_data) {
+                append_kv(key, val);
+            }
         }
         if (str.back() == ',') {
             str.pop_back(); // pop last ','
