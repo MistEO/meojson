@@ -100,15 +100,9 @@ namespace json
         decltype(auto) get(KeysThenDefaultValue &&... keys_then_default_value) const;
 
         template <typename Type = value>
-        std::optional<Type> find(size_t pos) const
-        {
-            return is_array() ? as_array().find<Type>(pos) : std::nullopt;
-        }
+        std::optional<Type> find(size_t pos) const;
         template <typename Type = value>
-        std::optional<Type> find(const std::string& key) const
-        {
-            return is_object() ? as_object().find<Type>(key) : std::nullopt;
-        }
+        std::optional<Type> find(const std::string& key) const;
 
         bool as_boolean() const;
         int as_integer() const;
@@ -222,6 +216,8 @@ namespace json
         array(const raw_array& arr);
         array(raw_array&& arr) noexcept;
         array(std::initializer_list<raw_array::value_type> init_list);
+        array(raw_array::size_type size);
+
         explicit array(const value& val);
         explicit array(value&& val);
         template<typename ArrayType> array(ArrayType arr);
@@ -603,6 +599,18 @@ namespace json
         else {
             static_assert(!sizeof(UniqueKey), "Parameter must be integral or std::string constructible");
         }
+    }
+
+    template <typename Type>
+    MEOJSON_INLINE std::optional<Type> value::find(size_t pos) const
+    {
+        return is_array() ? as_array().template find<Type>(pos) : std::nullopt;
+    }
+
+    template <typename Type>
+    MEOJSON_INLINE std::optional<Type> value::find(const std::string& key) const
+    {
+        return is_object() ? as_object().template find<Type>(key) : std::nullopt;
     }
 
     MEOJSON_INLINE bool value::as_boolean() const
@@ -1021,6 +1029,13 @@ namespace json
     MEOJSON_INLINE
         array::array(std::initializer_list<raw_array::value_type> init_list)
         : _array_data(init_list)
+    {
+        ;
+    }
+
+    MEOJSON_INLINE
+        array::array(raw_array::size_type size)
+        : _array_data(size)
     {
         ;
     }
