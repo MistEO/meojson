@@ -533,7 +533,10 @@ namespace json
     template<typename Type>
     MEOJSON_INLINE bool value::is() const noexcept
     {
-        if constexpr (std::is_same_v<Type, bool>) {
+        if constexpr (std::is_same_v<Type, value>) {
+            return true;
+        }
+        else if constexpr (std::is_same_v<Type, bool>) {
             return _type == value_type::Boolean;
         }
         else if constexpr (std::is_same_v<Type, int> ||
