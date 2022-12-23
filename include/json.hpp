@@ -30,7 +30,7 @@ namespace json
         using array_ptr = std::unique_ptr<array>;
         using object_ptr = std::unique_ptr<object>;
     public:
-        enum class value_type : char
+        enum class value_type: char
         {
             Invalid,
             Null,
@@ -87,6 +87,9 @@ namespace json
         bool is_string() const noexcept { return _type == value_type::String; }
         bool is_array() const noexcept { return _type == value_type::Array; }
         bool is_object() const noexcept { return _type == value_type::Object; }
+        template<typename Type>
+        bool is() const noexcept;
+
         bool contains(const std::string& key) const;
         bool contains(size_t pos) const;
         bool exists(const std::string& key) const { return contains(key); }
@@ -117,6 +120,8 @@ namespace json
         const std::string as_string() const;
         const array& as_array() const;
         const object& as_object() const;
+        template<typename Type>
+        Type as() const;
 
         array& as_array();
         object& as_object();
@@ -310,18 +315,18 @@ namespace json
         object(object&& rhs) noexcept = default;
         object(const raw_object& raw_obj);
         object(raw_object&& raw_obj);
-        object(std::initializer_list<raw_object::value_type> init_list);
+        object(std::initializer_list<value_type> init_list);
         explicit object(const value& val);
         explicit object(value&& val);
         template <typename MapType, typename EnableT = std::enable_if_t<
-            std::is_constructible_v<raw_object::value_type, typename MapType::value_type>>>
+            std::is_constructible_v<value_type, typename MapType::value_type>>>
             object(MapType map);
 
         ~object() = default;
 
         bool empty() const noexcept { return _object_data.empty(); }
         size_t size() const noexcept { return _object_data.size(); }
-        bool contains(const std::string& key) const { return _object_data.find(key) != _object_data.cend(); }
+        bool contains(const std::string& key) const;
         bool exists(const std::string& key) const { return contains(key); }
         const value& at(const std::string& key) const;
         const std::string to_string() const;
@@ -394,11 +399,11 @@ namespace json
     // *************************
     // *   exception declare   *
     // *************************
-    class exception : public std::exception
+    class exception: public std::exception
     {
     public:
         exception() = default;
-        exception(const std::string& msg) : _what(msg) {}
+        exception(const std::string& msg): _what(msg) {}
 
         exception(const exception&) = default;
         exception& operator=(const exception&) = default;
@@ -524,6 +529,37 @@ namespace json
 
     // for Pimpl
     MEOJSON_INLINE value::~value() = default;
+
+    template<typename Type>
+    MEOJSON_INLINE bool value::is() const noexcept
+    {
+        if constexpr (std::is_same_v<Type, bool>) {
+            return _type == value_type::Boolean;
+        }
+        else if constexpr (std::is_same_v<Type, int> ||
+            std::is_same_v<Type, unsigned> ||
+            std::is_same_v<Type, long> ||
+            std::is_same_v<Type, unsigned long> ||
+            std::is_same_v<Type, long long> ||
+            std::is_same_v<Type, unsigned long long> ||
+            std::is_same_v<Type, float> ||
+            std::is_same_v<Type, double> ||
+            std::is_same_v<Type, long double>) {
+            return _type == value_type::Number;
+        }
+        else if constexpr (std::is_same_v<Type, std::string>) {
+            return _type == value_type::String;
+        }
+        else if constexpr (std::is_same_v<Type, array>) {
+            return _type == value_type::Array;
+        }
+        else if constexpr (std::is_same_v<Type, object>) {
+            return _type == value_type::Object;
+        }
+        else {
+            static_assert(false, "Unsupported type");
+        }
+    }
 
     MEOJSON_INLINE bool value::contains(const std::string& key) const
     {
@@ -782,6 +818,12 @@ namespace json
         throw exception("Wrong Type or data empty");
     }
 
+    template<typename Type>
+    MEOJSON_INLINE Type value::as() const
+    {
+        return static_cast<Type>(*this);
+    }
+
     MEOJSON_INLINE const std::string& value::as_basic_type_str() const
     {
         return std::get<std::string>(_raw_data);
@@ -1017,7 +1059,7 @@ namespace json
     // *************************
     template <typename... Args> decltype(auto) array::emplace_back(Args &&...args)
     {
-        static_assert(std::is_constructible<raw_array::value_type, Args...>::value,
+        static_assert(std::is_constructible<value_type, Args...>::value,
                       "Parameter can't be used to construct a raw_array::value_type");
         return _array_data.emplace_back(std::forward<Args>(args)...);
     }
@@ -1031,7 +1073,7 @@ namespace json
     }
 
     MEOJSON_INLINE
-        array::array(std::initializer_list<raw_array::value_type> init_list)
+        array::array(std::initializer_list<value_type> init_list)
         : _array_data(init_list)
     {
         ;
@@ -1308,7 +1350,8 @@ namespace json
         if (!contains(pos)) {
             return std::nullopt;
         }
-        return static_cast<Type>(_array_data.at(pos));
+        const auto& val = _array_data.at(pos);
+        return val.is<Type>() ? std::optional<Type>(val.as<Type>()) : std::nullopt;
     }
 
     MEOJSON_INLINE array::iterator array::begin() noexcept
@@ -1433,7 +1476,7 @@ namespace json
     template <typename... Args> decltype(auto) object::emplace(Args &&...args)
     {
         static_assert(
-            std::is_constructible<raw_object::value_type, Args...>::value,
+            std::is_constructible<value_type, Args...>::value,
             "Parameter can't be used to construct a raw_object::value_type");
         return _object_data.emplace(std::forward<Args>(args)...);
     }
@@ -1482,6 +1525,11 @@ namespace json
         : object(std::move(val.as_object()))
     {
         ;
+    }
+
+    MEOJSON_INLINE bool object::contains(const std::string& key) const
+    {
+        return _object_data.find(key) != _object_data.cend();
     }
 
     MEOJSON_INLINE const value& object::at(const std::string& key) const
@@ -1760,7 +1808,8 @@ namespace json
         if (iter == _object_data.end()) {
             return std::nullopt;
         }
-        return static_cast<Type>(iter->second);
+        const auto& val = iter->second;
+        return val.is<Type>() ? std::optional<Type>(val.as<Type>()) : std::nullopt;
     }
 
     MEOJSON_INLINE object::iterator object::begin() noexcept
