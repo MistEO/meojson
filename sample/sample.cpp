@@ -140,4 +140,16 @@ void serializing()
     root |= other;
 
     std::cout << root.format(true) << std::endl;
+    
+    // test operator==()
+    std::cout << "\n  ****** sub test value equal ******\n" << std::endl;
+
+    json::value root_copy = root; // copy value `root`
+
+    std::cout << "before: root_copy "<< (root_copy == root ? "==" : "!=") << " root" << std::endl;
+
+    root_copy["hello"] = "windsgo hello"; // revise a string
+    root_copy["arr"].as_array()[2] = "B"; // revise an array element
+
+    std::cout << "after : root_copy "<< (root_copy == root ? "==" : "!=") << " root" << std::endl;
 }
