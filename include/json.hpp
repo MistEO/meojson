@@ -887,19 +887,19 @@ namespace json
         if (_type != rhs._type) return false;
 
         switch (_type) {
-            case value_type::Null:
-                return rhs.is_null();
-            case value_type::Boolean:
-            case value_type::Number:
-            case value_type::String:
-                return _raw_data == rhs._raw_data;
-            case value_type::Array:
-                return as_array() == rhs.as_array();
-            case value_type::Object:
-                return as_object() == rhs.as_object();
-            default:
-                throw exception("Unknown Value Type");
-        } 
+        case value_type::Null:
+            return rhs.is_null();
+        case value_type::Boolean:
+        case value_type::Number:
+        case value_type::String:
+            return _raw_data == rhs._raw_data;
+        case value_type::Array:
+            return as_array() == rhs.as_array();
+        case value_type::Object:
+            return as_object() == rhs.as_object();
+        default:
+            throw exception("Unknown Value Type");
+        }
     }
 
     MEOJSON_INLINE const value& value::operator[](size_t pos) const
@@ -1459,7 +1459,7 @@ namespace json
 
     MEOJSON_INLINE bool array::operator==(const array& rhs) const
     {
-        return (_array_data == rhs._array_data); // use std::vector<json::value>::operator==()
+        return _array_data == rhs._array_data;
     }
 
     // const raw_array &array::raw_data() const
