@@ -23,7 +23,7 @@ int main()
 
 void parsing()
 {
-    std::string content = R"(
+    std::string_view content = R"(
 {
     "repo": "meojson",
     "author": {
@@ -54,8 +54,8 @@ void parsing()
         return;
     }
     auto& value = ret.value(); // you can use rvalues if needed, like
-                               // `auto value = std::move(ret).value();`
-    // Output: meojson
+    // `auto value = std::move(ret).value();`
+// Output: meojson
     std::cout << value["repo"].as_string() << std::endl;
 
     /* Output:
@@ -140,16 +140,16 @@ void serializing()
     root |= other;
 
     std::cout << root.format(true) << std::endl;
-    
+
     // test operator==()
     std::cout << "\n  ****** sub test value equal ******\n" << std::endl;
 
     json::value root_copy = root; // copy value `root`
 
-    std::cout << "before: root_copy "<< (root_copy == root ? "==" : "!=") << " root" << std::endl;
+    std::cout << "before: root_copy " << (root_copy == root ? "==" : "!=") << " root" << std::endl;
 
     root_copy["hello"] = "windsgo hello"; // revise a string
     root_copy["arr"].as_array()[2] = "B"; // revise an array element
 
-    std::cout << "after : root_copy "<< (root_copy == root ? "==" : "!=") << " root" << std::endl;
+    std::cout << "after : root_copy " << (root_copy == root ? "==" : "!=") << " root" << std::endl;
 }
