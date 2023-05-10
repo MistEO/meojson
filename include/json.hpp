@@ -1957,9 +1957,12 @@ namespace json
     // *************************
     // *     parser declare    *
     // *************************
-    template <typename StringT, typename StringIterT = StringT::const_iterator>
+    template <typename StringT>
     class parser
     {
+    public:
+        using StringIterT = typename StringT::const_iterator;
+
     public:
         ~parser() noexcept = default;
 
@@ -2095,8 +2098,8 @@ namespace json
         return parser(content.cbegin(), content.cend()).parse();
     }
 
-    template<typename StringT, typename StringIterT>
-    MEOJSON_INLINE std::optional<value> parser<StringT, StringIterT>::parse()
+    template<typename StringT>
+    MEOJSON_INLINE std::optional<value> parser<StringT>::parse()
     {
         if (!skip_whitespace()) {
             return std::nullopt;
@@ -2127,8 +2130,8 @@ namespace json
         return result_value;
     }
 
-    template<typename StringT, typename StringIterT>
-    MEOJSON_INLINE value parser<StringT, StringIterT>::parse_value()
+    template<typename StringT>
+    MEOJSON_INLINE value parser<StringT>::parse_value()
     {
         switch (*_cur) {
         case 'n':
@@ -2159,8 +2162,8 @@ namespace json
         }
     }
 
-    template<typename StringT, typename StringIterT>
-    MEOJSON_INLINE value parser<StringT, StringIterT>::parse_null()
+    template<typename StringT>
+    MEOJSON_INLINE value parser<StringT>::parse_null()
     {
         static constexpr std::string_view null_string = "null";
 
@@ -2176,8 +2179,8 @@ namespace json
         return value();
     }
 
-    template<typename StringT, typename StringIterT>
-    MEOJSON_INLINE value parser<StringT, StringIterT>::parse_boolean()
+    template<typename StringT>
+    MEOJSON_INLINE value parser<StringT>::parse_boolean()
     {
         static constexpr std::string_view true_string = "true";
         static constexpr std::string_view false_string = "false";
@@ -2208,8 +2211,8 @@ namespace json
         }
     }
 
-    template<typename StringT, typename StringIterT>
-    MEOJSON_INLINE value parser<StringT, StringIterT>::parse_number()
+    template<typename StringT>
+    MEOJSON_INLINE value parser<StringT>::parse_number()
     {
         const auto first = _cur;
         if (*_cur == '-') {
@@ -2247,8 +2250,8 @@ namespace json
         return value(value::value_type::Number, std::string(first, _cur));
     }
 
-    template<typename StringT, typename StringIterT>
-    MEOJSON_INLINE value parser<StringT, StringIterT>::parse_string()
+    template<typename StringT>
+    MEOJSON_INLINE value parser<StringT>::parse_string()
     {
         auto string_opt = parse_stdstring();
         if (!string_opt) {
@@ -2257,8 +2260,8 @@ namespace json
         return value(value::value_type::String, std::move(string_opt).value());
     }
 
-    template<typename StringT, typename StringIterT>
-    MEOJSON_INLINE value parser<StringT, StringIterT>::parse_array()
+    template<typename StringT>
+    MEOJSON_INLINE value parser<StringT>::parse_array()
     {
         if (*_cur == '[') {
             ++_cur;
@@ -2309,8 +2312,8 @@ namespace json
         return array(std::move(result));
     }
 
-    template<typename StringT, typename StringIterT>
-    MEOJSON_INLINE value parser<StringT, StringIterT>::parse_object()
+    template<typename StringT>
+    MEOJSON_INLINE value parser<StringT>::parse_object()
     {
         if (*_cur == '{') {
             ++_cur;
@@ -2375,8 +2378,8 @@ namespace json
         return object(std::move(result));
     }
 
-    template<typename StringT, typename StringIterT>
-    MEOJSON_INLINE std::optional<std::string> parser<StringT, StringIterT>::parse_stdstring()
+    template<typename StringT>
+    MEOJSON_INLINE std::optional<std::string> parser<StringT>::parse_stdstring()
     {
         if (*_cur == '"') {
             ++_cur;
@@ -2434,8 +2437,8 @@ namespace json
         return std::string(first, last);
     }
 
-    template<typename StringT, typename StringIterT>
-    MEOJSON_INLINE bool parser<StringT, StringIterT>::skip_whitespace() noexcept
+    template<typename StringT>
+    MEOJSON_INLINE bool parser<StringT>::skip_whitespace() noexcept
     {
         while (_cur != _end) {
             switch (*_cur) {
@@ -2454,8 +2457,8 @@ namespace json
         return false;
     }
 
-    template<typename StringT, typename StringIterT>
-    MEOJSON_INLINE bool parser<StringT, StringIterT>::skip_digit()
+    template<typename StringT>
+    MEOJSON_INLINE bool parser<StringT>::skip_digit()
     {
         // At least one digit
         if (_cur != _end && std::isdigit(*_cur)) {
