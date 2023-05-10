@@ -1966,10 +1966,7 @@ namespace json
     public:
         ~parser() noexcept = default;
 
-        static std::optional<value> parse(const std::string& content);
-        static std::optional<value> parse(const std::wstring& content);
-        static std::optional<value> parse(std::string_view content);
-        static std::optional<value> parse(std::wstring_view content);
+        static std::optional<value> parse(const StringT& content);
 
     private:
         parser(StringIterT cbegin, StringIterT cend) noexcept
@@ -2009,24 +2006,10 @@ namespace json
         return value(value::value_type::Invalid, value::var_t());
     }
 
-    MEOJSON_INLINE std::optional<value> parse(const std::string& content)
+    template <typename StringT>
+    MEOJSON_INLINE std::optional<value> parse(const StringT& content)
     {
-        return parser<std::string>::parse(content);
-    }
-
-    MEOJSON_INLINE std::optional<value> parse(const std::wstring& content)
-    {
-        return parser<std::wstring>::parse(content);
-    }
-
-    MEOJSON_INLINE std::optional<value> parse(std::string_view content)
-    {
-        return parser<std::string_view>::parse(content);
-    }
-
-    MEOJSON_INLINE std::optional<value> parse(std::wstring_view content)
-    {
-        return parser<std::wstring_view>::parse(content);
+        return parser<StringT>::parse(content);
     }
 
     MEOJSON_INLINE std::ostream& operator<<(std::ostream& out, const value& val)
@@ -2086,16 +2069,10 @@ namespace json
     // *      parser impl      *
     // *************************
 
-    template<>
-    MEOJSON_INLINE std::optional<value> parser<std::string>::parse(const std::string& content)
+    template<typename StringT>
+    MEOJSON_INLINE std::optional<value> parser<StringT>::parse(const StringT& content)
     {
-        return parser(content.cbegin(), content.cend()).parse();
-    }
-
-    template<>
-    MEOJSON_INLINE std::optional<value> parser<std::string_view>::parse(std::string_view content)
-    {
-        return parser(content.cbegin(), content.cend()).parse();
+        return parser<StringT>(content.cbegin(), content.cend()).parse();
     }
 
     template<typename StringT>
