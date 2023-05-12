@@ -56,13 +56,13 @@ class basic_value
 public:
     enum class value_type : char
     {
-        Invalid,
-        Null,
-        Boolean,
-        String,
-        Number,
-        Array,
-        Object
+        invalid,
+        null,
+        boolean,
+        string,
+        number,
+        j_array,
+        j_object
     };
 
     using var_t = typename std::variant<string_t, array_ptr, object_ptr>;
@@ -92,24 +92,24 @@ public:
     basic_value(basic_object<string_t> obj);
 
     // Constructed from raw data
-    template <typename... Args>
-    basic_value(value_type type, Args&&... args);
+    template <typename... args_t>
+    basic_value(value_type type, args_t&&... args);
 
     // Prohibit conversion of other types to basic_value
-    template <typename T>
-    basic_value(T) = delete;
+    template <typename value_t>
+    basic_value(value_t) = delete;
 
     ~basic_value();
 
-    bool valid() const noexcept { return _type != value_type::Invalid; }
+    bool valid() const noexcept { return _type != value_type::invalid; }
     bool empty() const noexcept { return is_null(); }
-    bool is_null() const noexcept { return _type == value_type::Null; }
-    bool is_number() const noexcept { return _type == value_type::Number; }
-    bool is_boolean() const noexcept { return _type == value_type::Boolean; }
-    bool is_string() const noexcept { return _type == value_type::String; }
-    bool is_array() const noexcept { return _type == value_type::Array; }
-    bool is_object() const noexcept { return _type == value_type::Object; }
-    template <typename Type>
+    bool is_null() const noexcept { return _type == value_type::null; }
+    bool is_number() const noexcept { return _type == value_type::number; }
+    bool is_boolean() const noexcept { return _type == value_type::boolean; }
+    bool is_string() const noexcept { return _type == value_type::string; }
+    bool is_array() const noexcept { return _type == value_type::j_array; }
+    bool is_object() const noexcept { return _type == value_type::j_object; }
+    template <typename value_t>
     bool is() const noexcept;
 
     bool contains(const string_t& key) const;
@@ -124,10 +124,10 @@ public:
     template <typename... key_then_default_value_t>
     decltype(auto) get(key_then_default_value_t&&... keys_then_default_value) const;
 
-    template <typename Type = basic_value<string_t>>
-    std::optional<Type> find(size_t pos) const;
-    template <typename Type = basic_value<string_t>>
-    std::optional<Type> find(const string_t& key) const;
+    template <typename value_t = basic_value<string_t>>
+    std::optional<value_t> find(size_t pos) const;
+    template <typename value_t = basic_value<string_t>>
+    std::optional<value_t> find(const string_t& key) const;
 
     bool as_boolean() const;
     int as_integer() const;
@@ -142,16 +142,16 @@ public:
     const string_t as_string() const;
     const basic_array<string_t>& as_array() const;
     const basic_object<string_t>& as_object() const;
-    template <typename Type>
-    Type as() const;
+    template <typename value_t>
+    value_t as() const;
 
     basic_array<string_t>& as_array();
     basic_object<string_t>& as_object();
 
-    template <typename... Args>
-    decltype(auto) array_emplace(Args&&... args);
-    template <typename... Args>
-    decltype(auto) object_emplace(Args&&... args);
+    template <typename... args_t>
+    decltype(auto) array_emplace(args_t&&... args);
+    template <typename... args_t>
+    decltype(auto) object_emplace(args_t&&... args);
     void clear() noexcept;
 
     // return raw string
@@ -203,15 +203,15 @@ private:
     decltype(auto) get(std::tuple<key_then_default_value_t...> keys_then_default_value,
                        std::index_sequence<keys_indexes_t...>) const;
 
-    template <typename T, typename first_key_t, typename... rest_keys_t>
-    decltype(auto) get_aux(T&& default_value, first_key_t&& first, rest_keys_t&&... rest) const;
-    template <typename T, typename unique_key_t>
-    decltype(auto) get_aux(T&& default_value, unique_key_t&& first) const;
+    template <typename value_t, typename first_key_t, typename... rest_keys_t>
+    decltype(auto) get_helper(value_t&& default_value, first_key_t&& first, rest_keys_t&&... rest) const;
+    template <typename value_t, typename unique_key_t>
+    decltype(auto) get_helper(value_t&& default_value, unique_key_t&& first) const;
 
     const string_t& as_basic_type_str() const;
     string_t& as_basic_type_str();
 
-    value_type _type = value_type::Null;
+    value_type _type = value_type::null;
     var_t _raw_data;
 };
 
@@ -273,11 +273,11 @@ public:
     const string_t get(size_t pos, const char_t* default_value) const;
     const basic_value<string_t>& get(size_t pos) const;
 
-    template <typename Type = basic_value<string_t>>
-    std::optional<Type> find(size_t pos) const;
+    template <typename value_t = basic_value<string_t>>
+    std::optional<value_t> find(size_t pos) const;
 
-    template <typename... Args>
-    decltype(auto) emplace_back(Args&&... args);
+    template <typename... args_t>
+    decltype(auto) emplace_back(args_t&&... args);
 
     void clear() noexcept;
     // void erase(size_t pos);
@@ -344,9 +344,9 @@ public:
     basic_object(std::initializer_list<value_type> init_list);
     explicit basic_object(const basic_value<string_t>& val);
     explicit basic_object(basic_value<string_t>&& val);
-    template <typename MapType,
-              typename _ = std::enable_if_t<std::is_constructible_v<value_type, typename MapType::value_type>>>
-    basic_object(MapType map);
+    template <typename map_t,
+              typename _ = std::enable_if_t<std::is_constructible_v<value_type, typename map_t::value_type>>>
+    basic_object(map_t map);
 
     ~basic_object() = default;
 
@@ -371,13 +371,13 @@ public:
     const string_t get(const string_t& key, const char_t* default_value) const;
     const basic_value<string_t>& get(const string_t& key) const;
 
-    template <typename Type = basic_value<string_t>>
-    std::optional<Type> find(const string_t& key) const;
+    template <typename value_t = basic_value<string_t>>
+    std::optional<value_t> find(const string_t& key) const;
 
-    template <typename... Args>
-    decltype(auto) emplace(Args&&... args);
-    template <typename... Args>
-    decltype(auto) insert(Args&&... args);
+    template <typename... args_t>
+    decltype(auto) emplace(args_t&&... args);
+    template <typename... args_t>
+    decltype(auto) insert(args_t&&... args);
 
     void clear() noexcept;
     bool erase(const string_t& key);
@@ -438,7 +438,7 @@ protected:
 };
 
 // *************************
-// *      aux declare      *
+// *      helper declare      *
 // *************************
 template <typename string_t>
 string_t unescape_string(string_t str);
@@ -463,95 +463,95 @@ MEOJSON_INLINE basic_value<string_t>::basic_value(basic_value<string_t>&& rhs) n
 
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::basic_value(bool b)
-    : _type(value_type::Boolean), _raw_data(string_t(b ? "true" : "false"))
+    : _type(value_type::boolean), _raw_data(string_t(b ? "true" : "false"))
 {
     ;
 }
 
 template <typename string_t>
-MEOJSON_INLINE basic_value<string_t>::basic_value(int num) : _type(value_type::Number), _raw_data(std::to_string(num))
+MEOJSON_INLINE basic_value<string_t>::basic_value(int num) : _type(value_type::number), _raw_data(std::to_string(num))
 {
     ;
 }
 
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::basic_value(unsigned num)
-    : _type(value_type::Number), _raw_data(std::to_string(num))
+    : _type(value_type::number), _raw_data(std::to_string(num))
 {
     ;
 }
 
 template <typename string_t>
-MEOJSON_INLINE basic_value<string_t>::basic_value(long num) : _type(value_type::Number), _raw_data(std::to_string(num))
+MEOJSON_INLINE basic_value<string_t>::basic_value(long num) : _type(value_type::number), _raw_data(std::to_string(num))
 {
     ;
 }
 
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::basic_value(unsigned long num)
-    : _type(value_type::Number), _raw_data(std::to_string(num))
+    : _type(value_type::number), _raw_data(std::to_string(num))
 {
     ;
 }
 
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::basic_value(long long num)
-    : _type(value_type::Number), _raw_data(std::to_string(num))
+    : _type(value_type::number), _raw_data(std::to_string(num))
 {
     ;
 }
 
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::basic_value(unsigned long long num)
-    : _type(value_type::Number), _raw_data(std::to_string(num))
+    : _type(value_type::number), _raw_data(std::to_string(num))
 {
     ;
 }
 
 template <typename string_t>
-MEOJSON_INLINE basic_value<string_t>::basic_value(float num) : _type(value_type::Number), _raw_data(std::to_string(num))
+MEOJSON_INLINE basic_value<string_t>::basic_value(float num) : _type(value_type::number), _raw_data(std::to_string(num))
 {
     ;
 }
 
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::basic_value(double num)
-    : _type(value_type::Number), _raw_data(std::to_string(num))
+    : _type(value_type::number), _raw_data(std::to_string(num))
 {
     ;
 }
 
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::basic_value(long double num)
-    : _type(value_type::Number), _raw_data(std::to_string(num))
+    : _type(value_type::number), _raw_data(std::to_string(num))
 {
     ;
 }
 
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::basic_value(const char_t* str)
-    : _type(value_type::String), _raw_data(unescape_string(string_t(str)))
+    : _type(value_type::string), _raw_data(unescape_string(string_t(str)))
 {
     ;
 }
 
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::basic_value(string_t str)
-    : _type(value_type::String), _raw_data(unescape_string(std::move(str)))
+    : _type(value_type::string), _raw_data(unescape_string(std::move(str)))
 {
     ;
 }
 
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::basic_value(basic_array<string_t> arr)
-    : _type(value_type::Array), _raw_data(std::make_unique<basic_array<string_t>>(std::move(arr)))
+    : _type(value_type::j_array), _raw_data(std::make_unique<basic_array<string_t>>(std::move(arr)))
 {
     ;
 }
 
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::basic_value(basic_object<string_t> obj)
-    : _type(value_type::Object), _raw_data(std::make_unique<basic_object<string_t>>(std::move(obj)))
+    : _type(value_type::j_object), _raw_data(std::make_unique<basic_object<string_t>>(std::move(obj)))
 {
     ;
 }
@@ -561,29 +561,29 @@ template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::~basic_value() = default;
 
 template <typename string_t>
-template <typename Type>
+template <typename value_t>
 MEOJSON_INLINE bool basic_value<string_t>::is() const noexcept
 {
     if constexpr (std::is_same_v<Type, basic_value<string_t>>) {
         return true;
     }
     else if constexpr (std::is_same_v<Type, bool>) {
-        return _type == value_type::Boolean;
+        return _type == value_type::boolean;
     }
     else if constexpr (std::is_same_v<Type, int> || std::is_same_v<Type, unsigned> || std::is_same_v<Type, long> ||
                        std::is_same_v<Type, unsigned long> || std::is_same_v<Type, long long> ||
                        std::is_same_v<Type, unsigned long long> || std::is_same_v<Type, float> ||
                        std::is_same_v<Type, double> || std::is_same_v<Type, long double>) {
-        return _type == value_type::Number;
+        return _type == value_type::number;
     }
     else if constexpr (std::is_same_v<Type, string_t>) {
-        return _type == value_type::String;
+        return _type == value_type::string;
     }
     else if constexpr (std::is_same_v<Type, basic_array<string_t>>) {
-        return _type == value_type::Array;
+        return _type == value_type::j_array;
     }
     else if constexpr (std::is_same_v<Type, basic_object<string_t>>) {
-        return _type == value_type::Object;
+        return _type == value_type::j_object;
     }
     else {
         static_assert(!sizeof(Type), "Unsupported type");
@@ -628,25 +628,25 @@ MEOJSON_INLINE decltype(auto) basic_value<string_t>::get(
     std::tuple<key_then_default_value_t...> keys_then_default_value, std::index_sequence<keys_indexes_t...>) const
 {
     constexpr unsigned long default_value_index = sizeof...(key_then_default_value_t) - 1;
-    return get_aux(std::get<default_value_index>(keys_then_default_value),
-                   std::get<keys_indexes_t>(keys_then_default_value)...);
+    return get_helper(std::get<default_value_index>(keys_then_default_value),
+                      std::get<keys_indexes_t>(keys_then_default_value)...);
 }
 
 template <typename string_t>
-template <typename T, typename first_key_t, typename... rest_keys_t>
-MEOJSON_INLINE decltype(auto) basic_value<string_t>::get_aux(T&& default_value, first_key_t&& first,
-                                                             rest_keys_t&&... rest) const
+template <typename value_t, typename first_key_t, typename... rest_keys_t>
+MEOJSON_INLINE decltype(auto) basic_value<string_t>::get_helper(value_t&& default_value, first_key_t&& first,
+                                                                rest_keys_t&&... rest) const
 {
     if constexpr (std::is_constructible_v<string_t, first_key_t>) {
         return is_object() ? as_object()
                                  .get(std::forward<first_key_t>(first))
-                                 .get_aux(std::forward<T>(default_value), std::forward<rest_keys_t>(rest)...)
+                                 .get_helper(std::forward<value_t>(default_value), std::forward<rest_keys_t>(rest)...)
                            : default_value;
     }
     else if constexpr (std::is_integral_v<typename std::remove_reference<first_key_t>::type>) {
         return is_array() ? as_array()
                                 .get(std::forward<first_key_t>(first))
-                                .get_aux(std::forward<T>(default_value), std::forward<rest_keys_t>(rest)...)
+                                .get_helper(std::forward<value_t>(default_value), std::forward<rest_keys_t>(rest)...)
                           : default_value;
     }
     else {
@@ -655,15 +655,15 @@ MEOJSON_INLINE decltype(auto) basic_value<string_t>::get_aux(T&& default_value, 
 }
 
 template <typename string_t>
-template <typename T, typename unique_key_t>
-MEOJSON_INLINE decltype(auto) basic_value<string_t>::get_aux(T&& default_value, unique_key_t&& first) const
+template <typename value_t, typename unique_key_t>
+MEOJSON_INLINE decltype(auto) basic_value<string_t>::get_helper(value_t&& default_value, unique_key_t&& first) const
 {
     if constexpr (std::is_constructible_v<string_t, unique_key_t>) {
-        return is_object() ? as_object().get(std::forward<unique_key_t>(first), std::forward<T>(default_value))
+        return is_object() ? as_object().get(std::forward<unique_key_t>(first), std::forward<value_t>(default_value))
                            : default_value;
     }
-    else if constexpr (std::is_integral_v<typename std::remove_reference<unique_key_t>::type>) {
-        return is_array() ? as_array().get(std::forward<unique_key_t>(first), std::forward<T>(default_value))
+    else if constexpr (std::is_integral_v<typename std::remove_reference<unique_key_t>>) {
+        return is_array() ? as_array().get(std::forward<unique_key_t>(first), std::forward<value_t>(default_value))
                           : default_value;
     }
     else {
@@ -672,17 +672,17 @@ MEOJSON_INLINE decltype(auto) basic_value<string_t>::get_aux(T&& default_value, 
 }
 
 template <typename string_t>
-template <typename Type>
-MEOJSON_INLINE std::optional<Type> basic_value<string_t>::find(size_t pos) const
+template <typename value_t>
+MEOJSON_INLINE std::optional<value_t> basic_value<string_t>::find(size_t pos) const
 {
-    return is_array() ? as_array().template find<Type>(pos) : std::nullopt;
+    return is_array() ? as_array().template find<value_t>(pos) : std::nullopt;
 }
 
 template <typename string_t>
-template <typename Type>
-MEOJSON_INLINE std::optional<Type> basic_value<string_t>::find(const string_t& key) const
+template <typename value_t>
+MEOJSON_INLINE std::optional<value_t> basic_value<string_t>::find(const string_t& key) const
 {
-    return is_object() ? as_object().template find<Type>(key) : std::nullopt;
+    return is_object() ? as_object().template find<value_t>(key) : std::nullopt;
 }
 
 template <typename string_t>
@@ -852,10 +852,10 @@ MEOJSON_INLINE basic_object<string_t>& basic_value<string_t>::as_object()
 }
 
 template <typename string_t>
-template <typename Type>
-MEOJSON_INLINE Type basic_value<string_t>::as() const
+template <typename value_t>
+MEOJSON_INLINE value_t basic_value<string_t>::as() const
 {
-    return static_cast<Type>(*this);
+    return static_cast<value_t>(*this);
 }
 
 template <typename string_t>
@@ -871,17 +871,17 @@ MEOJSON_INLINE string_t& basic_value<string_t>::as_basic_type_str()
 }
 
 template <typename string_t>
-template <typename... Args>
-MEOJSON_INLINE decltype(auto) basic_value<string_t>::array_emplace(Args&&... args)
+template <typename... args_t>
+MEOJSON_INLINE decltype(auto) basic_value<string_t>::array_emplace(args_t&&... args)
 {
-    return as_array().emplace_back(std::forward<Args>(args)...);
+    return as_array().emplace_back(std::forward<args_t>(args)...);
 }
 
 template <typename string_t>
-template <typename... Args>
-MEOJSON_INLINE decltype(auto) basic_value<string_t>::object_emplace(Args&&... args)
+template <typename... args_t>
+MEOJSON_INLINE decltype(auto) basic_value<string_t>::object_emplace(args_t&&... args)
 {
-    return as_object().emplace(std::forward<Args>(args)...);
+    return as_object().emplace(std::forward<args_t>(args)...);
 }
 
 template <typename string_t>
@@ -894,16 +894,16 @@ template <typename string_t>
 MEOJSON_INLINE const string_t basic_value<string_t>::to_string() const
 {
     switch (_type) {
-    case value_type::Null:
+    case value_type::null:
         return "null";
-    case value_type::Boolean:
-    case value_type::Number:
+    case value_type::boolean:
+    case value_type::number:
         return as_basic_type_str();
-    case value_type::String:
+    case value_type::string:
         return '"' + as_basic_type_str() + '"';
-    case value_type::Array:
+    case value_type::j_array:
         return as_array().to_string();
-    case value_type::Object:
+    case value_type::j_object:
         return as_object().to_string();
     default:
         throw exception("Unknown basic_value Type");
@@ -915,16 +915,16 @@ MEOJSON_INLINE const string_t basic_value<string_t>::format(bool ordered, string
                                                             size_t basic_shift_count) const
 {
     switch (_type) {
-    case value_type::Null:
+    case value_type::null:
         return "null";
-    case value_type::Boolean:
-    case value_type::Number:
+    case value_type::boolean:
+    case value_type::number:
         return as_basic_type_str();
-    case value_type::String:
+    case value_type::string:
         return '"' + as_basic_type_str() + '"';
-    case value_type::Array:
+    case value_type::j_array:
         return as_array().format(ordered, shift_str, basic_shift_count);
-    case value_type::Object:
+    case value_type::j_object:
         return as_object().format(ordered, shift_str, basic_shift_count);
     default:
         throw exception("Unknown basic_value Type");
@@ -949,15 +949,15 @@ MEOJSON_INLINE bool basic_value<string_t>::operator==(const basic_value<string_t
     if (_type != rhs._type) return false;
 
     switch (_type) {
-    case value_type::Null:
+    case value_type::null:
         return rhs.is_null();
-    case value_type::Boolean:
-    case value_type::Number:
-    case value_type::String:
+    case value_type::boolean:
+    case value_type::number:
+    case value_type::string:
         return _raw_data == rhs._raw_data;
-    case value_type::Array:
+    case value_type::j_array:
         return as_array() == rhs.as_array();
-    case value_type::Object:
+    case value_type::j_object:
         return as_object() == rhs.as_object();
     default:
         throw exception("Unknown basic_value Type");
@@ -1077,11 +1077,11 @@ MEOJSON_INLINE basic_value<string_t>& basic_value<string_t>::operator+=(basic_ar
 }
 
 template <typename string_t>
-template <typename... Args>
-basic_value<string_t>::basic_value(value_type type, Args&&... args)
-    : _type(type), _raw_data(std::forward<Args>(args)...)
+template <typename... args_t>
+basic_value<string_t>::basic_value(value_type type, args_t&&... args)
+    : _type(type), _raw_data(std::forward<args_t>(args)...)
 {
-    static_assert(std::is_constructible_v<var_t, Args...>, "Parameter can't be used to construct a var_t");
+    static_assert(std::is_constructible_v<var_t, args_t...>, "Parameter can't be used to construct a var_t");
 }
 
 template <typename string_t>
@@ -1108,12 +1108,12 @@ MEOJSON_INLINE typename basic_value<string_t>::var_t basic_value<string_t>::deep
 // *       basic_array impl      *
 // *************************
 template <typename string_t>
-template <typename... Args>
-decltype(auto) basic_array<string_t>::emplace_back(Args&&... args)
+template <typename... args_t>
+decltype(auto) basic_array<string_t>::emplace_back(args_t&&... args)
 {
-    static_assert(std::is_constructible_v<value_type, Args...>,
+    static_assert(std::is_constructible_v<value_type, args_t...>,
                   "Parameter can't be used to construct a raw_array::value_type");
-    return _array_data.emplace_back(std::forward<Args>(args)...);
+    return _array_data.emplace_back(std::forward<args_t>(args)...);
 }
 
 template <typename string_t>
@@ -1412,15 +1412,15 @@ MEOJSON_INLINE const basic_value<string_t>& basic_array<string_t>::get(size_t po
 }
 
 template <typename string_t>
-template <typename Type>
-MEOJSON_INLINE std::optional<Type> basic_array<string_t>::find(size_t pos) const
+template <typename value_t>
+MEOJSON_INLINE std::optional<value_t> basic_array<string_t>::find(size_t pos) const
 {
     static_assert(std::is_constructible_v<Type, basic_value<string_t>>, "Type can NOT be constructed by basic_value");
     if (!contains(pos)) {
         return std::nullopt;
     }
     const auto& val = _array_data.at(pos);
-    return val.is<Type>() ? std::optional<Type>(val.as<Type>()) : std::nullopt;
+    return val.is<value_t>() ? std::optional<value_t>(val.as<value_t>()) : std::nullopt;
 }
 
 template <typename string_t>
@@ -1567,19 +1567,19 @@ MEOJSON_INLINE bool basic_array<string_t>::operator==(const basic_array<string_t
 // *      basic_object impl      *
 // *************************
 template <typename string_t>
-template <typename... Args>
-decltype(auto) basic_object<string_t>::emplace(Args&&... args)
+template <typename... args_t>
+decltype(auto) basic_object<string_t>::emplace(args_t&&... args)
 {
-    static_assert(std::is_constructible_v<value_type, Args...>,
+    static_assert(std::is_constructible_v<value_type, args_t...>,
                   "Parameter can't be used to construct a raw_object::value_type");
-    return _object_data.emplace(std::forward<Args>(args)...);
+    return _object_data.emplace(std::forward<args_t>(args)...);
 }
 
 template <typename string_t>
-template <typename... Args>
-decltype(auto) basic_object<string_t>::insert(Args&&... args)
+template <typename... args_t>
+decltype(auto) basic_object<string_t>::insert(args_t&&... args)
 {
-    return _object_data.insert(std::forward<Args>(args)...);
+    return _object_data.insert(std::forward<args_t>(args)...);
 }
 
 template <typename string_t>
@@ -1908,16 +1908,17 @@ MEOJSON_INLINE const basic_value<string_t>& basic_object<string_t>::get(const st
 }
 
 template <typename string_t>
-template <typename Type>
-MEOJSON_INLINE std::optional<Type> basic_object<string_t>::find(const string_t& key) const
+template <typename value_t>
+MEOJSON_INLINE std::optional<value_t> basic_object<string_t>::find(const string_t& key) const
 {
-    static_assert(std::is_constructible_v<Type, basic_value<string_t>>, "Type can NOT be constructed by basic_value");
+    static_assert(std::is_constructible_v<value_t, basic_value<string_t>>,
+                  "value_t can NOT be constructed by basic_value");
     auto iter = _object_data.find(key);
     if (iter == _object_data.end()) {
         return std::nullopt;
     }
     const auto& val = iter->second;
-    return val.is<Type>() ? std::optional<Type>(val.as<Type>()) : std::nullopt;
+    return val.is<value_t>() ? std::optional<value_t>(val.as<value_t>()) : std::nullopt;
 }
 
 template <typename string_t>
@@ -2035,8 +2036,8 @@ MEOJSON_INLINE std::ostream& operator<<(std::ostream& out, const basic_object<st
 }
 
 template <typename string_t>
-template <typename MapType, typename _>
-basic_object<string_t>::basic_object(MapType map)
+template <typename map_t, typename _>
+basic_object<string_t>::basic_object(map_t map)
 {
     _object_data.insert(std::make_move_iterator(map.begin()), std::make_move_iterator(map.end()));
 }
@@ -2064,7 +2065,7 @@ private:
     basic_value<string_t> parse_null();
     basic_value<string_t> parse_boolean();
     basic_value<string_t> parse_number();
-    // parse and return a basic_value<string_t> whose type is value_type::String
+    // parse and return a basic_value<string_t> whose type is value_type::string
     basic_value<string_t> parse_string();
     basic_value<string_t> parse_array();
     basic_value<string_t> parse_object();
@@ -2087,7 +2088,7 @@ private:
 template <typename string_t>
 MEOJSON_INLINE const basic_value<string_t> invalid_value()
 {
-    return basic_value<string_t>(basic_value<string_t>::value_type::Invalid, basic_value<string_t>::var_t());
+    return basic_value<string_t>(basic_value<string_t>::value_type::invalid, basic_value<string_t>::var_t());
 }
 
 template <typename parsing_t, typename string_t = default_string_t>
@@ -2285,7 +2286,7 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_number()
         ++_cur;
     }
 
-    // Numbers cannot have leading zeroes
+    // numbers cannot have leading zeroes
     if (_cur != _end && *_cur == '0' && _cur + 1 != _end && std::isdigit(*(_cur + 1))) {
         return invalid_value();
     }
@@ -2313,7 +2314,7 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_number()
         }
     }
 
-    return basic_value<string_t>(basic_value<string_t>::value_type::Number, string_t(first, _cur));
+    return basic_value<string_t>(basic_value<string_t>::value_type::number, string_t(first, _cur));
 }
 
 template <typename parsing_t, typename string_t>
@@ -2323,7 +2324,7 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_string()
     if (!string_opt) {
         return invalid_value();
     }
-    return basic_value<string_t>(basic_value<string_t>::value_type::String, std::move(string_opt).value());
+    return basic_value<string_t>(basic_value<string_t>::value_type::string, std::move(string_opt).value());
 }
 
 template <typename parsing_t, typename string_t>
@@ -2547,7 +2548,7 @@ MEOJSON_INLINE bool parser<parsing_t, string_t>::skip_digit()
 }
 
 // *************************
-// *      aux impl         *
+// *      helper impl         *
 // *************************
 
 template <typename string_t>
