@@ -5,23 +5,27 @@
 
 #include "json.hpp"
 
-void parsing();
-void serializing();
+bool parsing();
+bool serializing();
 
 int main()
 {
     std::cout << "\n****** Parsing ******\n" << std::endl;
 
-    parsing();
+    if (!parsing()) {
+        return -1;
+    }
 
     std::cout << "\n****** Serializing ******\n" << std::endl;
 
-    serializing();
+    if (!serializing()) {
+        return -1;
+    }
 
     return 0;
 }
 
-void parsing()
+bool parsing()
 {
     std::string_view content = R"(
 {
@@ -51,7 +55,7 @@ void parsing()
 
     if (!ret) {
         std::cerr << "Parsing failed" << std::endl;
-        return;
+        return false;
     }
     auto& value = ret.value(); // you can use rvalues if needed, like
     // `auto value = std::move(ret).value();`
@@ -99,9 +103,11 @@ void parsing()
     // If you use the `find` without template argument, it will return a `std::optional<json::value>`
     auto opt_v = value.find("not_exists");
     std::cout << "Did we find the \"not_exists\"? " << opt_v.has_value() << std::endl;
+
+    return true;
 }
 
-void serializing()
+bool serializing()
 {
     json::value root;
     root["hello"] = "meojson";
@@ -152,4 +158,6 @@ void serializing()
     root_copy["arr"].as_array()[2] = "B"; // revise an array element
 
     std::cout << "after : root_copy " << (root_copy == root ? "==" : "!=") << " root" << std::endl;
+
+    return true;
 }

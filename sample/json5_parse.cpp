@@ -2,24 +2,28 @@
 
 #include "json5.hpp"
 
-void parsing();
-void parsing_error();
+bool parsing();
+bool parsing_error();
 
 int main()
 {
     /*** Parsing Json5 ***/
-    std::cout << "\n****** Parsing ******\n" << std::endl;
+    std::cout << "\n****** Parsing 5 ******\n" << std::endl;
 
-    parsing();
+    if (!parsing()) {
+        return -1;
+    }
 
-    std::cout << "\n****** Parsing error ******\n" << std::endl;
+    std::cout << "\n****** Parsing error 5 ******\n" << std::endl;
 
-    parsing_error();
+    if (!parsing_error()) {
+        return -1;
+    }
 
     return 0;
 }
 
-void parsing()
+bool parsing()
 {
     std::string_view content = R"(
 // 这是一段json5格式的信息
@@ -37,7 +41,7 @@ void parsing()
     auto ret = json::parse5(content);
     if (!ret) {
         std::cerr << "Parsing failed" << std::endl;
-        return;
+        return false;
     }
     auto& value = ret.value(); // you can use rvalues if needed, like
                                // `auto value = std::move(ret).value();`
@@ -49,9 +53,10 @@ void parsing()
     std::cout << str << std::endl;
 
     // for more json::value usage, please refer to sample.cpp
+    return true;
 }
 
-void parsing_error()
+bool parsing_error()
 {
     std::string error_content = "{ error }";
     std::string error_msg;
@@ -59,5 +64,8 @@ void parsing_error()
     if (!err_ret) {
         std::cout << "Parsing failed" << std::endl;
         std::cout << error_msg << std::endl;
+        return true;
     }
+
+    return false;
 }
