@@ -56,7 +56,7 @@ jobs:
           name: sample-linux
           path: build
 
-  macOS:
+  macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3

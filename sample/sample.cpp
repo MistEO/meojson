@@ -148,7 +148,7 @@ bool serializing()
     std::cout << root.format(true) << std::endl;
 
     // test operator==()
-    std::cout << "\n  ****** sub test value equal ******\n" << std::endl;
+    std::cout << "\n****** sub test value equal ******\n" << std::endl;
 
     json::value root_copy = root; // copy value `root`
 
