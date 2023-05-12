@@ -27,7 +27,7 @@ int main()
 
 bool parsing()
 {
-    std::string_view content = R"(
+    std::wstring_view content = LR"(
 {
     "repo": "meojson",
     "author": {
@@ -51,7 +51,7 @@ bool parsing()
 }
     )";
 
-    auto ret = json::parse(content);
+    auto ret = json::parse<std::wstring_view, std::wstring>(content);
 
     if (!ret) {
         std::cerr << "Parsing failed" << std::endl;
@@ -60,35 +60,35 @@ bool parsing()
     auto& value = ret.value(); // you can use rvalues if needed, like
     // `auto value = std::move(ret).value();`
 // Output: meojson
-    std::cout << value["repo"].as_string() << std::endl;
+    std::wcout << value[L"repo"].as_string() << std::endl;
 
     /* Output:
         ChingCdesu's homepage: https://github.com/ChingCdesu
         MistEO's homepage: https://github.com/MistEO
     */
-    for (auto&& [name, homepage] : value["author"].as_object()) {
-        std::cout << name << "'s homepage: " << homepage.as_string() << std::endl;
+    for (auto&& [name, homepage] : value[L"author"].as_object()) {
+        std::wcout << name << "'s homepage: " << homepage.as_string() << std::endl;
     }
 
     // Output: abc
-    std::string str = (std::string)value["str"];    // it is equivalent to `value["str"].as_string()`
-    std::cout << str << std::endl;
+    std::wstring str = (std::wstring)value[L"str"];    // it is equivalent to `value["str"].as_string()`
+    std::wcout << str << std::endl;
 
     // Output: 3.141600
-    double num = value["num"].as_double();          // similarly, you can use `(double)value["num"]`
-    std::cout << num << std::endl;
+    double num = value[L"num"].as_double();          // similarly, you can use `(double)value["num"]`
+    std::wcout << num << std::endl;
 
     // Output: default_value
-    std::string get = value.get("maybe_exists", "default_value");
-    std::cout << get << std::endl;
+    std::wstring get = value.get(L"maybe_exists", L"default_value");
+    std::wcout << get << std::endl;
 
     // Output: you found me!
-    std::string nested_get = value.get("A_obj", "B_arr", 0, "C_str", "default_value");
-    std::cout << nested_get << std::endl;
+    std::wstring nested_get = value.get(L"A_obj", L"B_arr", 0, L"C_str", L"default_value");
+    std::wcout << nested_get << std::endl;
 
     // Output: 1, 2, 3
     // If the "list" is not an array or not exists, it will be a invalid optional;
-    auto opt = value.find<json::array>("list");
+    auto opt = value.find<json::array>(L"list");
     if (opt) {
         auto& arr = opt.value();
         for (auto&& elem : arr) {
@@ -96,12 +96,12 @@ bool parsing()
         }
     }
     // more examples, it will output 3.141600
-    auto opt_n = value.find<double>("num");
+    auto opt_n = value.find<double>(L"num");
     if (opt_n) {
         std::cout << opt_n.value() << std::endl;
     }
     // If you use the `find` without template argument, it will return a `std::optional<json::value>`
-    auto opt_v = value.find("not_exists");
+    auto opt_v = value.find(L"not_exists");
     std::cout << "Did we find the \"not_exists\"? " << opt_v.has_value() << std::endl;
 
     return true;
