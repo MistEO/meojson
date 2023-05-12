@@ -21,7 +21,7 @@ int main()
 
 void parsing()
 {
-    std::string content = R"(
+    std::string_view content = R"(
 // 这是一段json5格式的信息
 {
   名字: "MistEO",                  /* key的引号可省略 */
