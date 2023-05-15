@@ -27,21 +27,21 @@ class basic_object;
 
 using default_string_t = std::string;
 
-using value = typename basic_value<default_string_t>;
-using array = typename basic_array<default_string_t>;
-using object = typename basic_object<default_string_t>;
+using value = basic_value<default_string_t>;
+using array = basic_array<default_string_t>;
+using object = basic_object<default_string_t>;
 
-using wvalue = typename basic_value<std::wstring>;
-using warray = typename basic_array<std::wstring>;
-using wobject = typename basic_object<std::wstring>;
+using wvalue = basic_value<std::wstring>;
+using warray = basic_array<std::wstring>;
+using wobject = basic_object<std::wstring>;
 
-using u16value = typename basic_value<std::u16string>;
-using u16array = typename basic_array<std::u16string>;
-using u16object = typename basic_object<std::u16string>;
+using u16value = basic_value<std::u16string>;
+using u16array = basic_array<std::u16string>;
+using u16object = basic_object<std::u16string>;
 
-using u32value = typename basic_value<std::u32string>;
-using u32array = typename basic_array<std::u32string>;
-using u32object = typename basic_object<std::u32string>;
+using u32value = basic_value<std::u32string>;
+using u32array = basic_array<std::u32string>;
+using u32object = basic_object<std::u32string>;
 
 // *************************
 // *     basic_value declare     *
@@ -50,8 +50,8 @@ using u32object = typename basic_object<std::u32string>;
 template <typename string_t>
 class basic_value
 {
-    using array_ptr = std::unique_ptr<typename basic_array<string_t>>;
-    using object_ptr = std::unique_ptr<typename basic_object<string_t>>;
+    using array_ptr = std::unique_ptr<basic_array<string_t>>;
+    using object_ptr = std::unique_ptr<basic_object<string_t>>;
 
 public:
     enum class value_type : char
@@ -65,7 +65,7 @@ public:
         j_object
     };
 
-    using var_t = typename std::variant<string_t, array_ptr, object_ptr>;
+    using var_t = std::variant<string_t, array_ptr, object_ptr>;
     using char_t = typename string_t::value_type;
 
 public:
@@ -250,7 +250,7 @@ template <typename string_t>
 class basic_array
 {
 public:
-    using raw_array = typename std::vector<typename basic_value<string_t>>;
+    using raw_array = std::vector<typename basic_value<string_t>>;
     using value_type = typename raw_array::value_type;
     using iterator = typename raw_array::iterator;
     using const_iterator = typename raw_array::const_iterator;
@@ -352,7 +352,7 @@ template <typename string_t>
 class basic_object
 {
 public:
-    using raw_object = typename std::unordered_map<string_t, typename basic_value<string_t>>;
+    using raw_object = std::unordered_map<string_t, basic_value<string_t>>;
     using value_type = typename raw_object::value_type;
     using iterator = typename raw_object::iterator;
     using const_iterator = typename raw_object::const_iterator;
