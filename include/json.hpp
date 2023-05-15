@@ -269,7 +269,7 @@ public:
 
     explicit basic_array(const basic_value<string_t>& val);
     explicit basic_array(basic_value<string_t>&& val);
-    template <typename array_t, typename _ = std::enable_if_t<std::is_constructible_v<typename basic_value<string_t>,
+    template <typename array_t, typename _ = std::enable_if_t<std::is_constructible_v< basic_value<string_t>,
                                                                                       typename array_t::value_type>>>
     basic_array(array_t arr);
 
@@ -666,7 +666,7 @@ MEOJSON_INLINE decltype(auto) basic_value<string_t>::get_helper(value_t&& defaul
                                  .get_helper(std::forward<value_t>(default_value), std::forward<rest_keys_t>(rest)...)
                            : default_value;
     }
-    else if constexpr (std::is_integral_v<typename std::remove_reference<first_key_t>::type>) {
+    else if constexpr (std::is_integral_v< std::remove_reference<first_key_t>::type>) {
         return is_array() ? as_array()
                                 .get(std::forward<first_key_t>(first))
                                 .get_helper(std::forward<value_t>(default_value), std::forward<rest_keys_t>(rest)...)
@@ -685,7 +685,7 @@ MEOJSON_INLINE decltype(auto) basic_value<string_t>::get_helper(value_t&& defaul
         return is_object() ? as_object().get(std::forward<unique_key_t>(first), std::forward<value_t>(default_value))
                            : default_value;
     }
-    else if constexpr (std::is_integral_v<typename std::remove_reference<unique_key_t>>) {
+    else if constexpr (std::is_integral_v< std::remove_reference<unique_key_t>>) {
         return is_array() ? as_array().get(std::forward<unique_key_t>(first), std::forward<value_t>(default_value))
                           : default_value;
     }
@@ -2077,12 +2077,12 @@ public:
 public:
     ~parser() noexcept = default;
 
-    static std::optional<typename basic_value<string_t>> parse(const parsing_t& content);
+    static std::optional< basic_value<string_t>> parse(const parsing_t& content);
 
 private:
     parser(parsing_iter_t cbegin, parsing_iter_t cend) noexcept : _cur(cbegin), _end(cend) { ; }
 
-    std::optional<typename basic_value<string_t>> parse();
+    std::optional< basic_value<string_t>> parse();
     basic_value<string_t> parse_value();
 
     basic_value<string_t> parse_null();
@@ -2115,7 +2115,7 @@ MEOJSON_INLINE const basic_value<string_t> invalid_value()
 }
 
 template <typename parsing_t, typename string_t = default_string_t>
-MEOJSON_INLINE std::optional<typename basic_value<string_t>> parse(const parsing_t& content)
+MEOJSON_INLINE std::optional< basic_value<string_t>> parse(const parsing_t& content)
 {
     return parser<parsing_t, string_t>::parse(content);
 }
@@ -2136,7 +2136,7 @@ MEOJSON_INLINE std::ostream& operator<<(std::ostream& out, const basic_value<str
 //}
 
 template <typename string_t>
-MEOJSON_INLINE std::optional<typename basic_value<string_t>> open(std::ifstream& ifs, bool check_bom = false)
+MEOJSON_INLINE std::optional< basic_value<string_t>> open(std::ifstream& ifs, bool check_bom = false)
 {
     if (!ifs.is_open()) {
         return std::nullopt;
@@ -2164,7 +2164,7 @@ MEOJSON_INLINE std::optional<typename basic_value<string_t>> open(std::ifstream&
 }
 
 template <typename input_t, typename string_t = default_string_t>
-MEOJSON_INLINE std::optional<typename basic_value<string_t>> open(const input_t& filepath, bool check_bom = false)
+MEOJSON_INLINE std::optional< basic_value<string_t>> open(const input_t& filepath, bool check_bom = false)
 {
     using char_t = string_t::value_type;
     using ifstream_t = std::basic_ifstream<char_t, std::char_traits<char_t>>;
@@ -2182,14 +2182,14 @@ MEOJSON_INLINE std::optional<typename basic_value<string_t>> open(const input_t&
 // *************************
 
 template <typename parsing_t, typename string_t>
-MEOJSON_INLINE std::optional<typename basic_value<string_t>> parser<parsing_t, string_t>::parse(
+MEOJSON_INLINE std::optional< basic_value<string_t>> parser<parsing_t, string_t>::parse(
     const parsing_t& content)
 {
     return parser<parsing_t, string_t>(content.cbegin(), content.cend()).parse();
 }
 
 template <typename parsing_t, typename string_t>
-MEOJSON_INLINE std::optional<typename basic_value<string_t>> parser<parsing_t, string_t>::parse()
+MEOJSON_INLINE std::optional< basic_value<string_t>> parser<parsing_t, string_t>::parse()
 {
     if (!skip_whitespace()) {
         return std::nullopt;
