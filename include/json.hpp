@@ -666,7 +666,7 @@ MEOJSON_INLINE decltype(auto) basic_value<string_t>::get_helper(value_t&& defaul
                                  .get_helper(std::forward<value_t>(default_value), std::forward<rest_keys_t>(rest)...)
                            : default_value;
     }
-    else if constexpr (std::is_integral_v< std::remove_reference<first_key_t>::type>) {
+    else if constexpr (std::is_integral_v<typename std::remove_reference<first_key_t>::type>) {
         return is_array() ? as_array()
                                 .get(std::forward<first_key_t>(first))
                                 .get_helper(std::forward<value_t>(default_value), std::forward<rest_keys_t>(rest)...)
@@ -1443,7 +1443,7 @@ MEOJSON_INLINE std::optional<value_t> basic_array<string_t>::find(size_t pos) co
         return std::nullopt;
     }
     const auto& val = _array_data.at(pos);
-    return val.is<value_t>() ? std::optional<value_t>(val.as<value_t>()) : std::nullopt;
+    return val.template is<value_t>() ? std::optional<value_t>(val.template as<value_t>()) : std::nullopt;
 }
 
 template <typename string_t>
@@ -1519,7 +1519,7 @@ MEOJSON_INLINE typename basic_array<string_t>::const_reverse_iterator basic_arra
 }
 
 template <typename string_t>
-MEOJSON_INLINE typename basic_value<string_t>& basic_array<string_t>::operator[](size_t pos)
+MEOJSON_INLINE basic_value<string_t>& basic_array<string_t>::operator[](size_t pos)
 {
     return _array_data[pos];
 }
@@ -1703,7 +1703,7 @@ MEOJSON_INLINE const string_t basic_object<string_t>::format(bool ordered, strin
     };
 
     if (ordered) {
-        std::vector<raw_object::const_iterator> ordered_data;
+        std::vector<typename raw_object::const_iterator> ordered_data;
         for (auto it = _object_data.cbegin(); it != _object_data.cend(); ++it) {
             ordered_data.emplace_back(it);
         }
@@ -1941,7 +1941,7 @@ MEOJSON_INLINE std::optional<value_t> basic_object<string_t>::find(const string_
         return std::nullopt;
     }
     const auto& val = iter->second;
-    return val.is<value_t>() ? std::optional<value_t>(val.as<value_t>()) : std::nullopt;
+    return val.template is<value_t>() ? std::optional<value_t>(val.template as<value_t>()) : std::nullopt;
 }
 
 template <typename string_t>
@@ -2166,7 +2166,7 @@ MEOJSON_INLINE std::optional< basic_value<string_t>> open(std::ifstream& ifs, bo
 template <typename input_t, typename string_t = default_string_t>
 MEOJSON_INLINE std::optional< basic_value<string_t>> open(const input_t& filepath, bool check_bom = false)
 {
-    using char_t = string_t::value_type;
+    using char_t = typename string_t::value_type;
     using ifstream_t = std::basic_ifstream<char_t, std::char_traits<char_t>>;
 
     static_assert(std::is_constructible_v<ifstream_t, input_t>, "input_t can't be used to construct a ifstream_t");
@@ -2364,7 +2364,7 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_array()
         return basic_array<string_t>();
     }
 
-    basic_array<string_t>::raw_array result;
+    typename basic_array<string_t>::raw_array result;
     result.reserve(4);
     while (true) {
         if (!skip_whitespace()) {
@@ -2416,7 +2416,7 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_object()
         return basic_object<string_t>();
     }
 
-    basic_object<string_t>::raw_object result;
+    typename basic_object<string_t>::raw_object result;
     result.reserve(4);
     while (true) {
         if (!skip_whitespace()) {
