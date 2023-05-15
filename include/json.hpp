@@ -226,19 +226,19 @@ template <typename string_t>
 std::ostream& operator<<(std::ostream& out, const basic_value<string_t>& val);
 
 template <typename string_t>
-static string_t true_string()
+static constexpr string_t true_string()
 {
     return { 't', 'r', 'u', 'e' };
 }
 
 template <typename string_t>
-static string_t false_string()
+static constexpr string_t false_string()
 {
     return { 'f', 'a', 'l', 's', 'e' };
 }
 
 template <typename string_t>
-static string_t null_string()
+static constexpr string_t null_string()
 {
     return { 'n', 'u', 'l', 'l' };
 }
