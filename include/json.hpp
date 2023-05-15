@@ -686,7 +686,7 @@ MEOJSON_INLINE decltype(auto) basic_value<string_t>::get_helper(value_t&& defaul
         return is_object() ? as_object().get(std::forward<unique_key_t>(first), std::forward<value_t>(default_value))
                            : default_value;
     }
-    else if constexpr (std::is_integral_v<std::remove_reference<unique_key_t>>) {
+    else if constexpr (std::is_integral_v<std::decay_t<unique_key_t>>) {
         return is_array() ? as_array().get(std::forward<unique_key_t>(first), std::forward<value_t>(default_value))
                           : default_value;
     }
