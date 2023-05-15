@@ -250,7 +250,7 @@ template <typename string_t>
 class basic_array
 {
 public:
-    using raw_array = std::vector<typename basic_value<string_t>>;
+    using raw_array = std::vector<basic_value<string_t>>;
     using value_type = typename raw_array::value_type;
     using iterator = typename raw_array::iterator;
     using const_iterator = typename raw_array::const_iterator;
