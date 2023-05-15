@@ -215,10 +215,33 @@ private:
     var_t _raw_data;
 };
 
+// *************************
+// *     utils declare     *
+// *************************
+
 template <typename string_t = default_string_t>
 const basic_value<string_t> invalid_value();
+
 template <typename string_t>
 std::ostream& operator<<(std::ostream& out, const basic_value<string_t>& val);
+
+template <typename string_t>
+static string_t true_string()
+{
+    return { 't', 'r', 'u', 'e' };
+}
+
+template <typename string_t>
+static string_t false_string()
+{
+    return { 'f', 'a', 'l', 's', 'e' };
+}
+
+template <typename string_t>
+static string_t null_string()
+{
+    return { 'n', 'u', 'l', 'l' };
+}
 
 // *************************
 // *     basic_array declare     *
@@ -463,7 +486,7 @@ MEOJSON_INLINE basic_value<string_t>::basic_value(basic_value<string_t>&& rhs) n
 
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::basic_value(bool b)
-    : _type(value_type::boolean), _raw_data(string_t(b ? "true" : "false"))
+    : _type(value_type::boolean), _raw_data(string_t(b ? true_string<string_t>() : false_string<string_t>()))
 {
     ;
 }
@@ -564,29 +587,29 @@ template <typename string_t>
 template <typename value_t>
 MEOJSON_INLINE bool basic_value<string_t>::is() const noexcept
 {
-    if constexpr (std::is_same_v<Type, basic_value<string_t>>) {
+    if constexpr (std::is_same_v<value_t, basic_value<string_t>>) {
         return true;
     }
-    else if constexpr (std::is_same_v<Type, bool>) {
+    else if constexpr (std::is_same_v<value_t, bool>) {
         return _type == value_type::boolean;
     }
-    else if constexpr (std::is_same_v<Type, int> || std::is_same_v<Type, unsigned> || std::is_same_v<Type, long> ||
-                       std::is_same_v<Type, unsigned long> || std::is_same_v<Type, long long> ||
-                       std::is_same_v<Type, unsigned long long> || std::is_same_v<Type, float> ||
-                       std::is_same_v<Type, double> || std::is_same_v<Type, long double>) {
+    else if constexpr (std::is_same_v<value_t, int> || std::is_same_v<value_t, unsigned> || std::is_same_v<value_t, long> ||
+                       std::is_same_v<value_t, unsigned long> || std::is_same_v<value_t, long long> ||
+                       std::is_same_v<value_t, unsigned long long> || std::is_same_v<value_t, float> ||
+                       std::is_same_v<value_t, double> || std::is_same_v<value_t, long double>) {
         return _type == value_type::number;
     }
-    else if constexpr (std::is_same_v<Type, string_t>) {
+    else if constexpr (std::is_same_v<value_t, string_t>) {
         return _type == value_type::string;
     }
-    else if constexpr (std::is_same_v<Type, basic_array<string_t>>) {
+    else if constexpr (std::is_same_v<value_t, basic_array<string_t>>) {
         return _type == value_type::j_array;
     }
-    else if constexpr (std::is_same_v<Type, basic_object<string_t>>) {
+    else if constexpr (std::is_same_v<value_t, basic_object<string_t>>) {
         return _type == value_type::j_object;
     }
     else {
-        static_assert(!sizeof(Type), "Unsupported type");
+        static_assert(!sizeof(value_t), "Unsupported type");
     }
 }
 
@@ -689,7 +712,7 @@ template <typename string_t>
 MEOJSON_INLINE bool basic_value<string_t>::as_boolean() const
 {
     if (is_boolean()) {
-        if (const string_t& b_str = as_basic_type_str(); b_str == "true") {
+        if (const string_t& b_str = as_basic_type_str(); b_str == true_string<string_t>()) {
             return true;
         }
         else if (b_str == "false") {
@@ -895,7 +918,7 @@ MEOJSON_INLINE const string_t basic_value<string_t>::to_string() const
 {
     switch (_type) {
     case value_type::null:
-        return "null";
+        return null_string<string_t>();
     case value_type::boolean:
     case value_type::number:
         return as_basic_type_str();
@@ -916,7 +939,7 @@ MEOJSON_INLINE const string_t basic_value<string_t>::format(bool ordered, string
 {
     switch (_type) {
     case value_type::null:
-        return "null";
+        return null_string<string_t>();
     case value_type::boolean:
     case value_type::number:
         return as_basic_type_str();
@@ -1415,7 +1438,7 @@ template <typename string_t>
 template <typename value_t>
 MEOJSON_INLINE std::optional<value_t> basic_array<string_t>::find(size_t pos) const
 {
-    static_assert(std::is_constructible_v<Type, basic_value<string_t>>, "Type can NOT be constructed by basic_value");
+    static_assert(std::is_constructible_v<value_t, basic_value<string_t>>, "Type can NOT be constructed by basic_value");
     if (!contains(pos)) {
         return std::nullopt;
     }
@@ -2225,21 +2248,19 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_value()
     case '{':
         return parse_object();
     default:
-        return invalid_value();
+        return invalid_value<string_t>();
     }
 }
 
 template <typename parsing_t, typename string_t>
 MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_null()
 {
-    static constexpr std::string_view null_string = "null";
-
-    for (const char& ch : null_string) {
+    for (const auto& ch : null_string<string_t>()) {
         if (*_cur == ch) {
             ++_cur;
         }
         else {
-            return invalid_value();
+            return invalid_value<string_t>();
         }
     }
 
@@ -2249,32 +2270,29 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_null()
 template <typename parsing_t, typename string_t>
 MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_boolean()
 {
-    static constexpr std::string_view true_string = "true";
-    static constexpr std::string_view false_string = "false";
-
     switch (*_cur) {
     case 't':
-        for (const char& ch : true_string) {
+        for (const auto& ch : true_string<string_t>()) {
             if (*_cur == ch) {
                 ++_cur;
             }
             else {
-                return invalid_value();
+                return invalid_value<string_t>();
             }
         }
         return true;
     case 'f':
-        for (const char& ch : false_string) {
+        for (const auto& ch : false_string<string_t>()) {
             if (*_cur == ch) {
                 ++_cur;
             }
             else {
-                return invalid_value();
+                return invalid_value<string_t>();
             }
         }
         return false;
     default:
-        return invalid_value();
+        return invalid_value<string_t>();
     }
 }
 
@@ -2288,29 +2306,29 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_number()
 
     // numbers cannot have leading zeroes
     if (_cur != _end && *_cur == '0' && _cur + 1 != _end && std::isdigit(*(_cur + 1))) {
-        return invalid_value();
+        return invalid_value<string_t>();
     }
 
     if (!skip_digit()) {
-        return invalid_value();
+        return invalid_value<string_t>();
     }
 
     if (*_cur == '.') {
         ++_cur;
         if (!skip_digit()) {
-            return invalid_value();
+            return invalid_value<string_t>();
         }
     }
 
     if (*_cur == 'e' || *_cur == 'E') {
         if (++_cur == _end) {
-            return invalid_value();
+            return invalid_value<string_t>();
         }
         if (*_cur == '+' || *_cur == '-') {
             ++_cur;
         }
         if (!skip_digit()) {
-            return invalid_value();
+            return invalid_value<string_t>();
         }
     }
 
@@ -2322,7 +2340,7 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_string()
 {
     auto string_opt = parse_stdstring();
     if (!string_opt) {
-        return invalid_value();
+        return invalid_value<string_t>();
     }
     return basic_value<string_t>(basic_value<string_t>::value_type::string, std::move(string_opt).value());
 }
@@ -2334,11 +2352,11 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_array()
         ++_cur;
     }
     else {
-        return invalid_value();
+        return invalid_value<string_t>();
     }
 
     if (!skip_whitespace()) {
-        return invalid_value();
+        return invalid_value<string_t>();
     }
     else if (*_cur == ']') {
         ++_cur;
@@ -2350,13 +2368,13 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_array()
     result.reserve(4);
     while (true) {
         if (!skip_whitespace()) {
-            return invalid_value();
+            return invalid_value<string_t>();
         }
 
         basic_value<string_t> val = parse_value();
 
         if (!val.valid() || !skip_whitespace()) {
-            return invalid_value();
+            return invalid_value<string_t>();
         }
 
         result.emplace_back(std::move(val));
@@ -2373,7 +2391,7 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_array()
         ++_cur;
     }
     else {
-        return invalid_value();
+        return invalid_value<string_t>();
     }
 
     return basic_array<string_t>(std::move(result));
@@ -2386,11 +2404,11 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_object()
         ++_cur;
     }
     else {
-        return invalid_value();
+        return invalid_value<string_t>();
     }
 
     if (!skip_whitespace()) {
-        return invalid_value();
+        return invalid_value<string_t>();
     }
     else if (*_cur == '}') {
         ++_cur;
@@ -2402,7 +2420,7 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_object()
     result.reserve(4);
     while (true) {
         if (!skip_whitespace()) {
-            return invalid_value();
+            return invalid_value<string_t>();
         }
 
         auto key_opt = parse_stdstring();
@@ -2411,17 +2429,17 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_object()
             ++_cur;
         }
         else {
-            return invalid_value();
+            return invalid_value<string_t>();
         }
 
         if (!skip_whitespace()) {
-            return invalid_value();
+            return invalid_value<string_t>();
         }
 
         basic_value<string_t> val = parse_value();
 
         if (!val.valid() || !skip_whitespace()) {
-            return invalid_value();
+            return invalid_value<string_t>();
         }
 
         string_t key_escape = escape_string(std::move(key_opt).value());
@@ -2439,7 +2457,7 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_object()
         ++_cur;
     }
     else {
-        return invalid_value();
+        return invalid_value<string_t>();
     }
 
     return basic_object<string_t>(std::move(result));
@@ -2558,25 +2576,25 @@ MEOJSON_INLINE string_t unescape_string(string_t str)
         string_t replace_str;
         switch (str[pos]) {
         case '\"':
-            replace_str = R"(\")";
+            replace_str = { '\\', '\"' };
             break;
         case '\\':
-            replace_str = R"(\\)";
+            replace_str = { '\\', '\\' };
             break;
         case '\b':
-            replace_str = R"(\b)";
+            replace_str = { '\\', 'b' };
             break;
         case '\f':
-            replace_str = R"(\f)";
+            replace_str = { '\\', 'f' };
             break;
         case '\n':
-            replace_str = R"(\n)";
+            replace_str = { '\\', 'n' };
             break;
         case '\r':
-            replace_str = R"(\r)";
+            replace_str = { '\\', 'r' };
             break;
         case '\t':
-            replace_str = R"(\t)";
+            replace_str = { '\\', 't' };
             break;
         default:
             continue;
@@ -2598,25 +2616,25 @@ MEOJSON_INLINE string_t escape_string(string_t str)
         string_t replace_str;
         switch (str[pos + 1]) {
         case '"':
-            replace_str = "\"";
+            replace_str = { '\"' };
             break;
         case '\\':
-            replace_str = "\\";
+            replace_str = { '\\' };
             break;
         case 'b':
-            replace_str = "\b";
+            replace_str = { '\b' };
             break;
         case 'f':
-            replace_str = "\f";
+            replace_str = { '\f' };
             break;
         case 'n':
-            replace_str = "\n";
+            replace_str = { '\n' };
             break;
         case 'r':
-            replace_str = "\r";
+            replace_str = { '\r' };
             break;
         case 't':
-            replace_str = "\t";
+            replace_str = { '\t' };
             break;
         default:
             return string_t();

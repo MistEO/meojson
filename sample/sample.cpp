@@ -88,7 +88,7 @@ bool parsing()
 
     // Output: 1, 2, 3
     // If the "list" is not an array or not exists, it will be a invalid optional;
-    auto opt = value.find<json::array>(L"list");
+    auto opt = value.find<json::warray>(L"list");
     if (opt) {
         auto& arr = opt.value();
         for (auto&& elem : arr) {
