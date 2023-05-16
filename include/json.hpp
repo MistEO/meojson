@@ -117,7 +117,7 @@ public:
     const basic_value<string_t>& at(size_t pos) const;
     const basic_value<string_t>& at(const string_t& key) const;
 
-    // usage: get(key, key_child, ..., default_value);
+    // Usage: get(key_1, key_2, ..., default_value);
     template <typename... key_then_default_value_t>
     decltype(auto) get(key_then_default_value_t&&... keys_then_default_value) const;
 
@@ -153,13 +153,11 @@ public:
 
     // return raw string
     string_t to_string() const;
-
-    string_t format() { return format(4, 0); }
-    template <typename sz_t>
-    string_t format(sz_t indent)
+    string_t format() const { return format(4, 0); }
+    // format(bool) is deprecated now.
+    template <typename sz_t, typename = std::enable_if_t<std::is_integral_v<sz_t> && !std::is_same_v<sz_t, bool>>>
+    string_t format(sz_t indent) const
     {
-        static_assert(std::is_integral_v<sz_t>, "Indent must be a integral");
-        static_assert(!std::is_same_v<sz_t, bool>, "It is now sorted by default.");
         return format(indent, 0);
     }
 
@@ -214,9 +212,9 @@ private:
                        std::index_sequence<keys_indexes_t...>) const;
 
     template <typename value_t, typename first_key_t, typename... rest_keys_t>
-    decltype(auto) get_helper(value_t&& default_value, first_key_t&& first, rest_keys_t&&... rest) const;
+    decltype(auto) get_helper(const value_t& default_value, first_key_t&& first, rest_keys_t&&... rest) const;
     template <typename value_t, typename unique_key_t>
-    decltype(auto) get_helper(value_t&& default_value, unique_key_t&& first) const;
+    decltype(auto) get_helper(const value_t& default_value, unique_key_t&& first) const;
 
     const string_t& as_basic_type_str() const;
     string_t& as_basic_type_str();
@@ -232,6 +230,9 @@ private:
 template <typename string_t>
 class basic_array
 {
+    friend class basic_value<string_t>;
+    friend class basic_object<string_t>;
+
 public:
     using raw_array = std::vector<basic_value<string_t>>;
     using value_type = typename raw_array::value_type;
@@ -265,18 +266,16 @@ public:
     const basic_value<string_t>& at(size_t pos) const;
 
     string_t to_string() const;
-    string_t format() { return format(4, 0); }
-    template <typename sz_t>
-    string_t format(sz_t indent)
+    string_t format() const { return format(4, 0); }
+    template <typename sz_t, typename = std::enable_if_t<std::is_integral_v<sz_t> && !std::is_same_v<sz_t, bool>>>
+    string_t format(sz_t indent) const
     {
-        static_assert(std::is_integral_v<sz_t>, "Indent must be a integral");
-        static_assert(!std::is_same_v<sz_t, bool>, "It is now sorted by default.");
         return format(indent, 0);
     }
 
-    template <typename value_t>
-    decltype(auto) get(size_t pos, value_t default_value) const;
-    basic_value<string_t> get(size_t pos) const;
+    // Usage: get(key_1, key_2, ..., default_value);
+    template <typename... key_then_default_value_t>
+    decltype(auto) get(key_then_default_value_t&&... keys_then_default_value) const;
 
     template <typename value_t = basic_value<string_t>>
     std::optional<value_t> find(size_t pos) const;
@@ -318,14 +317,18 @@ public:
     bool operator==(const basic_array<string_t>& rhs) const;
     bool operator!=(const basic_array<string_t>& rhs) const { return !(*this == rhs); }
 
-    // const raw_array &raw_data() const;
-
 private:
-    friend class basic_value<string_t>;
-    friend class basic_object<string_t>;
+    template <typename... key_then_default_value_t, size_t... keys_indexes_t>
+    decltype(auto) get(std::tuple<key_then_default_value_t...> keys_then_default_value,
+                       std::index_sequence<keys_indexes_t...>) const;
+    template <typename value_t, typename... rest_keys_t>
+    decltype(auto) get_helper(const value_t& default_value, size_t pos, rest_keys_t&&... rest) const;
+    template <typename value_t>
+    decltype(auto) get_helper(const value_t& default_value, size_t pos) const;
 
     string_t format(size_t indent, size_t indent_times) const;
 
+private:
     raw_array _array_data;
 };
 
@@ -339,6 +342,9 @@ std::ostream& operator<<(std::ostream& out, const basic_array<string_t>& arr);
 template <typename string_t>
 class basic_object
 {
+    friend class basic_value<string_t>;
+    friend class basic_array<string_t>;
+
 public:
     using raw_object = std::map<string_t, basic_value<string_t>>;
     using value_type = typename raw_object::value_type;
@@ -366,20 +372,18 @@ public:
     bool contains(const string_t& key) const;
     bool exists(const string_t& key) const { return contains(key); }
     const basic_value<string_t>& at(const string_t& key) const;
-    string_t to_string() const;
 
-    string_t format() { return format(4, 0); }
-    template <typename sz_t>
-    string_t format(sz_t indent)
+    string_t to_string() const;
+    string_t format() const { return format(4, 0); }
+    template <typename sz_t, typename = std::enable_if_t<std::is_integral_v<sz_t> && !std::is_same_v<sz_t, bool>>>
+    string_t format(sz_t indent) const
     {
-        static_assert(std::is_integral_v<sz_t>, "Indent must be a integral");
-        static_assert(!std::is_same_v<sz_t, bool>, "It is now sorted by default.");
         return format(indent, 0);
     }
 
-    template <typename value_t>
-    decltype(auto) get(const string_t& key, value_t default_value) const;
-    basic_value<string_t> get(const string_t& key) const;
+    // Usage: get(key_1, key_2, ..., default_value);
+    template <typename... key_then_default_value_t>
+    decltype(auto) get(key_then_default_value_t&&... keys_then_default_value) const;
 
     template <typename value_t = basic_value<string_t>>
     std::optional<value_t> find(const string_t& key) const;
@@ -416,14 +420,18 @@ public:
     bool operator==(const basic_object<string_t>& rhs) const;
     bool operator!=(const basic_object<string_t>& rhs) const { return !(*this == rhs); }
 
-    // const raw_object &raw_data() const;
-
 private:
-    friend class basic_value<string_t>;
-    friend class basic_array<string_t>;
+    template <typename... key_then_default_value_t, size_t... keys_indexes_t>
+    decltype(auto) get(std::tuple<key_then_default_value_t...> keys_then_default_value,
+                       std::index_sequence<keys_indexes_t...>) const;
+    template <typename value_t, typename... rest_keys_t>
+    decltype(auto) get_helper(const value_t& default_value, string_t&& key, rest_keys_t&&... rest) const;
+    template <typename value_t>
+    decltype(auto) get_helper(const value_t& default_value, string_t&& key) const;
 
     string_t format(size_t indent, size_t indent_times) const;
 
+private:
     raw_object _object_data;
 };
 
@@ -670,19 +678,17 @@ MEOJSON_INLINE decltype(auto) basic_value<string_t>::get(
 
 template <typename string_t>
 template <typename value_t, typename first_key_t, typename... rest_keys_t>
-MEOJSON_INLINE decltype(auto) basic_value<string_t>::get_helper(value_t&& default_value, first_key_t&& first,
+MEOJSON_INLINE decltype(auto) basic_value<string_t>::get_helper(const value_t& default_value, first_key_t&& first,
                                                                 rest_keys_t&&... rest) const
 {
     if constexpr (std::is_constructible_v<string_t, first_key_t>) {
-        return is_object() ? as_object()
-                                 .get(std::forward<first_key_t>(first))
-                                 .get_helper(std::forward<value_t>(default_value), std::forward<rest_keys_t>(rest)...)
+        return is_object() ? as_object().get_helper(default_value, std::forward<first_key_t>(first),
+                                                    std::forward<rest_keys_t>(rest)...)
                            : default_value;
     }
-    else if constexpr (std::is_integral_v<typename std::remove_reference<first_key_t>::type>) {
-        return is_array() ? as_array()
-                                .get(std::forward<first_key_t>(first))
-                                .get_helper(std::forward<value_t>(default_value), std::forward<rest_keys_t>(rest)...)
+    else if constexpr (std::is_integral_v<std::decay_t<first_key_t>>) {
+        return is_array() ? as_array().get_helper(default_value, std::forward<first_key_t>(first),
+                                                  std::forward<rest_keys_t>(rest)...)
                           : default_value;
     }
     else {
@@ -692,19 +698,54 @@ MEOJSON_INLINE decltype(auto) basic_value<string_t>::get_helper(value_t&& defaul
 
 template <typename string_t>
 template <typename value_t, typename unique_key_t>
-MEOJSON_INLINE decltype(auto) basic_value<string_t>::get_helper(value_t&& default_value, unique_key_t&& first) const
+MEOJSON_INLINE decltype(auto) basic_value<string_t>::get_helper(const value_t& default_value,
+                                                                unique_key_t&& first) const
 {
     if constexpr (std::is_constructible_v<string_t, unique_key_t>) {
-        return is_object() ? as_object().get(std::forward<unique_key_t>(first), std::forward<value_t>(default_value))
-                           : default_value;
+        return is_object() ? as_object().get_helper(default_value, std::forward<unique_key_t>(first)) : default_value;
     }
     else if constexpr (std::is_integral_v<std::decay_t<unique_key_t>>) {
-        return is_array() ? as_array().get(std::forward<unique_key_t>(first), std::forward<value_t>(default_value))
-                          : default_value;
+        return is_array() ? as_array().get_helper(default_value, std::forward<unique_key_t>(first)) : default_value;
     }
     else {
         static_assert(!sizeof(unique_key_t), "Parameter must be integral or string_t constructible");
     }
+}
+
+template <typename string_t>
+template <typename... key_then_default_value_t>
+MEOJSON_INLINE decltype(auto) basic_array<string_t>::get(key_then_default_value_t&&... keys_then_default_value) const
+{
+    return get(std::forward_as_tuple(keys_then_default_value...),
+               std::make_index_sequence<sizeof...(keys_then_default_value) - 1> {});
+}
+
+template <typename string_t>
+template <typename... key_then_default_value_t, size_t... keys_indexes_t>
+MEOJSON_INLINE decltype(auto) basic_array<string_t>::get(
+    std::tuple<key_then_default_value_t...> keys_then_default_value, std::index_sequence<keys_indexes_t...>) const
+{
+    constexpr unsigned long default_value_index = sizeof...(key_then_default_value_t) - 1;
+    return get_helper(std::get<default_value_index>(keys_then_default_value),
+                      std::get<keys_indexes_t>(keys_then_default_value)...);
+}
+
+template <typename string_t>
+template <typename... key_then_default_value_t>
+MEOJSON_INLINE decltype(auto) basic_object<string_t>::get(key_then_default_value_t&&... keys_then_default_value) const
+{
+    return get(std::forward_as_tuple(keys_then_default_value...),
+               std::make_index_sequence<sizeof...(keys_then_default_value) - 1> {});
+}
+
+template <typename string_t>
+template <typename... key_then_default_value_t, size_t... keys_indexes_t>
+MEOJSON_INLINE decltype(auto) basic_object<string_t>::get(
+    std::tuple<key_then_default_value_t...> keys_then_default_value, std::index_sequence<keys_indexes_t...>) const
+{
+    constexpr unsigned long default_value_index = sizeof...(key_then_default_value_t) - 1;
+    return get_helper(std::get<default_value_index>(keys_then_default_value),
+                      std::get<keys_indexes_t>(keys_then_default_value)...);
 }
 
 template <typename string_t>
@@ -1240,26 +1281,20 @@ MEOJSON_INLINE string_t basic_array<string_t>::format(size_t indent, size_t inde
 }
 
 template <typename string_t>
-template <typename value_t>
-MEOJSON_INLINE decltype(auto) basic_array<string_t>::get(size_t pos, value_t default_value) const
+template <typename value_t, typename... rest_keys_t>
+MEOJSON_INLINE decltype(auto) basic_array<string_t>::get_helper(const value_t& default_value, size_t pos,
+                                                                rest_keys_t&&... rest) const
 {
-    constexpr bool is_string = std::is_constructible_v<string_t, value_t>;
-
-    if (!contains(pos)) {
-        if constexpr (is_string) {
-            return string_t { default_value };
-        }
-        else {
-            return default_value;
-        }
+    if (contains(pos)) {
+        return at(pos).get_helper(default_value, std::forward<rest_keys_t>(rest)...);
     }
-
-    basic_value<string_t> basic_value = _array_data.at(pos);
-    if constexpr (is_string) {
-        return basic_value.as<string_t>();
+    else if constexpr (std::is_same_v<basic_value<string_t>, value_t> ||
+                       std::is_same_v<basic_array<string_t>, value_t> ||
+                       std::is_same_v<basic_object<string_t>, value_t>) {
+        return default_value;
     }
-    else if (basic_value.is<value_t>()) {
-        return basic_value.as<value_t>();
+    else if constexpr (std::is_constructible_v<string_t, value_t>) {
+        return string_t { default_value };
     }
     else {
         return default_value;
@@ -1267,13 +1302,38 @@ MEOJSON_INLINE decltype(auto) basic_array<string_t>::get(size_t pos, value_t def
 }
 
 template <typename string_t>
-MEOJSON_INLINE basic_value<string_t> basic_array<string_t>::get(size_t pos) const
+template <typename value_t>
+MEOJSON_INLINE decltype(auto) basic_array<string_t>::get_helper(const value_t& default_value, size_t pos) const
 {
-    if (contains(pos)) {
-        return _array_data.at(pos);
+    constexpr bool is_json = std::is_same_v<basic_value<string_t>, value_t> ||
+                             std::is_same_v<basic_array<string_t>, value_t> ||
+                             std::is_same_v<basic_object<string_t>, value_t>;
+    constexpr bool is_string = std::is_constructible_v<string_t, value_t> && !is_json;
+
+    if (!contains(pos)) {
+        if constexpr (is_json) {
+            return default_value;
+        }
+        else if constexpr (is_string) {
+            return string_t { default_value };
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    const auto& val = _array_data.at(pos);
+    if constexpr (is_json) {
+        return default_value;
+    }
+    else if constexpr (is_string) {
+        return val.template as<string_t>();
+    }
+    else if (val.template is<value_t>()) {
+        return val.template as<value_t>();
     }
     else {
-        return {};
+        return default_value;
     }
 }
 
@@ -1546,26 +1606,20 @@ MEOJSON_INLINE string_t basic_object<string_t>::format(size_t indent, size_t ind
 }
 
 template <typename string_t>
-template <typename value_t>
-MEOJSON_INLINE decltype(auto) basic_object<string_t>::get(const string_t& key, value_t default_value) const
+template <typename value_t, typename... rest_keys_t>
+MEOJSON_INLINE decltype(auto) basic_object<string_t>::get_helper(const value_t& default_value, string_t&& key,
+                                                                 rest_keys_t&&... rest) const
 {
-    constexpr bool is_string = std::is_constructible_v<string_t, value_t>;
-
-    if (!contains(key)) {
-        if constexpr (is_string) {
-            return string_t { default_value };
-        }
-        else {
-            return default_value;
-        }
+    if (contains(key)) {
+        return at(key).get_helper(default_value, std::forward<rest_keys_t>(rest)...);
     }
-
-    basic_value<string_t> basic_value = _object_data.at(key);
-    if constexpr (is_string) {
-        return basic_value.as<string_t>();
+    else if constexpr (std::is_same_v<basic_value<string_t>, value_t> ||
+                       std::is_same_v<basic_array<string_t>, value_t> ||
+                       std::is_same_v<basic_object<string_t>, value_t>) {
+        return default_value;
     }
-    else if (basic_value.is<value_t>()) {
-        return basic_value.as<value_t>();
+    else if constexpr (std::is_constructible_v<string_t, value_t>) {
+        return string_t { default_value };
     }
     else {
         return default_value;
@@ -1573,13 +1627,39 @@ MEOJSON_INLINE decltype(auto) basic_object<string_t>::get(const string_t& key, v
 }
 
 template <typename string_t>
-MEOJSON_INLINE basic_value<string_t> basic_object<string_t>::get(const string_t& key) const
+template <typename value_t>
+MEOJSON_INLINE decltype(auto) basic_object<string_t>::get_helper(const value_t& default_value, string_t&& key) const
 {
+    constexpr bool is_json = std::is_same_v<basic_value<string_t>, value_t> ||
+                             std::is_same_v<basic_array<string_t>, value_t> ||
+                             std::is_same_v<basic_object<string_t>, value_t>;
+    constexpr bool is_string = std::is_constructible_v<string_t, value_t> && !is_json;
+
     if (!contains(key)) {
-        return {};
+        if constexpr (is_json) {
+            return default_value;
+        }
+        else if constexpr (is_string) {
+            return string_t { default_value };
+        }
+        else {
+            return default_value;
+        }
     }
 
-    return _object_data.at(key);
+    const auto& val = _object_data.at(key);
+    if constexpr (is_json) {
+        return val;
+    }
+    else if constexpr (is_string) {
+        return val.template as<string_t>();
+    }
+    else if (val.template is<value_t>()) {
+        return val.template as<value_t>();
+    }
+    else {
+        return default_value;
+    }
 }
 
 template <typename string_t>
