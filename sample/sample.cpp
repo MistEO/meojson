@@ -187,7 +187,7 @@ bool parsing_width()
     auto opt_v = value.find(L"not_exists");
     std::cout << "Did we find the \"not_exists\"? " << opt_v.has_value() << std::endl;
 
-    std::wcout << value.format() << std::endl;
+    std::wcout << value.format(2) << std::endl;
 
     return true;
 }

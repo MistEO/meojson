@@ -158,12 +158,9 @@ public:
     template <typename sz_t>
     string_t format(sz_t indent)
     {
+        static_assert(std::is_integral_v<sz_t>, "Indent must be a integral");
+        static_assert(!std::is_same_v<sz_t, bool>, "It is now sorted by default.");
         return format(indent, 0);
-    }
-    template <>
-    [[deprecated("It is now sorted by default.")]] string_t format(bool ordered)
-    {
-        static_assert(true, "Deprecated function.");
     }
 
     basic_value<string_t>& operator=(const basic_value<string_t>& rhs);
@@ -272,12 +269,9 @@ public:
     template <typename sz_t>
     string_t format(sz_t indent)
     {
+        static_assert(std::is_integral_v<sz_t>, "Indent must be a integral");
+        static_assert(!std::is_same_v<sz_t, bool>, "It is now sorted by default.");
         return format(indent, 0);
-    }
-    template <>
-    [[deprecated("It is now sorted by default.")]] string_t format(bool ordered)
-    {
-        static_assert(true, "Deprecated function.");
     }
 
     bool get(size_t pos, bool default_value) const;
@@ -387,12 +381,9 @@ public:
     template <typename sz_t>
     string_t format(sz_t indent)
     {
+        static_assert(std::is_integral_v<sz_t>, "Indent must be a integral");
+        static_assert(!std::is_same_v<sz_t, bool>, "It is now sorted by default.");
         return format(indent, 0);
-    }
-    template <>
-    [[deprecated("It is now sorted by default.")]] string_t format(bool ordered)
-    {
-        static_assert(true, "Deprecated function.");
     }
 
     bool get(const string_t& key, bool default_value) const;
