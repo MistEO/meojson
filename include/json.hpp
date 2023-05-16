@@ -161,7 +161,10 @@ public:
         return format(indent, 0);
     }
     template <>
-    [[deprecated("It is now sorted by default.")]] string_t format(bool ordered);
+    [[deprecated("It is now sorted by default.")]] string_t format(bool ordered)
+    {
+        static_assert(true, "Deprecated function.");
+    }
 
     basic_value<string_t>& operator=(const basic_value<string_t>& rhs);
     basic_value<string_t>& operator=(basic_value<string_t>&&) noexcept;
@@ -272,7 +275,10 @@ public:
         return format(indent, 0);
     }
     template <>
-    [[deprecated("It is now sorted by default.")]] string_t format(bool ordered);
+    [[deprecated("It is now sorted by default.")]] string_t format(bool ordered)
+    {
+        static_assert(true, "Deprecated function.");
+    }
 
     bool get(size_t pos, bool default_value) const;
     int get(size_t pos, int default_value) const;
@@ -384,7 +390,10 @@ public:
         return format(indent, 0);
     }
     template <>
-    [[deprecated("It is now sorted by default.")]] string_t format(bool ordered);
+    [[deprecated("It is now sorted by default.")]] string_t format(bool ordered)
+    {
+        static_assert(true, "Deprecated function.");
+    }
 
     bool get(const string_t& key, bool default_value) const;
     int get(const string_t& key, int default_value) const;
@@ -2561,7 +2570,7 @@ MEOJSON_INLINE bool parser<parsing_t, string_t>::skip_digit()
 template <typename string_t>
 MEOJSON_INLINE static constexpr string_t unescape_string(const string_t& str)
 {
-    using char_t = string_t::value_type;
+    using char_t = typename string_t::value_type;
 
     string_t result;
     auto cur = str.cbegin();
