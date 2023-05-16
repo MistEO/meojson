@@ -187,6 +187,8 @@ bool parsing_width()
     auto opt_v = value.find(L"not_exists");
     std::cout << "Did we find the \"not_exists\"? " << opt_v.has_value() << std::endl;
 
+    std::wcout << value.format() << std::endl;
+
     return true;
 }
 
@@ -228,7 +230,7 @@ bool serializing()
     // take union
     root |= other;
 
-    std::cout << root.format(true) << std::endl;
+    std::cout << root.format() << std::endl;
 
     // test operator==()
     std::cout << "\n****** sub test value equal ******\n" << std::endl;

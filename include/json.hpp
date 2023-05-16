@@ -1,16 +1,13 @@
 #pragma once
 
-#include <algorithm>
 #include <fstream>
 #include <initializer_list>
+#include <map>
 #include <memory>
 #include <optional>
 #include <ostream>
-#include <sstream>
 #include <string>
-#include <string_view>
 #include <tuple>
-#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -156,7 +153,15 @@ public:
 
     // return raw string
     const string_t to_string() const;
-    const string_t format(bool ordered = false, string_t shift_str = "    ", size_t basic_shift_count = 0) const;
+
+    const string_t format() { return format(4, 0); }
+    template <typename sz_t>
+    const string_t format(sz_t indent)
+    {
+        return format(indent, 0);
+    }
+    template <>
+    [[deprecated("It is now sorted by default.")]] const string_t format(bool ordered);
 
     basic_value<string_t>& operator=(const basic_value<string_t>& rhs);
     basic_value<string_t>& operator=(basic_value<string_t>&&) noexcept;
@@ -197,6 +202,11 @@ public:
     explicit operator string_t() const { return as_string(); }
 
 private:
+    friend class basic_array<string_t>;
+    friend class basic_object<string_t>;
+
+    const string_t format(size_t indent, size_t indent_times) const;
+
     static var_t deep_copy(const var_t& src);
 
     template <typename... key_then_default_value_t, size_t... keys_indexes_t>
@@ -281,7 +291,15 @@ public:
     bool exists(size_t pos) const { return contains(pos); }
     const basic_value<string_t>& at(size_t pos) const;
     const string_t to_string() const;
-    const string_t format(bool ordered = false, string_t shift_str = "    ", size_t basic_shift_count = 0) const;
+
+    const string_t format() { return format(4, 0); }
+    template <typename sz_t>
+    const string_t format(sz_t indent)
+    {
+        return format(indent, 0);
+    }
+    template <>
+    [[deprecated("It is now sorted by default.")]] const string_t format(bool ordered);
 
     bool get(size_t pos, bool default_value) const;
     int get(size_t pos, int default_value) const;
@@ -339,6 +357,11 @@ public:
     // const raw_array &raw_data() const;
 
 private:
+    friend class basic_value<string_t>;
+    friend class basic_object<string_t>;
+
+    const string_t format(size_t indent, size_t indent_times) const;
+
     raw_array _array_data;
 };
 
@@ -352,7 +375,7 @@ template <typename string_t>
 class basic_object
 {
 public:
-    using raw_object = std::unordered_map<string_t, basic_value<string_t>>;
+    using raw_object = std::map<string_t, basic_value<string_t>>;
     using value_type = typename raw_object::value_type;
     using iterator = typename raw_object::iterator;
     using const_iterator = typename raw_object::const_iterator;
@@ -379,7 +402,15 @@ public:
     bool exists(const string_t& key) const { return contains(key); }
     const basic_value<string_t>& at(const string_t& key) const;
     const string_t to_string() const;
-    const string_t format(bool ordered = false, string_t shift_str = "    ", size_t basic_shift_count = 0) const;
+
+    const string_t format() { return format(4, 0); }
+    template <typename sz_t>
+    const string_t format(sz_t indent)
+    {
+        return format(indent, 0);
+    }
+    template <>
+    [[deprecated("It is now sorted by default.")]] const string_t format(bool ordered);
 
     bool get(const string_t& key, bool default_value) const;
     int get(const string_t& key, int default_value) const;
@@ -432,6 +463,11 @@ public:
     // const raw_object &raw_data() const;
 
 private:
+    friend class basic_value<string_t>;
+    friend class basic_array<string_t>;
+
+    const string_t format(size_t indent, size_t indent_times) const;
+
     raw_object _object_data;
 };
 
@@ -593,11 +629,7 @@ MEOJSON_INLINE bool basic_value<string_t>::is() const noexcept
     else if constexpr (std::is_same_v<value_t, bool>) {
         return _type == value_type::boolean;
     }
-    else if constexpr (std::is_same_v<value_t, int> || std::is_same_v<value_t, unsigned> ||
-                       std::is_same_v<value_t, long> || std::is_same_v<value_t, unsigned long> ||
-                       std::is_same_v<value_t, long long> || std::is_same_v<value_t, unsigned long long> ||
-                       std::is_same_v<value_t, float> || std::is_same_v<value_t, double> ||
-                       std::is_same_v<value_t, long double>) {
+    else if constexpr (std::is_arithmetic_v<value_t>) {
         return _type == value_type::number;
     }
     else if constexpr (std::is_same_v<value_t, string_t>) {
@@ -716,7 +748,7 @@ MEOJSON_INLINE bool basic_value<string_t>::as_boolean() const
         if (const string_t& b_str = as_basic_type_str(); b_str == true_string<string_t>()) {
             return true;
         }
-        else if (b_str == "false") {
+        else if (b_str == false_string<string_t>()) {
             return false;
         }
         else {
@@ -935,8 +967,7 @@ MEOJSON_INLINE const string_t basic_value<string_t>::to_string() const
 }
 
 template <typename string_t>
-MEOJSON_INLINE const string_t basic_value<string_t>::format(bool ordered, string_t shift_str,
-                                                            size_t basic_shift_count) const
+MEOJSON_INLINE const string_t basic_value<string_t>::format(size_t indent, size_t indent_times) const
 {
     switch (_type) {
     case value_type::null:
@@ -945,11 +976,11 @@ MEOJSON_INLINE const string_t basic_value<string_t>::format(bool ordered, string
     case value_type::number:
         return as_basic_type_str();
     case value_type::string:
-        return '"' + as_basic_type_str() + '"';
+        return char_t('"') + as_basic_type_str() + char_t('"');
     case value_type::j_array:
-        return as_array().format(ordered, shift_str, basic_shift_count);
+        return as_array().format(indent, indent_times);
     case value_type::j_object:
-        return as_object().format(ordered, shift_str, basic_shift_count);
+        return as_object().format(indent, indent_times);
     default:
         throw exception("Unknown basic_value Type");
     }
@@ -1200,39 +1231,33 @@ MEOJSON_INLINE void basic_array<string_t>::clear() noexcept
 template <typename string_t>
 MEOJSON_INLINE const string_t basic_array<string_t>::to_string() const
 {
-    string_t str = "[";
-    for (const basic_value<string_t>& val : _array_data) {
-        str += val.to_string() + ",";
+    string_t str = '[';
+    for (const auto& val : _array_data) {
+        str += val.to_string() + ',';
     }
     if (str.back() == ',') {
         str.pop_back();
     }
-    str += "]";
+    str += ']';
     return str;
 }
 
 template <typename string_t>
-MEOJSON_INLINE const string_t basic_array<string_t>::format(bool ordered, string_t shift_str,
-                                                            size_t basic_shift_count) const
+MEOJSON_INLINE const string_t basic_array<string_t>::format(size_t indent, size_t indent_times) const
 {
-    string_t shift;
-    for (size_t i = 0; i != basic_shift_count + 1; ++i) {
-        shift += shift_str;
-    }
+    const string_t tail_indent(indent * indent_times, ' ');
+    const string_t body_indent(indent * (indent_times + 1), ' ');
 
-    string_t str = "[";
-    for (const basic_value<string_t>& val : _array_data) {
-        str += "\n" + shift + val.format(ordered, shift_str, basic_shift_count + 1) + ",";
+    string_t str { '[', '\n' };
+    for (auto iter = _array_data.cbegin(); iter != _array_data.cend();) {
+        const auto& val = *iter;
+        str += body_indent + val.format(indent, indent_times + 1);
+        if (++iter != _array_data.cend()) {
+            str += ',';
+        }
+        str += '\n';
     }
-    if (str.back() == ',') {
-        str.pop_back(); // pop last ','
-    }
-
-    str += '\n';
-    for (size_t i = 0; i != basic_shift_count; ++i) {
-        str += shift_str;
-    }
-    str += ']';
+    str += tail_indent + char_t(']');
     return str;
 }
 
@@ -1631,7 +1656,6 @@ MEOJSON_INLINE basic_object<string_t>::basic_object(raw_object&& raw_obj) : _obj
 template <typename string_t>
 MEOJSON_INLINE basic_object<string_t>::basic_object(std::initializer_list<typename raw_object::value_type> init_list)
 {
-    _object_data.reserve(init_list.size());
     for (const auto& [key, val] : init_list) {
         emplace(key, val);
     }
@@ -1678,57 +1702,34 @@ MEOJSON_INLINE bool basic_object<string_t>::erase(const string_t& key)
 template <typename string_t>
 MEOJSON_INLINE const string_t basic_object<string_t>::to_string() const
 {
-    string_t str = "{";
+    string_t str = '{';
     for (const auto& [key, val] : _object_data) {
-        str += "\"" + unescape_string(key) + "\":" + val.to_string() + ",";
+        str += '"' + unescape_string(key) + string_t { '\"', ':', ' ' } + val.to_string() + ',';
     }
     if (str.back() == ',') {
         str.pop_back();
     }
-    str += "}";
+    str += '}';
     return str;
 }
 
 template <typename string_t>
-MEOJSON_INLINE const string_t basic_object<string_t>::format(bool ordered, string_t shift_str,
-                                                             size_t basic_shift_count) const
+MEOJSON_INLINE const string_t basic_object<string_t>::format(size_t indent, size_t indent_times) const
 {
-    string_t shift;
-    for (size_t i = 0; i != basic_shift_count + 1; ++i) {
-        shift += shift_str;
-    }
+    const string_t tail_indent(indent * indent_times, ' ');
+    const string_t body_indent(indent * (indent_times + 1), ' ');
 
-    string_t str = "{";
-    auto append_kv = [&](const string_t& key, const basic_value<string_t>& val) {
-        str += "\n" + shift + "\"" + unescape_string(key) +
-               "\": " + val.format(ordered, shift_str, basic_shift_count + 1) + ",";
-    };
-
-    if (ordered) {
-        std::vector<typename raw_object::const_iterator> ordered_data;
-        for (auto it = _object_data.cbegin(); it != _object_data.cend(); ++it) {
-            ordered_data.emplace_back(it);
+    string_t str { '{', '\n' };
+    for (auto iter = _object_data.cbegin(); iter != _object_data.cend();) {
+        const auto& [key, val] = *iter;
+        str += body_indent + char_t('"') + unescape_string(key) + string_t { '\"', ':', ' ' } +
+               val.format(indent, indent_times + 1);
+        if (++iter != _object_data.cend()) {
+            str += ',';
         }
-        std::sort(ordered_data.begin(), ordered_data.end(),
-                  [](const auto& lhs, const auto& rhs) { return lhs->first < rhs->first; });
-        for (const auto& it : ordered_data) {
-            append_kv(it->first, it->second);
-        }
+        str += '\n';
     }
-    else {
-        for (const auto& [key, val] : _object_data) {
-            append_kv(key, val);
-        }
-    }
-    if (str.back() == ',') {
-        str.pop_back(); // pop last ','
-    }
-
-    str += '\n';
-    for (size_t i = 0; i != basic_shift_count; ++i) {
-        str += shift_str;
-    }
-    str += '}';
+    str += tail_indent + char_t('}');
     return str;
 }
 
@@ -2366,7 +2367,6 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_array()
     }
 
     typename basic_array<string_t>::raw_array result;
-    result.reserve(4);
     while (true) {
         if (!skip_whitespace()) {
             return invalid_value<string_t>();
@@ -2418,7 +2418,6 @@ MEOJSON_INLINE basic_value<string_t> parser<parsing_t, string_t>::parse_object()
     }
 
     typename basic_object<string_t>::raw_object result;
-    result.reserve(4);
     while (true) {
         if (!skip_whitespace()) {
             return invalid_value<string_t>();
