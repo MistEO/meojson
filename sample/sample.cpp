@@ -1,7 +1,7 @@
 #include <iostream>
+#include <map>
 #include <set>
 #include <vector>
-#include <map>
 
 #include "json.hpp"
 
@@ -142,7 +142,7 @@ bool parsing_width()
     }
     auto& value = ret.value(); // you can use rvalues if needed, like
     // `auto value = std::move(ret).value();`
-// Output: meojson
+    // Output: meojson
     std::wcout << value[L"repo"].as_string() << std::endl;
 
     /* Output:
@@ -154,11 +154,11 @@ bool parsing_width()
     }
 
     // Output: abc
-    std::wstring str = (std::wstring)value[L"str"];    // it is equivalent to `value["str"].as_string()`
+    std::wstring str = (std::wstring)value[L"str"]; // it is equivalent to `value["str"].as_string()`
     std::wcout << str << std::endl;
 
     // Output: 3.141600
-    double num = value[L"num"].as_double();          // similarly, you can use `(double)value["num"]`
+    double num = value[L"num"].as_double(); // similarly, you can use `(double)value["num"]`
     std::wcout << num << std::endl;
 
     // Output: default_value
@@ -198,24 +198,18 @@ bool serializing()
     root["hello"] = "meojson";
     root["Pi"] = 3.1416;
 
-    root["arr"] = json::array{
-        "a", "b", "c"
-    };
-    root["obj"] = json::object{
-        {"obj_key1", "aaa"},
-        {"obj_key2", 123},
-        {"obj_key3", true}
-    };
-    root["obj"].object_emplace("key4", json::object{ { "key4 child", "lol" } });
+    root["arr"] = json::array { "a", "b", "c" };
+    root["obj"] = json::object { { "obj_key1", "aaa" }, { "obj_key2", 123 }, { "obj_key3", true } };
+    root["obj"].object_emplace("key4", json::object { { "key4 child", "lol" } });
     root["obj_another"]["child"]["grand"] = "i am grand";
 
     std::vector<int> vec = { 1, 2, 3, 4, 5 };
     root["arr from vec"] = json::array(vec);
     root["arr from vec"].array_emplace(6);
 
-    root["arr from vec"] += json::array{ 7, 8, 9, 10 };
+    root["arr from vec"] += json::array { 7, 8, 9, 10 };
 
-    std::set<std::string> set = { "a", "bbb", "cc" };
+    std::set<std::string> set = { "a", "bb\n\nb", "cc\t" };
     root["arr from set"] = json::array(set);
 
     std::map<std::string, int> map;
@@ -223,12 +217,12 @@ bool serializing()
     map.emplace("key2", 2);
     root["obj from map"] = json::object(map);
 
-    auto other = json::object{
-        { "other_key", "lol" },
-        { "obj", "Existing key will not be overwritten"}
-    };
+    auto other = json::object { { "other_key", "lol" }, { "obj", "Existing key will not be overwritten" } };
     // take union
     root |= other;
+
+    root["a\\n"] = "1a\\n";
+    root["a\n"] = "2a\n";
 
     std::cout << root.format() << std::endl;
 
