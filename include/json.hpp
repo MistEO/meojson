@@ -40,9 +40,9 @@ using u32value = basic_value<std::u32string>;
 using u32array = basic_array<std::u32string>;
 using u32object = basic_object<std::u32string>;
 
-// *************************
-// *     basic_value declare     *
-// *************************
+// *********************************
+// *      basic_value declare      *
+// *********************************
 
 template <typename string_t>
 class basic_value
@@ -136,7 +136,7 @@ public:
     float as_float() const;
     double as_double() const;
     long double as_long_double() const;
-    const string_t as_string() const;
+    string_t as_string() const;
     const basic_array<string_t>& as_array() const;
     const basic_object<string_t>& as_object() const;
     template <typename value_t>
@@ -152,16 +152,16 @@ public:
     void clear() noexcept;
 
     // return raw string
-    const string_t to_string() const;
+    string_t to_string() const;
 
-    const string_t format() { return format(4, 0); }
+    string_t format() { return format(4, 0); }
     template <typename sz_t>
-    const string_t format(sz_t indent)
+    string_t format(sz_t indent)
     {
         return format(indent, 0);
     }
     template <>
-    [[deprecated("It is now sorted by default.")]] const string_t format(bool ordered);
+    [[deprecated("It is now sorted by default.")]] string_t format(bool ordered);
 
     basic_value<string_t>& operator=(const basic_value<string_t>& rhs);
     basic_value<string_t>& operator=(basic_value<string_t>&&) noexcept;
@@ -205,7 +205,7 @@ private:
     friend class basic_array<string_t>;
     friend class basic_object<string_t>;
 
-    const string_t format(size_t indent, size_t indent_times) const;
+    string_t format(size_t indent, size_t indent_times) const;
 
     static var_t deep_copy(const var_t& src);
 
@@ -225,40 +225,10 @@ private:
     var_t _raw_data;
 };
 
-// *************************
-// *     utils declare     *
-// *************************
+// *********************************
+// *      basic_array declare      *
+// *********************************
 
-template <typename string_t = default_string_t>
-const basic_value<string_t> invalid_value();
-
-template <typename string_t>
-std::ostream& operator<<(std::ostream& out, const basic_value<string_t>& val);
-
-template <typename string_t>
-static constexpr string_t true_string()
-{
-    return { 't', 'r', 'u', 'e' };
-}
-
-template <typename string_t>
-static constexpr string_t false_string()
-{
-    return { 'f', 'a', 'l', 's', 'e' };
-}
-
-template <typename string_t>
-static constexpr string_t null_string()
-{
-    return { 'n', 'u', 'l', 'l' };
-}
-
-template <typename string_t>
-static constexpr string_t unescape_string(const string_t& str);
-
-// *************************
-// *     basic_array declare     *
-// *************************
 template <typename string_t>
 class basic_array
 {
@@ -293,16 +263,16 @@ public:
     bool contains(size_t pos) const { return pos < _array_data.size(); }
     bool exists(size_t pos) const { return contains(pos); }
     const basic_value<string_t>& at(size_t pos) const;
-    const string_t to_string() const;
 
-    const string_t format() { return format(4, 0); }
+    string_t to_string() const;
+    string_t format() { return format(4, 0); }
     template <typename sz_t>
-    const string_t format(sz_t indent)
+    string_t format(sz_t indent)
     {
         return format(indent, 0);
     }
     template <>
-    [[deprecated("It is now sorted by default.")]] const string_t format(bool ordered);
+    [[deprecated("It is now sorted by default.")]] string_t format(bool ordered);
 
     bool get(size_t pos, bool default_value) const;
     int get(size_t pos, int default_value) const;
@@ -363,7 +333,7 @@ private:
     friend class basic_value<string_t>;
     friend class basic_object<string_t>;
 
-    const string_t format(size_t indent, size_t indent_times) const;
+    string_t format(size_t indent, size_t indent_times) const;
 
     raw_array _array_data;
 };
@@ -371,9 +341,10 @@ private:
 template <typename string_t>
 std::ostream& operator<<(std::ostream& out, const basic_array<string_t>& arr);
 
-// *************************
-// *     basic_object declare    *
-// *************************
+// **********************************
+// *      basic_object declare      *
+// **********************************
+
 template <typename string_t>
 class basic_object
 {
@@ -404,16 +375,16 @@ public:
     bool contains(const string_t& key) const;
     bool exists(const string_t& key) const { return contains(key); }
     const basic_value<string_t>& at(const string_t& key) const;
-    const string_t to_string() const;
+    string_t to_string() const;
 
-    const string_t format() { return format(4, 0); }
+    string_t format() { return format(4, 0); }
     template <typename sz_t>
-    const string_t format(sz_t indent)
+    string_t format(sz_t indent)
     {
         return format(indent, 0);
     }
     template <>
-    [[deprecated("It is now sorted by default.")]] const string_t format(bool ordered);
+    [[deprecated("It is now sorted by default.")]] string_t format(bool ordered);
 
     bool get(const string_t& key, bool default_value) const;
     int get(const string_t& key, int default_value) const;
@@ -469,7 +440,7 @@ private:
     friend class basic_value<string_t>;
     friend class basic_array<string_t>;
 
-    const string_t format(size_t indent, size_t indent_times) const;
+    string_t format(size_t indent, size_t indent_times) const;
 
     raw_object _object_data;
 };
@@ -477,9 +448,10 @@ private:
 template <typename string_t>
 std::ostream& operator<<(std::ostream& out, const basic_object<string_t>& obj);
 
-// *************************
-// *   exception declare   *
-// *************************
+// *******************************
+// *      exception declare      *
+// *******************************
+
 class exception : public std::exception
 {
 public:
@@ -499,9 +471,41 @@ protected:
     std::string _what;
 };
 
-// *************************
-// *       basic_value<string_t> impl      *
-// *************************
+// ***************************
+// *      utils declare      *
+// ***************************
+
+template <typename string_t = default_string_t>
+const basic_value<string_t> invalid_value();
+
+template <typename string_t>
+std::ostream& operator<<(std::ostream& out, const basic_value<string_t>& val);
+
+template <typename string_t>
+static constexpr string_t true_string()
+{
+    return { 't', 'r', 'u', 'e' };
+}
+
+template <typename string_t>
+static constexpr string_t false_string()
+{
+    return { 'f', 'a', 'l', 's', 'e' };
+}
+
+template <typename string_t>
+static constexpr string_t null_string()
+{
+    return { 'n', 'u', 'l', 'l' };
+}
+
+template <typename string_t>
+static constexpr string_t unescape_string(const string_t& str);
+
+// ******************************
+// *      basic_value impl      *
+// ******************************
+
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::basic_value() = default;
 
@@ -843,7 +847,7 @@ MEOJSON_INLINE long double basic_value<string_t>::as_long_double() const
 }
 
 template <typename string_t>
-MEOJSON_INLINE const string_t basic_value<string_t>::as_string() const
+MEOJSON_INLINE string_t basic_value<string_t>::as_string() const
 {
     if (is_string()) {
         return as_basic_type_str();
@@ -941,7 +945,7 @@ MEOJSON_INLINE void basic_value<string_t>::clear() noexcept
 }
 
 template <typename string_t>
-MEOJSON_INLINE const string_t basic_value<string_t>::to_string() const
+MEOJSON_INLINE string_t basic_value<string_t>::to_string() const
 {
     switch (_type) {
     case value_type::null:
@@ -961,7 +965,7 @@ MEOJSON_INLINE const string_t basic_value<string_t>::to_string() const
 }
 
 template <typename string_t>
-MEOJSON_INLINE const string_t basic_value<string_t>::format(size_t indent, size_t indent_times) const
+MEOJSON_INLINE string_t basic_value<string_t>::format(size_t indent, size_t indent_times) const
 {
     switch (_type) {
     case value_type::null:
@@ -1151,9 +1155,10 @@ MEOJSON_INLINE typename basic_value<string_t>::var_t basic_value<string_t>::deep
     return dst;
 }
 
-// *************************
-// *       basic_array impl      *
-// *************************
+// ******************************
+// *      basic_array impl      *
+// ******************************
+
 template <typename string_t>
 template <typename... args_t>
 decltype(auto) basic_array<string_t>::emplace_back(args_t&&... args)
@@ -1221,7 +1226,7 @@ MEOJSON_INLINE void basic_array<string_t>::clear() noexcept
 }
 
 template <typename string_t>
-MEOJSON_INLINE const string_t basic_array<string_t>::to_string() const
+MEOJSON_INLINE string_t basic_array<string_t>::to_string() const
 {
     string_t str { '[' };
     for (auto iter = _array_data.cbegin(); iter != _array_data.cend();) {
@@ -1235,7 +1240,7 @@ MEOJSON_INLINE const string_t basic_array<string_t>::to_string() const
 }
 
 template <typename string_t>
-MEOJSON_INLINE const string_t basic_array<string_t>::format(size_t indent, size_t indent_times) const
+MEOJSON_INLINE string_t basic_array<string_t>::format(size_t indent, size_t indent_times) const
 {
     const string_t tail_indent(indent * indent_times, ' ');
     const string_t body_indent(indent * (indent_times + 1), ' ');
@@ -1598,14 +1603,10 @@ MEOJSON_INLINE bool basic_array<string_t>::operator==(const basic_array<string_t
     return _array_data == rhs._array_data;
 }
 
-// const raw_array &basic_array<string_t>::raw_data() const
-// {
-//     return _array_data;
-// }
-
-// *************************
+// *******************************
 // *      basic_object impl      *
-// *************************
+// *******************************
+
 template <typename string_t>
 template <typename... args_t>
 decltype(auto) basic_object<string_t>::emplace(args_t&&... args)
@@ -1625,9 +1626,7 @@ decltype(auto) basic_object<string_t>::insert(args_t&&... args)
 template <typename string_t>
 MEOJSON_INLINE std::ostream& operator<<(std::ostream& out, const basic_array<string_t>& arr)
 {
-    // TODO: format output
-
-    out << arr.to_string();
+    out << arr.format();
     return out;
 }
 
@@ -1690,7 +1689,7 @@ MEOJSON_INLINE bool basic_object<string_t>::erase(const string_t& key)
 }
 
 template <typename string_t>
-MEOJSON_INLINE const string_t basic_object<string_t>::to_string() const
+MEOJSON_INLINE string_t basic_object<string_t>::to_string() const
 {
     string_t str { '{' };
     for (auto iter = _object_data.cbegin(); iter != _object_data.cend();) {
@@ -1705,7 +1704,7 @@ MEOJSON_INLINE const string_t basic_object<string_t>::to_string() const
 }
 
 template <typename string_t>
-MEOJSON_INLINE const string_t basic_object<string_t>::format(size_t indent, size_t indent_times) const
+MEOJSON_INLINE string_t basic_object<string_t>::format(size_t indent, size_t indent_times) const
 {
     const string_t tail_indent(indent * indent_times, ' ');
     const string_t body_indent(indent * (indent_times + 1), ' ');
@@ -2058,9 +2057,10 @@ basic_object<string_t>::basic_object(map_t map)
     _object_data.insert(std::make_move_iterator(map.begin()), std::make_move_iterator(map.end()));
 }
 
-// *************************
-// *     parser declare    *
-// *************************
+// ****************************
+// *      parser declare      *
+// ****************************
+
 template <typename parsing_t, typename string_t = default_string_t>
 class parser
 {
@@ -2116,17 +2116,9 @@ MEOJSON_INLINE std::optional<basic_value<string_t>> parse(const parsing_t& conte
 template <typename string_t>
 MEOJSON_INLINE std::ostream& operator<<(std::ostream& out, const basic_value<string_t>& val)
 {
-    // TODO: format output
-
     out << val.to_string();
     return out;
 }
-
-// TODO
-// std::istream &operator>>(std::istream &in, basic_value &val)
-//{
-//    return in;
-//}
 
 template <typename string_t>
 MEOJSON_INLINE std::optional<basic_value<string_t>> open(std::ifstream& ifs, bool check_bom = false)
@@ -2613,5 +2605,4 @@ MEOJSON_INLINE static constexpr string_t unescape_string(const string_t& str)
 
     return result;
 }
-
 } // namespace json
