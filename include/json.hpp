@@ -2472,7 +2472,8 @@ MEOJSON_INLINE std::optional<string_t> parser<parsing_t, string_t>::parse_stdstr
         case '\n':
             return std::nullopt;
         case '\\': {
-            if (++_cur == _end) {
+            result += string_t(first, _cur++);
+            if (_cur == _end) {
                 return std::nullopt;
             }
             switch (*_cur) {

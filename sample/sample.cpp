@@ -40,7 +40,7 @@ bool parsing()
         2,
         3
     ],
-    "str": "abc",
+    "str": "abc\n123",
     "num": 3.1416,
     "A_obj": {
         "B_arr": [
