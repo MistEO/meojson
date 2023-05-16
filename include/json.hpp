@@ -1291,13 +1291,13 @@ MEOJSON_INLINE decltype(auto) basic_array<string_t>::get_helper(const value_t& d
     else if constexpr (std::is_same_v<basic_value<string_t>, value_t> ||
                        std::is_same_v<basic_array<string_t>, value_t> ||
                        std::is_same_v<basic_object<string_t>, value_t>) {
-        return default_value;
+        return value_t(default_value);
     }
     else if constexpr (std::is_constructible_v<string_t, value_t>) {
         return string_t { default_value };
     }
     else {
-        return default_value;
+        return value_t(default_value);
     }
 }
 
@@ -1312,19 +1312,19 @@ MEOJSON_INLINE decltype(auto) basic_array<string_t>::get_helper(const value_t& d
 
     if (!contains(pos)) {
         if constexpr (is_json) {
-            return default_value;
+            return value_t(default_value);
         }
         else if constexpr (is_string) {
             return string_t { default_value };
         }
         else {
-            return default_value;
+            return value_t(default_value);
         }
     }
 
-    const auto& val = _array_data.at(pos);
+    auto val = _array_data.at(pos);
     if constexpr (is_json) {
-        return default_value;
+        return val;
     }
     else if constexpr (is_string) {
         return val.template as<string_t>();
@@ -1333,7 +1333,7 @@ MEOJSON_INLINE decltype(auto) basic_array<string_t>::get_helper(const value_t& d
         return val.template as<value_t>();
     }
     else {
-        return default_value;
+        return value_t(default_value);
     }
 }
 
@@ -1616,13 +1616,13 @@ MEOJSON_INLINE decltype(auto) basic_object<string_t>::get_helper(const value_t& 
     else if constexpr (std::is_same_v<basic_value<string_t>, value_t> ||
                        std::is_same_v<basic_array<string_t>, value_t> ||
                        std::is_same_v<basic_object<string_t>, value_t>) {
-        return default_value;
+        return value_t(default_value);
     }
     else if constexpr (std::is_constructible_v<string_t, value_t>) {
         return string_t { default_value };
     }
     else {
-        return default_value;
+        return value_t(default_value);
     }
 }
 
@@ -1637,17 +1637,17 @@ MEOJSON_INLINE decltype(auto) basic_object<string_t>::get_helper(const value_t& 
 
     if (!contains(key)) {
         if constexpr (is_json) {
-            return default_value;
+            return value_t(default_value);
         }
         else if constexpr (is_string) {
             return string_t { default_value };
         }
         else {
-            return default_value;
+            return value_t(default_value);
         }
     }
 
-    const auto& val = _object_data.at(key);
+    auto val = _object_data.at(key);
     if constexpr (is_json) {
         return val;
     }
@@ -1658,7 +1658,7 @@ MEOJSON_INLINE decltype(auto) basic_object<string_t>::get_helper(const value_t& 
         return val.template as<value_t>();
     }
     else {
-        return default_value;
+        return value_t(default_value);
     }
 }
 
