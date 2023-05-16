@@ -254,7 +254,7 @@ static constexpr string_t null_string()
 }
 
 template <typename string_t>
-static constexpr string_t unescape_string(string_t str);
+static constexpr string_t unescape_string(const string_t& str);
 
 // *************************
 // *     basic_array declare     *
@@ -2463,7 +2463,7 @@ MEOJSON_INLINE std::optional<string_t> parser<parsing_t, string_t>::parse_stdstr
     }
 
     string_t result;
-    auto first = _cur;
+    auto no_escape_beg = _cur;
 
     while (_cur != _end) {
         switch (*_cur) {
@@ -2472,7 +2472,7 @@ MEOJSON_INLINE std::optional<string_t> parser<parsing_t, string_t>::parse_stdstr
         case '\n':
             return std::nullopt;
         case '\\': {
-            result += string_t(first, _cur++);
+            result += string_t(no_escape_beg, _cur++);
             if (_cur == _end) {
                 return std::nullopt;
             }
@@ -2508,11 +2508,11 @@ MEOJSON_INLINE std::optional<string_t> parser<parsing_t, string_t>::parse_stdstr
                 // Illegal backslash escape
                 return std::nullopt;
             }
-            first = ++_cur;
+            no_escape_beg = ++_cur;
             break;
         }
         case '"': {
-            result += string_t(first, _cur++);
+            result += string_t(no_escape_beg, _cur++);
             return result;
         }
         default:
@@ -2567,40 +2567,51 @@ MEOJSON_INLINE bool parser<parsing_t, string_t>::skip_digit()
 }
 
 template <typename string_t>
-MEOJSON_INLINE static constexpr string_t unescape_string(string_t str)
+MEOJSON_INLINE static constexpr string_t unescape_string(const string_t& str)
 {
-    for (size_t pos = 0; pos < str.size(); ++pos) {
-        string_t replace_str;
-        switch (str[pos]) {
-        case '\"':
-            replace_str = { '\\', '\"' };
+    using char_t = string_t::value_type;
+
+    string_t result;
+    auto cur = str.cbegin();
+    auto end = str.cend();
+    auto no_escape_beg = cur;
+    char_t escape = 0;
+
+    for (; cur != end; ++cur) {
+        switch (*cur) {
+        case '"':
+            escape = '"';
             break;
         case '\\':
-            replace_str = { '\\', '\\' };
+            escape = '\\';
             break;
         case '\b':
-            replace_str = { '\\', 'b' };
+            escape = 'b';
             break;
         case '\f':
-            replace_str = { '\\', 'f' };
+            escape = 'f';
             break;
         case '\n':
-            replace_str = { '\\', 'n' };
+            escape = 'n';
             break;
         case '\r':
-            replace_str = { '\\', 'r' };
+            escape = 'r';
             break;
         case '\t':
-            replace_str = { '\\', 't' };
+            escape = 't';
             break;
         default:
-            continue;
             break;
         }
-        str.replace(pos, 1, replace_str);
-        ++pos;
+        if (escape) {
+            result += string_t(no_escape_beg, cur) + char_t('\\') + escape;
+            no_escape_beg = cur + 1;
+            escape = 0;
+        }
     }
-    return str;
+    result += string_t(no_escape_beg, cur);
+
+    return result;
 }
 
 } // namespace json
