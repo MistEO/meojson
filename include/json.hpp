@@ -274,17 +274,8 @@ public:
         return format(indent, 0);
     }
 
-    bool get(size_t pos, bool default_value) const;
-    int get(size_t pos, int default_value) const;
-    long get(size_t pos, long default_value) const;
-    unsigned long get(size_t pos, unsigned default_value) const;
-    long long get(size_t pos, long long default_value) const;
-    unsigned long long get(size_t pos, unsigned long long default_value) const;
-    float get(size_t pos, float default_value) const;
-    double get(size_t pos, double default_value) const;
-    long double get(size_t pos, long double default_value) const;
-    string_t get(size_t pos, string_t default_value) const;
-    string_t get(size_t pos, const char_t* default_value) const;
+    template <typename value_t>
+    decltype(auto) get(size_t pos, value_t default_value) const;
     basic_value<string_t> get(size_t pos) const;
 
     template <typename value_t = basic_value<string_t>>
@@ -386,17 +377,8 @@ public:
         return format(indent, 0);
     }
 
-    bool get(const string_t& key, bool default_value) const;
-    int get(const string_t& key, int default_value) const;
-    long get(const string_t& key, long default_value) const;
-    unsigned long get(const string_t& key, unsigned default_value) const;
-    long long get(const string_t& key, long long default_value) const;
-    unsigned long long get(const string_t& key, unsigned long long default_value) const;
-    float get(const string_t& key, float default_value) const;
-    double get(const string_t& key, double default_value) const;
-    long double get(const string_t& key, long double default_value) const;
-    string_t get(const string_t& key, string_t default_value) const;
-    string_t get(const string_t& key, const char_t* default_value) const;
+    template <typename value_t>
+    decltype(auto) get(const string_t& key, value_t default_value) const;
     basic_value<string_t> get(const string_t& key) const;
 
     template <typename value_t = basic_value<string_t>>
@@ -621,22 +603,22 @@ template <typename string_t>
 template <typename value_t>
 MEOJSON_INLINE bool basic_value<string_t>::is() const noexcept
 {
-    if constexpr (std::is_same_v<value_t, basic_value<string_t>>) {
+    if constexpr (std::is_same_v<basic_value<string_t>, value_t>) {
         return true;
     }
-    else if constexpr (std::is_same_v<value_t, bool>) {
+    else if constexpr (std::is_same_v<bool, value_t>) {
         return _type == value_type::boolean;
     }
     else if constexpr (std::is_arithmetic_v<value_t>) {
         return _type == value_type::number;
     }
-    else if constexpr (std::is_same_v<value_t, string_t>) {
+    else if constexpr (std::is_same_v<string_t, value_t>) {
         return _type == value_type::string;
     }
-    else if constexpr (std::is_same_v<value_t, basic_array<string_t>>) {
+    else if constexpr (std::is_same_v<basic_array<string_t>, value_t>) {
         return _type == value_type::j_array;
     }
-    else if constexpr (std::is_same_v<value_t, basic_object<string_t>>) {
+    else if constexpr (std::is_same_v<basic_object<string_t>, value_t>) {
         return _type == value_type::j_object;
     }
     else {
@@ -1258,186 +1240,26 @@ MEOJSON_INLINE string_t basic_array<string_t>::format(size_t indent, size_t inde
 }
 
 template <typename string_t>
-MEOJSON_INLINE bool basic_array<string_t>::get(size_t pos, bool default_value) const
+template <typename value_t>
+MEOJSON_INLINE decltype(auto) basic_array<string_t>::get(size_t pos, value_t default_value) const
 {
-    if (contains(pos)) {
-        basic_value<string_t> basic_value = _array_data.at(pos);
-        if (basic_value.is_boolean()) {
-            return basic_value.as_boolean();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
+    constexpr bool is_string = std::is_constructible_v<string_t, value_t>;
 
-template <typename string_t>
-MEOJSON_INLINE int basic_array<string_t>::get(size_t pos, int default_value) const
-{
-    if (contains(pos)) {
-        basic_value<string_t> basic_value = _array_data.at(pos);
-        if (basic_value.is_number()) {
-            return basic_value.as_integer();
+    if (!contains(pos)) {
+        if constexpr (is_string) {
+            return string_t { default_value };
         }
         else {
             return default_value;
         }
     }
-    else {
-        return default_value;
-    }
-}
 
-template <typename string_t>
-MEOJSON_INLINE long basic_array<string_t>::get(size_t pos, long default_value) const
-{
-    if (contains(pos)) {
-        basic_value<string_t> basic_value = _array_data.at(pos);
-        if (basic_value.is_number()) {
-            return basic_value.as_long();
-        }
-        else {
-            return default_value;
-        }
+    basic_value<string_t> basic_value = _array_data.at(pos);
+    if constexpr (is_string) {
+        return basic_value.as<string_t>();
     }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE unsigned long basic_array<string_t>::get(size_t pos, unsigned default_value) const
-{
-    if (contains(pos)) {
-        basic_value<string_t> basic_value = _array_data.at(pos);
-        if (basic_value.is_number()) {
-            return basic_value.as_unsigned_long();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE long long basic_array<string_t>::get(size_t pos, long long default_value) const
-{
-    if (contains(pos)) {
-        basic_value<string_t> basic_value = _array_data.at(pos);
-        if (basic_value.is_number()) {
-            return basic_value.as_long_long();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE unsigned long long basic_array<string_t>::get(size_t pos, unsigned long long default_value) const
-{
-    if (contains(pos)) {
-        basic_value<string_t> basic_value = _array_data.at(pos);
-        if (basic_value.is_number()) {
-            return basic_value.as_unsigned_long_long();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE float basic_array<string_t>::get(size_t pos, float default_value) const
-{
-    if (contains(pos)) {
-        basic_value<string_t> basic_value = _array_data.at(pos);
-        if (basic_value.is_number()) {
-            return basic_value.as_float();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE double basic_array<string_t>::get(size_t pos, double default_value) const
-{
-    if (contains(pos)) {
-        basic_value<string_t> basic_value = _array_data.at(pos);
-        if (basic_value.is_number()) {
-            return basic_value.as_double();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE long double basic_array<string_t>::get(size_t pos, long double default_value) const
-{
-    if (contains(pos)) {
-        basic_value<string_t> basic_value = _array_data.at(pos);
-        if (basic_value.is_number()) {
-            return basic_value.as_long_double();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE string_t basic_array<string_t>::get(size_t pos, string_t default_value) const
-{
-    if (contains(pos)) {
-        basic_value<string_t> basic_value = _array_data.at(pos);
-        if (basic_value.is_string()) {
-            return basic_value.as_string();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE string_t basic_array<string_t>::get(size_t pos, const char_t* default_value) const
-{
-    if (contains(pos)) {
-        basic_value<string_t> basic_value = _array_data.at(pos);
-        if (basic_value.is_string()) {
-            return basic_value.as_string();
-        }
-        else {
-            return default_value;
-        }
+    else if (basic_value.is<value_t>()) {
+        return basic_value.as<value_t>();
     }
     else {
         return default_value;
@@ -1724,187 +1546,26 @@ MEOJSON_INLINE string_t basic_object<string_t>::format(size_t indent, size_t ind
 }
 
 template <typename string_t>
-MEOJSON_INLINE bool basic_object<string_t>::get(const string_t& key, bool default_value) const
+template <typename value_t>
+MEOJSON_INLINE decltype(auto) basic_object<string_t>::get(const string_t& key, value_t default_value) const
 {
-    if (contains(key)) {
-        basic_value<string_t> basic_value = _object_data.at(key);
-        if (basic_value.is_boolean()) {
-            return basic_value.as_boolean();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
+    constexpr bool is_string = std::is_constructible_v<string_t, value_t>;
 
-template <typename string_t>
-MEOJSON_INLINE int basic_object<string_t>::get(const string_t& key, int default_value) const
-{
-    if (contains(key)) {
-        basic_value<string_t> basic_value = _object_data.at(key);
-        if (basic_value.is_number()) {
-            return basic_value.as_integer();
+    if (!contains(key)) {
+        if constexpr (is_string) {
+            return string_t { default_value };
         }
         else {
             return default_value;
         }
     }
-    else {
-        return default_value;
-    }
-}
 
-template <typename string_t>
-MEOJSON_INLINE long basic_object<string_t>::get(const string_t& key, long default_value) const
-{
-    if (contains(key)) {
-        basic_value<string_t> basic_value = _object_data.at(key);
-        if (basic_value.is_number()) {
-            return basic_value.as_long();
-        }
-        else {
-            return default_value;
-        }
+    basic_value<string_t> basic_value = _object_data.at(key);
+    if constexpr (is_string) {
+        return basic_value.as<string_t>();
     }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE unsigned long basic_object<string_t>::get(const string_t& key, unsigned default_value) const
-{
-    if (contains(key)) {
-        basic_value<string_t> basic_value = _object_data.at(key);
-        if (basic_value.is_number()) {
-            return basic_value.as_unsigned_long();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE long long basic_object<string_t>::get(const string_t& key, long long default_value) const
-{
-    if (contains(key)) {
-        basic_value<string_t> basic_value = _object_data.at(key);
-        if (basic_value.is_number()) {
-            return basic_value.as_long_long();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE unsigned long long basic_object<string_t>::get(const string_t& key,
-                                                              unsigned long long default_value) const
-{
-    if (contains(key)) {
-        basic_value<string_t> basic_value = _object_data.at(key);
-        if (basic_value.is_number()) {
-            return basic_value.as_unsigned_long_long();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE float basic_object<string_t>::get(const string_t& key, float default_value) const
-{
-    if (contains(key)) {
-        basic_value<string_t> basic_value = _object_data.at(key);
-        if (basic_value.is_number()) {
-            return basic_value.as_float();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE double basic_object<string_t>::get(const string_t& key, double default_value) const
-{
-    if (contains(key)) {
-        basic_value<string_t> basic_value = _object_data.at(key);
-        if (basic_value.is_number()) {
-            return basic_value.as_double();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE long double basic_object<string_t>::get(const string_t& key, long double default_value) const
-{
-    if (contains(key)) {
-        basic_value<string_t> basic_value = _object_data.at(key);
-        if (basic_value.is_number()) {
-            return basic_value.as_long_double();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE string_t basic_object<string_t>::get(const string_t& key, string_t default_value) const
-{
-    if (contains(key)) {
-        basic_value<string_t> basic_value = _object_data.at(key);
-        if (basic_value.is_string()) {
-            return basic_value.as_string();
-        }
-        else {
-            return default_value;
-        }
-    }
-    else {
-        return default_value;
-    }
-}
-
-template <typename string_t>
-MEOJSON_INLINE string_t basic_object<string_t>::get(const string_t& key, const char_t* default_value) const
-{
-    if (contains(key)) {
-        basic_value<string_t> basic_value = _object_data.at(key);
-        if (basic_value.is_string()) {
-            return basic_value.as_string();
-        }
-        else {
-            return default_value;
-        }
+    else if (basic_value.is<value_t>()) {
+        return basic_value.as<value_t>();
     }
     else {
         return default_value;
@@ -1914,12 +1575,11 @@ MEOJSON_INLINE string_t basic_object<string_t>::get(const string_t& key, const c
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t> basic_object<string_t>::get(const string_t& key) const
 {
-    if (contains(key)) {
-        return _object_data.at(key);
-    }
-    else {
+    if (!contains(key)) {
         return {};
     }
+
+    return _object_data.at(key);
 }
 
 template <typename string_t>
