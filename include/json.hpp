@@ -253,8 +253,7 @@ public:
 
     explicit basic_array(const basic_value<string_t>& val);
     explicit basic_array(basic_value<string_t>&& val);
-    template <typename array_t, typename _ = std::enable_if_t<
-                                    std::is_constructible_v<basic_value<string_t>, typename array_t::value_type>>>
+    template <typename array_t>
     basic_array(array_t arr);
 
     ~basic_array() noexcept = default;
@@ -358,8 +357,7 @@ public:
     basic_object(std::initializer_list<value_type> init_list);
     explicit basic_object(const basic_value<string_t>& val);
     explicit basic_object(basic_value<string_t>&& val);
-    template <typename map_t,
-              typename _ = std::enable_if_t<std::is_constructible_v<value_type, typename map_t::value_type>>>
+    template <typename map_t>
     basic_object(map_t map);
 
     ~basic_object() = default;
@@ -667,14 +665,14 @@ MEOJSON_INLINE bool basic_value<string_t>::is() const noexcept
     else if constexpr (std::is_arithmetic_v<value_t>) {
         return _type == value_type::number;
     }
-    else if constexpr (std::is_same_v<string_t, value_t>) {
-        return _type == value_type::string;
-    }
     else if constexpr (std::is_same_v<basic_array<string_t>, value_t>) {
         return _type == value_type::j_array;
     }
     else if constexpr (std::is_same_v<basic_object<string_t>, value_t>) {
         return _type == value_type::j_object;
+    }
+    else if constexpr (std::is_constructible_v<string_t, value_t>) {
+        return _type == value_type::string;
     }
     else {
         static_assert(!sizeof(value_t), "Unsupported type");
@@ -1276,9 +1274,11 @@ MEOJSON_INLINE basic_array<string_t>::basic_array(basic_value<string_t>&& val)
 }
 
 template <typename string_t>
-template <typename array_t, typename _>
+template <typename array_t>
 MEOJSON_INLINE basic_array<string_t>::basic_array(array_t arr)
 {
+    static_assert(std::is_constructible_v<value_type, typename array_t::value_type>,
+                  "array_t can not construct a json array");
     _array_data.assign(std::make_move_iterator(arr.begin()), std::make_move_iterator(arr.end()));
 }
 
@@ -1367,14 +1367,21 @@ MEOJSON_INLINE auto basic_array<string_t>::get_helper(const value_t& default_val
     }
 
     auto val = _array_data.at(pos);
-    if constexpr (is_string) {
-        return val.template as<string_t>();
-    }
-    else if (val.template is<value_t>()) {
-        return val.template as<value_t>();
+    if (val.template is<value_t>()) {
+        if constexpr (is_string) {
+            return val.template as<string_t>();
+        }
+        else {
+            return val.template as<value_t>();
+        }
     }
     else {
-        return value_t(default_value);
+        if constexpr (is_string) {
+            return string_t(default_value);
+        }
+        else {
+            return value_t(default_value);
+        }
     }
 }
 
@@ -1680,14 +1687,21 @@ MEOJSON_INLINE auto basic_object<string_t>::get_helper(const value_t& default_va
     }
 
     auto val = _object_data.at(key);
-    if constexpr (is_string) {
-        return val.template as<string_t>();
-    }
-    else if (val.template is<value_t>()) {
-        return val.template as<value_t>();
+    if (val.template is<value_t>()) {
+        if constexpr (is_string) {
+            return val.template as<string_t>();
+        }
+        else {
+            return val.template as<value_t>();
+        }
     }
     else {
-        return value_t(default_value);
+        if constexpr (is_string) {
+            return string_t(default_value);
+        }
+        else {
+            return value_t(default_value);
+        }
     }
 }
 
@@ -1806,9 +1820,11 @@ MEOJSON_INLINE bool basic_object<string_t>::operator==(const basic_object<string
 }
 
 template <typename string_t>
-template <typename map_t, typename _>
+template <typename map_t>
 basic_object<string_t>::basic_object(map_t map)
 {
+    static_assert(std::is_constructible_v<value_type, typename map_t::value_type>,
+                  "map_t can not construct a json object");
     _object_data.insert(std::make_move_iterator(map.begin()), std::make_move_iterator(map.end()));
 }
 

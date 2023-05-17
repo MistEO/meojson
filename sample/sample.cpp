@@ -134,7 +134,7 @@ bool parsing_width()
 }
     )";
 
-    auto ret = json::parse<std::wstring_view, std::wstring>(content);
+    auto ret = json::parse(content);
 
     if (!ret) {
         std::cerr << "Parsing failed" << std::endl;
