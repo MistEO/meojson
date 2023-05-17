@@ -206,6 +206,6 @@ void serializing()
     // take union
     root |= other;
 
-    std::cout << root.format(true) << std::endl;
+    std::cout << root.format() << std::endl;
 }
 ```
