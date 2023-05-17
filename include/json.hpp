@@ -58,8 +58,8 @@ public:
         boolean,
         string,
         number,
-        j_array,
-        j_object
+        array,
+        object
     };
 
     using var_t = std::variant<string_t, array_ptr, object_ptr>;
@@ -104,8 +104,8 @@ public:
     bool is_number() const noexcept { return _type == value_type::number; }
     bool is_boolean() const noexcept { return _type == value_type::boolean; }
     bool is_string() const noexcept { return _type == value_type::string; }
-    bool is_array() const noexcept { return _type == value_type::j_array; }
-    bool is_object() const noexcept { return _type == value_type::j_object; }
+    bool is_array() const noexcept { return _type == value_type::array; }
+    bool is_object() const noexcept { return _type == value_type::object; }
     template <typename value_t>
     bool is() const noexcept;
 
@@ -636,14 +636,14 @@ MEOJSON_INLINE basic_value<string_t>::basic_value(string_t str) : _type(value_ty
 
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::basic_value(basic_array<string_t> arr)
-    : _type(value_type::j_array), _raw_data(std::make_unique<basic_array<string_t>>(std::move(arr)))
+    : _type(value_type::array), _raw_data(std::make_unique<basic_array<string_t>>(std::move(arr)))
 {
     ;
 }
 
 template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>::basic_value(basic_object<string_t> obj)
-    : _type(value_type::j_object), _raw_data(std::make_unique<basic_object<string_t>>(std::move(obj)))
+    : _type(value_type::object), _raw_data(std::make_unique<basic_object<string_t>>(std::move(obj)))
 {
     ;
 }
@@ -666,10 +666,10 @@ MEOJSON_INLINE bool basic_value<string_t>::is() const noexcept
         return _type == value_type::number;
     }
     else if constexpr (std::is_same_v<basic_array<string_t>, value_t>) {
-        return _type == value_type::j_array;
+        return _type == value_type::array;
     }
     else if constexpr (std::is_same_v<basic_object<string_t>, value_t>) {
-        return _type == value_type::j_object;
+        return _type == value_type::object;
     }
     else if constexpr (std::is_constructible_v<string_t, value_t>) {
         return _type == value_type::string;
@@ -1022,9 +1022,9 @@ MEOJSON_INLINE string_t basic_value<string_t>::to_string() const
         return as_basic_type_str();
     case value_type::string:
         return char_t('"') + unescape_string(as_basic_type_str()) + char_t('"');
-    case value_type::j_array:
+    case value_type::array:
         return as_array().to_string();
-    case value_type::j_object:
+    case value_type::object:
         return as_object().to_string();
     default:
         throw exception("Unknown basic_value Type");
@@ -1040,9 +1040,9 @@ MEOJSON_INLINE string_t basic_value<string_t>::format(size_t indent, size_t inde
     case value_type::number:
     case value_type::string:
         return to_string();
-    case value_type::j_array:
+    case value_type::array:
         return as_array().format(indent, indent_times);
-    case value_type::j_object:
+    case value_type::object:
         return as_object().format(indent, indent_times);
     default:
         throw exception("Unknown basic_value Type");
@@ -1073,9 +1073,9 @@ MEOJSON_INLINE bool basic_value<string_t>::operator==(const basic_value<string_t
     case value_type::number:
     case value_type::string:
         return _raw_data == rhs._raw_data;
-    case value_type::j_array:
+    case value_type::array:
         return as_array() == rhs.as_array();
-    case value_type::j_object:
+    case value_type::object:
         return as_object() == rhs.as_object();
     default:
         throw exception("Unknown basic_value Type");
