@@ -105,6 +105,10 @@ bool parsing()
     auto opt_v = value.find("not_exists");
     std::cout << "Did we find the \"not_exists\"? " << opt_v.has_value() << std::endl;
 
+    using namespace json::literals;
+    json::value val = "{\"hi\":\"literals\"}"_json;
+    std::cout << val["hi"] << std::endl;
+
     return true;
 }
 
@@ -188,6 +192,10 @@ bool parsing_width()
     std::cout << "Did we find the \"not_exists\"? " << opt_v.has_value() << std::endl;
 
     std::wcout << value.format(2) << std::endl;
+
+    using namespace json::literals;
+    auto val = LR"({"hi":"literals"})"_json;
+    std::wcout << val[L"hi"] << std::endl;
 
     return true;
 }

@@ -5,7 +5,6 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <ostream>
 #include <string>
 #include <tuple>
 #include <variant>
@@ -506,12 +505,35 @@ auto parse(istream_t& istream, bool check_bom);
 template <typename ifstream_t = std::ifstream, typename path_t = void>
 auto open(const path_t& path, bool check_bom = false);
 
-template <typename string_t>
-std::ostream& operator<<(std::ostream& out, const basic_value<string_t>& val);
-template <typename string_t>
-std::ostream& operator<<(std::ostream& out, const basic_array<string_t>& arr);
-template <typename string_t>
-std::ostream& operator<<(std::ostream& out, const basic_object<string_t>& obj);
+template <typename ostream_t, typename string_t>
+ostream_t& operator<<(ostream_t& out, const basic_value<string_t>& val);
+template <typename ostream_t, typename string_t>
+ostream_t& operator<<(ostream_t& out, const basic_array<string_t>& arr);
+template <typename ostream_t, typename string_t>
+ostream_t& operator<<(ostream_t& out, const basic_object<string_t>& obj);
+
+namespace literals
+{
+    value operator""_json(const char* str, size_t len);
+    wvalue operator""_json(const wchar_t* str, size_t len);
+    u16value operator""_json(const char16_t* str, size_t len);
+    u32value operator""_json(const char32_t* str, size_t len);
+
+    value operator""_jvalue(const char* str, size_t len);
+    wvalue operator""_jvalue(const wchar_t* str, size_t len);
+    u16value operator""_jvalue(const char16_t* str, size_t len);
+    u32value operator""_jvalue(const char32_t* str, size_t len);
+
+    array operator""_jarray(const char* str, size_t len);
+    warray operator""_jarray(const wchar_t* str, size_t len);
+    u16array operator""_jarray(const char16_t* str, size_t len);
+    u32array operator""_jarray(const char32_t* str, size_t len);
+
+    object operator""_jobject(const char* str, size_t len);
+    wobject operator""_jobject(const wchar_t* str, size_t len);
+    u16object operator""_jobject(const char16_t* str, size_t len);
+    u32object operator""_jobject(const char32_t* str, size_t len);
+}
 
 template <typename string_t = default_string_t>
 const basic_value<string_t> invalid_value();
@@ -2279,22 +2301,101 @@ MEOJSON_INLINE auto open(const path_t& filepath, bool check_bom)
     return opt;
 }
 
-template <typename string_t>
-MEOJSON_INLINE std::ostream& operator<<(std::ostream& out, const basic_value<string_t>& val)
+namespace literals
+{
+    value operator""_json(const char* str, size_t len)
+    {
+        return operator""_jvalue(str, len);
+    }
+    wvalue operator""_json(const wchar_t* str, size_t len)
+    {
+        return operator""_jvalue(str, len);
+    }
+    u16value operator""_json(const char16_t* str, size_t len)
+    {
+        return operator""_jvalue(str, len);
+    }
+    u32value operator""_json(const char32_t* str, size_t len)
+    {
+        return operator""_jvalue(str, len);
+    }
+
+    value operator""_jvalue(const char* str, size_t len)
+    {
+        return parse(std::string_view(str, len)).value_or(value());
+    }
+    wvalue operator""_jvalue(const wchar_t* str, size_t len)
+    {
+        return parse(std::wstring_view(str, len)).value_or(wvalue());
+    }
+    u16value operator""_jvalue(const char16_t* str, size_t len)
+    {
+        return parse(std::u16string_view(str, len)).value_or(u16value());
+    }
+    u32value operator""_jvalue(const char32_t* str, size_t len)
+    {
+        return parse(std::u32string_view(str, len)).value_or(u32value());
+    }
+
+    array operator""_jarray(const char* str, size_t len)
+    {
+        auto val = parse(std::string_view(str, len)).value_or(value());
+        return val.is_array() ? val.as_array() : array();
+    }
+    warray operator""_jarray(const wchar_t* str, size_t len)
+    {
+        auto val = parse(std::wstring_view(str, len)).value_or(wvalue());
+        return val.is_array() ? val.as_array() : warray();
+    }
+    u16array operator""_jarray(const char16_t* str, size_t len)
+    {
+        auto val = parse(std::u16string_view(str, len)).value_or(u16value());
+        return val.is_array() ? val.as_array() : u16array();
+    }
+    u32array operator""_jarray(const char32_t* str, size_t len)
+    {
+        auto val = parse(std::u32string_view(str, len)).value_or(u32value());
+        return val.is_array() ? val.as_array() : u32array();
+    }
+
+    object operator""_jobject(const char* str, size_t len)
+    {
+        auto val = parse(std::string_view(str, len)).value_or(value());
+        return val.is_object() ? val.as_object() : object();
+    }
+    wobject operator""_jobject(const wchar_t* str, size_t len)
+    {
+        auto val = parse(std::wstring_view(str, len)).value_or(wvalue());
+        return val.is_object() ? val.as_object() : wobject();
+    }
+    u16object operator""_jobject(const char16_t* str, size_t len)
+    {
+        auto val = parse(std::u16string_view(str, len)).value_or(u16value());
+        return val.is_object() ? val.as_object() : u16object();
+    }
+    u32object operator""_jobject(const char32_t* str, size_t len)
+    {
+        auto val = parse(std::u32string_view(str, len)).value_or(u32value());
+        return val.is_object() ? val.as_object() : u32object();
+    }
+} // namespace literals
+
+template <typename ostream_t, typename string_t>
+MEOJSON_INLINE ostream_t& operator<<(ostream_t& out, const basic_value<string_t>& val)
 {
     out << val.format();
     return out;
 }
 
-template <typename string_t>
-MEOJSON_INLINE std::ostream& operator<<(std::ostream& out, const basic_array<string_t>& arr)
+template <typename ostream_t, typename string_t>
+MEOJSON_INLINE ostream_t& operator<<(ostream_t& out, const basic_array<string_t>& arr)
 {
     out << arr.format();
     return out;
 }
 
-template <typename string_t>
-MEOJSON_INLINE std::ostream& operator<<(std::ostream& out, const basic_object<string_t>& obj)
+template <typename ostream_t, typename string_t>
+MEOJSON_INLINE ostream_t& operator<<(ostream_t& out, const basic_object<string_t>& obj)
 {
     out << obj.format();
     return out;

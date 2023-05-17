@@ -115,6 +115,11 @@ void parsing()
     // If you use the `find` without template argument, it will return a `std::optional<json::value>`
     auto opt_v = value.find("not_exists");
     std::cout << "Did we find the \"not_exists\"? " << opt_v.has_value() << std::endl;
+
+    // Output: "literals"
+    using namespace json::literals;
+    auto val = "{\"hi\":\"literals\"}"_json;
+    std::cout << val["hi"] << std::endl;
 }
 ```
 
