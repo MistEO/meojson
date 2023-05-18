@@ -117,6 +117,9 @@ public:
     const basic_value<string_t>& at(size_t pos) const;
     const basic_value<string_t>& at(const string_t& key) const;
 
+    bool erase(size_t pos);
+    bool erase(const string_t& key);
+
     // Usage: get(key_1, key_2, ..., default_value);
     template <typename... key_then_default_value_t>
     auto get(key_then_default_value_t&&... keys_then_default_value) const;
@@ -293,7 +296,7 @@ public:
     decltype(auto) push_back(args_t&&... args);
 
     void clear() noexcept;
-    // void erase(size_t pos);
+    bool erase(size_t pos);
 
     iterator begin() noexcept;
     iterator end() noexcept;
@@ -743,6 +746,18 @@ template <typename string_t>
 MEOJSON_INLINE const basic_value<string_t>& basic_value<string_t>::at(const string_t& key) const
 {
     return as_object().at(key);
+}
+
+template <typename string_t>
+MEOJSON_INLINE bool basic_value<string_t>::erase(size_t pos)
+{
+    return as_array().erase(pos);
+}
+
+template <typename string_t>
+MEOJSON_INLINE bool basic_value<string_t>::erase(const string_t& key)
+{
+    return as_object().erase(key);
 }
 
 template <typename string_t>
@@ -1346,6 +1361,12 @@ template <typename string_t>
 MEOJSON_INLINE void basic_array<string_t>::clear() noexcept
 {
     _array_data.clear();
+}
+
+template <typename string_t>
+MEOJSON_INLINE bool basic_array<string_t>::erase(size_t pos)
+{
+    return _array_data.erase(pos) != _array_data.end();
 }
 
 template <typename string_t>
