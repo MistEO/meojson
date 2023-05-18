@@ -112,6 +112,12 @@ bool parsing()
     json::value val = "{\"hi\":\"literals\"}"_json;
     std::cout << val["hi"] << std::endl;
 
+    std::vector<uint16_t> vec_j = { '{', '"', 'k', '"', ':', '"', 'v', '"', '}' };
+    auto vecj_opt = json::parse(vec_j);
+    if (vecj_opt) {
+        std::ignore = vecj_opt->dumps();
+    }
+
     return true;
 }
 
