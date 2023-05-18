@@ -51,10 +51,13 @@ void parsing()
         2,
         3
     ],
-    "str": "abc",
+    "str": "abc\n123",
     "num": 3.1416,
     "A_obj": {
         "B_arr": [
+            {
+                "C_str": "i am a distraction"
+            },
             {
                 "C_str": "you found me!"
             }
@@ -95,7 +98,7 @@ void parsing()
     std::cout << get << std::endl;
 
     // Output: you found me!
-    std::string nested_get = value.get("A_obj", "B_arr", 0, "C_str", "default_value");
+    std::string nested_get = value.get("A_obj", "B_arr", 1, "C_str", "default_value");
     std::cout << nested_get << std::endl;
 
     // Output: 1, 2, 3
