@@ -1371,7 +1371,7 @@ MEOJSON_INLINE bool basic_array<string_t>::erase(size_t pos)
 
 template <typename string_t>
 template <typename... args_t>
-decltype(auto) basic_array<string_t>::emplace_back(args_t&&... args)
+MEOJSON_INLINE decltype(auto) basic_array<string_t>::emplace_back(args_t&&... args)
 {
     static_assert(std::is_constructible_v<value_type, args_t...>,
                   "Parameter can't be used to construct a raw_array::value_type");
@@ -1380,7 +1380,7 @@ decltype(auto) basic_array<string_t>::emplace_back(args_t&&... args)
 
 template <typename string_t>
 template <typename... args_t>
-decltype(auto) basic_array<string_t>::push_back(args_t&&... args)
+MEOJSON_INLINE decltype(auto) basic_array<string_t>::push_back(args_t&&... args)
 {
     return emplace_back(std::forward<args_t>(args)...);
 }
@@ -1694,7 +1694,7 @@ MEOJSON_INLINE bool basic_object<string_t>::erase(const string_t& key)
 
 template <typename string_t>
 template <typename... args_t>
-decltype(auto) basic_object<string_t>::emplace(args_t&&... args)
+MEOJSON_INLINE decltype(auto) basic_object<string_t>::emplace(args_t&&... args)
 {
     static_assert(std::is_constructible_v<value_type, args_t...>,
                   "Parameter can't be used to construct a raw_object::value_type");
@@ -1703,7 +1703,7 @@ decltype(auto) basic_object<string_t>::emplace(args_t&&... args)
 
 template <typename string_t>
 template <typename... args_t>
-decltype(auto) basic_object<string_t>::insert(args_t&&... args)
+MEOJSON_INLINE decltype(auto) basic_object<string_t>::insert(args_t&&... args)
 {
     return emplace(std::forward<args_t>(args)...);
 }
