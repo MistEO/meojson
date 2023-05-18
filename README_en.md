@@ -217,6 +217,10 @@ void serializing()
     };
     root["obj from map"] = json::object(map);
 
-    std::cout << root.format() << std::endl;
+    std::cout << root << std::endl;
+
+    std::ofstream ofs("meo.json");
+    ofs << root;
+    ofs.close();
 }
 ```

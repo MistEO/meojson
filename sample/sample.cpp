@@ -247,7 +247,11 @@ bool serializing()
     root["a\\n"] = "1a\\n";
     root["a\n"] = "2a\n";
 
-    std::cout << root.format() << std::endl;
+    std::cout << root << std::endl;
+
+    std::ofstream ofs("meo.json");
+    ofs << root;
+    ofs.close();
 
     // test operator==()
     json::value root_copy = root; // copy value `root`
