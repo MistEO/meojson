@@ -203,46 +203,56 @@ bool parsing_width()
 bool serializing()
 {
     json::value root;
+
     root["hello"] = "meojson";
     root["Pi"] = 3.1416;
 
-    root["arr"] = json::array { "a", "b", "c" };
-    root["obj"] = json::object { { "obj_key1", "aaa" }, { "obj_key2", 123 }, { "obj_key3", true } };
-    root["obj"].object_emplace("key4", json::object { { "key4 child", "lol" } });
-    root["obj_another"]["child"]["grand"] = "i am grand";
+    root["obj"] = {
+        { "obj_key1", "Hi" },
+        { "obj_key2", 123 },
+        { "obj_key3", true },
+    };
+    root["obj"].emplace("obj_key4", 789);
+
+    root["obj"].emplace("obj_key5", json::object {
+                                        { "key4 child", "i am a object" },
+                                    });
+    // take union
+    root["obj"] |= json::object {
+        { "obj_key6", "i am string" },
+        { "obj_key7", json::array { "i", "am", "array" } },
+    };
+    root["another_obj"]["child"]["grand"] = "i am grand";
+
+    root["arr"] = json::array { 1, 2, 3 };
+    root["arr"].emplace(4);
+    root["arr"] += json::array { 5, 6 };
 
     std::vector<int> vec = { 1, 2, 3, 4, 5 };
     root["arr from vec"] = json::array(vec);
-    root["arr from vec"].array_emplace(6);
-
-    root["arr from vec"] += json::array { 7, 8, 9, 10 };
 
     std::set<std::string> set = { "a", "bb\n\nb", "cc\t" };
     root["arr from set"] = json::array(set);
 
-    std::map<std::string, int> map;
-    map.emplace("key1", 1);
-    map.emplace("key2", 2);
+    std::map<std::string, int> map {
+        { "key1", 1 },
+        { "key2", 2 },
+    };
     root["obj from map"] = json::object(map);
 
-    auto other = json::object { { "other_key", "lol" }, { "obj", "Existing key will not be overwritten" } };
-    // take union
-    root |= other;
-
+    // for test
     root["a\\n"] = "1a\\n";
     root["a\n"] = "2a\n";
 
     std::cout << root.format() << std::endl;
 
     // test operator==()
-    std::cout << "\n****** sub test value equal ******\n" << std::endl;
-
     json::value root_copy = root; // copy value `root`
 
     std::cout << "before: root_copy " << (root_copy == root ? "==" : "!=") << " root" << std::endl;
 
     root_copy["hello"] = "windsgo hello"; // revise a string
-    root_copy["arr"].as_array()[2] = "B"; // revise an array element
+    root_copy["arr"][2] = "B";            // revise an array element
 
     std::cout << "after : root_copy " << (root_copy == root ? "==" : "!=") << " root" << std::endl;
 

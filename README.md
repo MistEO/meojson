@@ -134,7 +134,7 @@ void parsing()
 
 void parsing()
 {
-    std::string content = R"(
+    std::string_view content = R"(
 // 这是一段json5格式的信息
 {
   名字: "MistEO",                  /* key的引号可省略 */
@@ -177,39 +177,42 @@ void parsing()
 void serializing()
 {
     json::value root;
+
     root["hello"] = "meojson";
     root["Pi"] = 3.1416;
 
-    root["arr"] = json::array{
-        "a", "b", "c"
+    root["obj"] = {
+        { "obj_key1", "Hi" },
+        { "obj_key2", 123 },
+        { "obj_key3", true },
     };
-    root["obj"] = json::object{
-        {"obj_key1", "aaa"},
-        {"obj_key2", 123},
-        {"obj_key3", true}
+    root["obj"].emplace("obj_key4", 789);
+
+    root["obj"].emplace("obj_key5", json::object {
+                                        { "key4 child", "i am a object" },
+                                    });
+    // take union
+    root["obj"] |= json::object {
+        { "obj_key6", "i am string" },
+        { "obj_key7", json::array { "i", "am", "array" } },
     };
-    root["obj"].object_emplace("key4", json::object{ { "key4 child", "lol" } });
-    root["obj_another"]["child"]["grand"] = "i am grand";
+    root["another_obj"]["child"]["grand"] = "i am grand";
+
+    root["arr"] = json::array { 1, 2, 3 };
+    root["arr"].emplace(4);
+    root["arr"] += json::array { 5, 6 };
 
     std::vector<int> vec = { 1, 2, 3, 4, 5 };
     root["arr from vec"] = json::array(vec);
-    root["arr from vec"].array_emplace(6);
-    root["arr from vec"] += json::array{ 7, 8, 9, 10 };
 
-    std::set<std::string> set = { "a", "bbb", "cc" };
+    std::set<std::string> set = { "a", "bb\n\nb", "cc\t" };
     root["arr from set"] = json::array(set);
 
-    std::map<std::string, int> map;
-    map.emplace("key1", 1);
-    map.emplace("key2", 2);
-    root["obj from map"] = json::object(map);
-
-    auto other = json::object{
-        { "other_key", "lol" },
-        { "obj", "Existing key will not be overwritten"}
+    std::map<std::string, int> map {
+        { "key1", 1 },
+        { "key2", 2 },
     };
-    // take union
-    root |= other;
+    root["obj from map"] = json::object(map);
 
     std::cout << root.format() << std::endl;
 }
