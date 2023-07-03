@@ -253,6 +253,32 @@ bool serializing()
     root["a\\n"] = "1a\\n";
     root["a\n"] = "2a\n";
 
+    std::vector<std::map<std::string, std::vector<std::vector<int>>>> threeD_array { {
+        { "key1",
+          {
+              { 1, 2, 3 },
+              { 4, 5 },
+          } },
+        { "key2",
+          {
+              { 6, 7 },
+              { 8, 9 },
+          } },
+    }, {
+        { "key3",
+          {
+              { 11, 12, 13 },
+              { 14, 15 },
+          } },
+        { "key4",
+          {
+              { 16, 17 },
+              { 18, 19 },
+          } }
+    } };
+    json::value threeD = json::serialize<true>(threeD_array);
+    root["3D"] = threeD;
+
     std::cout << root << std::endl;
 
     std::ofstream ofs("meo.json");

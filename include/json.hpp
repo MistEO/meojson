@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <tuple>
 #include <variant>
@@ -557,6 +558,9 @@ namespace literals
 
 template <typename string_t = default_string_t>
 const basic_value<string_t> invalid_value();
+
+template <bool strict, typename any_t, typename string_t = default_string_t>
+basic_value<string_t> serialize(any_t&& arg);
 
 // ******************************
 // *      basic_value impl      *
@@ -2474,6 +2478,100 @@ template <typename string_t>
 MEOJSON_INLINE const basic_value<string_t> invalid_value()
 {
     return basic_value<string_t>(basic_value<string_t>::value_type::invalid, typename basic_value<string_t>::var_t());
+}
+
+namespace _serialization_helper
+{
+    template <typename T>
+    class has_output_operator
+    {
+        template <typename U>
+        static auto test(int) -> decltype(std::declval<std::ostream&>() << std::declval<U>(), std::true_type());
+
+        template <typename U>
+        static std::false_type test(...);
+
+    public:
+        static constexpr bool value = decltype(test<T>(0))::value;
+    };
+
+    template <typename...>
+    using void_t = void;
+
+    // something like a map
+    template <typename T, typename = void>
+    constexpr bool is_associative_container = false;
+    template <typename T>
+    constexpr bool
+        is_associative_container<T, void_t<typename T::key_type, typename T::mapped_type,
+                                           decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())>> =
+            true;
+
+    // something like a vector
+    template <typename T, typename = void>
+    constexpr bool is_sequence_container = false;
+    template <typename T>
+    constexpr bool is_sequence_container<
+        T, void_t<typename T::value_type, decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())>> =
+        !is_associative_container<T>;
+
+    template <bool loose, typename loose_string_t, typename string_t>
+    MEOJSON_INLINE string_t loose_string(const loose_string_t& arg)
+    {
+        if constexpr (std::is_constructible_v<string_t, loose_string_t>) {
+            return arg;
+        }
+        else if constexpr (loose && has_output_operator<loose_string_t>::value) {
+            using char_t = typename string_t::value_type;
+            using stringstream_t = std::basic_stringstream<char_t, std::char_traits<char_t>, std::allocator<char_t>>;
+
+            stringstream_t ss;
+            ss << std::forward<loose_string_t>(arg);
+            return ss.str();
+        }
+        else {
+            static_assert(!sizeof(loose_string_t), "Unsupported type");
+        }
+    }
+}
+
+template <bool strict, typename any_t, typename string_t>
+MEOJSON_INLINE basic_value<string_t> serialize(any_t&& arg)
+{
+    using namespace _serialization_helper;
+    constexpr bool loose = !strict;
+
+    if constexpr (std::is_constructible_v<basic_value<string_t>, any_t>) {
+        return arg;
+    }
+    else if constexpr (std::is_constructible_v<basic_array<string_t>, any_t>) {
+        return basic_array<string_t>(std::forward<any_t>(arg));
+    }
+    else if constexpr (std::is_constructible_v<basic_object<string_t>, any_t>) {
+        return basic_object<string_t>(std::forward<any_t>(arg));
+    }
+    else if constexpr (is_sequence_container<std::decay_t<any_t>>) {
+
+        basic_value<string_t> result;
+        for (auto&& val : arg) {
+            using value_t = decltype(val);
+            result.emplace(serialize<loose, value_t, string_t>(std::forward<value_t>(val)));
+        }
+        return result;
+    }
+    else if constexpr (is_associative_container<std::decay_t<any_t>>) {
+        basic_value<string_t> result;
+        for (auto&& [key, val] : arg) {
+            using key_t = decltype(key);
+            using value_t = decltype(val);
+            result.emplace(loose_string<loose, key_t, string_t>(key),
+                           serialize<loose, value_t, string_t>(std::forward<value_t>(val)));
+        }
+        return result;
+    }
+    else {
+        return loose_string<loose, any_t, string_t>(std::forward<any_t>(arg));
+    }
 }
 
 template <typename string_t>
