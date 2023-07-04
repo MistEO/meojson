@@ -2526,7 +2526,7 @@ namespace _serialization_helper
 
             stringstream_t ss;
             ss << std::forward<input_t>(arg);
-            return ss.str();
+            return std::move(ss).str();
         }
         else {
             static_assert(!sizeof(input_t), "Unable to convert type to string, there is no operator <<.");
