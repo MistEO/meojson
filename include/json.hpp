@@ -2498,22 +2498,24 @@ namespace _serialization_helper
     template <typename...>
     using void_t = void;
 
+    template <typename T, typename = void>
+    constexpr bool is_container = false;
+    template <typename T>
+    constexpr bool is_container<
+        T, void_t<typename T::value_type, decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())>> =
+        true;
+
     // something like a map
     template <typename T, typename = void>
     constexpr bool is_associative_container = false;
     template <typename T>
-    constexpr bool
-        is_associative_container<T, void_t<typename T::key_type, typename T::mapped_type,
-                                           decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())>> =
-            true;
+    constexpr bool is_associative_container<T, void_t<typename T::key_type, typename T::mapped_type>> = is_container<T>;
 
     // something like a vector
     template <typename T, typename = void>
     constexpr bool is_sequence_container = false;
     template <typename T>
-    constexpr bool is_sequence_container<
-        T, void_t<typename T::value_type, decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())>> =
-        !is_associative_container<T>;
+    constexpr bool is_sequence_container<T> = is_container<T> && !is_associative_container<T>;
 
     template <typename input_t, typename string_t>
     MEOJSON_INLINE string_t to_stream_string(input_t&& arg)
