@@ -37,21 +37,13 @@ bool parsing()
         "MistEO": "https://github.com/MistEO",
         "ChingCdesu": "https://github.com/ChingCdesu"
     },
-    "list": [
-        1,
-        2,
-        3
-    ],
+    "list": [ 1, 2, 3 ],
     "str": "abc\n123",
     "num": 3.1416,
     "A_obj": {
         "B_arr": [
-            {
-                "C_str": "i am a distraction"
-            },
-            {
-                "C_str": "you found me!"
-            }
+            { "C_str": "i am a distraction" },
+            { "C_str": "you found me!" }
         ]
     }
 }
@@ -132,18 +124,13 @@ bool parsing_width()
         "MistEO": "https://github.com/MistEO",
         "ChingCdesu": "https://github.com/ChingCdesu"
     },
-    "list": [
-        1,
-        2,
-        3
-    ],
-    "str": "abc",
+    "list": [ 1, 2, 3 ],
+    "str": "abc\n123",
     "num": 3.1416,
     "A_obj": {
         "B_arr": [
-            {
-                "C_str": "you found me!"
-            }
+            { "C_str": "i am a distraction" },
+            { "C_str": "you found me!" }
         ]
     }
 }
@@ -181,7 +168,7 @@ bool parsing_width()
     std::wcout << get << std::endl;
 
     // Output: you found me!
-    std::wstring nested_get = value.get(L"A_obj", L"B_arr", 0, L"C_str", L"default_value");
+    std::wstring nested_get = value.get(L"A_obj", L"B_arr", 1, L"C_str", L"default_value");
     std::wcout << nested_get << std::endl;
 
     // Output: 1, 2, 3
@@ -225,19 +212,19 @@ bool serializing()
     };
     root["obj"].emplace("obj_key4", 789);
 
-    root["obj"].emplace("obj_key5", json::object {
-                                        { "key4 child", "i am a object" },
-                                    });
+    root["obj"].emplace("obj_key5", json::object { { "key4 child", "i am object value" } });
+    root["another_obj"]["child"]["grand"] = "i am grand";
+
     // take union
     root["obj"] |= json::object {
         { "obj_key6", "i am string" },
         { "obj_key7", json::array { "i", "am", "array" } },
     };
-    root["another_obj"]["child"]["grand"] = "i am grand";
 
     root["arr"] = json::array { 1, 2, 3 };
     root["arr"].emplace(4);
-    root["arr"] += json::array { 5, 6 };
+    root["arr"].emplace(5);
+    root["arr"] += json::array { 6, 7 };
 
     std::vector<int> vec = { 1, 2, 3, 4, 5 };
     root["arr from vec"] = json::array(vec);
@@ -256,7 +243,7 @@ bool serializing()
 
     std::map<std::string, std::map<int, std::vector<double>>> more_complex {
         { "key1", { { 1, { 0.1, 0.2 } }, { 2, { 0.2, 0.3 } } } },
-        { "key2", { { 3, { 0.4 } }, { 4, { 0.5, 0.6, 0.7 } } } }
+        { "key2", { { 3, { 0.4 } }, { 4, { 0.5, 0.6, 0.7 } } } },
     };
     // the "std::map<int, xxx>" cannot be converted to json because the key is "int",
     // you can set the template parameter "loose" of "serialize" to true, which will make a more relaxed conversion.
