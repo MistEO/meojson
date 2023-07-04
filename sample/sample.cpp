@@ -1,7 +1,10 @@
+#include <array>
+#include <deque>
 #include <iostream>
+#include <list>
 #include <map>
 #include <set>
-#include <vector>
+#include <unordered_set>
 
 #include "json.hpp"
 
@@ -249,35 +252,20 @@ bool serializing()
     };
     root["obj from map"] = json::object(map);
 
+    std::vector<std::list<std::set<int>>> complex { { { 1, 2, 3 }, { 4, 5 } }, { { 6 }, { 7, 8 } } };
+    root["complex"] = json::serialize<false>(complex);
+
+    std::map<std::string, std::map<int, std::vector<double>>> more_complex {
+        { "key1", { { 1, { 0.1, 0.2 } }, { 2, { 0.2, 0.3 } } } },
+        { "key2", { { 3, { 0.4 } }, { 4, { 0.5, 0.6, 0.7 } } } }
+    };
+    // the "std::map<int, xxx>" cannot be converted to json because the key is "int",
+    // you can set the template parameter "loose" of "serialize" to true, which will make a more relaxed conversion.
+    root["more_complex"] = json::serialize<true>(more_complex);
+
     // for test
     root["a\\n"] = "1a\\n";
     root["a\n"] = "2a\n";
-
-    std::vector<std::map<std::string, std::vector<std::vector<int>>>> threeD_array { {
-        { "key1",
-          {
-              { 1, 2, 3 },
-              { 4, 5 },
-          } },
-        { "key2",
-          {
-              { 6, 7 },
-              { 8, 9 },
-          } },
-    }, {
-        { "key3",
-          {
-              { 11, 12, 13 },
-              { 14, 15 },
-          } },
-        { "key4",
-          {
-              { 16, 17 },
-              { 18, 19 },
-          } }
-    } };
-    json::value threeD = json::serialize<false>(threeD_array);
-    root["3D"] = threeD;
 
     std::cout << root << std::endl;
 
