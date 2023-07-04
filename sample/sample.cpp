@@ -276,7 +276,7 @@ bool serializing()
               { 18, 19 },
           } }
     } };
-    json::value threeD = json::serialize<true>(threeD_array);
+    json::value threeD = json::serialize<false>(threeD_array);
     root["3D"] = threeD;
 
     std::cout << root << std::endl;

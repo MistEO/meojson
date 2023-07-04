@@ -559,7 +559,7 @@ namespace literals
 template <typename string_t = default_string_t>
 const basic_value<string_t> invalid_value();
 
-template <bool strict, typename any_t, typename string_t = default_string_t>
+template <bool loose, typename any_t, typename string_t = default_string_t>
 basic_value<string_t> serialize(any_t&& arg);
 
 // ******************************
@@ -2515,31 +2515,41 @@ namespace _serialization_helper
         T, void_t<typename T::value_type, decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())>> =
         !is_associative_container<T>;
 
-    template <bool loose, typename loose_string_t, typename string_t>
-    MEOJSON_INLINE string_t loose_string(const loose_string_t& arg)
+    template <typename input_t, typename string_t>
+    MEOJSON_INLINE string_t to_stream_string(input_t&& arg)
     {
-        if constexpr (std::is_constructible_v<string_t, loose_string_t>) {
-            return arg;
-        }
-        else if constexpr (loose && has_output_operator<loose_string_t>::value) {
+        if constexpr (has_output_operator<input_t>::value) {
             using char_t = typename string_t::value_type;
             using stringstream_t = std::basic_stringstream<char_t, std::char_traits<char_t>, std::allocator<char_t>>;
 
             stringstream_t ss;
-            ss << std::forward<loose_string_t>(arg);
+            ss << std::forward<input_t>(arg);
             return ss.str();
         }
         else {
-            static_assert(!sizeof(loose_string_t), "Unsupported type");
+            static_assert(!sizeof(input_t), "Unable to convert type to string, there is no operator <<.");
+        }
+    }
+
+    template <bool loose, typename input_t, typename string_t>
+    MEOJSON_INLINE string_t to_string(input_t&& arg)
+    {
+        if constexpr (std::is_constructible_v<string_t, input_t>) {
+            return arg;
+        }
+        else if constexpr (loose) {
+            return to_stream_string<input_t, string_t>(std::forward<input_t>(arg));
+        }
+        else {
+            static_assert(!sizeof(input_t), "Unable to convert type to string.");
         }
     }
 }
 
-template <bool strict, typename any_t, typename string_t>
+template <bool loose, typename any_t, typename string_t>
 MEOJSON_INLINE basic_value<string_t> serialize(any_t&& arg)
 {
     using namespace _serialization_helper;
-    constexpr bool loose = !strict;
 
     if constexpr (std::is_constructible_v<basic_value<string_t>, any_t>) {
         return arg;
@@ -2551,10 +2561,10 @@ MEOJSON_INLINE basic_value<string_t> serialize(any_t&& arg)
         return basic_object<string_t>(std::forward<any_t>(arg));
     }
     else if constexpr (is_sequence_container<std::decay_t<any_t>>) {
-
         basic_value<string_t> result;
         for (auto&& val : arg) {
             using value_t = decltype(val);
+
             result.emplace(serialize<loose, value_t, string_t>(std::forward<value_t>(val)));
         }
         return result;
@@ -2564,13 +2574,14 @@ MEOJSON_INLINE basic_value<string_t> serialize(any_t&& arg)
         for (auto&& [key, val] : arg) {
             using key_t = decltype(key);
             using value_t = decltype(val);
-            result.emplace(loose_string<loose, key_t, string_t>(key),
+
+            result.emplace(to_string<loose, key_t, string_t>(std::forward<key_t>(key)),
                            serialize<loose, value_t, string_t>(std::forward<value_t>(val)));
         }
         return result;
     }
     else {
-        return loose_string<loose, any_t, string_t>(std::forward<any_t>(arg));
+        return to_string<loose, any_t, string_t>(std::forward<any_t>(arg));
     }
 }
 
