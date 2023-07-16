@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <cstring>
 #include <type_traits>
-#include <bit>
+#include "bitops.hpp"
 
 #if defined(__GNUC__) || defined(__clang__)
 #define __packed_bytes_strong_inline __attribute__((always_inline)) 
@@ -60,10 +60,10 @@ struct packed_bytes_trait_uint64 {
     }
 
     __packed_bytes_strong_inline static size_t first_nonzero_byte(value_type x) {
-        if constexpr (std::endian::native == std::endian::little)
-            return std::countr_zero(x) / 8;
+        if (json::__bitops::is_little_endian())
+            return json::__bitops::countr_zero(x) / 8;
         else
-            return std::countl_zero(x) / 8;
+            return json::__bitops::countl_zero(x) / 8;
     }
 };
 
@@ -99,10 +99,10 @@ struct packed_bytes_trait_uint32 {
     }
 
     __packed_bytes_strong_inline static size_t first_nonzero_byte(value_type x) {
-        if constexpr (std::endian::native == std::endian::little)
-            return std::countr_zero(x) / 8;
+        if (json::__bitops::is_little_endian())
+            return json::__bitops::countr_zero(x) / 8;
         else
-            return std::countl_zero(x) / 8;
+            return json::__bitops::countl_zero(x) / 8;
     }
 };
 template <>

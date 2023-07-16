@@ -16,7 +16,7 @@ struct packed_bytes_trait_sse {
     }
 
     __packed_bytes_strong_inline static value_type less(value_type x, uint8_t n) {
-        auto bcast = _mm_set1_epi8(std::bit_cast<char>(n));
+        auto bcast = _mm_set1_epi8(static_cast<char>(n));
         auto all1 = _mm_set1_epi8(-1);
         auto max_with_n = _mm_max_epu8(x, bcast);
         auto is_greater_or_equal = _mm_cmpeq_epi8(max_with_n, x);
@@ -25,7 +25,7 @@ struct packed_bytes_trait_sse {
     }
 
     __packed_bytes_strong_inline static value_type equal(value_type x, uint8_t n) {
-        return _mm_cmpeq_epi8(x, _mm_set1_epi8(std::bit_cast<char>(n)));
+        return _mm_cmpeq_epi8(x, _mm_set1_epi8(static_cast<char>(n)));
     }
 
     __packed_bytes_strong_inline static value_type equal(value_type x, value_type y) {
@@ -51,7 +51,7 @@ struct packed_bytes_trait_sse {
     __packed_bytes_strong_inline static size_t first_nonzero_byte(value_type x) {
         auto cmp = _mm_cmpeq_epi8(x, _mm_set1_epi8(0));
         auto mask = (uint16_t)_mm_movemask_epi8(cmp);
-        return std::countr_one(mask);
+        return json::__bitops::countr_one((uint32_t)mask);
     }
 };
 
@@ -77,7 +77,7 @@ struct packed_bytes_trait_avx2
 
     __packed_bytes_strong_inline static value_type less(value_type x, uint8_t n)
     {
-        auto bcast = _mm256_set1_epi8(std::bit_cast<char>(n));
+        auto bcast = _mm256_set1_epi8(static_cast<char>(n));
         auto all1 = _mm256_set1_epi8(-1);
         auto max_with_n = _mm256_max_epu8(x, bcast);
         auto is_greater_or_equal = _mm256_cmpeq_epi8(max_with_n, x);
@@ -87,7 +87,7 @@ struct packed_bytes_trait_avx2
 
     __packed_bytes_strong_inline static value_type equal(value_type x, uint8_t n)
     {
-        return _mm256_cmpeq_epi8(x, _mm256_set1_epi8(std::bit_cast<char>(n)));
+        return _mm256_cmpeq_epi8(x, _mm256_set1_epi8(static_cast<char>(n)));
     }
 
     __packed_bytes_strong_inline static value_type equal(value_type x, value_type y)
@@ -110,7 +110,7 @@ struct packed_bytes_trait_avx2
         auto cmp = _mm256_cmpeq_epi8(x, _mm256_set1_epi8(0));
         auto mask = (uint32_t)_mm256_movemask_epi8(cmp);
         // AVX512 alternative: _mm_cmpeq_epi8_mask
-        return std::countr_one(mask);
+        return json::__bitops::countr_one(mask);
     }
 };
 

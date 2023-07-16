@@ -2282,8 +2282,8 @@ MEOJSON_INLINE void parser<string_t, parsing_t, accel_traits>::skip_string_liter
     while (_end - _cur >= accel_traits::step) {
         auto pack = accel_traits::load_unaligned(&(*_cur));
         auto result = accel_traits::less(pack, 32);
-        result = accel_traits::bitwise_or(result, accel_traits::equal(pack, std::bit_cast<uint8_t>('"')));
-        result = accel_traits::bitwise_or(result, accel_traits::equal(pack, std::bit_cast<uint8_t>('\\')));
+        result = accel_traits::bitwise_or(result, accel_traits::equal(pack, static_cast<uint8_t>('"')));
+        result = accel_traits::bitwise_or(result, accel_traits::equal(pack, static_cast<uint8_t>('\\')));
         if (accel_traits::is_all_zero(result)) {
             _cur += accel_traits::step;
         } else {

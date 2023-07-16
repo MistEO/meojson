@@ -51,7 +51,7 @@ struct packed_bytes_trait_neon {
         auto cmp = equal(x, 0);
         auto res = vshrn_n_u16(cmp, 4);
         auto mask64 = vget_lane_u64(vreinterpret_u64_u8(res), 0);
-        return std::countr_one(mask64) >> 2;
+        return json::__bitops::countr_one(mask64) >> 2;
     }
 };
 
