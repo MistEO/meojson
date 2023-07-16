@@ -12,6 +12,8 @@
 #include <variant>
 #include <vector>
 
+#include "packed_bytes.hpp"
+
 #define MEOJSON_INLINE inline
 
 namespace json
@@ -461,7 +463,7 @@ private:
 // *      parser declare      *
 // ****************************
 
-template <typename string_t = default_string_t, typename parsing_t = void>
+template <typename string_t = default_string_t, typename parsing_t = void, typename accel_traits = packed_bytes_trait_max>
 class parser
 {
 public:
@@ -489,6 +491,7 @@ private:
     // parse and return a string_t
     std::optional<string_t> parse_stdstring();
 
+    void skip_string_literal();
     bool skip_whitespace() noexcept;
     bool skip_digit();
 
@@ -1917,14 +1920,14 @@ MEOJSON_INLINE bool basic_object<string_t>::operator==(const basic_object<string
 // *      parser impl      *
 // *************************
 
-template <typename string_t, typename parsing_t>
-MEOJSON_INLINE std::optional<basic_value<string_t>> parser<string_t, parsing_t>::parse(const parsing_t& content)
+template <typename string_t, typename parsing_t, typename accel_traits>
+MEOJSON_INLINE std::optional<basic_value<string_t>> parser<string_t, parsing_t, accel_traits>::parse(const parsing_t& content)
 {
-    return parser<string_t, parsing_t>(content.cbegin(), content.cend()).parse();
+    return parser<string_t, parsing_t, accel_traits>(content.cbegin(), content.cend()).parse();
 }
 
-template <typename string_t, typename parsing_t>
-MEOJSON_INLINE std::optional<basic_value<string_t>> parser<string_t, parsing_t>::parse()
+template <typename string_t, typename parsing_t, typename accel_traits>
+MEOJSON_INLINE std::optional<basic_value<string_t>> parser<string_t, parsing_t, accel_traits>::parse()
 {
     if (!skip_whitespace()) {
         return std::nullopt;
@@ -1955,8 +1958,8 @@ MEOJSON_INLINE std::optional<basic_value<string_t>> parser<string_t, parsing_t>:
     return result_value;
 }
 
-template <typename string_t, typename parsing_t>
-MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t>::parse_value()
+template <typename string_t, typename parsing_t, typename accel_traits>
+MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_value()
 {
     switch (*_cur) {
     case 'n':
@@ -1987,8 +1990,8 @@ MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t>::parse_value()
     }
 }
 
-template <typename string_t, typename parsing_t>
-MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t>::parse_null()
+template <typename string_t, typename parsing_t, typename accel_traits>
+MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_null()
 {
     for (const auto& ch : null_string<string_t>()) {
         if (*_cur == ch) {
@@ -2002,8 +2005,8 @@ MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t>::parse_null()
     return basic_value<string_t>();
 }
 
-template <typename string_t, typename parsing_t>
-MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t>::parse_boolean()
+template <typename string_t, typename parsing_t, typename accel_traits>
+MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_boolean()
 {
     switch (*_cur) {
     case 't':
@@ -2031,8 +2034,8 @@ MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t>::parse_boolean(
     }
 }
 
-template <typename string_t, typename parsing_t>
-MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t>::parse_number()
+template <typename string_t, typename parsing_t, typename accel_traits>
+MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_number()
 {
     const auto first = _cur;
     if (*_cur == '-') {
@@ -2070,8 +2073,8 @@ MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t>::parse_number()
     return basic_value<string_t>(basic_value<string_t>::value_type::number, string_t(first, _cur));
 }
 
-template <typename string_t, typename parsing_t>
-MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t>::parse_string()
+template <typename string_t, typename parsing_t, typename accel_traits>
+MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_string()
 {
     auto string_opt = parse_stdstring();
     if (!string_opt) {
@@ -2080,8 +2083,8 @@ MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t>::parse_string()
     return basic_value<string_t>(basic_value<string_t>::value_type::string, std::move(string_opt).value());
 }
 
-template <typename string_t, typename parsing_t>
-MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t>::parse_array()
+template <typename string_t, typename parsing_t, typename accel_traits>
+MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_array()
 {
     if (*_cur == '[') {
         ++_cur;
@@ -2131,8 +2134,8 @@ MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t>::parse_array()
     return basic_array<string_t>(std::move(result));
 }
 
-template <typename string_t, typename parsing_t>
-MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t>::parse_object()
+template <typename string_t, typename parsing_t, typename accel_traits>
+MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_object()
 {
     if (*_cur == '{') {
         ++_cur;
@@ -2195,8 +2198,8 @@ MEOJSON_INLINE basic_value<string_t> parser<string_t, parsing_t>::parse_object()
     return basic_object<string_t>(std::move(result));
 }
 
-template <typename string_t, typename parsing_t>
-MEOJSON_INLINE std::optional<string_t> parser<string_t, parsing_t>::parse_stdstring()
+template <typename string_t, typename parsing_t, typename accel_traits>
+MEOJSON_INLINE std::optional<string_t> parser<string_t, parsing_t, accel_traits>::parse_stdstring()
 {
     if (*_cur == '"') {
         ++_cur;
@@ -2209,6 +2212,11 @@ MEOJSON_INLINE std::optional<string_t> parser<string_t, parsing_t>::parse_stdstr
     auto no_escape_beg = _cur;
 
     while (_cur != _end) {
+        if constexpr (sizeof(*_cur) == 1) {
+            if constexpr (accel_traits::available) {
+                skip_string_literal();
+            }
+        }
         switch (*_cur) {
         case '\t':
         case '\r':
@@ -2266,8 +2274,28 @@ MEOJSON_INLINE std::optional<string_t> parser<string_t, parsing_t>::parse_stdstr
     return std::nullopt;
 }
 
-template <typename string_t, typename parsing_t>
-MEOJSON_INLINE bool parser<string_t, parsing_t>::skip_whitespace() noexcept
+template <typename string_t, typename parsing_t, typename accel_traits>
+MEOJSON_INLINE void parser<string_t, parsing_t, accel_traits>::skip_string_literal() {
+    if constexpr (sizeof(*_cur) != 1) {
+        return;
+    }
+    while (_end - _cur >= accel_traits::step) {
+        auto pack = accel_traits::load_unaligned(&(*_cur));
+        auto result = accel_traits::less(pack, 32);
+        result = accel_traits::bitwise_or(result, accel_traits::equal(pack, static_cast<uint8_t>('"')));
+        result = accel_traits::bitwise_or(result, accel_traits::equal(pack, static_cast<uint8_t>('\\')));
+        if (accel_traits::is_all_zero(result)) {
+            _cur += accel_traits::step;
+        } else {
+            auto index = accel_traits::first_nonzero_byte(result);
+            _cur += index;
+            break;
+        }
+    }
+}
+
+template <typename string_t, typename parsing_t, typename accel_traits>
+MEOJSON_INLINE bool parser<string_t, parsing_t, accel_traits>::skip_whitespace() noexcept
 {
     while (_cur != _end) {
         switch (*_cur) {
@@ -2286,8 +2314,8 @@ MEOJSON_INLINE bool parser<string_t, parsing_t>::skip_whitespace() noexcept
     return false;
 }
 
-template <typename string_t, typename parsing_t>
-MEOJSON_INLINE bool parser<string_t, parsing_t>::skip_digit()
+template <typename string_t, typename parsing_t, typename accel_traits>
+MEOJSON_INLINE bool parser<string_t, parsing_t, accel_traits>::skip_digit()
 {
     // At least one digit
     if (_cur != _end && std::isdigit(*_cur)) {
