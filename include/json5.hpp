@@ -592,8 +592,7 @@ namespace json
     template <typename CharT>
     MEOJSON_INLINE std::optional<value> parse5(CharT* content, std::string* error = nullptr)
     {
-        return parser5<StringT>::parse(std::basic_string_view<
-        typename std::decay<CharT>::type>{content}, error);
+        return parse5(std::basic_string_view<typename std::decay<CharT>::type>{content}, error);
     }
 
     template<typename StringT>
