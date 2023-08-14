@@ -25,7 +25,7 @@ int main()
 
 bool parsing()
 {
-    std::string_view content = R"(
+    auto content_raw = R"(
 // 这是一段json5格式的信息
 {
   名字: "MistEO",                  /* key的引号可省略 */
@@ -38,10 +38,18 @@ bool parsing()
   light_speed: +3e8,               // 科学计数法
 }
 )";
+    std::string_view content = content_raw;
     auto ret = json::parse5(content);
     if (!ret) {
         std::cerr << "Parsing failed" << std::endl;
         return false;
+    }
+    {     
+        auto another_ret = json::parse5(content);
+        if (!another_ret) {
+            std::cerr << "Parsing failed" << std::endl;
+            return false;
+        }//C-style strings can also be used as input.
     }
     auto& value = ret.value(); // you can use rvalues if needed, like
                                // `auto value = std::move(ret).value();`

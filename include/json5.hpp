@@ -588,6 +588,13 @@ namespace json
         return parser5<StringT>::parse(content, error);
     }
 
+    /* Wrapper for handling input of C-style strings. */
+    template <typename CharT>
+    MEOJSON_INLINE std::optional<value> parse5(CharT* content, std::string* error = nullptr)
+    {
+        return parse5(std::basic_string_view<typename std::decay<CharT>::type>{content}, error);
+    }
+
     template<typename StringT>
     MEOJSON_INLINE std::optional<value> parser5<StringT>::parse(const StringT& content, std::string* error)
     {
