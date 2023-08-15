@@ -36,6 +36,8 @@ bool parsing()
   fractional: .3, integer: 42.,    // 小数点作为起始/结尾
   byte_max: 0xff,                  // 十六进制数
   light_speed: +3e8,               // 科学计数法
+  negative: -1,                    // 负数
+  negative_double: -2.5,           // 负小数
 }
 )";
     std::string_view content = content_raw;
@@ -59,6 +61,14 @@ bool parsing()
     // Output: value
     std::string str = (std::string)value["key"][0];
     std::cout << str << std::endl;
+    // Output: 42
+    std::cout << value["integer"].as_integer() << std::endl;
+    // Output: -1
+    std::cout << value["negative"].as_integer() << std::endl;
+    // Output: -2.5
+    std::cout << value["negative_double"].as_double() << std::endl;
+    // Output: inf
+    std::cout << value["inf"].as_double() << std::endl;
 
     // for more json::value usage, please refer to sample.cpp
     return true;

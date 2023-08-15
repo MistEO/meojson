@@ -257,7 +257,7 @@ namespace json
         LexState _lex_state = LexState::default_;
         std::string _buffer;
         bool _double_quote = false;
-        size_t _sign = 1;
+        long _sign = 1;
         u8char _current_char = 0;
     };
 
@@ -990,7 +990,7 @@ namespace json
         case '-':
         case '+':
             if (read() == '-') {
-                _sign = SIZE_MAX;
+                _sign = -1;
             }
             _lex_state = LexState::sign;
             return std::nullopt;
