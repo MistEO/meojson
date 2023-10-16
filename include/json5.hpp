@@ -257,7 +257,7 @@ namespace json
         LexState _lex_state = LexState::default_;
         std::string _buffer;
         bool _double_quote = false;
-        long _sign = 1;
+        int64_t _sign = 1;
         u8char _current_char = 0;
     };
 
