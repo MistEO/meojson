@@ -92,13 +92,12 @@ public:
     basic_value(basic_object<string_t> obj);
     basic_value(std::initializer_list<std::pair<string_t, basic_value<string_t>>> init_list);
 
+    template <typename value_t>
+    basic_value(value_t&& val);
+
     // Constructed from raw data
     template <typename... args_t>
     basic_value(value_type type, args_t&&... args);
-
-    // Prohibit conversion of other types to basic_value
-    template <typename value_t>
-    basic_value(value_t) = delete;
 
     ~basic_value();
 
@@ -706,6 +705,25 @@ MEOJSON_INLINE basic_value<string_t>::basic_value(
     : _type(value_type::object), _raw_data(std::make_unique<basic_object<string_t>>(init_list))
 {
     ;
+}
+
+template <typename string_t>
+template <typename value_t>
+MEOJSON_INLINE basic_value<string_t>::basic_value(value_t&& val)
+{
+    constexpr bool is_array_val = std::is_constructible_v<basic_array<string_t>, value_t>;
+    constexpr bool is_object_val = std::is_constructible_v<basic_object<string_t>, value_t>;
+
+    static_assert(is_array_val || is_object_val, "value can not constructure a array or object");
+
+    if constexpr (is_array_val) {
+        _type = value_type::array;
+        _raw_data = std::make_unique<basic_array<string_t>>(std::forward<value_t>(val));
+    }
+    else if constexpr (is_object_val) {
+        _type = value_type::object;
+        _raw_data = std::make_unique<basic_object<string_t>>(std::forward<value_t>(val));
+    }
 }
 
 // for Pimpl
