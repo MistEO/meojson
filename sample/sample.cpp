@@ -227,16 +227,16 @@ bool serializing()
     root["arr"] += json::array { 6, 7 };
 
     std::vector<int> vec = { 1, 2, 3, 4, 5 };
-    root["arr from vec"] = vec;
+    root["arr from vec"] = json::array(vec);
 
     std::set<std::string> set = { "a", "bb\n\nb", "cc\t" };
-    root["arr from set"] = set;
+    root["arr from set"] = json::array(set);
 
     std::map<std::string, int> map {
         { "key1", 1 },
         { "key2", 2 },
     };
-    root["obj from map"] = map;
+    root["obj from map"] = json::object(map);
 
     std::vector<std::list<std::set<int>>> complex { { { 1, 2, 3 }, { 4, 5 } }, { { 6 }, { 7, 8 } } };
     root["complex"] = json::serialize<false>(complex);
