@@ -52,7 +52,8 @@ namespace json
                 : exception("Invalid Char",
                             "Unexpected token \'" + StringFromCharCode(ch) + "\'",
                             detail)
-            {}
+            {
+            }
         };
 
         class InvalidIdentifier : public exception
@@ -61,7 +62,8 @@ namespace json
             InvalidIdentifier(const std::string& msg = "",
                               const std::string& detail = "")
                 : exception("Invalid Identifier", msg, detail)
-            {}
+            {
+            }
         };
 
         class InvalidEOF : public exception
@@ -69,7 +71,8 @@ namespace json
         public:
             InvalidEOF(const std::string& msg = "", const std::string& detail = "")
                 : exception("Invalid EOF", msg, detail)
-            {}
+            {
+            }
         };
 
     public:
@@ -177,7 +180,8 @@ namespace json
         parser5(const StringIterT& cbegin,
                 const StringIterT& cend) noexcept
             : _cur(cbegin), _end(cend), _line_begin_cur(cbegin)
-        {}
+        {
+        }
         std::optional<value> parse();
 
     private:
@@ -592,7 +596,7 @@ namespace json
     template <typename CharT>
     MEOJSON_INLINE std::optional<value> parse5(CharT* content, std::string* error = nullptr)
     {
-        return parse5(std::basic_string_view<typename std::decay<CharT>::type>{content}, error);
+        return parse5(std::basic_string_view<std::decay_t<CharT>>{content}, error);
     }
 
     template<typename StringT>
