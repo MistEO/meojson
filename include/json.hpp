@@ -2562,7 +2562,9 @@ namespace _serialization_helper
     constexpr bool is_container = false;
     template <typename T>
     constexpr bool is_container<
-        T, void_t<typename T::value_type, decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())>> =
+        T, void_t<typename T::value_type, decltype(std::declval<T>().begin()), decltype(std::declval<T>().end()),
+                  std::enable_if_t<std::is_same_v<typename T::value_type,
+                                                  std::decay_t<decltype(std::declval<T>().begin().operator*())>>>>> =
         true;
 
     // something like a map
