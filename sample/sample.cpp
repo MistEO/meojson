@@ -32,8 +32,9 @@ int main()
     
     json::value jdata = data;
 
-    std::filesystem::path p;
+    std::filesystem::path p = "i am path/123/456";
     auto s = json::serialize<true>(p);
+    std::cout << s << std::endl;
 
     std::cout << "\n****** Parsing ******\n" << std::endl;
 
