@@ -6,6 +6,7 @@ include_directories(./include)
 option(BUILD_SAMPLE "Build sample in sample/sample.cpp" ON)
 option(BUILD_BENCHMARK "Build benchmark in benchmark/benchmark.cpp" OFF)
 option(ENABLE_NEON "Enable ARM NEON" OFF)
+option(BUILD_TESTING "Build testing" ON)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -25,6 +26,15 @@ endif()
 if (BUILD_SAMPLE)
     add_executable(sample sample/sample.cpp include/json.hpp)
     add_executable(json5_parse_sample sample/json5_parse.cpp include/json.hpp include/json5.hpp)
+endif()
+
+if (BUILD_TESTING)
+    file(GLOB testing_src
+        test/*.cpp
+        test/*.h
+        test/*.hpp
+    )
+    add_executable(testing ${testing_src} include/json.hpp)
 endif()
 
 if (BUILD_BENCHMARK)
