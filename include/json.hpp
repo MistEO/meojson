@@ -96,10 +96,6 @@ public:
     template <typename... args_t>
     basic_value(value_type type, args_t&&... args);
 
-    // Prohibit conversion of other types to basic_value
-    template <typename value_t>
-    basic_value(value_t) = delete;
-
     ~basic_value();
 
     bool valid() const noexcept { return _type != value_type::invalid; }

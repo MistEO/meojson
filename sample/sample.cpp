@@ -11,8 +11,21 @@ bool parsing();
 bool parsing_width();
 bool serializing();
 
+void new_feature()
+{
+    struct my_data
+    {
+        operator json::value() const { return "mydata"; }
+    };
+
+    my_data data;
+    json::value jdata = data;
+}
+
 int main()
 {
+    new_feature();
+
     std::cout << "\n****** Parsing ******\n" << std::endl;
 
     if (!parsing()) {
