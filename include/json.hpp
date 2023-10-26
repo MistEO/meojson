@@ -18,6 +18,17 @@
 
 namespace json
 {
+namespace utils
+{
+    template <typename T>
+    using iterator_t = decltype(std::declval<T&>().begin());
+    template <typename T>
+    using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
+    template <typename T>
+    using iter_value_t = typename std::iterator_traits<remove_cvref_t<T>>::value_type;
+    template <typename R>
+    using range_value_t = iter_value_t<iterator_t<R>>;
+}
 template <typename string_t>
 class basic_value;
 template <typename string_t>
@@ -273,8 +284,7 @@ public:
     explicit basic_array(basic_value<string_t>&& val);
 
     template <typename collection_t,
-              typename _ = std::enable_if_t<std::is_constructible_v<
-                  value_type, typename std::iterator_traits<typename collection_t::iterator>::value_type>>>
+              typename = std::enable_if_t<std::is_constructible_v<value_type, utils::range_value_t<collection_t>>>>
     basic_array(collection_t arr)
         : _array_data(std::make_move_iterator(arr.begin()), std::make_move_iterator(arr.end()))
     {}
@@ -384,8 +394,8 @@ public:
     basic_object(std::initializer_list<value_type> init_list);
     explicit basic_object(const basic_value<string_t>& val);
     explicit basic_object(basic_value<string_t>&& val);
-    template <typename map_t, typename _ = std::enable_if_t<std::is_constructible_v<
-                                  value_type, typename std::iterator_traits<typename map_t::iterator>::value_type>>>
+    template <typename map_t,
+              typename = std::enable_if_t<std::is_constructible_v<value_type, utils::range_value_t<map_t>>>>
     basic_object(map_t map) : _object_data(std::make_move_iterator(map.begin()), std::make_move_iterator(map.end()))
     {}
 
@@ -2488,20 +2498,16 @@ namespace _serialization_helper
         static constexpr bool value = decltype(test<T>(0))::value;
     };
 
-    template <typename...>
-    using void_t = void;
-
     template <typename T, typename = void>
     constexpr bool is_container = false;
     template <typename T>
-    constexpr bool is_container<T, void_t<typename T::value_type, typename T::iterator,
-                                          typename std::iterator_traits<typename T::iterator>::value_type>> =
-        std::is_same_v<typename T::value_type, typename std::iterator_traits<typename T::iterator>::value_type>;
+    constexpr bool is_container<T, std::void_t<typename T::value_type, utils::range_value_t<T>>> =
+        std::is_same_v<typename T::value_type, utils::range_value_t<T>>;
 
     template <typename T, typename = void>
     constexpr bool is_map = false;
     template <typename T>
-    constexpr bool is_map<T, void_t<typename T::key_type, typename T::mapped_type>> = is_container<T>;
+    constexpr bool is_map<T, std::void_t<typename T::key_type, typename T::mapped_type>> = is_container<T>;
 
     template <typename T, typename = void>
     constexpr bool is_collection = false;
