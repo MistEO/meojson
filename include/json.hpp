@@ -269,8 +269,8 @@ public:
     explicit basic_array(const basic_value<string_t>& val);
     explicit basic_array(basic_value<string_t>&& val);
 
-    template <typename array_t, typename _ = std::enable_if_t<std::is_constructible_v<
-                                    value_type, decltype(std::declval<array_t>().begin().operator*())>>>
+    template <typename array_t, typename _ = std::enable_if_t<
+                                    std::is_constructible_v<value_type, typename array_t::iterator::value_type>>>
     basic_array(array_t arr) : _array_data(std::make_move_iterator(arr.begin()), std::make_move_iterator(arr.end()))
     {}
 
@@ -381,8 +381,8 @@ public:
     basic_object(std::initializer_list<value_type> init_list);
     explicit basic_object(const basic_value<string_t>& val);
     explicit basic_object(basic_value<string_t>&& val);
-    template <typename map_t, typename _ = std::enable_if_t<std::is_constructible_v<
-                                  value_type, decltype(std::declval<map_t>().begin().operator*())>>>
+    template <typename map_t,
+              typename _ = std::enable_if_t<std::is_constructible_v<value_type, typename map_t::iterator::value_type>>>
     basic_object(map_t map) : _object_data(std::make_move_iterator(map.begin()), std::make_move_iterator(map.end()))
     {}
 
@@ -2561,8 +2561,8 @@ namespace _serialization_helper
     template <typename T, typename = void>
     constexpr bool is_container = false;
     template <typename T>
-    constexpr bool is_container<T, void_t<typename T::value_type, typename T::iterator,
-                                          typename T::iterator::value_type, typename T::pointer>> =
+    constexpr bool
+        is_container<T, void_t<typename T::value_type, typename T::iterator, typename T::iterator::value_type>> =
             std::is_same_v<typename T::value_type, typename T::iterator::value_type>;
 
     template <typename T, typename = void>
