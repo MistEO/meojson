@@ -245,9 +245,9 @@ bool serializing()
         { { "i", "am", "key1" }, { { 1, { 0.1, 0.2 } }, { 2, { 0.2, 0.3 } } } },
         { { "key2" }, { { 3, { 0.4 } }, { 4, { 0.5, 0.6, 0.7 } } } },
     };
-    // the "std::map<int, xxx>" cannot be converted to json because the key is "int",
+    // the "std::map" cannot be converted to json because the key is "std::vector<std::string>",
     // you can set the template parameter "loose" of "serialize" to true, which will make a more relaxed conversion.
-    json::value crazy_serialization = json::serialize<true>(more_complex);
+    root["more_complex"] = json::serialize<true>(more_complex);
 
     // for test
     root["a\\n"] = "1a\\n";
