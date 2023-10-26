@@ -2561,11 +2561,9 @@ namespace _serialization_helper
     template <typename T, typename = void>
     constexpr bool is_container = false;
     template <typename T>
-    constexpr bool is_container<
-        T, void_t<typename T::value_type, decltype(std::declval<T>().begin()), decltype(std::declval<T>().end()),
-                  std::enable_if_t<std::is_same_v<typename T::value_type,
-                                                  std::decay_t<decltype(std::declval<T>().begin().operator*())>>>>> =
-        true;
+    constexpr bool
+        is_container<T, void_t<typename T::value_type, typename T::iterator, typename T::iterator::value_type>> =
+            std::is_same_v<typename T::value_type, typename T::iterator::value_type>;
 
     // something like a map
     template <typename T, typename = void>
@@ -2617,7 +2615,7 @@ namespace _serialization_helper
 #ifdef _MSC_VER
                                   "See T below: " __FUNCSIG__
 #else
-                                  //"See T below: " __PRETTY_FUNCTION__
+        //"See T below: " __PRETTY_FUNCTION__
 
 #endif
         );
