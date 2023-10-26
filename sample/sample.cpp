@@ -4,7 +4,6 @@
 #include <map>
 #include <set>
 #include <vector>
-#include <filesystem>
 
 #include "json.hpp"
 
@@ -14,9 +13,6 @@ bool serializing();
 
 int main()
 {
-    std::string str = "abc";
-    json::array arr = str;
-
     std::cout << "\n****** Parsing ******\n" << std::endl;
 
     if (!parsing()) {
@@ -251,7 +247,7 @@ bool serializing()
     };
     // the "std::map<int, xxx>" cannot be converted to json because the key is "int",
     // you can set the template parameter "loose" of "serialize" to true, which will make a more relaxed conversion.
-    root["more_complex"] = json::serialize<true>(more_complex);
+    json::value crazy_serialization = json::serialize<true>(more_complex);
 
     // for test
     root["a\\n"] = "1a\\n";

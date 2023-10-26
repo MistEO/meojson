@@ -100,6 +100,12 @@ public:
     template <typename value_t, typename _ = std::enable_if_t<!std::is_convertible_v<value_t, basic_value<string_t>>>>
     basic_value(value_t) = delete;
 
+    basic_value(char) = delete;
+    basic_value(unsigned char) = delete;
+    basic_value(char16_t) = delete;
+    basic_value(char32_t) = delete;
+    basic_value(wchar_t) = delete;
+
     ~basic_value();
 
     bool valid() const noexcept { return _type != value_type::invalid; }
