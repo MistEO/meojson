@@ -2561,21 +2561,19 @@ namespace _serialization_helper
     template <typename T, typename = void>
     constexpr bool is_container = false;
     template <typename T>
-    constexpr bool
-        is_container<T, void_t<typename T::value_type, typename T::iterator, typename T::iterator::value_type>> =
+    constexpr bool is_container<T, void_t<typename T::value_type, typename T::iterator,
+                                          typename T::iterator::value_type, typename T::pointer>> =
             std::is_same_v<typename T::value_type, typename T::iterator::value_type>;
 
-    // something like a map
     template <typename T, typename = void>
-    constexpr bool is_associative_container = false;
+    constexpr bool is_map = false;
     template <typename T>
-    constexpr bool is_associative_container<T, void_t<typename T::key_type, typename T::mapped_type>> = is_container<T>;
+    constexpr bool is_map<T, void_t<typename T::key_type, typename T::mapped_type>> = is_container<T>;
 
-    // something like a vector
     template <typename T, typename = void>
-    constexpr bool is_sequence_container = false;
+    constexpr bool is_collection = false;
     template <typename T>
-    constexpr bool is_sequence_container<T> = is_container<T> && !is_associative_container<T>;
+    constexpr bool is_collection<T> = is_container<T> && !is_map<T>;
 
     template <bool loose, typename string_t>
     struct string_converter
@@ -2639,7 +2637,7 @@ MEOJSON_INLINE basic_value<string_t> serialize(any_t&& arg, string_converter_t&&
     else if constexpr (std::decay_t<string_converter_t>::template is_convertible<any_t>) {
         return string_converter(std::forward<any_t>(arg));
     }
-    else if constexpr (is_sequence_container<std::decay_t<any_t>>) {
+    else if constexpr (is_collection<std::decay_t<any_t>>) {
         basic_value<string_t> result;
         for (auto&& val : arg) {
             using value_t = decltype(val);
@@ -2649,7 +2647,7 @@ MEOJSON_INLINE basic_value<string_t> serialize(any_t&& arg, string_converter_t&&
         }
         return result;
     }
-    else if constexpr (is_associative_container<std::decay_t<any_t>>) {
+    else if constexpr (is_map<std::decay_t<any_t>>) {
         basic_value<string_t> result;
         for (auto&& [key, val] : arg) {
             using key_t = decltype(key);
