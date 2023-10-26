@@ -2617,7 +2617,7 @@ namespace _serialization_helper
 #ifdef _MSC_VER
                                   "See T below: " __FUNCSIG__
 #else
-                                  "See T below: " __PRETTY_FUNCTION__
+                                  //"See T below: " __PRETTY_FUNCTION__
 
 #endif
         );
