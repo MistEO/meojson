@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <filesystem>
 
 #include "json.hpp"
 
@@ -24,7 +25,15 @@ void new_feature()
 
 int main()
 {
-    new_feature();
+    struct MyData
+    {
+        operator json::value() const { return "mydata"; }
+    } data;
+    
+    json::value jdata = data;
+
+    std::filesystem::path p;
+    auto s = json::serialize<true>(p);
 
     std::cout << "\n****** Parsing ******\n" << std::endl;
 

@@ -96,6 +96,10 @@ public:
     template <typename... args_t>
     basic_value(value_type type, args_t&&... args);
 
+    // Prohibit conversion of other types to basic_value
+    template <typename value_t, typename _ = std::enable_if_t<!std::is_convertible_v<value_t, basic_value<string_t>>>>
+    basic_value(value_t) = delete;
+
     ~basic_value();
 
     bool valid() const noexcept { return _type != value_type::invalid; }
@@ -266,10 +270,8 @@ public:
     explicit basic_array(basic_value<string_t>&& val);
     template <typename array_t, typename _ = std::enable_if_t<
                                     std::is_constructible_v<value_type, typename std::decay_t<array_t>::value_type>>>
-    basic_array(array_t arr)
-    {
-        _array_data.assign(std::make_move_iterator(arr.begin()), std::make_move_iterator(arr.end()));
-    }
+    basic_array(array_t arr) : _array_data(std::make_move_iterator(arr.begin()), std::make_move_iterator(arr.end()))
+    {}
 
     ~basic_array() noexcept = default;
 
@@ -2611,12 +2613,14 @@ namespace _serialization_helper
     void unable_to_serialize()
     {
         static_assert(!sizeof(T), "Unable to serialize T. "
-                                  "You can define the conversion of T to json, or overload operator<< for it.");
+                                  "You can define the conversion of T to json, or overload operator<< for it. "
 #ifdef _MSC_VER
-        static_assert(!sizeof(T), "See T below: " __FUNCSIG__);
+                                  "See T below: " __FUNCSIG__
 #else
-        // static_assert(!sizeof(T), "See T below: " __PRETTY_FUNCTION__);
+                                  "See T below: " __PRETTY_FUNCTION__
+
 #endif
+        );
     }
 } // namespace _serialization_helper
 
