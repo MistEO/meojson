@@ -12,29 +12,10 @@ bool parsing();
 bool parsing_width();
 bool serializing();
 
-void new_feature()
-{
-    struct my_data
-    {
-        operator json::value() const { return "mydata"; }
-    };
-
-    my_data data;
-    json::value jdata = data;
-}
-
 int main()
 {
-    struct MyData
-    {
-        operator json::value() const { return "mydata"; }
-    } data;
-    
-    json::value jdata = data;
-
-    std::filesystem::path p = "i am path/123/456";
-    auto s = json::serialize<true>(p);
-    std::cout << s << std::endl;
+    std::string str = "abc";
+    json::array arr = str;
 
     std::cout << "\n****** Parsing ******\n" << std::endl;
 
