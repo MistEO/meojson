@@ -1,4 +1,3 @@
-#include <array>
 #include <fstream>
 #include <iostream>
 #include <list>
@@ -242,9 +241,9 @@ bool serializing()
     std::vector<std::list<std::set<int>>> complex { { { 1, 2, 3 }, { 4, 5 } }, { { 6 }, { 7, 8 } } };
     root["complex"] = json::serialize<false>(complex);
 
-    std::map<std::vector<std::string>, std::vector<std::array<int, 2>>> more_complex {
-        { { "i", "am", "key1" }, { std::array<int, 2> { 1, 2 } } },
-        { { "key2" }, { std::array<int, 2> { 1, 2 } } },
+    std::map<std::vector<std::string>, std::map<int, std::vector<double>>> more_complex {
+        { { "i", "am", "key1" }, { { 1, { 0.1, 0.2 } }, { 2, { 0.2, 0.3 } } } },
+        { { "key2" }, { { 3, { 0.4 } }, { 4, { 0.5, 0.6, 0.7 } } } },
     };
     // the "std::map" cannot be converted to json because the key is "std::vector<std::string>",
     // you can set the template parameter "loose" of "serialize" to true, which will make a more relaxed conversion.
