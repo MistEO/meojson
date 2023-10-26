@@ -108,21 +108,18 @@ public:
     basic_value(value_type type, args_t&&... args);
 
     template <typename collection_t,
-              std::enable_if_t<
-                  std::is_constructible_v<typename basic_array<string_t>::value_type,
-                                          typename std::iterator_traits<typename collection_t::iterator>::value_type>,
-                  bool> = true>
+              std::enable_if_t<std::is_constructible_v<typename basic_array<string_t>::value_type,
+                                                       utils::range_value_t<collection_t>>,
+                               bool> = true>
     basic_value(collection_t&& collection) : basic_value(basic_array<string_t>(std::forward<collection_t>(collection)))
     {}
-    template <
-        typename map_t,
-        std::enable_if_t<std::is_constructible_v<typename basic_object<string_t>::value_type,
-                                                 typename std::iterator_traits<typename map_t::iterator>::value_type>,
-                         bool> = true>
+    template <typename map_t, std::enable_if_t<std::is_constructible_v<typename basic_object<string_t>::value_type,
+                                                                       utils::range_value_t<map_t>>,
+                                               bool> = true>
     basic_value(map_t&& map) : basic_value(basic_object<string_t>(std::forward<map_t>(map)))
     {}
 
-    template <typename value_t, typename _ = std::enable_if_t<!std::is_convertible_v<value_t, basic_value<string_t>>>>
+    template <typename value_t, std::enable_if_t<!std::is_convertible_v<value_t, basic_value<string_t>>, bool> = true>
     basic_value(value_t) = delete;
 
     // I don't know if you want to convert char to string or number, so I delete these constructors.
