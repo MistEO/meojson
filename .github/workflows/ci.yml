@@ -66,17 +66,20 @@ jobs:
       - name: Install Dependencies
         run: brew install ninja
 
-      - name: Install compiler (AppleClang 16)
+      - name: Install Compiler(AppleClang 16)
         run: |
           brew install llvm
 
       - name: Build
+        env:
+          CC: "/usr/local/opt/llvm/bin/clang"
+          CXX: "/usr/local/opt/llvm/bin/clang++"
         run: |
           mkdir build
           cd build
-          cmake ..
+          cmake -G Ninja ..
 
-          cmake --build .
+          ninja
 
       - name: Run Testing
         run: |
