@@ -194,9 +194,9 @@ public:
         return format(indent, 0);
     }
 
-    template <typename value_t, template <typename> typename vector_t = std::vector>
+    template <typename value_t, template <typename...> typename vector_t = std::vector>
     vector_t<value_t> to_vector() const;
-    template <typename value_t, template <typename, typename> typename map_t = std::map>
+    template <typename value_t, template <typename...> typename map_t = std::map>
     map_t<string_t, value_t> to_map() const;
 
     basic_value<string_t>& operator=(const basic_value<string_t>& rhs);
@@ -313,7 +313,7 @@ public:
     {
         return format(indent, 0);
     }
-    template <typename value_t, template <typename> typename vector_t = std::vector>
+    template <typename value_t, template <typename...> typename vector_t = std::vector>
     vector_t<value_t> to_vector() const;
 
     // Usage: get(key_1, key_2, ..., default_value);
@@ -425,7 +425,7 @@ public:
     {
         return format(indent, 0);
     }
-    template <typename value_t, template <typename, typename> typename map_t = std::map>
+    template <typename value_t, template <typename...> typename map_t = std::map>
     map_t<string_t, value_t> to_map() const;
 
     // Usage: get(key_1, key_2, ..., default_value);
@@ -1153,14 +1153,14 @@ inline string_t basic_value<string_t>::format(size_t indent, size_t indent_times
 }
 
 template <typename string_t>
-template <typename value_t, template <typename> typename vector_t>
+template <typename value_t, template <typename...> typename vector_t>
 inline vector_t<value_t> basic_value<string_t>::to_vector() const
 {
     return as_array().template to_vector<value_t, vector_t>();
 }
 
 template <typename string_t>
-template <typename value_t, template <typename, typename> typename map_t>
+template <typename value_t, template <typename...> typename map_t>
 inline map_t<string_t, value_t> basic_value<string_t>::to_map() const
 {
     return as_object().template to_map<value_t, map_t>();
@@ -1449,7 +1449,7 @@ namespace _to_vector_helper
 }
 
 template <typename string_t>
-template <typename value_t, template <typename> typename vector_t>
+template <typename value_t, template <typename...> typename vector_t>
 inline vector_t<value_t> basic_array<string_t>::to_vector() const
 {
 
@@ -1773,7 +1773,7 @@ inline string_t basic_object<string_t>::format(size_t indent, size_t indent_time
 }
 
 template <typename string_t>
-template <typename value_t, template <typename, typename> typename map_t>
+template <typename value_t, template <typename...> typename map_t>
 inline map_t<string_t, value_t> basic_object<string_t>::to_map() const
 {
     map_t<string_t, value_t> result;
