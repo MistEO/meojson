@@ -1452,8 +1452,8 @@ template <typename string_t>
 template <typename value_t, template <typename _T> typename vector_t>
 inline vector_t<value_t> basic_array<string_t>::to_vector() const
 {
-
     vector_t<value_t> result;
+
     if constexpr (_to_vector_helper::has_emplace_back<vector_t<value_t>>::value) {
         for (const auto& elem : _array_data) {
             result.emplace_back(elem.template as<value_t>());
@@ -1464,6 +1464,7 @@ inline vector_t<value_t> basic_array<string_t>::to_vector() const
             result.emplace(elem.template as<value_t>());
         }
     }
+
     return result;
 }
 
