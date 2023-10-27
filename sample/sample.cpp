@@ -102,6 +102,12 @@ bool parsing()
     auto opt_v = value.find("not_exists");
     std::cout << "Did we find the \"not_exists\"? " << opt_v.has_value() << std::endl;
 
+    // Output: 1, 2, 3
+    std::vector<int> vec = value["list"].to_vector<int>();
+    for (auto&& i : vec) {
+        std::cout << i << std::endl;
+    }
+
     using namespace json::literals;
     json::value val = "{\"hi\":\"literals\"}"_json;
     std::cout << val["hi"] << std::endl;

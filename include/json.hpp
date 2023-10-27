@@ -194,6 +194,10 @@ public:
     {
         return format(indent, 0);
     }
+    template <typename value_t>
+    std::vector<value_t> to_vector() const;
+    template <typename value_t>
+    std::map<string_t, value_t> to_map() const;
 
     basic_value<string_t>& operator=(const basic_value<string_t>& rhs);
     basic_value<string_t>& operator=(basic_value<string_t>&&) noexcept;
@@ -309,6 +313,8 @@ public:
     {
         return format(indent, 0);
     }
+    template <typename value_t>
+    std::vector<value_t> to_vector() const;
 
     // Usage: get(key_1, key_2, ..., default_value);
     template <typename... key_then_default_value_t>
@@ -419,6 +425,8 @@ public:
     {
         return format(indent, 0);
     }
+    template <typename value_t>
+    std::map<string_t, value_t> to_map() const;
 
     // Usage: get(key_1, key_2, ..., default_value);
     template <typename... key_then_default_value_t>
@@ -1147,6 +1155,20 @@ MEOJSON_INLINE string_t basic_value<string_t>::format(size_t indent, size_t inde
 }
 
 template <typename string_t>
+template <typename value_t>
+MEOJSON_INLINE std::vector<value_t> basic_value<string_t>::to_vector() const
+{
+    return as_array().template to_vector<value_t>();
+}
+
+template <typename string_t>
+template <typename value_t>
+MEOJSON_INLINE std::map<string_t, value_t> basic_value<string_t>::to_map() const
+{
+    return as_object().template to_map<value_t>();
+}
+
+template <typename string_t>
 MEOJSON_INLINE basic_value<string_t>& basic_value<string_t>::operator=(const basic_value<string_t>& rhs)
 {
     _type = rhs._type;
@@ -1411,6 +1433,17 @@ MEOJSON_INLINE string_t basic_array<string_t>::format(size_t indent, size_t inde
     }
     str += tail_indent + char_t(']');
     return str;
+}
+
+template <typename string_t>
+template <typename value_t>
+MEOJSON_INLINE std::vector<value_t> basic_array<string_t>::to_vector() const
+{
+    std::vector<value_t> result;
+    for (const auto& elem : _array_data) {
+        result.emplace_back(elem.template as<value_t>());
+    }
+    return result;
 }
 
 template <typename string_t>
@@ -1719,6 +1752,18 @@ MEOJSON_INLINE string_t basic_object<string_t>::format(size_t indent, size_t ind
     str += tail_indent + char_t('}');
     return str;
 }
+
+template <typename string_t>
+template <typename value_t>
+MEOJSON_INLINE std::map<string_t, value_t> basic_object<string_t>::to_map() const
+{
+    std::map<string_t, value_t> result;
+    for (const auto& [key, val] : _object_data) {
+        result.emplace(key, val.template as<value_t>());
+    }
+    return result;
+}
+
 
 template <typename string_t>
 template <typename value_t, typename... rest_keys_t>

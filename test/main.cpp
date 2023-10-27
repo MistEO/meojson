@@ -57,6 +57,8 @@ bool serializing()
     root["arr"].emplace(5);
     root["arr"] += json::array { 6, 7 };
 
+    auto to_arr = root["arr"].to_vector<int>();
+
     std::vector<int> vec = { 1, 2, 3, 4, 5 };
     root["arr from vec"] = vec;
 
@@ -68,6 +70,8 @@ bool serializing()
         { "key2", 2 },
     };
     root["obj from map"] = map;
+
+    auto to_map = root["obj from map"].to_map<int>();
 
     std::vector<std::list<std::set<int>>> complex { { { 1, 2, 3 }, { 4, 5 } }, { { 6 }, { 7, 8 } } };
     root["complex"] = json::serialize<false>(complex);
