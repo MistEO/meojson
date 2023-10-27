@@ -23,7 +23,7 @@ jobs:
 
           MSBUILD meojson.sln /t:rebuild /p:Configuration="Debug" /p:Platform="x64" /m
 
-      - name: Run Sample
+      - name: Run Testing
         run: |
           ./build/Debug/sample.exe
           ./build/Debug/json5_parse_sample.exe
@@ -47,7 +47,7 @@ jobs:
 
           make -j$(nproc)
 
-      - name: Run Sample
+      - name: Run Testing
         run: |
           ./build/sample
           ./build/json5_parse_sample
@@ -74,7 +74,7 @@ jobs:
 
           ninja
 
-      - name: Run Sample
+      - name: Run Testing
         run: |
           ./build/sample
           ./build/json5_parse_sample
