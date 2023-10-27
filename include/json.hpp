@@ -193,10 +193,11 @@ public:
     {
         return format(indent, 0);
     }
-    template <typename value_t>
-    std::vector<value_t> to_vector() const;
-    template <typename value_t>
-    std::map<string_t, value_t> to_map() const;
+
+    template <typename value_t, template <typename> typename vector_t = std::vector>
+    vector_t<value_t> to_vector() const;
+    template <typename value_t, template <typename, typename> typename map_t = std::map>
+    map_t<string_t, value_t> to_map() const;
 
     basic_value<string_t>& operator=(const basic_value<string_t>& rhs);
     basic_value<string_t>& operator=(basic_value<string_t>&&) noexcept;
@@ -312,8 +313,8 @@ public:
     {
         return format(indent, 0);
     }
-    template <typename value_t>
-    std::vector<value_t> to_vector() const;
+    template <typename value_t, template <typename> typename vector_t = std::vector>
+    vector_t<value_t> to_vector() const;
 
     // Usage: get(key_1, key_2, ..., default_value);
     template <typename... key_then_default_value_t>
@@ -424,8 +425,8 @@ public:
     {
         return format(indent, 0);
     }
-    template <typename value_t>
-    std::map<string_t, value_t> to_map() const;
+    template <typename value_t, template <typename, typename> typename map_t = std::map>
+    map_t<string_t, value_t> to_map() const;
 
     // Usage: get(key_1, key_2, ..., default_value);
     template <typename... key_then_default_value_t>
@@ -1152,17 +1153,17 @@ inline string_t basic_value<string_t>::format(size_t indent, size_t indent_times
 }
 
 template <typename string_t>
-template <typename value_t>
-inline std::vector<value_t> basic_value<string_t>::to_vector() const
+template <typename value_t, template <typename> typename vector_t>
+inline vector_t<value_t> basic_value<string_t>::to_vector() const
 {
-    return as_array().template to_vector<value_t>();
+    return as_array().template to_vector<value_t, vector_t>();
 }
 
 template <typename string_t>
-template <typename value_t>
-inline std::map<string_t, value_t> basic_value<string_t>::to_map() const
+template <typename value_t, template <typename, typename> typename map_t>
+inline map_t<string_t, value_t> basic_value<string_t>::to_map() const
 {
-    return as_object().template to_map<value_t>();
+    return as_object().template to_map<value_t, map_t>();
 }
 
 template <typename string_t>
@@ -1431,13 +1432,37 @@ inline string_t basic_array<string_t>::format(size_t indent, size_t indent_times
     return str;
 }
 
-template <typename string_t>
-template <typename value_t>
-inline std::vector<value_t> basic_array<string_t>::to_vector() const
+namespace _to_vector_helper
 {
-    std::vector<value_t> result;
-    for (const auto& elem : _array_data) {
-        result.emplace_back(elem.template as<value_t>());
+    template <typename T>
+    class has_emplace_back
+    {
+        template <typename U>
+        static auto test(int) -> decltype(std::declval<U>().emplace_back(), std::true_type());
+
+        template <typename U>
+        static std::false_type test(...);
+
+    public:
+        static constexpr bool value = decltype(test<T>(0))::value;
+    };
+}
+
+template <typename string_t>
+template <typename value_t, template <typename> typename vector_t>
+inline vector_t<value_t> basic_array<string_t>::to_vector() const
+{
+
+    vector_t<value_t> result;
+    if constexpr (_to_vector_helper::has_emplace_back<vector_t<value_t>>::value) {
+        for (const auto& elem : _array_data) {
+            result.emplace_back(elem.template as<value_t>());
+        }
+    }
+    else {
+        for (const auto& elem : _array_data) {
+            result.emplace(elem.template as<value_t>());
+        }
     }
     return result;
 }
@@ -1748,10 +1773,10 @@ inline string_t basic_object<string_t>::format(size_t indent, size_t indent_time
 }
 
 template <typename string_t>
-template <typename value_t>
-inline std::map<string_t, value_t> basic_object<string_t>::to_map() const
+template <typename value_t, template <typename, typename> typename map_t>
+inline map_t<string_t, value_t> basic_object<string_t>::to_map() const
 {
-    std::map<string_t, value_t> result;
+    map_t<string_t, value_t> result;
     for (const auto& [key, val] : _object_data) {
         result.emplace(key, val.template as<value_t>());
     }

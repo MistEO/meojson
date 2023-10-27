@@ -111,11 +111,15 @@ void parsing()
     auto opt_v = value.find("not_exists");
     std::cout << "Did we find the \"not_exists\"? " << opt_v.has_value() << std::endl;
 
+    std::vector<int> to_vec = value["list"].to_vector<int>();
+    std::list<int> to_list = value["list"].to_vector<int, std::list>();
+    std::set<int> to_set = value["list"].to_vector<int, std::set>();
     // Output: 1, 2, 3
-    std::vector<int> vec = value["list"].to_vector<int>();
-    for (auto&& i : vec) {
+    for (auto&& i : to_vec) {
         std::cout << i << std::endl;
     }
+    std::map<std::string, std::string> to_map = value["author"].to_map<std::string>();
+    auto to_hashmap = value["author"].to_map<std::string, std::unordered_map>();
 
     // Output: "literals"
     using namespace json::literals;
