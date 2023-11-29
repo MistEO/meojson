@@ -14,6 +14,8 @@
 #define __packed_bytes_strong_inline inline
 #endif
 
+namespace json::_packed_bytes
+{
 struct packed_bytes_trait_none
 {
     static constexpr bool available = false;
@@ -24,6 +26,7 @@ struct packed_bytes
 {
     using traits = packed_bytes_trait_none;
 };
+}
 
 #if defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP)
 #include "packed_bytes_x86.hpp"
@@ -31,6 +34,8 @@ struct packed_bytes
 #include "packed_bytes_arm.hpp"
 #endif
 
+namespace json::_packed_bytes
+{
 struct packed_bytes_trait_uint64
 {
     static constexpr bool available = sizeof(void*) >= 8;
@@ -65,10 +70,10 @@ struct packed_bytes_trait_uint64
 
     __packed_bytes_strong_inline static size_t first_nonzero_byte(value_type x)
     {
-        if (json::__bitops::is_little_endian())
-            return json::__bitops::countr_zero(x) / 8;
+        if (_bitops::is_little_endian())
+            return _bitops::countr_zero(x) / 8;
         else
-            return json::__bitops::countl_zero(x) / 8;
+            return _bitops::countl_zero(x) / 8;
     }
 };
 
@@ -107,10 +112,10 @@ struct packed_bytes_trait_uint32
 
     __packed_bytes_strong_inline static size_t first_nonzero_byte(value_type x)
     {
-        if (json::__bitops::is_little_endian())
-            return json::__bitops::countr_zero(x) / 8;
+        if (_bitops::is_little_endian())
+            return _bitops::countr_zero(x) / 8;
         else
-            return json::__bitops::countl_zero(x) / 8;
+            return _bitops::countl_zero(x) / 8;
     }
 };
 template <>
@@ -133,3 +138,5 @@ using packed_bytes_trait_max =
                        std::conditional_t<packed_bytes_trait<16>::available, packed_bytes_trait<16>,
                                           std::conditional_t<packed_bytes_trait<8>::available, packed_bytes_trait<8>,
                                                              packed_bytes_trait<4>>>>;
+
+} // namespace json::_packed_bytes

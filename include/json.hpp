@@ -488,7 +488,7 @@ private:
 // ****************************
 
 template <typename string_t = default_string_t, typename parsing_t = void,
-          typename accel_traits = packed_bytes_trait_max>
+          typename accel_traits = _packed_bytes::packed_bytes_trait_max>
 class parser
 {
 public:

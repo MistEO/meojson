@@ -2,7 +2,7 @@
 
 #if __cplusplus >= 202002L || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)
 #include <bit>
-namespace json::__bitops
+namespace json::_bitops
 {
 using std::countl_one;
 using std::countl_zero;
@@ -15,7 +15,7 @@ inline constexpr bool is_little_endian()
 }
 #else
 #include <cstdint>
-namespace json::__bitops
+namespace json::_bitops
 {
 #if defined(__GNUC__) || defined(__clang__)
 inline constexpr int countl_zero(uint32_t x)
@@ -108,5 +108,5 @@ inline bool is_little_endian()
     } u = { 0x01020304 };
     return u.u8 == 4;
 }
-} // namespace json::__bitops
+} // namespace json::_bitops
 #endif // C++20

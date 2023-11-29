@@ -7,6 +7,8 @@
 #include <smmintrin.h>
 #endif
 
+namespace json::_packed_bytes
+{
 struct packed_bytes_trait_sse
 {
     static constexpr bool available = true;
@@ -54,7 +56,7 @@ struct packed_bytes_trait_sse
     {
         auto cmp = _mm_cmpeq_epi8(x, _mm_set1_epi8(0));
         auto mask = (uint16_t)_mm_movemask_epi8(cmp);
-        return json::__bitops::countr_one((uint32_t)mask);
+        return _bitops::countr_one((uint32_t)mask);
     }
 };
 
@@ -63,10 +65,12 @@ struct packed_bytes<16>
 {
     using traits = packed_bytes_trait_sse;
 };
-
+}
 #ifdef __AVX2__
 #include <immintrin.h>
 
+namespace json::_packed_bytes
+{
 struct packed_bytes_trait_avx2
 {
     static constexpr bool available = true;
@@ -107,7 +111,7 @@ struct packed_bytes_trait_avx2
         auto cmp = _mm256_cmpeq_epi8(x, _mm256_set1_epi8(0));
         auto mask = (uint32_t)_mm256_movemask_epi8(cmp);
         // AVX512 alternative: _mm_cmpeq_epi8_mask
-        return json::__bitops::countr_one(mask);
+        return _bitops::countr_one(mask);
     }
 };
 
@@ -116,5 +120,6 @@ struct packed_bytes<32>
 {
     using traits = packed_bytes_trait_avx2;
 };
+}
 
 #endif
