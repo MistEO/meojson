@@ -53,7 +53,7 @@ bool parsing()
             return false;
         }//C-style strings can also be used as input.
     }
-    auto& value = ret.value(); // you can use rvalues if needed, like
+    json::value& value = ret.value(); // you can use rvalues if needed, like
                                // `auto value = std::move(ret).value();`
 
     // Output: MistEO

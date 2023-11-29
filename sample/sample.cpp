@@ -56,7 +56,7 @@ bool parsing()
         std::cerr << "Parsing failed" << std::endl;
         return false;
     }
-    auto& value = ret.value(); // you can use rvalues if needed, like
+    json::value& value = ret.value(); // you can use rvalues if needed, like
     // `auto value = std::move(ret).value();`
     // Output: meojson
     std::cout << value["repo"].as_string() << std::endl;
@@ -154,7 +154,7 @@ bool parsing_width()
         std::cerr << "Parsing failed" << std::endl;
         return false;
     }
-    auto& value = ret.value(); // you can use rvalues if needed, like
+    json::wvalue& value = ret.value(); // you can use rvalues if needed, like
     // `auto value = std::move(ret).value();`
     // Output: meojson
     std::wcout << value[L"repo"].as_string() << std::endl;
