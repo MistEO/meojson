@@ -38,6 +38,11 @@ bool serializing()
     root["arr"].emplace(5);
     root["arr"] += json::array { 6, 7 };
 
+    bool is_int_array = root["arr"].is_array() && root["arr"].all<int>();
+    if (!is_int_array) {
+        std::cerr << "not all int: " << root["arr"].as_string() << std::endl;
+        return false;
+    }
     auto to_vec = root["arr"].to_vector<int>();
     auto to_vec_2 = root["arr"].to_vector<int, std::vector>();
     auto to_list = root["arr"].to_vector<int, std::list>();
@@ -59,6 +64,11 @@ bool serializing()
     };
     root["obj from map"] = map;
 
+    bool is_int_map = root["obj from map"].is_object() && root["obj from map"].all<int>();
+    if (!is_int_map) {
+        std::cerr << "not all int: " << root["obj from map"].as_string() << std::endl;
+        return false;
+    }
     auto to_map = root["obj from map"].to_map<int>();
     auto to_map_2 = root["obj from map"].to_map<int, std::map>();
     auto to_hashmap = root["obj from map"].to_map<int, std::unordered_map>();
