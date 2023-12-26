@@ -1,16 +1,21 @@
-name: ClusterFuzzLite PR fuzzing
+name: fuzzing
+
+
 on:
-  workflow_dispatch:
+  push:
   pull_request:
-    branches: [ master ]
+  workflow_dispatch:
+
 permissions: read-all
+
 jobs:
-  PR:
+  fuzzing:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         sanitizer: [address]
+
     steps:
     - name: Build Fuzzers (${{ matrix.sanitizer }})
       id: build
@@ -19,6 +24,7 @@ jobs:
         sanitizer: ${{ matrix.sanitizer }}
         language: c++
         bad-build-check: false
+
     - name: Run Fuzzers (${{ matrix.sanitizer }})
       id: run
       uses: google/clusterfuzzlite/actions/run_fuzzers@v1
