@@ -2079,7 +2079,7 @@ template <typename string_t, typename parsing_t, typename accel_traits>
 inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_null()
 {
     for (const auto& ch : null_string<string_t>()) {
-        if (*_cur == ch) {
+        if (_cur != _end && *_cur == ch) {
             ++_cur;
         }
         else {
@@ -2096,7 +2096,7 @@ inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_bo
     switch (*_cur) {
     case 't':
         for (const auto& ch : true_string<string_t>()) {
-            if (*_cur == ch) {
+            if (_cur != _end && *_cur == ch) {
                 ++_cur;
             }
             else {
@@ -2106,7 +2106,7 @@ inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_bo
         return true;
     case 'f':
         for (const auto& ch : false_string<string_t>()) {
-            if (*_cur == ch) {
+            if (_cur != _end && *_cur == ch) {
                 ++_cur;
             }
             else {
