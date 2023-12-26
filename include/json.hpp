@@ -522,7 +522,7 @@ private:
     // parse and return a string_t
     std::optional<string_t> parse_stdstring();
 
-    void skip_string_literal();
+    bool skip_string_literal_with_accel();
     bool skip_whitespace() noexcept;
     bool skip_digit();
 
@@ -2297,9 +2297,9 @@ inline std::optional<string_t> parser<string_t, parsing_t, accel_traits>::parse_
     auto no_escape_beg = _cur;
 
     while (_cur != _end) {
-        if constexpr (sizeof(*_cur) == 1) {
-            if constexpr (accel_traits::available) {
-                skip_string_literal();
+        if constexpr (sizeof(*_cur) == 1 && accel_traits::available) {
+            if (!skip_string_literal_with_accel()) {
+                return std::nullopt;
             }
         }
         switch (*_cur) {
@@ -2360,16 +2360,18 @@ inline std::optional<string_t> parser<string_t, parsing_t, accel_traits>::parse_
 }
 
 template <typename string_t, typename parsing_t, typename accel_traits>
-inline void parser<string_t, parsing_t, accel_traits>::skip_string_literal()
+inline bool parser<string_t, parsing_t, accel_traits>::skip_string_literal_with_accel()
 {
     if constexpr (sizeof(*_cur) != 1) {
-        return;
+        return false;
     }
+
     while (_end - _cur >= accel_traits::step) {
         auto pack = accel_traits::load_unaligned(&(*_cur));
         auto result = accel_traits::less(pack, 32);
         result = accel_traits::bitwise_or(result, accel_traits::equal(pack, static_cast<uint8_t>('"')));
         result = accel_traits::bitwise_or(result, accel_traits::equal(pack, static_cast<uint8_t>('\\')));
+
         if (accel_traits::is_all_zero(result)) {
             _cur += accel_traits::step;
         }
@@ -2379,6 +2381,8 @@ inline void parser<string_t, parsing_t, accel_traits>::skip_string_literal()
             break;
         }
     }
+
+    return _cur != _end;
 }
 
 template <typename string_t, typename parsing_t, typename accel_traits>
