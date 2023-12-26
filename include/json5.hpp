@@ -97,6 +97,7 @@ private:
         static bool isIdContinueChar(u8char ch);
         static bool isDigit(u8char ch);
         static bool isHexDigit(u8char ch);
+        static std::wstring toWString(u8char ch);
     };
 
     enum class LexState
@@ -146,18 +147,18 @@ private:
 
     enum class TokenType
     {
-        punctuator = 0,
+        eof = 0,
+        punctuator,
         identifier,
         null,
         boolean,
         numeric,
         string,
-        eof,
     };
 
     struct Token
     {
-        TokenType type;
+        TokenType type = TokenType::eof;
         value _value;
         size_t col = 0;
         size_t line = 0;
@@ -169,14 +170,14 @@ public:
     static std::optional<value> parse(const StringT& content, std::string* error = nullptr);
 
 private:
-    parser5(const StringIterT& cbegin, const StringIterT& cend) noexcept
+    parser5(StringIterT cbegin, StringIterT cend) noexcept
         : _cur(cbegin), _end(cend), _line_begin_cur(cbegin)
     {}
     std::optional<value> parse();
 
 private:
     /* utf-8 reader */
-    static u8char peek(StringIterT& begin, const StringIterT& end, size_t* len = nullptr);
+    static u8char peek(const StringIterT& begin, const StringIterT& end, size_t* len = nullptr);
     static u8char peek(const std::string& str);
     typename parser5<StringT>::u8char read();
     static std::string StringFromCharCode(u8char code);
@@ -511,51 +512,21 @@ inline const std::wregex parser5<StringT>::unicode::id_continue =
 template <typename StringT>
 inline bool parser5<StringT>::unicode::isSpaceSeparator(u8char ch)
 {
-#ifdef _MSC_VER
-    std::wstring wstr = { (wchar_t)ch, 0 };
-#else
-    auto str = StringFromCharCode(ch);
-    auto len = str.size() + 1;
-    std::unique_ptr<wchar_t[]> p(new wchar_t[len]);
-    std::setlocale(LC_CTYPE, ".UTF8");
-    std::mbstowcs(p.get(), str.c_str(), len);
-    std::wstring wstr(p.get());
-#endif
-    return std::regex_search(wstr, unicode::space_separator);
+    return std::regex_search(toWString(ch), unicode::space_separator);
 }
 
 template <typename StringT>
 inline bool parser5<StringT>::unicode::isIdStartChar(u8char ch)
 {
-#ifdef _MSC_VER
-    std::wstring wstr = { (wchar_t)ch, 0 };
-#else
-    auto str = StringFromCharCode(ch);
-    auto len = str.size() + 1;
-    std::unique_ptr<wchar_t[]> p(new wchar_t[len]);
-    std::setlocale(LC_CTYPE, ".UTF8");
-    std::mbstowcs(p.get(), str.c_str(), len);
-    std::wstring wstr(p.get());
-#endif
     return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch == '$') || (ch == '_') ||
-           std::regex_search(wstr, unicode::id_start);
+           std::regex_search(toWString(ch), unicode::id_start);
 }
 
 template <typename StringT>
 inline bool parser5<StringT>::unicode::isIdContinueChar(u8char ch)
 {
-#ifdef _MSC_VER
-    std::wstring wstr = { (wchar_t)ch, 0 };
-#else
-    auto str = StringFromCharCode(ch);
-    auto len = str.size() + 1;
-    std::unique_ptr<wchar_t[]> p(new wchar_t[len]);
-    std::setlocale(LC_CTYPE, ".UTF8");
-    std::mbstowcs(p.get(), str.c_str(), len);
-    std::wstring wstr(p.get());
-#endif
     return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || (ch == '$') ||
-           (ch == '_') || std::regex_search(wstr, unicode::id_continue);
+           (ch == '_') || std::regex_search(toWString(ch), unicode::id_continue);
 }
 
 template <typename StringT>
@@ -570,6 +541,22 @@ inline bool parser5<StringT>::unicode::isHexDigit(u8char ch)
 {
     auto str = StringFromCharCode(ch);
     return std::regex_search(str, std::regex(R"([0-9A-Fa-f])"));
+}
+
+template <typename StringT>
+inline std::wstring parser5<StringT>::unicode::toWString(u8char ch)
+{
+#ifdef _MSC_VER
+    std::wstring wstr = { (wchar_t)ch, 0 };
+#else
+    auto str = StringFromCharCode(ch);
+    auto len = str.size() + 1;
+    auto p = std::make_unique<wchar_t[]>(len);
+    std::setlocale(LC_CTYPE, ".UTF8");
+    std::mbstowcs(p.get(), str.c_str(), len);
+    std::wstring wstr(p.get(), len);
+#endif
+    return wstr;
 }
 
 /* constrators and callers */
@@ -741,21 +728,24 @@ inline typename parser5<StringT>::u8char parser5<StringT>::unicodeEscape()
 
 /* utf-8 reader */
 template <typename StringT>
-inline typename parser5<StringT>::u8char parser5<StringT>::peek(StringIterT& begin, const StringIterT& end,
+inline typename parser5<StringT>::u8char parser5<StringT>::peek(const StringIterT& begin, const StringIterT& end,
                                                                 size_t* plen)
 {
     if (begin == end) {
         if (plen) *plen = 0;
         return 0;
     }
-    uint8_t head = (*begin);
+    uint8_t head = *begin;
     uint64_t ch = head;
     size_t len = 1;
-    while (begin != end && (head & 0b11000000) > 0b10000000) {
+    while ((head & 0b11000000) > 0b10000000) {
         head <<= 1;
         ++len;
         ch <<= 8;
-        ch += (uint8_t)(*(begin + len - 1));
+        auto sep = begin + len - 1;
+        if (sep < end) {
+            ch += (uint8_t)(*sep);
+        }
     }
     if (plen) {
         *plen = len;
@@ -766,8 +756,7 @@ inline typename parser5<StringT>::u8char parser5<StringT>::peek(StringIterT& beg
 template <typename StringT>
 inline typename parser5<StringT>::u8char parser5<StringT>::peek(const std::string& str)
 {
-    auto begin = str.begin();
-    return peek(begin, str.cend());
+    return peek(str.cbegin(), str.cend());
 }
 inline constexpr size_t operator"" _sz(unsigned long long size)
 {
@@ -791,6 +780,9 @@ inline typename parser5<StringT>::u8char parser5<StringT>::read()
     if (len > 0) {
         _print_len += (std::min)(len, 2_sz);
         _cur += len;
+        if (_cur > _end) {
+            _cur = _end;
+        }
     }
     return _current_char;
 }
@@ -831,7 +823,7 @@ inline typename parser5<StringT>::Token parser5<StringT>::lex()
 
     std::optional<Token> token;
 
-    for (;;) {
+    while (_cur != _end) {
         _current_char = peek(_cur, _end);
 
         token = lexStates(_lex_state);
@@ -839,6 +831,7 @@ inline typename parser5<StringT>::Token parser5<StringT>::lex()
             return token.value();
         }
     }
+    return Token{ TokenType::eof, value(), _line, _col };
 }
 
 template <typename StringT>
@@ -1178,7 +1171,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_dec
         return std::nullopt;
     }
 
-    return newToken(TokenType::numeric, _sign * std::stod(_buffer));
+    std::string number = _sign == -1 ? ("-" + _buffer) : _buffer;
+    return newToken(TokenType::numeric, value(value::value_type::number, std::move(number)));
 }
 
 template <typename StringT>
@@ -1208,7 +1202,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_dec
         return std::nullopt;
     }
 
-    return newToken(TokenType::numeric, _sign * std::stod(_buffer));
+    std::string number = _sign == -1 ? ("-" + _buffer) : _buffer;
+    return newToken(TokenType::numeric, value(value::value_type::number, std::move(number)));
 }
 
 template <typename StringT>
@@ -1226,7 +1221,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_dec
         return std::nullopt;
     }
 
-    return newToken(TokenType::numeric, _sign * std::stod(_buffer));
+    std::string number = _sign == -1 ? ("-" + _buffer) : _buffer;
+    return newToken(TokenType::numeric, value(value::value_type::number, std::move(number)));
 }
 
 template <typename StringT>
@@ -1266,7 +1262,9 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_dec
         _buffer += StringFromCharCode(read());
         return std::nullopt;
     }
-    return newToken(TokenType::numeric, _sign * std::stod(_buffer));
+    
+    std::string number = _sign == -1 ? ("-" + _buffer) : _buffer;
+    return newToken(TokenType::numeric, value(value::value_type::number, std::move(number)));
 }
 
 template <typename StringT>
@@ -1287,7 +1285,9 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_hex
         _buffer += StringFromCharCode(read());
         return std::nullopt;
     }
-    return newToken(TokenType::numeric, _sign * std::stod(_buffer));
+    
+    std::string number = _sign == -1 ? ("-" + _buffer) : _buffer;
+    return newToken(TokenType::numeric, value(value::value_type::number, std::move(number)));
 }
 
 template <typename StringT>
@@ -1499,7 +1499,7 @@ template <typename StringT>
 inline void parser5<StringT>::parse_start()
 {
     if (_token->type == TokenType::eof) {
-        throw InvalidEOF("", exceptionDetailInfo());
+        throw InvalidEOF("EOF", exceptionDetailInfo());
     }
 
     push();
@@ -1518,7 +1518,7 @@ inline void parser5<StringT>::parse_beforePropertyName()
         pop();
         break;
     case TokenType::eof:
-        throw InvalidEOF("", exceptionDetailInfo());
+        throw InvalidEOF("EOF", exceptionDetailInfo());
         break;
     default:
 
@@ -1530,7 +1530,7 @@ template <typename StringT>
 inline void parser5<StringT>::parse_afterPropertyName()
 {
     if (_token->type == TokenType::eof) {
-        throw InvalidEOF("", exceptionDetailInfo());
+        throw InvalidEOF("EOF", exceptionDetailInfo());
     }
 
     _parse_state = ParseState::beforePropertyValue;
@@ -1540,7 +1540,7 @@ template <typename StringT>
 inline void parser5<StringT>::parse_beforePropertyValue()
 {
     if (_token->type == TokenType::eof) {
-        throw InvalidEOF("", exceptionDetailInfo());
+        throw InvalidEOF("EOF", exceptionDetailInfo());
     }
     push();
 }
@@ -1549,7 +1549,7 @@ template <typename StringT>
 inline void parser5<StringT>::parse_beforeArrayValue()
 {
     if (_token->type == TokenType::eof) {
-        throw InvalidEOF("", exceptionDetailInfo());
+        throw InvalidEOF("EOF", exceptionDetailInfo());
     }
 
     if (_token->type == TokenType::punctuator && _token->_value.as_string()[0] == ']') {
@@ -1564,7 +1564,7 @@ template <typename StringT>
 inline void parser5<StringT>::parse_afterPropertyValue()
 {
     if (_token->type == TokenType::eof) {
-        throw InvalidEOF("", exceptionDetailInfo());
+        throw InvalidEOF("EOF", exceptionDetailInfo());
     }
 
     switch (_token->_value.as_string()[0]) {
@@ -1581,7 +1581,7 @@ template <typename StringT>
 inline void parser5<StringT>::parse_afterArrayValue()
 {
     if (_token->type == TokenType::eof) {
-        throw InvalidEOF("", exceptionDetailInfo());
+        throw InvalidEOF("EOF", exceptionDetailInfo());
     }
     switch (_token->_value.as_string()[0]) {
     case ',':
