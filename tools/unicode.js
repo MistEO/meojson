@@ -52,7 +52,7 @@ header += '#include <set>\n'
 header += 'namespace json::unicode {\n'
 
 header += Object.keys(data).map(key => `
-std::set<uint64_t> ${key} =
+std::set<uint64_t> ${key} 
     {${data[key].toArray().map(v => '0x' + Number(v).toString(16)).join(', ')}}
 ;
 `).join('')
