@@ -73,7 +73,7 @@ public:
     std::string exceptionDetailInfo()
     {
         size_t start_point = _col;
-        auto len = _print_len;
+        auto len = _print_len + 1;
         auto current_line = _line_begin_cur;
         std::stringstream ss;
         ss << "at line " << _line << ", column " << _col + 1 << '\n';
@@ -82,6 +82,11 @@ public:
             ;
         ss << std::string(current_line, _cur) << '\n';
         ss << std::setw(len) << '^' << '\n';
+
+#ifdef __DEBUG_JSON__
+        ss << "[DEBUG] current lex state: " << static_cast<int>(_lex_state) << '\n';
+        ss << "[DEBUG] current parse state: " << static_cast<int>(_parse_state) << '\n';
+#endif
         return ss.str();
     }
 
@@ -252,7 +257,6 @@ private:
     bool _double_quote = false;
     int64_t _sign = 1;
     u8char _current_char = 0;
-    u8char _error_char = 0;
 };
 
 // *************************
@@ -396,7 +400,7 @@ inline void parser5<StringT>::literal(const std::string& s)
     for (const auto& ch : s) {
         char p = static_cast<char>(read());
         if (p != ch) {
-            throw InvalidChar(_error_char, exceptionDetailInfo());
+            throw InvalidChar(_current_char, exceptionDetailInfo());
         }
     }
 }
@@ -433,7 +437,7 @@ inline std::optional<typename parser5<StringT>::u8char> parser5<StringT>::escape
     case '0':
         read();
         if (unicode::isDigit(peek(_cur, _end))) {
-            throw InvalidChar(_error_char, exceptionDetailInfo());
+            throw InvalidChar(_current_char, exceptionDetailInfo());
         }
 
         return '\0';
@@ -469,10 +473,10 @@ inline std::optional<typename parser5<StringT>::u8char> parser5<StringT>::escape
     case '7':
     case '8':
     case '9':
-        throw InvalidChar(_error_char, exceptionDetailInfo());
+        throw InvalidChar(_current_char, exceptionDetailInfo());
     default:
         if (c == 0) {
-            throw InvalidChar(_error_char, exceptionDetailInfo());
+            throw InvalidChar(_current_char, exceptionDetailInfo());
         }
     }
 
@@ -486,14 +490,14 @@ inline typename parser5<StringT>::u8char parser5<StringT>::hexEscape()
     auto c = peek(_cur, _end);
 
     if (!unicode::isHexDigit(c)) {
-        throw InvalidChar(_error_char, exceptionDetailInfo());
+        throw InvalidChar(_current_char, exceptionDetailInfo());
     }
 
     buffer += static_cast<char>(read());
 
     c = peek(_cur, _end);
     if (!unicode::isHexDigit(c)) {
-        throw InvalidChar(_error_char, exceptionDetailInfo());
+        throw InvalidChar(_current_char, exceptionDetailInfo());
     }
 
     buffer += static_cast<char>(read());
@@ -509,7 +513,7 @@ inline typename parser5<StringT>::u8char parser5<StringT>::unicodeEscape()
     while (count-- > 0) {
         auto c = peek(_cur, _end);
         if (!unicode::isHexDigit(c)) {
-            throw InvalidChar(_error_char, exceptionDetailInfo());
+            throw InvalidChar(_current_char, exceptionDetailInfo());
         }
         buffer += StringFromCharCode(read());
     }
@@ -558,7 +562,6 @@ inline typename parser5<StringT>::u8char parser5<StringT>::read()
 {
     size_t len = 0;
     _current_char = peek(_cur, _end, &len);
-    _error_char = _current_char;
     if (_current_char == '\n') {
         _line++;
         _col = 0;
@@ -680,7 +683,7 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_com
         return std::nullopt;
     }
 
-    throw InvalidChar(_error_char, exceptionDetailInfo());
+    throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
 template <typename StringT>
@@ -693,7 +696,7 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_mul
     }
 
     if (_current_char == 0) {
-        throw InvalidChar(_error_char, exceptionDetailInfo());
+        throw InvalidChar(_current_char, exceptionDetailInfo());
     }
 
     read();
@@ -715,7 +718,7 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_mul
 
     default:
         if (_current_char == 0) {
-            throw InvalidChar(_error_char, exceptionDetailInfo());
+            throw InvalidChar(_current_char, exceptionDetailInfo());
         }
     }
 
@@ -805,14 +808,14 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_val
         _lex_state = LexState::string;
         return std::nullopt;
     }
-    throw InvalidChar(_error_char, exceptionDetailInfo());
+    throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
 template <typename StringT>
 inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_identifierNameStartEscape()
 {
     if (_current_char != 'u') {
-        throw InvalidChar(_error_char, exceptionDetailInfo());
+        throw InvalidChar(_current_char, exceptionDetailInfo());
     }
     read();
     auto u = unicodeEscape();
@@ -859,7 +862,7 @@ template <typename StringT>
 inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_identifierNameEscape()
 {
     if (_current_char != 'u') {
-        throw InvalidChar(_error_char, exceptionDetailInfo());
+        throw InvalidChar(_current_char, exceptionDetailInfo());
     }
     read();
     auto u = unicodeEscape();
@@ -917,7 +920,7 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_sig
         literal("aN");
         return newToken(TokenType::numeric, NAN);
     }
-    throw InvalidChar(_error_char, exceptionDetailInfo());
+    throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
 template <typename StringT>
@@ -975,7 +978,7 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_dec
         _lex_state = LexState::decimalFraction;
         return std::nullopt;
     }
-    throw InvalidChar(_error_char, exceptionDetailInfo());
+    throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
 template <typename StringT>
@@ -1033,7 +1036,7 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_dec
         _lex_state = LexState::decimalExponentInteger;
         return std::nullopt;
     }
-    throw InvalidChar(_error_char, exceptionDetailInfo());
+    throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
 template <typename StringT>
@@ -1044,7 +1047,7 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_dec
         _lex_state = LexState::decimalExponentInteger;
         return std::nullopt;
     }
-    throw InvalidChar(_error_char, exceptionDetailInfo());
+    throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
 template <typename StringT>
@@ -1067,7 +1070,7 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_hex
         _lex_state = LexState::hexadecimalInteger;
         return std::nullopt;
     }
-    throw InvalidChar(_error_char, exceptionDetailInfo());
+    throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
 template <typename StringT>
@@ -1106,14 +1109,14 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_str
         return std::nullopt;
     case '\n':
     case '\r':
-        throw InvalidChar(_error_char, exceptionDetailInfo());
+        throw InvalidChar(_current_char, exceptionDetailInfo());
     case 0x2028:
     case 0x2029:
         // throw separatorChar(_current_char);
         break;
     default:
         if (_current_char == 0) {
-            throw InvalidChar(_error_char, exceptionDetailInfo());
+            throw InvalidChar(_current_char, exceptionDetailInfo());
         }
     }
     _buffer += StringFromCharCode(read());
@@ -1161,7 +1164,7 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_bef
         return std::nullopt;
     }
 
-    throw InvalidChar(_error_char, exceptionDetailInfo());
+    throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
 template <typename StringT>
@@ -1170,7 +1173,7 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_aft
     if (_current_char == ':') {
         return newToken(TokenType::punctuator, StringFromCharCode(read()));
     }
-    throw InvalidChar(_error_char, exceptionDetailInfo());
+    throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
 template <typename StringT>
@@ -1188,7 +1191,7 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_aft
     case '}':
         return newToken(TokenType::punctuator, StringFromCharCode(read()));
     }
-    throw InvalidChar(_error_char, exceptionDetailInfo());
+    throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
 template <typename StringT>
@@ -1210,13 +1213,13 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_aft
         return newToken(TokenType::punctuator, StringFromCharCode(read()));
     }
 
-    throw InvalidChar(_error_char, exceptionDetailInfo());
+    throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
 template <typename StringT>
 inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_end()
 {
-    throw InvalidChar(_error_char, exceptionDetailInfo());
+    throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
 template <typename StringT>
