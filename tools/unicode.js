@@ -48,11 +48,11 @@ const data = {
 
 let header = '// This is a generated file. Do not edit.\n'
 header += '#pragma once\n'
-header += '#include <set>\n'
+header += '#include <array>\n'
 header += 'namespace json::unicode {\n'
 
 header += Object.keys(data).map(key => `
-std::set<uint64_t> ${key} 
+std::array<uint64_t, ${data[key].toArray().length}> ${key} 
     {${data[key].toArray().map(v => '0x' + Number(v).toString(16)).join(', ')}}
 ;
 `).join('')

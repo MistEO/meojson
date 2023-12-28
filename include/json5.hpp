@@ -96,7 +96,8 @@ private:
         static bool isDigit(u8char ch);
         static bool isHexDigit(u8char ch);
         static u8char toUnicode(u8char ch);
-        static bool findInRange(const std::set<u8char> &range, /* unicode code point */ u8char codePoint);
+        template <typename ArrT>
+        static bool findInRange(const ArrT &range, /* unicode code point */ u8char codePoint);
     };
 
     enum class LexState
@@ -331,7 +332,8 @@ inline uint64_t parser5<StringT>::unicode::toUnicode(u8char ch)
 }
 
 template <typename StringT>
-inline bool parser5<StringT>::unicode::findInRange(const std::set<u8char> &range, u8char codePoint)
+template <typename ArrT>
+inline bool parser5<StringT>::unicode::findInRange(const ArrT &range, u8char codePoint)
 {
     const auto begin = std::begin(range);
     const auto end = std::end(range);
