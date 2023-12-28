@@ -354,7 +354,7 @@ inline bool parser5<StringT>::unicode::findInRange(const std::vector<u8char> &ra
         }
     }
     // Iterate over the data per `(start, end)` pair.
-    while (index < length) {
+    while (index < length - 1) {
         start = range[index];
         end = range[index + 1];
         if (codePoint >= start && codePoint < end) {
