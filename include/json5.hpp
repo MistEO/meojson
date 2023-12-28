@@ -90,17 +90,13 @@ private:
     class unicode
     {
     public:
-        static const std::vector<uint64_t> space_separator;
-        static const std::vector<uint64_t> id_start;
-        static const std::vector<uint64_t> id_continue;
-
         static bool isSpaceSeparator(u8char ch);
         static bool isIdStartChar(u8char ch);
         static bool isIdContinueChar(u8char ch);
         static bool isDigit(u8char ch);
         static bool isHexDigit(u8char ch);
         static u8char toUnicode(u8char ch);
-        static bool findInRange(const std::vector<u8char> &range, /* unicode code point */ u8char codePoint);
+        static bool findInRange(const std::set<u8char> &range, /* unicode code point */ u8char codePoint);
     };
 
     enum class LexState
@@ -262,33 +258,25 @@ private:
 // *************************
 
 /* parser5<StringT>::unicode */
-template <typename StringT>
-inline const std::vector<uint64_t> parser5<StringT>::unicode::space_separator = SPACE_SEPARATOR;
-
-template <typename StringT>
-inline const std::vector<uint64_t> parser5<StringT>::unicode::id_start = ID_START;
-
-template <typename StringT>
-inline const std::vector<uint64_t> parser5<StringT>::unicode::id_continue = ID_CONTINUE;
 
 template <typename StringT>
 inline bool parser5<StringT>::unicode::isSpaceSeparator(u8char ch)
 {
-    return findInRange(unicode::space_separator, toUnicode(ch));
+    return findInRange(json::unicode::space_separator, toUnicode(ch));
 }
 
 template <typename StringT>
 inline bool parser5<StringT>::unicode::isIdStartChar(u8char ch)
 {
     return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch == '$') || (ch == '_') ||
-           findInRange(unicode::id_start, toUnicode(ch));
+           findInRange(json::unicode::id_start, toUnicode(ch));
 }
 
 template <typename StringT>
 inline bool parser5<StringT>::unicode::isIdContinueChar(u8char ch)
 {
     return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || (ch == '$') ||
-           (ch == '_') || findInRange(unicode::id_continue, toUnicode(ch));
+           (ch == '_') || findInRange(json::unicode::id_continue, toUnicode(ch));
 }
 
 template <typename StringT>
@@ -343,29 +331,20 @@ inline uint64_t parser5<StringT>::unicode::toUnicode(u8char ch)
 }
 
 template <typename StringT>
-inline bool parser5<StringT>::unicode::findInRange(const std::vector<u8char> &range, u8char codePoint)
+inline bool parser5<StringT>::unicode::findInRange(const std::set<u8char> &range, u8char codePoint)
 {
-    size_t index = 0;
-    size_t length = range.size();
-    auto start = range[index];
-    auto end = range[length - 1];
+    const auto begin = std::begin(range);
+    const auto end = std::end(range);
 
-    // Exit early if `codePoint` is not within `data`’s overall range.
-    if (length >= 2) {
-        if (codePoint < start || codePoint > end) {
-            return false;
-        }
+    const auto [lb, ub] = std::equal_range(begin, end, codePoint);
+
+    // 如果 lb == ub, 则表示codePoint不在range中
+    if (lb == ub) {
+        return false;
     }
-    // Iterate over the data per `(start, end)` pair.
-    while (index < length - 1) {
-        start = range[index];
-        end = range[index + 1];
-        if (codePoint >= start && codePoint < end) {
-            return true;
-        }
-        index += 2;
-    }
-    return false;
+    // set 中保存的是类似于 { start1, end1, start2, end2, ... } 的形式, 区间可表示为[start, end)
+    // 判断lb是否位于start的位置, 如果是, 则表示codePoint在某个区间的内部, 如果不是, 则表示codePoint在两个区间中间
+    return std::distance(begin, lb) % 2 == 0;
 }
 
 /* constrators and callers */

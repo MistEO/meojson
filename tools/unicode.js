@@ -46,13 +46,17 @@ const data = {
     id_continue,
 }
 
-let hpp = '// This is a generated file. Do not edit.\n'
-hpp += '#pragma once\n'
+let header = '// This is a generated file. Do not edit.\n'
+header += '#pragma once\n'
+header += '#include <set>\n'
+header += 'namespace json::unicode {\n'
 
-hpp += Object.keys(data).map(key => `
-#define ${key.toUpperCase()} \\
+header += Object.keys(data).map(key => `
+std::set<uint64_t> ${key} =
     {${data[key].toArray().map(v => '0x' + Number(v).toString(16)).join(', ')}}
-
+;
 `).join('')
 
-fs.writeFileSync(outPath, hpp)
+header += `}\n`
+
+fs.writeFileSync(outPath, header)
