@@ -309,6 +309,9 @@ template <typename StringT>
 inline uint64_t parser5<StringT>::unicode::toUnicode(u8char ch)
 {
     std::stack<uint8_t> coded;
+    if (ch == 0) {
+        return ch;
+    }
     while (ch > 0) {
         coded.push(ch & 0xff);
         ch = ch >> 8;
