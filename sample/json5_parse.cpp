@@ -41,15 +41,18 @@ bool parsing()
 }
 )";
     std::string_view content = content_raw;
-    auto ret = json::parse5(content);
+    std::string error_message;
+    auto ret = json::parse5(content, &error_message);
     if (!ret) {
         std::cerr << "Parsing failed" << std::endl;
+        std::cerr << error_message << std::endl;
         return false;
     }
     {     
-        auto another_ret = json::parse5(content);
+        auto another_ret = json::parse5(content, &error_message);
         if (!another_ret) {
             std::cerr << "Parsing failed" << std::endl;
+            std::cerr << error_message << std::endl;
             return false;
         }//C-style strings can also be used as input.
     }
