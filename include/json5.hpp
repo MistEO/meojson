@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <iomanip>
@@ -7,7 +8,6 @@
 #include <sstream>
 #include <stack>
 #include <vector>
-#include <algorithm>
 
 #include "json.hpp"
 #include "unicode.h"
@@ -102,7 +102,7 @@ private:
         static bool isHexDigit(u8char ch);
         static u8char toUnicode(u8char ch);
         template <typename ArrT>
-        static bool findInRange(const ArrT &range, /* unicode code point */ u8char codePoint);
+        static bool findInRange(const ArrT& range, /* unicode code point */ u8char codePoint);
     };
 
     enum class LexState
@@ -175,9 +175,7 @@ public:
     static std::optional<value> parse(const StringT& content, std::string* error = nullptr);
 
 private:
-    parser5(StringIterT cbegin, StringIterT cend) noexcept
-        : _cur(cbegin), _end(cend), _line_begin_cur(cbegin)
-    {}
+    parser5(StringIterT cbegin, StringIterT cend) noexcept : _cur(cbegin), _end(cend), _line_begin_cur(cbegin) {}
     std::optional<value> parse();
 
 private:
@@ -313,32 +311,30 @@ inline uint64_t parser5<StringT>::unicode::toUnicode(u8char ch)
     u8char charcode = 0;
     uint8_t t = coded.top();
     coded.pop();
-    if (t < 128)
-    {
+    if (t < 128) {
         return t;
     }
-    uint8_t high_bit_mask = (1 << 6) -1;
+    uint8_t high_bit_mask = (1 << 6) - 1;
     uint8_t high_bit_shift = 0;
     int total_bits = 0;
     const int other_bits = 6;
-    while((t & 0xC0) == 0xC0)
-    {
+    while ((t & 0xC0) == 0xC0) {
         t <<= 1;
         t &= 0xff;
         total_bits += 6;
-        high_bit_mask >>= 1; 
+        high_bit_mask >>= 1;
         high_bit_shift++;
         charcode <<= other_bits;
-        charcode |= coded.top() & ((1 << other_bits)-1);
+        charcode |= coded.top() & ((1 << other_bits) - 1);
         coded.pop();
-    } 
+    }
     charcode |= ((t >> high_bit_shift) & high_bit_mask) << total_bits;
     return charcode;
 }
 
 template <typename StringT>
 template <typename ArrT>
-inline bool parser5<StringT>::unicode::findInRange(const ArrT &range, u8char codePoint)
+inline bool parser5<StringT>::unicode::findInRange(const ArrT& range, u8char codePoint)
 {
     const auto begin = std::begin(range);
     const auto end = std::end(range);
@@ -626,7 +622,7 @@ inline typename parser5<StringT>::Token parser5<StringT>::lex()
             return token.value();
         }
     }
-    return Token{ TokenType::eof, value(), _line, _col };
+    return Token { TokenType::eof, value(), _line, _col };
 }
 
 template <typename StringT>
@@ -1057,7 +1053,7 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_dec
         _buffer += StringFromCharCode(read());
         return std::nullopt;
     }
-    
+
     std::string number = _sign == -1 ? ("-" + _buffer) : _buffer;
     return newToken(TokenType::numeric, value(value::value_type::number, std::move(number)));
 }
@@ -1080,7 +1076,7 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_hex
         _buffer += StringFromCharCode(read());
         return std::nullopt;
     }
-    
+
     std::string number = _sign == -1 ? ("-" + _buffer) : _buffer;
     return newToken(TokenType::numeric, value(value::value_type::number, std::move(number)));
 }

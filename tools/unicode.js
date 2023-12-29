@@ -52,7 +52,7 @@ header += '#include <array>\n'
 header += 'namespace json::unicode {\n'
 
 header += Object.keys(data).map(key => `
-std::array<uint64_t, ${data[key].toArray().length}> ${key} 
+constexpr std::array<uint64_t, ${data[key].toArray().length}> ${key} 
     {${data[key].toArray().map(v => '0x' + Number(v).toString(16)).join(', ')}}
 ;
 `).join('')
