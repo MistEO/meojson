@@ -37,3 +37,10 @@
 
 # build files
 build/
+
+# Source Generator
+node_modules/
+package.json
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
