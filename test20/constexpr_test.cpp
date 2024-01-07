@@ -3,6 +3,8 @@
 
 #include "json.hpp"
 
+using namespace json::literals;
+
 // constexpr json::object wrap_obj(json::value v)
 // {
 //     return json::object { { "kkk", v } };
@@ -13,7 +15,8 @@
 
 constexpr size_t test()
 {
-    json::basic_object<std::string, json::constexpr_map> empty = { { "abc", 1 } };
+    auto empty = "{ \"abc\": 1 }"_cjobject;
+    // json::cobject empty = { { "abc", 1 } };
 
     empty["def"] = 123;
     empty["float"] = -1234.567890987654321;
@@ -25,11 +28,14 @@ constexpr size_t test()
 template <size_t sz>
 constexpr std::array<char, sz + 1> test2()
 {
-    json::basic_object<std::string, json::constexpr_map> empty = { { "abc", 1 } };
+    auto empty = "{ \"abc\": 1 }"_cjobject;
+    // json::cobject empty = { { "abc", 1 } };
 
     empty["def"] = 123;
     empty["float"] = -1234.567890987654321;
     empty.emplace("float", 1);
+
+    // json::cvalue v = json::cobject { { "abc", 1 } };
 
     std::array<char, sz + 1> buf;
     auto str = empty.to_string();

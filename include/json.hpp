@@ -16,31 +16,58 @@
 
 #if __cplusplus >= 202002L || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)
 #define __json_enable_constexpr
-#include "constexpr_map.hpp"
+#include "constexpr_helper.hpp"
 
 #define __json_constexpr constexpr
 #else
 #define __json_constexpr
 #endif
 
+#define __json_template        \
+    typename string_t,         \
+        template <typename...> \
+        typename map_t,        \
+        template <typename...> \
+        typename unique_ptr_t
+#define __json_template_default              \
+    typename string_t = default_string_t,    \
+             template <typename...>          \
+             typename map_t = default_map_t, \
+             template <typename...>          \
+             typename unique_ptr_t = default_unique_ptr_t
+#define __json_template_arg string_t, map_t, unique_ptr_t
+
 namespace json
 {
-template <typename string_t, template <typename...> typename map_t>
+
+template <__json_template>
 class basic_value;
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 class basic_array;
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 class basic_object;
 
 using default_string_t = std::string;
+template <typename... _>
+using default_map_t = std::map<_...>;
+template <typename... _>
+using default_unique_ptr_t = std::unique_ptr<_...>;
 
-using value = basic_value<default_string_t, std::map>;
-using array = basic_array<default_string_t, std::map>;
-using object = basic_object<default_string_t, std::map>;
+using value = basic_value<default_string_t, default_map_t, default_unique_ptr_t>;
+using array = basic_array<default_string_t, default_map_t, default_unique_ptr_t>;
+using object = basic_object<default_string_t, default_map_t, default_unique_ptr_t>;
 
-using wvalue = basic_value<std::wstring, std::map>;
-using warray = basic_array<std::wstring, std::map>;
-using wobject = basic_object<std::wstring, std::map>;
+using wvalue = basic_value<std::wstring, default_map_t, default_unique_ptr_t>;
+using warray = basic_array<std::wstring, default_map_t, default_unique_ptr_t>;
+using wobject = basic_object<std::wstring, default_map_t, default_unique_ptr_t>;
+
+#ifdef __json_enable_constexpr
+
+using cvalue = basic_value<default_string_t, constexpr_map, constexpr_unique_ptr>;
+using carray = basic_array<default_string_t, constexpr_map, constexpr_unique_ptr>;
+using cobject = basic_object<default_string_t, constexpr_map, constexpr_unique_ptr>;
+
+#endif
 
 namespace utils
 {
@@ -54,29 +81,15 @@ namespace utils
     using range_value_t = iter_value_t<iterator_t<R>>;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-struct value_traits
-{
-    using value = basic_value<string_t, map_t>;
-    using array = basic_array<string_t, map_t>;
-    using object = basic_object<string_t, map_t>;
-};
-
 // *********************************
 // *      basic_value declare      *
 // *********************************
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 class basic_value
 {
-    using traits = value_traits<string_t, map_t>;
-
-    using _value_t = typename traits::value;
-    using _array_t = typename traits::array;
-    using _object_t = typename traits::object;
-
-    using array_ptr = std::unique_ptr<_array_t>;
-    using object_ptr = std::unique_ptr<_object_t>;
+    using array_ptr = unique_ptr_t<basic_array<__json_template_arg>>;
+    using object_ptr = unique_ptr_t<basic_object<__json_template_arg>>;
 
 public:
     enum class value_type : char
@@ -95,8 +108,8 @@ public:
 
 public:
     __json_constexpr basic_value();
-    __json_constexpr basic_value(const basic_value<string_t, map_t>& rhs);
-    __json_constexpr basic_value(basic_value<string_t, map_t>&& rhs) noexcept;
+    __json_constexpr basic_value(const basic_value<__json_template_arg>& rhs);
+    __json_constexpr basic_value(basic_value<__json_template_arg>&& rhs) noexcept;
 
     __json_constexpr basic_value(bool b);
 
@@ -113,29 +126,31 @@ public:
     __json_constexpr basic_value(const char_t* str);
     __json_constexpr basic_value(string_t str);
 
-    __json_constexpr basic_value(_array_t arr);
-    __json_constexpr basic_value(_object_t obj);
-    __json_constexpr basic_value(std::initializer_list<_value_t> init_list);
+    __json_constexpr basic_value(basic_array<__json_template_arg> arr);
+    __json_constexpr basic_value(basic_object<__json_template_arg> obj);
+    __json_constexpr basic_value(std::initializer_list<basic_value<__json_template_arg>> init_list);
 
     // Constructed from raw data
     template <typename... args_t>
     __json_constexpr basic_value(value_type type, args_t&&... args);
 
-    template <
-        typename collection_t,
-        std::enable_if_t<std::is_constructible_v<typename _array_t::value_type, utils::range_value_t<collection_t>>,
-                         bool> = true>
+    template <typename collection_t,
+              std::enable_if_t<std::is_constructible_v<typename basic_array<__json_template_arg>::value_type,
+                                                       utils::range_value_t<collection_t>>,
+                               bool> = true>
     __json_constexpr basic_value(collection_t&& collection)
-        : basic_value(_array_t(std::forward<collection_t>(collection)))
+        : basic_value(basic_array<__json_template_arg>(std::forward<collection_t>(collection)))
     {}
-    template <
-        typename another_map_t,
-        std::enable_if_t<std::is_constructible_v<typename _object_t::value_type, utils::range_value_t<another_map_t>>,
-                         bool> = true>
-    __json_constexpr basic_value(another_map_t&& map) : basic_value(_object_t(std::forward<another_map_t>(map)))
+    template <typename another_map_t,
+              std::enable_if_t<std::is_constructible_v<typename basic_object<__json_template_arg>::value_type,
+                                                       utils::range_value_t<another_map_t>>,
+                               bool> = true>
+    __json_constexpr basic_value(another_map_t&& map)
+        : basic_value(basic_object<__json_template_arg>(std::forward<another_map_t>(map)))
     {}
 
-    template <typename value_t, std::enable_if_t<!std::is_convertible_v<value_t, _value_t>, bool> = true>
+    template <typename value_t,
+              std::enable_if_t<!std::is_convertible_v<value_t, basic_value<__json_template_arg>>, bool> = true>
     basic_value(value_t) = delete;
 
     // I don't know if you want to convert char to string or number, so I delete these constructors.
@@ -162,8 +177,8 @@ public:
     __json_constexpr bool exists(const string_t& key) const { return contains(key); }
     __json_constexpr bool exists(size_t pos) const { return contains(pos); }
     __json_constexpr value_type type() const noexcept { return _type; }
-    __json_constexpr const _value_t& at(size_t pos) const;
-    __json_constexpr const _value_t& at(const string_t& key) const;
+    __json_constexpr const basic_value<__json_template_arg>& at(size_t pos) const;
+    __json_constexpr const basic_value<__json_template_arg>& at(const string_t& key) const;
 
     __json_constexpr bool erase(size_t pos);
     __json_constexpr bool erase(const string_t& key);
@@ -172,9 +187,9 @@ public:
     template <typename... key_then_default_value_t>
     __json_constexpr auto get(key_then_default_value_t&&... keys_then_default_value) const;
 
-    template <typename value_t = _value_t>
+    template <typename value_t = basic_value<__json_template_arg>>
     __json_constexpr std::optional<value_t> find(size_t pos) const;
-    template <typename value_t = _value_t>
+    template <typename value_t = basic_value<__json_template_arg>>
     __json_constexpr std::optional<value_t> find(const string_t& key) const;
 
     __json_constexpr bool as_boolean() const;
@@ -188,13 +203,13 @@ public:
     __json_constexpr double as_double() const;
     __json_constexpr long double as_long_double() const;
     __json_constexpr string_t as_string() const;
-    __json_constexpr const _array_t& as_array() const;
-    __json_constexpr const _object_t& as_object() const;
+    __json_constexpr const basic_array<__json_template_arg>& as_array() const;
+    __json_constexpr const basic_object<__json_template_arg>& as_object() const;
     template <typename value_t>
     __json_constexpr value_t as() const;
 
-    __json_constexpr _array_t& as_array();
-    __json_constexpr _object_t& as_object();
+    __json_constexpr basic_array<__json_template_arg>& as_array();
+    __json_constexpr basic_object<__json_template_arg>& as_object();
 
     template <typename... args_t>
     __json_constexpr decltype(auto) emplace(args_t&&... args);
@@ -229,32 +244,32 @@ public:
     template <typename value_t, template <typename...> typename another_map_t = std::map>
     __json_constexpr another_map_t<string_t, value_t> to_map() const;
 
-    __json_constexpr basic_value<string_t, map_t>& operator=(const basic_value<string_t, map_t>& rhs);
-    __json_constexpr basic_value<string_t, map_t>& operator=(basic_value<string_t, map_t>&&) noexcept;
+    __json_constexpr basic_value<__json_template_arg>& operator=(const basic_value<__json_template_arg>& rhs);
+    __json_constexpr basic_value<__json_template_arg>& operator=(basic_value<__json_template_arg>&&) noexcept;
 
-    __json_constexpr bool operator==(const _value_t& rhs) const;
-    __json_constexpr bool operator!=(const _value_t& rhs) const { return !(*this == rhs); }
+    __json_constexpr bool operator==(const basic_value<__json_template_arg>& rhs) const;
+    __json_constexpr bool operator!=(const basic_value<__json_template_arg>& rhs) const { return !(*this == rhs); }
 
-    __json_constexpr const _value_t& operator[](size_t pos) const;
-    __json_constexpr _value_t& operator[](size_t pos);
-    __json_constexpr _value_t& operator[](const string_t& key);
-    __json_constexpr _value_t& operator[](string_t&& key);
+    __json_constexpr const basic_value<__json_template_arg>& operator[](size_t pos) const;
+    __json_constexpr basic_value<__json_template_arg>& operator[](size_t pos);
+    __json_constexpr basic_value<__json_template_arg>& operator[](const string_t& key);
+    __json_constexpr basic_value<__json_template_arg>& operator[](string_t&& key);
 
-    __json_constexpr _value_t operator|(const _object_t& rhs) const&;
-    __json_constexpr _value_t operator|(_object_t&& rhs) const&;
-    __json_constexpr _value_t operator|(const _object_t& rhs) &&;
-    __json_constexpr _value_t operator|(_object_t&& rhs) &&;
+    __json_constexpr basic_value<__json_template_arg> operator|(const basic_object<__json_template_arg>& rhs) const&;
+    __json_constexpr basic_value<__json_template_arg> operator|(basic_object<__json_template_arg>&& rhs) const&;
+    __json_constexpr basic_value<__json_template_arg> operator|(const basic_object<__json_template_arg>& rhs) &&;
+    __json_constexpr basic_value<__json_template_arg> operator|(basic_object<__json_template_arg>&& rhs) &&;
 
-    __json_constexpr _value_t& operator|=(const _object_t& rhs);
-    __json_constexpr _value_t& operator|=(_object_t&& rhs);
+    __json_constexpr basic_value<__json_template_arg>& operator|=(const basic_object<__json_template_arg>& rhs);
+    __json_constexpr basic_value<__json_template_arg>& operator|=(basic_object<__json_template_arg>&& rhs);
 
-    __json_constexpr _value_t operator+(const _array_t& rhs) const&;
-    __json_constexpr _value_t operator+(_array_t&& rhs) const&;
-    __json_constexpr _value_t operator+(const _array_t& rhs) &&;
-    __json_constexpr _value_t operator+(_array_t&& rhs) &&;
+    __json_constexpr basic_value<__json_template_arg> operator+(const basic_array<__json_template_arg>& rhs) const&;
+    __json_constexpr basic_value<__json_template_arg> operator+(basic_array<__json_template_arg>&& rhs) const&;
+    __json_constexpr basic_value<__json_template_arg> operator+(const basic_array<__json_template_arg>& rhs) &&;
+    __json_constexpr basic_value<__json_template_arg> operator+(basic_array<__json_template_arg>&& rhs) &&;
 
-    __json_constexpr _value_t& operator+=(const _array_t& rhs);
-    __json_constexpr _value_t& operator+=(_array_t&& rhs);
+    __json_constexpr basic_value<__json_template_arg>& operator+=(const basic_array<__json_template_arg>& rhs);
+    __json_constexpr basic_value<__json_template_arg>& operator+=(basic_array<__json_template_arg>&& rhs);
 
     __json_constexpr explicit operator bool() const { return as_boolean(); }
     __json_constexpr explicit operator int() const { return as_integer(); }
@@ -269,8 +284,8 @@ public:
     __json_constexpr explicit operator string_t() const { return as_string(); }
 
 private:
-    friend class basic_array<string_t, map_t>;
-    friend class basic_object<string_t, map_t>;
+    friend class basic_array<__json_template_arg>;
+    friend class basic_object<__json_template_arg>;
 
     __json_constexpr string_t format(size_t indent, size_t indent_times) const;
 
@@ -296,20 +311,14 @@ private:
 // *      basic_array declare      *
 // *********************************
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 class basic_array
 {
-    using traits = value_traits<string_t, map_t>;
-
-    using _value_t = typename traits::value;
-    using _array_t = typename traits::array;
-    using _object_t = typename traits::object;
-
-    friend class basic_value<string_t, map_t>;
-    friend class basic_object<string_t, map_t>;
+    friend class basic_value<__json_template_arg>;
+    friend class basic_object<__json_template_arg>;
 
 public:
-    using raw_array = std::vector<_value_t>;
+    using raw_array = std::vector<basic_value<__json_template_arg>>;
     using value_type = typename raw_array::value_type;
     using iterator = typename raw_array::iterator;
     using const_iterator = typename raw_array::const_iterator;
@@ -319,13 +328,13 @@ public:
 
 public:
     __json_constexpr basic_array() = default;
-    __json_constexpr basic_array(const basic_array<string_t, map_t>& rhs) = default;
-    __json_constexpr basic_array(basic_array<string_t, map_t>&& rhs) noexcept = default;
+    __json_constexpr basic_array(const basic_array<__json_template_arg>& rhs) = default;
+    __json_constexpr basic_array(basic_array<__json_template_arg>&& rhs) noexcept = default;
     __json_constexpr basic_array(std::initializer_list<value_type> init_list);
     __json_constexpr basic_array(typename raw_array::size_type size);
 
-    __json_constexpr explicit basic_array(const _value_t& val);
-    __json_constexpr explicit basic_array(_value_t&& val);
+    __json_constexpr explicit basic_array(const basic_value<__json_template_arg>& val);
+    __json_constexpr explicit basic_array(basic_value<__json_template_arg>&& val);
 
     template <typename collection_t,
               typename = std::enable_if_t<std::is_constructible_v<value_type, utils::range_value_t<collection_t>>>>
@@ -339,7 +348,7 @@ public:
     __json_constexpr size_t size() const noexcept { return _array_data.size(); }
     __json_constexpr bool contains(size_t pos) const { return pos < _array_data.size(); }
     __json_constexpr bool exists(size_t pos) const { return contains(pos); }
-    __json_constexpr const _value_t& at(size_t pos) const;
+    __json_constexpr const basic_value<__json_template_arg>& at(size_t pos) const;
 
     __json_constexpr string_t dumps(std::optional<size_t> indent = std::nullopt) const
     {
@@ -361,7 +370,7 @@ public:
     template <typename... key_then_default_value_t>
     __json_constexpr auto get(key_then_default_value_t&&... keys_then_default_value) const;
 
-    template <typename value_t = _value_t>
+    template <typename value_t = basic_value<__json_template_arg>>
     __json_constexpr std::optional<value_t> find(size_t pos) const;
 
     template <typename... args_t>
@@ -387,22 +396,22 @@ public:
     __json_constexpr const_reverse_iterator crbegin() const noexcept;
     __json_constexpr const_reverse_iterator crend() const noexcept;
 
-    __json_constexpr const _value_t& operator[](size_t pos) const;
-    __json_constexpr _value_t& operator[](size_t pos);
+    __json_constexpr const basic_value<__json_template_arg>& operator[](size_t pos) const;
+    __json_constexpr basic_value<__json_template_arg>& operator[](size_t pos);
 
-    __json_constexpr _array_t operator+(const _array_t& rhs) const&;
-    __json_constexpr _array_t operator+(_array_t&& rhs) const&;
-    __json_constexpr _array_t operator+(const _array_t& rhs) &&;
-    __json_constexpr _array_t operator+(_array_t&& rhs) &&;
+    __json_constexpr basic_array<__json_template_arg> operator+(const basic_array<__json_template_arg>& rhs) const&;
+    __json_constexpr basic_array<__json_template_arg> operator+(basic_array<__json_template_arg>&& rhs) const&;
+    __json_constexpr basic_array<__json_template_arg> operator+(const basic_array<__json_template_arg>& rhs) &&;
+    __json_constexpr basic_array<__json_template_arg> operator+(basic_array<__json_template_arg>&& rhs) &&;
 
-    __json_constexpr _array_t& operator+=(const _array_t& rhs);
-    __json_constexpr _array_t& operator+=(_array_t&& rhs);
+    __json_constexpr basic_array<__json_template_arg>& operator+=(const basic_array<__json_template_arg>& rhs);
+    __json_constexpr basic_array<__json_template_arg>& operator+=(basic_array<__json_template_arg>&& rhs);
 
-    __json_constexpr basic_array<string_t, map_t>& operator=(const basic_array<string_t, map_t>&) = default;
-    __json_constexpr basic_array<string_t, map_t>& operator=(basic_array<string_t, map_t>&&) noexcept = default;
+    __json_constexpr basic_array<__json_template_arg>& operator=(const basic_array<__json_template_arg>&) = default;
+    __json_constexpr basic_array<__json_template_arg>& operator=(basic_array<__json_template_arg>&&) noexcept = default;
 
-    __json_constexpr bool operator==(const _array_t& rhs) const;
-    __json_constexpr bool operator!=(const _array_t& rhs) const { return !(*this == rhs); }
+    __json_constexpr bool operator==(const basic_array<__json_template_arg>& rhs) const;
+    __json_constexpr bool operator!=(const basic_array<__json_template_arg>& rhs) const { return !(*this == rhs); }
 
 private:
     template <typename... key_then_default_value_t, size_t... keys_indexes_t>
@@ -423,20 +432,14 @@ private:
 // *      basic_object declare      *
 // **********************************
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 class basic_object
 {
-    using traits = value_traits<string_t, map_t>;
-
-    using _value_t = typename traits::value;
-    using _array_t = typename traits::array;
-    using _object_t = typename traits::object;
-
-    friend class basic_value<string_t, map_t>;
-    friend class basic_array<string_t, map_t>;
+    friend class basic_value<__json_template_arg>;
+    friend class basic_array<__json_template_arg>;
 
 public:
-    using raw_object = map_t<string_t, _value_t>;
+    using raw_object = map_t<string_t, basic_value<__json_template_arg>>;
     using key_type = typename raw_object::key_type;
     using mapped_type = typename raw_object::mapped_type;
     using value_type = typename raw_object::value_type;
@@ -446,14 +449,14 @@ public:
 
 public:
     __json_constexpr basic_object() = default;
-    __json_constexpr basic_object(const basic_object<string_t, map_t>& rhs) = default;
-    __json_constexpr basic_object(basic_object<string_t, map_t>&& rhs) noexcept = default;
+    __json_constexpr basic_object(const basic_object<__json_template_arg>& rhs) = default;
+    __json_constexpr basic_object(basic_object<__json_template_arg>&& rhs) noexcept = default;
     __json_constexpr basic_object(std::initializer_list<value_type> init_list);
-    __json_constexpr explicit basic_object(const _value_t& val);
-    __json_constexpr explicit basic_object(_value_t&& val);
-    template <typename map_t,
-              typename = std::enable_if_t<std::is_constructible_v<value_type, utils::range_value_t<map_t>>>>
-    __json_constexpr basic_object(map_t map)
+    __json_constexpr explicit basic_object(const basic_value<__json_template_arg>& val);
+    __json_constexpr explicit basic_object(basic_value<__json_template_arg>&& val);
+    template <typename another_map_t,
+              typename = std::enable_if_t<std::is_constructible_v<value_type, utils::range_value_t<another_map_t>>>>
+    __json_constexpr basic_object(another_map_t map)
         : _object_data(std::make_move_iterator(map.begin()), std::make_move_iterator(map.end()))
     {}
 
@@ -463,7 +466,7 @@ public:
     __json_constexpr size_t size() const noexcept { return _object_data.size(); }
     __json_constexpr bool contains(const string_t& key) const;
     __json_constexpr bool exists(const string_t& key) const { return contains(key); }
-    __json_constexpr const _value_t& at(const string_t& key) const;
+    __json_constexpr const basic_value<__json_template_arg>& at(const string_t& key) const;
 
     __json_constexpr string_t dumps(std::optional<size_t> indent = std::nullopt) const
     {
@@ -478,14 +481,14 @@ public:
     }
     template <typename value_t>
     __json_constexpr bool all() const;
-    template <typename value_t, template <typename...> typename map_t = std::map>
+    template <typename value_t, template <typename...> typename map_t = default_map_t>
     __json_constexpr map_t<string_t, value_t> to_map() const;
 
     // Usage: get(key_1, key_2, ..., default_value);
     template <typename... key_then_default_value_t>
     __json_constexpr auto get(key_then_default_value_t&&... keys_then_default_value) const;
 
-    template <typename value_t = _value_t>
+    template <typename value_t = basic_value<__json_template_arg>>
     __json_constexpr std::optional<value_t> find(const string_t& key) const;
 
     template <typename... args_t>
@@ -504,22 +507,22 @@ public:
     __json_constexpr const_iterator cbegin() const noexcept;
     __json_constexpr const_iterator cend() const noexcept;
 
-    __json_constexpr _value_t& operator[](const string_t& key);
-    __json_constexpr _value_t& operator[](string_t&& key);
+    __json_constexpr basic_value<__json_template_arg>& operator[](const string_t& key);
+    __json_constexpr basic_value<__json_template_arg>& operator[](string_t&& key);
 
-    __json_constexpr _object_t operator|(const _object_t& rhs) const&;
-    __json_constexpr _object_t operator|(_object_t&& rhs) const&;
-    __json_constexpr _object_t operator|(const _object_t& rhs) &&;
-    __json_constexpr _object_t operator|(_object_t&& rhs) &&;
+    __json_constexpr basic_object<__json_template_arg> operator|(const basic_object<__json_template_arg>& rhs) const&;
+    __json_constexpr basic_object<__json_template_arg> operator|(basic_object<__json_template_arg>&& rhs) const&;
+    __json_constexpr basic_object<__json_template_arg> operator|(const basic_object<__json_template_arg>& rhs) &&;
+    __json_constexpr basic_object<__json_template_arg> operator|(basic_object<__json_template_arg>&& rhs) &&;
 
-    __json_constexpr _object_t& operator|=(const _object_t& rhs);
-    __json_constexpr _object_t& operator|=(_object_t&& rhs);
+    __json_constexpr basic_object<__json_template_arg>& operator|=(const basic_object<__json_template_arg>& rhs);
+    __json_constexpr basic_object<__json_template_arg>& operator|=(basic_object<__json_template_arg>&& rhs);
 
-    __json_constexpr basic_object<string_t, map_t>& operator=(const basic_object<string_t, map_t>&) = default;
-    __json_constexpr basic_object<string_t, map_t>& operator=(basic_object<string_t, map_t>&&) = default;
+    __json_constexpr basic_object<__json_template_arg>& operator=(const basic_object<__json_template_arg>&) = default;
+    __json_constexpr basic_object<__json_template_arg>& operator=(basic_object<__json_template_arg>&&) = default;
 
-    __json_constexpr bool operator==(const _object_t& rhs) const;
-    __json_constexpr bool operator!=(const _object_t& rhs) const { return !(*this == rhs); }
+    __json_constexpr bool operator==(const basic_object<__json_template_arg>& rhs) const;
+    __json_constexpr bool operator!=(const basic_object<__json_template_arg>& rhs) const { return !(*this == rhs); }
 
 private:
     template <typename... key_then_default_value_t, size_t... keys_indexes_t>
@@ -540,37 +543,31 @@ private:
 // *      parser declare      *
 // ****************************
 
-template <typename string_t = default_string_t, template <typename...> typename map_t = std::map,
-          typename parsing_t = void, typename accel_traits = _packed_bytes::packed_bytes_trait_max>
+template <__json_template_default, typename parsing_t = void,
+          typename accel_traits = _packed_bytes::packed_bytes_trait_max>
 class parser
 {
-    using traits = value_traits<string_t, map_t>;
-
-    using _value_t = typename traits::value;
-    using _array_t = typename traits::array;
-    using _object_t = typename traits::object;
-
 public:
     using parsing_iter_t = typename parsing_t::const_iterator;
 
 public:
     __json_constexpr ~parser() noexcept = default;
 
-    __json_constexpr static std::optional<_value_t> parse(const parsing_t& content);
+    __json_constexpr static std::optional<basic_value<__json_template_arg>> parse(const parsing_t& content);
 
 private:
     __json_constexpr parser(parsing_iter_t cbegin, parsing_iter_t cend) noexcept : _cur(cbegin), _end(cend) { ; }
 
-    __json_constexpr std::optional<_value_t> parse();
-    __json_constexpr _value_t parse_value();
+    __json_constexpr std::optional<basic_value<__json_template_arg>> parse();
+    __json_constexpr basic_value<__json_template_arg> parse_value();
 
-    __json_constexpr _value_t parse_null();
-    __json_constexpr _value_t parse_boolean();
-    __json_constexpr _value_t parse_number();
-    // parse and return a _value_t whose type is value_type::string
-    __json_constexpr _value_t parse_string();
-    __json_constexpr _value_t parse_array();
-    __json_constexpr _value_t parse_object();
+    __json_constexpr basic_value<__json_template_arg> parse_null();
+    __json_constexpr basic_value<__json_template_arg> parse_boolean();
+    __json_constexpr basic_value<__json_template_arg> parse_number();
+    // parse and return a basic_value<__json_template_arg> whose type is value_type::string
+    __json_constexpr basic_value<__json_template_arg> parse_string();
+    __json_constexpr basic_value<__json_template_arg> parse_array();
+    __json_constexpr basic_value<__json_template_arg> parse_object();
 
     // parse and return a string_t
     __json_constexpr std::optional<string_t> parse_stdstring();
@@ -614,6 +611,11 @@ protected:
 template <typename parsing_t>
 __json_constexpr auto parse(const parsing_t& content);
 
+#ifdef __json_enable_constexpr
+template <typename parsing_t>
+__json_constexpr auto cparse(const parsing_t& content);
+#endif
+
 template <typename char_t>
 __json_constexpr auto parse(char_t* content);
 
@@ -637,20 +639,26 @@ namespace literals
 
     object operator""_jobject(const char* str, size_t len);
     wobject operator""_jobject(const wchar_t* str, size_t len);
+
+#ifdef __json_enable_constexpr
+    __json_constexpr cvalue operator""_cjson(const char* str, size_t len);
+    __json_constexpr cvalue operator""_cjvalue(const char* str, size_t len);
+    __json_constexpr carray operator""_cjarray(const char* str, size_t len);
+    __json_constexpr cobject operator""_cjobject(const char* str, size_t len);
+#endif
 }
 
-template <typename string_t = default_string_t, template <typename...> typename map_t = std::map>
-__json_constexpr const basic_value<string_t, map_t> invalid_value();
+template <__json_template_default>
+__json_constexpr const basic_value<__json_template_arg> invalid_value();
 
 namespace _serialization_helper
 {
     template <bool loose, typename string_t>
     struct string_converter;
 }
-template <bool loose, typename any_t, typename string_t = default_string_t,
-          template <typename...> typename map_t = std::map,
+template <bool loose, typename any_t, __json_template_default,
           typename string_converter_t = _serialization_helper::string_converter<loose, string_t>>
-__json_constexpr basic_value<string_t, map_t> serialize(any_t&& arg, string_converter_t&& string_converter = {});
+__json_constexpr basic_value<__json_template_arg> serialize(any_t&& arg, string_converter_t&& string_converter = {});
 
 // ******************************
 // *      basic_value impl      *
@@ -674,158 +682,19 @@ static constexpr string_t null_string()
     return { 'n', 'u', 'l', 'l' };
 }
 
-#ifdef __json_enable_constexpr
-template <typename type_t>
-constexpr std::string soft_to_string(type_t) = delete;
-
-template <>
-constexpr std::string soft_to_string<unsigned long long>(unsigned long long value)
-{
-    std::string result;
-    do {
-        result.push_back('0' + value % 10);
-        value /= 10;
-    } while (value > 0);
-    return std::string(result.rbegin(), result.rend());
-}
-
-template <>
-constexpr std::string soft_to_string<unsigned long>(unsigned long value)
-{
-    return soft_to_string<unsigned long long>(value);
-}
-
-template <>
-constexpr std::string soft_to_string<unsigned int>(unsigned int value)
-{
-    return soft_to_string<unsigned long long>(value);
-}
-
-template <>
-constexpr std::string soft_to_string<unsigned short>(unsigned short value)
-{
-    return soft_to_string<unsigned long long>(value);
-}
-
-template <>
-constexpr std::string soft_to_string<unsigned char>(unsigned char value)
-{
-    return soft_to_string<unsigned long long>(value);
-}
-
-template <>
-constexpr std::string soft_to_string<long long>(long long value)
-{
-    std::string result;
-    bool nega = false;
-    if (value == INT64_MIN) {
-        return soft_to_string(0x8000000000000000ull);
-    }
-    if (value < 0) {
-        nega = true;
-        value = -value;
-    }
-    do {
-        result.push_back('0' + value % 10);
-        value /= 10;
-    } while (value > 0);
-    if (nega) {
-        result.push_back('-');
-    }
-    return std::string(result.rbegin(), result.rend());
-}
-
-template <>
-constexpr std::string soft_to_string<long>(long value)
-{
-    return soft_to_string<long long>(value);
-}
-
-template <>
-constexpr std::string soft_to_string<int>(int value)
-{
-    return soft_to_string<long long>(value);
-}
-
-template <>
-constexpr std::string soft_to_string<short>(short value)
-{
-    return soft_to_string<long long>(value);
-}
-
-template <>
-constexpr std::string soft_to_string<signed char>(signed char value)
-{
-    return soft_to_string<long long>(value);
-}
-
-template <>
-constexpr std::string soft_to_string<double>(double value)
-{
-    std::string result;
-    if (value < 0) {
-        result.push_back('-');
-        value = -value;
-    }
-    int precision = 14;
-    double base = 1;
-    while (base < value) {
-        base *= 10;
-    }
-    while (precision--) {
-        base /= 10;
-        char c = '0';
-        while (value >= base) {
-            value -= base;
-            c++;
-        }
-        result.push_back(c);
-        if (base == 1) {
-            result.push_back('.');
-        }
-    }
-    return result;
-}
-
-template <>
-constexpr std::string soft_to_string<float>(float value)
-{
-    return soft_to_string<double>(value);
-}
-
-template <>
-constexpr std::string soft_to_string<long double>(long double value)
-{
-    return soft_to_string<double>(static_cast<double>(value));
-}
-#endif
-
 template <typename string_t, typename any_t>
 __json_constexpr string_t to_basic_string(any_t&& arg)
 {
+#ifdef __json_enable_constexpr
+    if (std::is_constant_evaluated()) {
+        return soft_to_string_t<string_t> {}.to_string(std::forward<any_t>(arg));
+    }
+#endif
     if constexpr (std::is_same_v<string_t, std::string>) {
-#ifdef __json_enable_constexpr
-        if (std::is_constant_evaluated()) {
-            return soft_to_string(std::forward<any_t>(arg));
-        }
-        else {
-#endif
-            return std::to_string(std::forward<any_t>(arg));
-#ifdef __json_enable_constexpr
-        }
-#endif
+        return std::to_string(std::forward<any_t>(arg));
     }
     else if constexpr (std::is_same_v<string_t, std::wstring>) {
-#ifdef __json_enable_constexpr
-        if (std::is_constant_evaluated()) {
-            return soft_to_string(std::forward<any_t>(arg));
-        }
-        else {
-#endif
-            return std::to_wstring(std::forward<any_t>(arg));
-#ifdef __json_enable_constexpr
-        }
-#endif
+        return std::to_wstring(std::forward<any_t>(arg));
     }
     else {
         static_assert(!sizeof(any_t), "Unsupported type");
@@ -835,102 +704,106 @@ __json_constexpr string_t to_basic_string(any_t&& arg)
 template <typename string_t>
 static constexpr string_t unescape_string(const string_t& str);
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value() = default;
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value() = default;
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(const basic_value<string_t, map_t>& rhs)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(const basic_value<__json_template_arg>& rhs)
     : _type(rhs._type), _raw_data(deep_copy(rhs._raw_data))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(basic_value<string_t, map_t>&& rhs) noexcept =
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(basic_value<__json_template_arg>&& rhs) noexcept =
     default;
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(bool b)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(bool b)
     : _type(value_type::boolean), _raw_data(string_t(b ? true_string<string_t>() : false_string<string_t>()))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(int num)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(int num)
     : _type(value_type::number), _raw_data(to_basic_string<string_t>(num))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(unsigned num)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(unsigned num)
     : _type(value_type::number), _raw_data(to_basic_string<string_t>(num))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(long num)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(long num)
     : _type(value_type::number), _raw_data(to_basic_string<string_t>(num))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(unsigned long num)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(unsigned long num)
     : _type(value_type::number), _raw_data(to_basic_string<string_t>(num))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(long long num)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(long long num)
     : _type(value_type::number), _raw_data(to_basic_string<string_t>(num))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(unsigned long long num)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(unsigned long long num)
     : _type(value_type::number), _raw_data(to_basic_string<string_t>(num))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(float num)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(float num)
     : _type(value_type::number), _raw_data(to_basic_string<string_t>(num))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(double num)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(double num)
     : _type(value_type::number), _raw_data(to_basic_string<string_t>(num))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(long double num)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(long double num)
     : _type(value_type::number), _raw_data(to_basic_string<string_t>(num))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(const char_t* str)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(const char_t* str)
     : _type(value_type::string), _raw_data(string_t(str))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(string_t str)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(string_t str)
     : _type(value_type::string), _raw_data(std::move(str))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(_array_t arr)
-    : _type(value_type::array), _raw_data(std::make_unique<_array_t>(std::move(arr)))
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(basic_array<__json_template_arg> arr)
+    : _type(value_type::array),
+      _raw_data(unique_ptr_t<basic_array<__json_template_arg>>(new basic_array<__json_template_arg>(std::move(arr))))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(_object_t obj)
-    : _type(value_type::object), _raw_data(std::make_unique<_object_t>(std::move(obj)))
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(basic_object<__json_template_arg> obj)
+    : _type(value_type::object),
+      _raw_data(unique_ptr_t<basic_object<__json_template_arg>>(new basic_object<__json_template_arg>(std::move(obj))))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(std::initializer_list<_value_t> init_list)
-    : _type(value_type::object), _raw_data(std::make_unique<_object_t>(init_list))
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(
+    std::initializer_list<basic_value<__json_template_arg>> init_list)
+    : _type(value_type::object),
+      _raw_data(unique_ptr_t<basic_object<__json_template_arg>>(new basic_object<__json_template_arg>(init_list)))
 {}
 
 // for Pimpl
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>::~basic_value() = default;
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>::~basic_value() = default;
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t>
-inline __json_constexpr bool basic_value<string_t, map_t>::is() const noexcept
+inline __json_constexpr bool basic_value<__json_template_arg>::is() const noexcept
 {
-    if constexpr (std::is_same_v<_value_t, value_t>) {
+    if constexpr (std::is_same_v<basic_value<__json_template_arg>, value_t>) {
         return true;
     }
     else if constexpr (std::is_same_v<bool, value_t>) {
@@ -939,10 +812,10 @@ inline __json_constexpr bool basic_value<string_t, map_t>::is() const noexcept
     else if constexpr (std::is_arithmetic_v<value_t>) {
         return _type == value_type::number;
     }
-    else if constexpr (std::is_same_v<_array_t, value_t>) {
+    else if constexpr (std::is_same_v<basic_array<__json_template_arg>, value_t>) {
         return _type == value_type::array;
     }
-    else if constexpr (std::is_same_v<_object_t, value_t>) {
+    else if constexpr (std::is_same_v<basic_object<__json_template_arg>, value_t>) {
         return _type == value_type::object;
     }
     else if constexpr (std::is_constructible_v<string_t, value_t>) {
@@ -953,56 +826,55 @@ inline __json_constexpr bool basic_value<string_t, map_t>::is() const noexcept
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr bool basic_value<string_t, map_t>::contains(const string_t& key) const
+template <__json_template>
+inline __json_constexpr bool basic_value<__json_template_arg>::contains(const string_t& key) const
 {
     return is_object() && as_object().contains(key);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr bool basic_value<string_t, map_t>::contains(size_t pos) const
+template <__json_template>
+inline __json_constexpr bool basic_value<__json_template_arg>::contains(size_t pos) const
 {
     return is_array() && as_array().contains(pos);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr const typename basic_value<string_t, map_t>::_value_t& basic_value<string_t, map_t>::at(
-    size_t pos) const
+template <__json_template>
+inline __json_constexpr const basic_value<__json_template_arg>& basic_value<__json_template_arg>::at(size_t pos) const
 {
     return as_array().at(pos);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr const typename basic_value<string_t, map_t>::_value_t& basic_value<string_t, map_t>::at(
+template <__json_template>
+inline __json_constexpr const basic_value<__json_template_arg>& basic_value<__json_template_arg>::at(
     const string_t& key) const
 {
     return as_object().at(key);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr bool basic_value<string_t, map_t>::erase(size_t pos)
+template <__json_template>
+inline __json_constexpr bool basic_value<__json_template_arg>::erase(size_t pos)
 {
     return as_array().erase(pos);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr bool basic_value<string_t, map_t>::erase(const string_t& key)
+template <__json_template>
+inline __json_constexpr bool basic_value<__json_template_arg>::erase(const string_t& key)
 {
     return as_object().erase(key);
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename... key_then_default_value_t>
-inline __json_constexpr auto basic_value<string_t, map_t>::get(
+inline __json_constexpr auto basic_value<__json_template_arg>::get(
     key_then_default_value_t&&... keys_then_default_value) const
 {
     return get(std::forward_as_tuple(keys_then_default_value...),
                std::make_index_sequence<sizeof...(keys_then_default_value) - 1> {});
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename... key_then_default_value_t, size_t... keys_indexes_t>
-inline __json_constexpr auto basic_value<string_t, map_t>::get(
+inline __json_constexpr auto basic_value<__json_template_arg>::get(
     std::tuple<key_then_default_value_t...> keys_then_default_value, std::index_sequence<keys_indexes_t...>) const
 {
     constexpr unsigned long default_value_index = sizeof...(key_then_default_value_t) - 1;
@@ -1010,10 +882,11 @@ inline __json_constexpr auto basic_value<string_t, map_t>::get(
                       std::get<keys_indexes_t>(keys_then_default_value)...);
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t, typename first_key_t, typename... rest_keys_t>
-inline __json_constexpr auto basic_value<string_t, map_t>::get_helper(const value_t& default_value, first_key_t&& first,
-                                                                      rest_keys_t&&... rest) const
+inline __json_constexpr auto basic_value<__json_template_arg>::get_helper(const value_t& default_value,
+                                                                          first_key_t&& first,
+                                                                          rest_keys_t&&... rest) const
 {
     if constexpr (std::is_constructible_v<string_t, first_key_t>) {
         return is_object() ? as_object().get_helper(default_value, std::forward<first_key_t>(first),
@@ -1030,10 +903,10 @@ inline __json_constexpr auto basic_value<string_t, map_t>::get_helper(const valu
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t, typename unique_key_t>
-inline __json_constexpr auto basic_value<string_t, map_t>::get_helper(const value_t& default_value,
-                                                                      unique_key_t&& first) const
+inline __json_constexpr auto basic_value<__json_template_arg>::get_helper(const value_t& default_value,
+                                                                          unique_key_t&& first) const
 {
     if constexpr (std::is_constructible_v<string_t, unique_key_t>) {
         return is_object() ? as_object().get_helper(default_value, std::forward<unique_key_t>(first)) : default_value;
@@ -1046,18 +919,18 @@ inline __json_constexpr auto basic_value<string_t, map_t>::get_helper(const valu
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename... key_then_default_value_t>
-inline __json_constexpr auto basic_array<string_t, map_t>::get(
+inline __json_constexpr auto basic_array<__json_template_arg>::get(
     key_then_default_value_t&&... keys_then_default_value) const
 {
     return get(std::forward_as_tuple(keys_then_default_value...),
                std::make_index_sequence<sizeof...(keys_then_default_value) - 1> {});
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename... key_then_default_value_t, size_t... keys_indexes_t>
-inline __json_constexpr auto basic_array<string_t, map_t>::get(
+inline __json_constexpr auto basic_array<__json_template_arg>::get(
     std::tuple<key_then_default_value_t...> keys_then_default_value, std::index_sequence<keys_indexes_t...>) const
 {
     constexpr unsigned long default_value_index = sizeof...(key_then_default_value_t) - 1;
@@ -1065,18 +938,18 @@ inline __json_constexpr auto basic_array<string_t, map_t>::get(
                       std::get<keys_indexes_t>(keys_then_default_value)...);
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename... key_then_default_value_t>
-inline __json_constexpr auto basic_object<string_t, map_t>::get(
+inline __json_constexpr auto basic_object<__json_template_arg>::get(
     key_then_default_value_t&&... keys_then_default_value) const
 {
     return get(std::forward_as_tuple(keys_then_default_value...),
                std::make_index_sequence<sizeof...(keys_then_default_value) - 1> {});
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename... key_then_default_value_t, size_t... keys_indexes_t>
-inline __json_constexpr auto basic_object<string_t, map_t>::get(
+inline __json_constexpr auto basic_object<__json_template_arg>::get(
     std::tuple<key_then_default_value_t...> keys_then_default_value, std::index_sequence<keys_indexes_t...>) const
 {
     constexpr unsigned long default_value_index = sizeof...(key_then_default_value_t) - 1;
@@ -1084,22 +957,22 @@ inline __json_constexpr auto basic_object<string_t, map_t>::get(
                       std::get<keys_indexes_t>(keys_then_default_value)...);
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t>
-inline __json_constexpr std::optional<value_t> basic_value<string_t, map_t>::find(size_t pos) const
+inline __json_constexpr std::optional<value_t> basic_value<__json_template_arg>::find(size_t pos) const
 {
     return is_array() ? as_array().template find<value_t>(pos) : std::nullopt;
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t>
-inline __json_constexpr std::optional<value_t> basic_value<string_t, map_t>::find(const string_t& key) const
+inline __json_constexpr std::optional<value_t> basic_value<__json_template_arg>::find(const string_t& key) const
 {
     return is_object() ? as_object().template find<value_t>(key) : std::nullopt;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr bool basic_value<string_t, map_t>::as_boolean() const
+template <__json_template>
+inline __json_constexpr bool basic_value<__json_template_arg>::as_boolean() const
 {
     if (is_boolean()) {
         if (const string_t& b_str = as_basic_type_str(); b_str == true_string<string_t>()) {
@@ -1117,8 +990,8 @@ inline __json_constexpr bool basic_value<string_t, map_t>::as_boolean() const
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr int basic_value<string_t, map_t>::as_integer() const
+template <__json_template>
+inline __json_constexpr int basic_value<__json_template_arg>::as_integer() const
 {
     if (is_number()) {
         return std::stoi(as_basic_type_str());
@@ -1128,15 +1001,15 @@ inline __json_constexpr int basic_value<string_t, map_t>::as_integer() const
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr unsigned basic_value<string_t, map_t>::as_unsigned() const
+template <__json_template>
+inline __json_constexpr unsigned basic_value<__json_template_arg>::as_unsigned() const
 {
     // I don't know why there is no std::stou.
     return static_cast<unsigned>(as_unsigned_long());
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr long basic_value<string_t, map_t>::as_long() const
+template <__json_template>
+inline __json_constexpr long basic_value<__json_template_arg>::as_long() const
 {
     if (is_number()) {
         return std::stol(as_basic_type_str());
@@ -1146,8 +1019,8 @@ inline __json_constexpr long basic_value<string_t, map_t>::as_long() const
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr unsigned long basic_value<string_t, map_t>::as_unsigned_long() const
+template <__json_template>
+inline __json_constexpr unsigned long basic_value<__json_template_arg>::as_unsigned_long() const
 {
     if (is_number()) {
         return std::stoul(as_basic_type_str());
@@ -1157,8 +1030,8 @@ inline __json_constexpr unsigned long basic_value<string_t, map_t>::as_unsigned_
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr long long basic_value<string_t, map_t>::as_long_long() const
+template <__json_template>
+inline __json_constexpr long long basic_value<__json_template_arg>::as_long_long() const
 {
     if (is_number()) {
         return std::stoll(as_basic_type_str());
@@ -1168,8 +1041,8 @@ inline __json_constexpr long long basic_value<string_t, map_t>::as_long_long() c
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr unsigned long long basic_value<string_t, map_t>::as_unsigned_long_long() const
+template <__json_template>
+inline __json_constexpr unsigned long long basic_value<__json_template_arg>::as_unsigned_long_long() const
 {
     if (is_number()) {
         return std::stoull(as_basic_type_str());
@@ -1179,8 +1052,8 @@ inline __json_constexpr unsigned long long basic_value<string_t, map_t>::as_unsi
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr float basic_value<string_t, map_t>::as_float() const
+template <__json_template>
+inline __json_constexpr float basic_value<__json_template_arg>::as_float() const
 {
     if (is_number()) {
         return std::stof(as_basic_type_str());
@@ -1190,8 +1063,8 @@ inline __json_constexpr float basic_value<string_t, map_t>::as_float() const
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr double basic_value<string_t, map_t>::as_double() const
+template <__json_template>
+inline __json_constexpr double basic_value<__json_template_arg>::as_double() const
 {
     if (is_number()) {
         return std::stod(as_basic_type_str());
@@ -1201,8 +1074,8 @@ inline __json_constexpr double basic_value<string_t, map_t>::as_double() const
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr long double basic_value<string_t, map_t>::as_long_double() const
+template <__json_template>
+inline __json_constexpr long double basic_value<__json_template_arg>::as_long_double() const
 {
     if (is_number()) {
         return std::stold(as_basic_type_str());
@@ -1212,8 +1085,8 @@ inline __json_constexpr long double basic_value<string_t, map_t>::as_long_double
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr string_t basic_value<string_t, map_t>::as_string() const
+template <__json_template>
+inline __json_constexpr string_t basic_value<__json_template_arg>::as_string() const
 {
     if (is_string()) {
         return as_basic_type_str();
@@ -1223,9 +1096,8 @@ inline __json_constexpr string_t basic_value<string_t, map_t>::as_string() const
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr const typename basic_value<string_t, map_t>::_array_t& basic_value<string_t, map_t>::as_array()
-    const
+template <__json_template>
+inline __json_constexpr const basic_array<__json_template_arg>& basic_value<__json_template_arg>::as_array() const
 {
     if (is_array()) {
         return *std::get<array_ptr>(_raw_data);
@@ -1234,9 +1106,8 @@ inline __json_constexpr const typename basic_value<string_t, map_t>::_array_t& b
     throw exception("Wrong Type");
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr const typename basic_value<string_t, map_t>::_object_t& basic_value<string_t,
-                                                                                            map_t>::as_object() const
+template <__json_template>
+inline __json_constexpr const basic_object<__json_template_arg>& basic_value<__json_template_arg>::as_object() const
 {
     if (is_object()) {
         return *std::get<object_ptr>(_raw_data);
@@ -1245,11 +1116,11 @@ inline __json_constexpr const typename basic_value<string_t, map_t>::_object_t& 
     throw exception("Wrong Type or data empty");
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_array_t& basic_value<string_t, map_t>::as_array()
+template <__json_template>
+inline __json_constexpr basic_array<__json_template_arg>& basic_value<__json_template_arg>::as_array()
 {
     if (empty()) {
-        *this = _array_t();
+        *this = basic_array<__json_template_arg>();
     }
 
     if (is_array()) {
@@ -1259,11 +1130,11 @@ inline __json_constexpr typename basic_value<string_t, map_t>::_array_t& basic_v
     throw exception("Wrong Type");
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_object_t& basic_value<string_t, map_t>::as_object()
+template <__json_template>
+inline __json_constexpr basic_object<__json_template_arg>& basic_value<__json_template_arg>::as_object()
 {
     if (empty()) {
-        *this = _object_t();
+        *this = basic_object<__json_template_arg>();
     }
 
     if (is_object()) {
@@ -1273,31 +1144,33 @@ inline __json_constexpr typename basic_value<string_t, map_t>::_object_t& basic_
     throw exception("Wrong Type or data empty");
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t>
-inline __json_constexpr value_t basic_value<string_t, map_t>::as() const
+inline __json_constexpr value_t basic_value<__json_template_arg>::as() const
 {
     return static_cast<value_t>(*this);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr const string_t& basic_value<string_t, map_t>::as_basic_type_str() const
+template <__json_template>
+inline __json_constexpr const string_t& basic_value<__json_template_arg>::as_basic_type_str() const
 {
     return std::get<string_t>(_raw_data);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr string_t& basic_value<string_t, map_t>::as_basic_type_str()
+template <__json_template>
+inline __json_constexpr string_t& basic_value<__json_template_arg>::as_basic_type_str()
 {
     return std::get<string_t>(_raw_data);
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename... args_t>
-inline __json_constexpr decltype(auto) basic_value<string_t, map_t>::emplace(args_t&&... args)
+inline __json_constexpr decltype(auto) basic_value<__json_template_arg>::emplace(args_t&&... args)
 {
-    constexpr bool is_array_args = std::is_constructible_v<typename _array_t::value_type, args_t...>;
-    constexpr bool is_object_args = std::is_constructible_v<typename _object_t::value_type, args_t...>;
+    constexpr bool is_array_args =
+        std::is_constructible_v<typename basic_array<__json_template_arg>::value_type, args_t...>;
+    constexpr bool is_object_args =
+        std::is_constructible_v<typename basic_object<__json_template_arg>::value_type, args_t...>;
 
     static_assert(is_array_args || is_object_args, "Args can not constructure a array or object value");
 
@@ -1309,28 +1182,28 @@ inline __json_constexpr decltype(auto) basic_value<string_t, map_t>::emplace(arg
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename... args_t>
-inline __json_constexpr decltype(auto) basic_value<string_t, map_t>::array_emplace(args_t&&... args)
+inline __json_constexpr decltype(auto) basic_value<__json_template_arg>::array_emplace(args_t&&... args)
 {
     return emplace(std::forward<args_t>(args)...);
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename... args_t>
-inline __json_constexpr decltype(auto) basic_value<string_t, map_t>::object_emplace(args_t&&... args)
+inline __json_constexpr decltype(auto) basic_value<__json_template_arg>::object_emplace(args_t&&... args)
 {
     return emplace(std::forward<args_t>(args)...);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr void basic_value<string_t, map_t>::clear() noexcept
+template <__json_template>
+inline __json_constexpr void basic_value<__json_template_arg>::clear() noexcept
 {
-    *this = _value_t();
+    *this = basic_value<__json_template_arg>();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr string_t basic_value<string_t, map_t>::to_string() const
+template <__json_template>
+inline __json_constexpr string_t basic_value<__json_template_arg>::to_string() const
 {
     switch (_type) {
     case value_type::null:
@@ -1349,8 +1222,8 @@ inline __json_constexpr string_t basic_value<string_t, map_t>::to_string() const
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr string_t basic_value<string_t, map_t>::format(size_t indent, size_t indent_times) const
+template <__json_template>
+inline __json_constexpr string_t basic_value<__json_template_arg>::format(size_t indent, size_t indent_times) const
 {
     switch (_type) {
     case value_type::null:
@@ -1367,9 +1240,9 @@ inline __json_constexpr string_t basic_value<string_t, map_t>::format(size_t ind
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t>
-inline __json_constexpr bool basic_value<string_t, map_t>::all() const
+inline __json_constexpr bool basic_value<__json_template_arg>::all() const
 {
     if (is_array()) {
         return as_array().template all<value_t>();
@@ -1382,23 +1255,23 @@ inline __json_constexpr bool basic_value<string_t, map_t>::all() const
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t, template <typename...> typename vector_t>
-inline __json_constexpr vector_t<value_t> basic_value<string_t, map_t>::to_vector() const
+inline __json_constexpr vector_t<value_t> basic_value<__json_template_arg>::to_vector() const
 {
     return as_array().template to_vector<value_t, vector_t>();
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t, template <typename...> typename another_map_t>
-inline __json_constexpr another_map_t<string_t, value_t> basic_value<string_t, map_t>::to_map() const
+inline __json_constexpr another_map_t<string_t, value_t> basic_value<__json_template_arg>::to_map() const
 {
     return as_object().template to_map<value_t, another_map_t>();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>& basic_value<string_t, map_t>::operator=(
-    const basic_value<string_t, map_t>& rhs)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>& basic_value<__json_template_arg>::operator=(
+    const basic_value<__json_template_arg>& rhs)
 {
     _type = rhs._type;
     _raw_data = deep_copy(rhs._raw_data);
@@ -1406,12 +1279,13 @@ inline __json_constexpr basic_value<string_t, map_t>& basic_value<string_t, map_
     return *this;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_value<string_t, map_t>& basic_value<string_t, map_t>::operator=(
-    basic_value<string_t, map_t>&& rhs) noexcept = default;
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>& basic_value<__json_template_arg>::operator=(
+    basic_value<__json_template_arg>&& rhs) noexcept = default;
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr bool basic_value<string_t, map_t>::operator==(const _value_t& rhs) const
+template <__json_template>
+inline __json_constexpr bool basic_value<__json_template_arg>::operator==(
+    const basic_value<__json_template_arg>& rhs) const
 {
     if (_type != rhs._type) return false;
 
@@ -1431,8 +1305,8 @@ inline __json_constexpr bool basic_value<string_t, map_t>::operator==(const _val
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr const typename basic_value<string_t, map_t>::_value_t& basic_value<string_t, map_t>::operator[](
+template <__json_template>
+inline __json_constexpr const basic_value<__json_template_arg>& basic_value<__json_template_arg>::operator[](
     size_t pos) const
 {
     // basic_array not support to create by operator[]
@@ -1440,135 +1314,133 @@ inline __json_constexpr const typename basic_value<string_t, map_t>::_value_t& b
     return as_array()[pos];
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_value_t& basic_value<string_t, map_t>::operator[](
-    size_t pos)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>& basic_value<__json_template_arg>::operator[](size_t pos)
 {
     // basic_array not support to create by operator[]
 
     return as_array()[pos];
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_value_t& basic_value<string_t, map_t>::operator[](
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>& basic_value<__json_template_arg>::operator[](
     const string_t& key)
 {
     if (empty()) {
-        *this = _object_t();
+        *this = basic_object<__json_template_arg>();
     }
 
     return as_object()[key];
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_value_t& basic_value<string_t, map_t>::operator[](
-    string_t&& key)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>& basic_value<__json_template_arg>::operator[](string_t&& key)
 {
     if (empty()) {
-        *this = _object_t();
+        *this = basic_object<__json_template_arg>();
     }
 
     return as_object()[std::move(key)];
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_value_t basic_value<string_t, map_t>::operator|(
-    const _object_t& rhs) const&
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg> basic_value<__json_template_arg>::operator|(
+    const basic_object<__json_template_arg>& rhs) const&
 {
     return as_object() | rhs;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_value_t basic_value<string_t, map_t>::operator|(
-    _object_t&& rhs) const&
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg> basic_value<__json_template_arg>::operator|(
+    basic_object<__json_template_arg>&& rhs) const&
 {
     return as_object() | std::move(rhs);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_value_t basic_value<string_t, map_t>::operator|(
-    const _object_t& rhs) &&
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg> basic_value<__json_template_arg>::operator|(
+    const basic_object<__json_template_arg>& rhs) &&
 {
     return std::move(as_object()) | rhs;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_value_t basic_value<string_t, map_t>::operator|(
-    _object_t&& rhs) &&
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg> basic_value<__json_template_arg>::operator|(
+    basic_object<__json_template_arg>&& rhs) &&
 {
     return std::move(as_object()) | std::move(rhs);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_value_t& basic_value<string_t, map_t>::operator|=(
-    const _object_t& rhs)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>& basic_value<__json_template_arg>::operator|=(
+    const basic_object<__json_template_arg>& rhs)
 {
     as_object() |= rhs;
     return *this;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_value_t& basic_value<string_t, map_t>::operator|=(
-    _object_t&& rhs)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>& basic_value<__json_template_arg>::operator|=(
+    basic_object<__json_template_arg>&& rhs)
 {
     as_object() |= std::move(rhs);
     return *this;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_value_t basic_value<string_t, map_t>::operator+(
-    const _array_t& rhs) const&
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg> basic_value<__json_template_arg>::operator+(
+    const basic_array<__json_template_arg>& rhs) const&
 {
     return as_array() + rhs;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_value_t basic_value<string_t, map_t>::operator+(
-    _array_t&& rhs) const&
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg> basic_value<__json_template_arg>::operator+(
+    basic_array<__json_template_arg>&& rhs) const&
 {
     return as_array() + std::move(rhs);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_value_t basic_value<string_t, map_t>::operator+(
-    const _array_t& rhs) &&
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg> basic_value<__json_template_arg>::operator+(
+    const basic_array<__json_template_arg>& rhs) &&
 {
     return std::move(as_array()) + rhs;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_value_t basic_value<string_t, map_t>::operator+(
-    _array_t&& rhs) &&
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg> basic_value<__json_template_arg>::operator+(
+    basic_array<__json_template_arg>&& rhs) &&
 {
     return std::move(as_array()) + std::move(rhs);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_value_t& basic_value<string_t, map_t>::operator+=(
-    const _array_t& rhs)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>& basic_value<__json_template_arg>::operator+=(
+    const basic_array<__json_template_arg>& rhs)
 {
     as_array() += rhs;
     return *this;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::_value_t& basic_value<string_t, map_t>::operator+=(
-    _array_t&& rhs)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>& basic_value<__json_template_arg>::operator+=(
+    basic_array<__json_template_arg>&& rhs)
 {
     as_array() += std::move(rhs);
     return *this;
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename... args_t>
-inline __json_constexpr basic_value<string_t, map_t>::basic_value(value_type type, args_t&&... args)
+inline __json_constexpr basic_value<__json_template_arg>::basic_value(value_type type, args_t&&... args)
     : _type(type), _raw_data(std::forward<args_t>(args)...)
 {
     static_assert(std::is_constructible_v<var_t, args_t...>, "Parameter can't be used to construct a var_t");
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_value<string_t, map_t>::var_t basic_value<string_t, map_t>::deep_copy(
+template <__json_template>
+inline __json_constexpr typename basic_value<__json_template_arg>::var_t basic_value<__json_template_arg>::deep_copy(
     const var_t& src)
 {
     var_t dst;
@@ -1576,10 +1448,10 @@ inline __json_constexpr typename basic_value<string_t, map_t>::var_t basic_value
         dst = *string_ptr;
     }
     else if (const auto arr_ptr = std::get_if<array_ptr>(&src)) {
-        dst = std::make_unique<_array_t>(**arr_ptr);
+        dst = unique_ptr_t<basic_array<__json_template_arg>>(new basic_array<__json_template_arg>(**arr_ptr));
     }
     else if (const auto obj_ptr = std::get_if<object_ptr>(&src)) {
-        dst = std::make_unique<_object_t>(**obj_ptr);
+        dst = unique_ptr_t<basic_object<__json_template_arg>>(new basic_object<__json_template_arg>(**obj_ptr));
     }
     else {
         // maybe invalid_value
@@ -1592,67 +1464,68 @@ inline __json_constexpr typename basic_value<string_t, map_t>::var_t basic_value
 // *      basic_array impl      *
 // ******************************
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_array<string_t, map_t>::basic_array(std::initializer_list<value_type> init_list)
+template <__json_template>
+inline __json_constexpr basic_array<__json_template_arg>::basic_array(std::initializer_list<value_type> init_list)
     : _array_data(init_list)
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_array<string_t, map_t>::basic_array(typename raw_array::size_type size)
+template <__json_template>
+inline __json_constexpr basic_array<__json_template_arg>::basic_array(typename raw_array::size_type size)
     : _array_data(size)
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_array<string_t, map_t>::basic_array(const _value_t& val) : _array_t(val.as_array())
+template <__json_template>
+inline __json_constexpr basic_array<__json_template_arg>::basic_array(const basic_value<__json_template_arg>& val)
+    : basic_array<__json_template_arg>(val.as_array())
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_array<string_t, map_t>::basic_array(_value_t&& val) : _array_t(std::move(val.as_array()))
+template <__json_template>
+inline __json_constexpr basic_array<__json_template_arg>::basic_array(basic_value<__json_template_arg>&& val)
+    : basic_array<__json_template_arg>(std::move(val.as_array()))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr void basic_array<string_t, map_t>::clear() noexcept
+template <__json_template>
+inline __json_constexpr void basic_array<__json_template_arg>::clear() noexcept
 {
     _array_data.clear();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr bool basic_array<string_t, map_t>::erase(size_t pos)
+template <__json_template>
+inline __json_constexpr bool basic_array<__json_template_arg>::erase(size_t pos)
 {
     return erase(_array_data.begin() + pos);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr bool basic_array<string_t, map_t>::erase(iterator iter)
+template <__json_template>
+inline __json_constexpr bool basic_array<__json_template_arg>::erase(iterator iter)
 {
     return _array_data.erase(iter) != _array_data.end();
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename... args_t>
-inline __json_constexpr decltype(auto) basic_array<string_t, map_t>::emplace_back(args_t&&... args)
+inline __json_constexpr decltype(auto) basic_array<__json_template_arg>::emplace_back(args_t&&... args)
 {
     static_assert(std::is_constructible_v<value_type, args_t...>,
                   "Parameter can't be used to construct a raw_array::value_type");
     return _array_data.emplace_back(std::forward<args_t>(args)...);
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename... args_t>
-inline __json_constexpr decltype(auto) basic_array<string_t, map_t>::push_back(args_t&&... args)
+inline __json_constexpr decltype(auto) basic_array<__json_template_arg>::push_back(args_t&&... args)
 {
     return emplace_back(std::forward<args_t>(args)...);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr const typename basic_array<string_t, map_t>::_value_t& basic_array<string_t, map_t>::at(
-    size_t pos) const
+template <__json_template>
+inline __json_constexpr const basic_value<__json_template_arg>& basic_array<__json_template_arg>::at(size_t pos) const
 {
     return _array_data.at(pos);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr string_t basic_array<string_t, map_t>::to_string() const
+template <__json_template>
+inline __json_constexpr string_t basic_array<__json_template_arg>::to_string() const
 {
     string_t str { '[' };
     for (auto iter = _array_data.cbegin(); iter != _array_data.cend();) {
@@ -1665,8 +1538,8 @@ inline __json_constexpr string_t basic_array<string_t, map_t>::to_string() const
     return str;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr string_t basic_array<string_t, map_t>::format(size_t indent, size_t indent_times) const
+template <__json_template>
+inline __json_constexpr string_t basic_array<__json_template_arg>::format(size_t indent, size_t indent_times) const
 {
     const string_t tail_indent(indent * indent_times, ' ');
     const string_t body_indent(indent * (indent_times + 1), ' ');
@@ -1683,9 +1556,9 @@ inline __json_constexpr string_t basic_array<string_t, map_t>::format(size_t ind
     return str;
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t>
-inline __json_constexpr bool basic_array<string_t, map_t>::all() const
+inline __json_constexpr bool basic_array<__json_template_arg>::all() const
 {
     for (const auto& elem : _array_data) {
         if (!elem.template is<value_t>()) {
@@ -1711,9 +1584,9 @@ namespace _to_vector_helper
     };
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t, template <typename...> typename vector_t>
-inline __json_constexpr vector_t<value_t> basic_array<string_t, map_t>::to_vector() const
+inline __json_constexpr vector_t<value_t> basic_array<__json_template_arg>::to_vector() const
 {
 
     vector_t<value_t> result;
@@ -1730,13 +1603,14 @@ inline __json_constexpr vector_t<value_t> basic_array<string_t, map_t>::to_vecto
     return result;
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t, typename... rest_keys_t>
-inline __json_constexpr auto basic_array<string_t, map_t>::get_helper(const value_t& default_value, size_t pos,
-                                                                      rest_keys_t&&... rest) const
+inline __json_constexpr auto basic_array<__json_template_arg>::get_helper(const value_t& default_value, size_t pos,
+                                                                          rest_keys_t&&... rest) const
 {
-    constexpr bool is_json =
-        std::is_same_v<_value_t, value_t> || std::is_same_v<_array_t, value_t> || std::is_same_v<_object_t, value_t>;
+    constexpr bool is_json = std::is_same_v<basic_value<__json_template_arg>, value_t> ||
+                             std::is_same_v<basic_array<__json_template_arg>, value_t> ||
+                             std::is_same_v<basic_object<__json_template_arg>, value_t>;
     constexpr bool is_string = std::is_constructible_v<string_t, value_t> && !is_json;
 
     if (!contains(pos)) {
@@ -1751,12 +1625,14 @@ inline __json_constexpr auto basic_array<string_t, map_t>::get_helper(const valu
     return at(pos).get_helper(default_value, std::forward<rest_keys_t>(rest)...);
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t>
-inline __json_constexpr auto basic_array<string_t, map_t>::get_helper(const value_t& default_value, size_t pos) const
+inline __json_constexpr auto basic_array<__json_template_arg>::get_helper(const value_t& default_value,
+                                                                          size_t pos) const
 {
-    constexpr bool is_json =
-        std::is_same_v<_value_t, value_t> || std::is_same_v<_array_t, value_t> || std::is_same_v<_object_t, value_t>;
+    constexpr bool is_json = std::is_same_v<basic_value<__json_template_arg>, value_t> ||
+                             std::is_same_v<basic_array<__json_template_arg>, value_t> ||
+                             std::is_same_v<basic_object<__json_template_arg>, value_t>;
     constexpr bool is_string = std::is_constructible_v<string_t, value_t> && !is_json;
 
     if (!contains(pos)) {
@@ -1787,11 +1663,12 @@ inline __json_constexpr auto basic_array<string_t, map_t>::get_helper(const valu
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t>
-inline __json_constexpr std::optional<value_t> basic_array<string_t, map_t>::find(size_t pos) const
+inline __json_constexpr std::optional<value_t> basic_array<__json_template_arg>::find(size_t pos) const
 {
-    static_assert(std::is_constructible_v<value_t, _value_t>, "Type can NOT be constructed by basic_value");
+    static_assert(std::is_constructible_v<value_t, basic_value<__json_template_arg>>,
+                  "Type can NOT be constructed by basic_value");
     if (!contains(pos)) {
         return std::nullopt;
     }
@@ -1799,155 +1676,157 @@ inline __json_constexpr std::optional<value_t> basic_array<string_t, map_t>::fin
     return val.template is<value_t>() ? std::optional<value_t>(val.template as<value_t>()) : std::nullopt;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::iterator basic_array<string_t, map_t>::begin() noexcept
+template <__json_template>
+inline __json_constexpr typename basic_array<__json_template_arg>::iterator basic_array<
+    __json_template_arg>::begin() noexcept
 {
     return _array_data.begin();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::iterator basic_array<string_t, map_t>::end() noexcept
+template <__json_template>
+inline __json_constexpr typename basic_array<__json_template_arg>::iterator basic_array<
+    __json_template_arg>::end() noexcept
 {
     return _array_data.end();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::const_iterator basic_array<string_t, map_t>::begin()
-    const noexcept
+template <__json_template>
+inline __json_constexpr typename basic_array<__json_template_arg>::const_iterator basic_array<
+    __json_template_arg>::begin() const noexcept
 {
     return _array_data.begin();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::const_iterator basic_array<string_t, map_t>::end()
-    const noexcept
+template <__json_template>
+inline __json_constexpr typename basic_array<__json_template_arg>::const_iterator basic_array<
+    __json_template_arg>::end() const noexcept
 {
     return _array_data.end();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::const_iterator basic_array<string_t, map_t>::cbegin()
-    const noexcept
+template <__json_template>
+inline __json_constexpr typename basic_array<__json_template_arg>::const_iterator basic_array<
+    __json_template_arg>::cbegin() const noexcept
 {
     return _array_data.cbegin();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::const_iterator basic_array<string_t, map_t>::cend()
-    const noexcept
+template <__json_template>
+inline __json_constexpr typename basic_array<__json_template_arg>::const_iterator basic_array<
+    __json_template_arg>::cend() const noexcept
 {
     return _array_data.cend();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::reverse_iterator basic_array<string_t,
-                                                                                            map_t>::rbegin() noexcept
+template <__json_template>
+inline __json_constexpr typename basic_array<__json_template_arg>::reverse_iterator basic_array<
+    __json_template_arg>::rbegin() noexcept
 {
     return _array_data.rbegin();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::reverse_iterator basic_array<string_t,
-                                                                                            map_t>::rend() noexcept
+template <__json_template>
+inline __json_constexpr typename basic_array<__json_template_arg>::reverse_iterator basic_array<
+    __json_template_arg>::rend() noexcept
 {
     return _array_data.rend();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::const_reverse_iterator basic_array<
-    string_t, map_t>::rbegin() const noexcept
+template <__json_template>
+inline __json_constexpr typename basic_array<__json_template_arg>::const_reverse_iterator basic_array<
+    __json_template_arg>::rbegin() const noexcept
 {
     return _array_data.rbegin();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::const_reverse_iterator basic_array<
-    string_t, map_t>::rend() const noexcept
+template <__json_template>
+inline __json_constexpr typename basic_array<__json_template_arg>::const_reverse_iterator basic_array<
+    __json_template_arg>::rend() const noexcept
 {
     return _array_data.rend();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::const_reverse_iterator basic_array<
-    string_t, map_t>::crbegin() const noexcept
+template <__json_template>
+inline __json_constexpr typename basic_array<__json_template_arg>::const_reverse_iterator basic_array<
+    __json_template_arg>::crbegin() const noexcept
 {
     return _array_data.crbegin();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::const_reverse_iterator basic_array<
-    string_t, map_t>::crend() const noexcept
+template <__json_template>
+inline __json_constexpr typename basic_array<__json_template_arg>::const_reverse_iterator basic_array<
+    __json_template_arg>::crend() const noexcept
 {
     return _array_data.crend();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::_value_t& basic_array<string_t, map_t>::operator[](
-    size_t pos)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>& basic_array<__json_template_arg>::operator[](size_t pos)
 {
     return _array_data[pos];
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr const typename basic_array<string_t, map_t>::_value_t& basic_array<string_t, map_t>::operator[](
+template <__json_template>
+inline __json_constexpr const basic_value<__json_template_arg>& basic_array<__json_template_arg>::operator[](
     size_t pos) const
 {
     return _array_data[pos];
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::_array_t basic_array<string_t, map_t>::operator+(
-    const _array_t& rhs) const&
+template <__json_template>
+inline __json_constexpr basic_array<__json_template_arg> basic_array<__json_template_arg>::operator+(
+    const basic_array<__json_template_arg>& rhs) const&
 {
-    _array_t temp = *this;
+    basic_array<__json_template_arg> temp = *this;
     temp._array_data.insert(_array_data.end(), rhs.begin(), rhs.end());
     return temp;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::_array_t basic_array<string_t, map_t>::operator+(
-    _array_t&& rhs) const&
+template <__json_template>
+inline __json_constexpr basic_array<__json_template_arg> basic_array<__json_template_arg>::operator+(
+    basic_array<__json_template_arg>&& rhs) const&
 {
-    _array_t temp = *this;
+    basic_array<__json_template_arg> temp = *this;
     temp._array_data.insert(_array_data.end(), std::make_move_iterator(rhs.begin()),
                             std::make_move_iterator(rhs.end()));
     return temp;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::_array_t basic_array<string_t, map_t>::operator+(
-    const _array_t& rhs) &&
+template <__json_template>
+inline __json_constexpr basic_array<__json_template_arg> basic_array<__json_template_arg>::operator+(
+    const basic_array<__json_template_arg>& rhs) &&
 {
     _array_data.insert(_array_data.end(), rhs.begin(), rhs.end());
     return std::move(*this);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::_array_t basic_array<string_t, map_t>::operator+(
-    _array_t&& rhs) &&
+template <__json_template>
+inline __json_constexpr basic_array<__json_template_arg> basic_array<__json_template_arg>::operator+(
+    basic_array<__json_template_arg>&& rhs) &&
 {
     _array_data.insert(_array_data.end(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
     return std::move(*this);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::_array_t& basic_array<string_t, map_t>::operator+=(
-    const _array_t& rhs)
+template <__json_template>
+inline __json_constexpr basic_array<__json_template_arg>& basic_array<__json_template_arg>::operator+=(
+    const basic_array<__json_template_arg>& rhs)
 {
     _array_data.insert(_array_data.end(), rhs.begin(), rhs.end());
     return *this;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_array<string_t, map_t>::_array_t& basic_array<string_t, map_t>::operator+=(
-    _array_t&& rhs)
+template <__json_template>
+inline __json_constexpr basic_array<__json_template_arg>& basic_array<__json_template_arg>::operator+=(
+    basic_array<__json_template_arg>&& rhs)
 {
     _array_data.insert(_array_data.end(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
     return *this;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr bool basic_array<string_t, map_t>::operator==(const _array_t& rhs) const
+template <__json_template>
+inline __json_constexpr bool basic_array<__json_template_arg>::operator==(
+    const basic_array<__json_template_arg>& rhs) const
 {
     return _array_data == rhs._array_data;
 }
@@ -1956,69 +1835,70 @@ inline __json_constexpr bool basic_array<string_t, map_t>::operator==(const _arr
 // *      basic_object impl      *
 // *******************************
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_object<string_t, map_t>::basic_object(std::initializer_list<value_type> init_list)
+template <__json_template>
+inline __json_constexpr basic_object<__json_template_arg>::basic_object(std::initializer_list<value_type> init_list)
     : _object_data(std::make_move_iterator(init_list.begin()), std::make_move_iterator(init_list.end()))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_object<string_t, map_t>::basic_object(const _value_t& val) : _object_t(val.as_object())
+template <__json_template>
+inline __json_constexpr basic_object<__json_template_arg>::basic_object(const basic_value<__json_template_arg>& val)
+    : basic_object<__json_template_arg>(val.as_object())
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr basic_object<string_t, map_t>::basic_object(_value_t&& val)
-    : _object_t(std::move(val.as_object()))
+template <__json_template>
+inline __json_constexpr basic_object<__json_template_arg>::basic_object(basic_value<__json_template_arg>&& val)
+    : basic_object<__json_template_arg>(std::move(val.as_object()))
 {}
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr bool basic_object<string_t, map_t>::contains(const string_t& key) const
+template <__json_template>
+inline __json_constexpr bool basic_object<__json_template_arg>::contains(const string_t& key) const
 {
     return _object_data.find(key) != _object_data.cend();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr const typename basic_object<string_t, map_t>::_value_t& basic_object<string_t, map_t>::at(
+template <__json_template>
+inline __json_constexpr const basic_value<__json_template_arg>& basic_object<__json_template_arg>::at(
     const string_t& key) const
 {
     return _object_data.at(key);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr void basic_object<string_t, map_t>::clear() noexcept
+template <__json_template>
+inline __json_constexpr void basic_object<__json_template_arg>::clear() noexcept
 {
     _object_data.clear();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr bool basic_object<string_t, map_t>::erase(const string_t& key)
+template <__json_template>
+inline __json_constexpr bool basic_object<__json_template_arg>::erase(const string_t& key)
 {
     return _object_data.erase(key) > 0 ? true : false;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr bool basic_object<string_t, map_t>::erase(iterator iter)
+template <__json_template>
+inline __json_constexpr bool basic_object<__json_template_arg>::erase(iterator iter)
 {
     return _object_data.erase(iter) != _object_data.end();
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename... args_t>
-inline __json_constexpr decltype(auto) basic_object<string_t, map_t>::emplace(args_t&&... args)
+inline __json_constexpr decltype(auto) basic_object<__json_template_arg>::emplace(args_t&&... args)
 {
     static_assert(std::is_constructible_v<value_type, args_t...>,
                   "Parameter can't be used to construct a raw_object::value_type");
     return _object_data.emplace(std::forward<args_t>(args)...);
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename... args_t>
-inline __json_constexpr decltype(auto) basic_object<string_t, map_t>::insert(args_t&&... args)
+inline __json_constexpr decltype(auto) basic_object<__json_template_arg>::insert(args_t&&... args)
 {
     return emplace(std::forward<args_t>(args)...);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr string_t basic_object<string_t, map_t>::to_string() const
+template <__json_template>
+inline __json_constexpr string_t basic_object<__json_template_arg>::to_string() const
 {
     string_t str { '{' };
     for (auto iter = _object_data.cbegin(); iter != _object_data.cend();) {
@@ -2032,8 +1912,8 @@ inline __json_constexpr string_t basic_object<string_t, map_t>::to_string() cons
     return str;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr string_t basic_object<string_t, map_t>::format(size_t indent, size_t indent_times) const
+template <__json_template>
+inline __json_constexpr string_t basic_object<__json_template_arg>::format(size_t indent, size_t indent_times) const
 {
     const string_t tail_indent(indent * indent_times, ' ');
     const string_t body_indent(indent * (indent_times + 1), ' ');
@@ -2052,9 +1932,9 @@ inline __json_constexpr string_t basic_object<string_t, map_t>::format(size_t in
     return str;
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t>
-inline __json_constexpr bool basic_object<string_t, map_t>::all() const
+inline __json_constexpr bool basic_object<__json_template_arg>::all() const
 {
     for (const auto& [_, val] : _object_data) {
         if (!val.template is<value_t>()) {
@@ -2064,9 +1944,9 @@ inline __json_constexpr bool basic_object<string_t, map_t>::all() const
     return true;
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t, template <typename...> typename another_map_t>
-inline __json_constexpr another_map_t<string_t, value_t> basic_object<string_t, map_t>::to_map() const
+inline __json_constexpr another_map_t<string_t, value_t> basic_object<__json_template_arg>::to_map() const
 {
     another_map_t<string_t, value_t> result;
     for (const auto& [key, val] : _object_data) {
@@ -2075,13 +1955,15 @@ inline __json_constexpr another_map_t<string_t, value_t> basic_object<string_t, 
     return result;
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t, typename... rest_keys_t>
-inline __json_constexpr auto basic_object<string_t, map_t>::get_helper(const value_t& default_value,
-                                                                       const string_t& key, rest_keys_t&&... rest) const
+inline __json_constexpr auto basic_object<__json_template_arg>::get_helper(const value_t& default_value,
+                                                                           const string_t& key,
+                                                                           rest_keys_t&&... rest) const
 {
-    constexpr bool is_json =
-        std::is_same_v<_value_t, value_t> || std::is_same_v<_array_t, value_t> || std::is_same_v<_object_t, value_t>;
+    constexpr bool is_json = std::is_same_v<basic_value<__json_template_arg>, value_t> ||
+                             std::is_same_v<basic_array<__json_template_arg>, value_t> ||
+                             std::is_same_v<basic_object<__json_template_arg>, value_t>;
     constexpr bool is_string = std::is_constructible_v<string_t, value_t> && !is_json;
 
     if (!contains(key)) {
@@ -2096,13 +1978,14 @@ inline __json_constexpr auto basic_object<string_t, map_t>::get_helper(const val
     return at(key).get_helper(default_value, std::forward<rest_keys_t>(rest)...);
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t>
-inline __json_constexpr auto basic_object<string_t, map_t>::get_helper(const value_t& default_value,
-                                                                       const string_t& key) const
+inline __json_constexpr auto basic_object<__json_template_arg>::get_helper(const value_t& default_value,
+                                                                           const string_t& key) const
 {
-    constexpr bool is_json =
-        std::is_same_v<_value_t, value_t> || std::is_same_v<_array_t, value_t> || std::is_same_v<_object_t, value_t>;
+    constexpr bool is_json = std::is_same_v<basic_value<__json_template_arg>, value_t> ||
+                             std::is_same_v<basic_array<__json_template_arg>, value_t> ||
+                             std::is_same_v<basic_object<__json_template_arg>, value_t>;
     constexpr bool is_string = std::is_constructible_v<string_t, value_t> && !is_json;
 
     if (!contains(key)) {
@@ -2133,11 +2016,12 @@ inline __json_constexpr auto basic_object<string_t, map_t>::get_helper(const val
     }
 }
 
-template <typename string_t, template <typename...> typename map_t>
+template <__json_template>
 template <typename value_t>
-inline __json_constexpr std::optional<value_t> basic_object<string_t, map_t>::find(const string_t& key) const
+inline __json_constexpr std::optional<value_t> basic_object<__json_template_arg>::find(const string_t& key) const
 {
-    static_assert(std::is_constructible_v<value_t, _value_t>, "value_t can NOT be constructed by basic_value");
+    static_assert(std::is_constructible_v<value_t, basic_value<__json_template_arg>>,
+                  "value_t can NOT be constructed by basic_value");
     auto iter = _object_data.find(key);
     if (iter == _object_data.end()) {
         return std::nullopt;
@@ -2146,114 +2030,116 @@ inline __json_constexpr std::optional<value_t> basic_object<string_t, map_t>::fi
     return val.template is<value_t>() ? std::optional<value_t>(val.template as<value_t>()) : std::nullopt;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_object<string_t, map_t>::iterator basic_object<string_t, map_t>::begin() noexcept
+template <__json_template>
+inline __json_constexpr typename basic_object<__json_template_arg>::iterator basic_object<
+    __json_template_arg>::begin() noexcept
 {
     return _object_data.begin();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_object<string_t, map_t>::iterator basic_object<string_t, map_t>::end() noexcept
+template <__json_template>
+inline __json_constexpr typename basic_object<__json_template_arg>::iterator basic_object<
+    __json_template_arg>::end() noexcept
 {
     return _object_data.end();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_object<string_t, map_t>::const_iterator basic_object<string_t, map_t>::begin()
-    const noexcept
+template <__json_template>
+inline __json_constexpr typename basic_object<__json_template_arg>::const_iterator basic_object<
+    __json_template_arg>::begin() const noexcept
 {
     return _object_data.begin();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_object<string_t, map_t>::const_iterator basic_object<string_t, map_t>::end()
-    const noexcept
+template <__json_template>
+inline __json_constexpr typename basic_object<__json_template_arg>::const_iterator basic_object<
+    __json_template_arg>::end() const noexcept
 {
     return _object_data.end();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_object<string_t, map_t>::const_iterator basic_object<string_t, map_t>::cbegin()
-    const noexcept
+template <__json_template>
+inline __json_constexpr typename basic_object<__json_template_arg>::const_iterator basic_object<
+    __json_template_arg>::cbegin() const noexcept
 {
     return _object_data.cbegin();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_object<string_t, map_t>::const_iterator basic_object<string_t, map_t>::cend()
-    const noexcept
+template <__json_template>
+inline __json_constexpr typename basic_object<__json_template_arg>::const_iterator basic_object<
+    __json_template_arg>::cend() const noexcept
 {
     return _object_data.cend();
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_object<string_t, map_t>::_value_t& basic_object<string_t, map_t>::operator[](
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>& basic_object<__json_template_arg>::operator[](
     const string_t& key)
 {
     return _object_data[key];
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_object<string_t, map_t>::_value_t& basic_object<string_t, map_t>::operator[](
-    string_t&& key)
+template <__json_template>
+inline __json_constexpr basic_value<__json_template_arg>& basic_object<__json_template_arg>::operator[](string_t&& key)
 {
     return _object_data[std::move(key)];
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_object<string_t, map_t>::_object_t basic_object<string_t, map_t>::operator|(
-    const _object_t& rhs) const&
+template <__json_template>
+inline __json_constexpr basic_object<__json_template_arg> basic_object<__json_template_arg>::operator|(
+    const basic_object<__json_template_arg>& rhs) const&
 {
-    _object_t temp = *this;
+    basic_object<__json_template_arg> temp = *this;
     temp._object_data.insert(rhs.begin(), rhs.end());
     return temp;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_object<string_t, map_t>::_object_t basic_object<string_t, map_t>::operator|(
-    _object_t&& rhs) const&
+template <__json_template>
+inline __json_constexpr basic_object<__json_template_arg> basic_object<__json_template_arg>::operator|(
+    basic_object<__json_template_arg>&& rhs) const&
 {
-    _object_t temp = *this;
+    basic_object<__json_template_arg> temp = *this;
     // temp._object_data.merge(std::move(rhs._object_data));
     temp._object_data.insert(std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
     return temp;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_object<string_t, map_t>::_object_t basic_object<string_t, map_t>::operator|(
-    const _object_t& rhs) &&
+template <__json_template>
+inline __json_constexpr basic_object<__json_template_arg> basic_object<__json_template_arg>::operator|(
+    const basic_object<__json_template_arg>& rhs) &&
 {
     _object_data.insert(rhs.begin(), rhs.end());
     return std::move(*this);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_object<string_t, map_t>::_object_t basic_object<string_t, map_t>::operator|(
-    _object_t&& rhs) &&
+template <__json_template>
+inline __json_constexpr basic_object<__json_template_arg> basic_object<__json_template_arg>::operator|(
+    basic_object<__json_template_arg>&& rhs) &&
 {
     //_object_data.merge(std::move(rhs._object_data));
     _object_data.insert(std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
     return std::move(*this);
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_object<string_t, map_t>::_object_t& basic_object<string_t, map_t>::operator|=(
-    const _object_t& rhs)
+template <__json_template>
+inline __json_constexpr basic_object<__json_template_arg>& basic_object<__json_template_arg>::operator|=(
+    const basic_object<__json_template_arg>& rhs)
 {
     _object_data.insert(rhs.begin(), rhs.end());
     return *this;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr typename basic_object<string_t, map_t>::_object_t& basic_object<string_t, map_t>::operator|=(
-    _object_t&& rhs)
+template <__json_template>
+inline __json_constexpr basic_object<__json_template_arg>& basic_object<__json_template_arg>::operator|=(
+    basic_object<__json_template_arg>&& rhs)
 {
     _object_data.insert(std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
     return *this;
 }
 
-template <typename string_t, template <typename...> typename map_t>
-inline __json_constexpr bool basic_object<string_t, map_t>::operator==(const _object_t& rhs) const
+template <__json_template>
+inline __json_constexpr bool basic_object<__json_template_arg>::operator==(
+    const basic_object<__json_template_arg>& rhs) const
 {
     return _object_data == rhs._object_data;
 }
@@ -2262,22 +2148,22 @@ inline __json_constexpr bool basic_object<string_t, map_t>::operator==(const _ob
 // *      parser impl      *
 // *************************
 
-template <typename string_t, template <typename...> typename map_t, typename parsing_t, typename accel_traits>
-inline __json_constexpr std::optional<typename parser<string_t, map_t, parsing_t, accel_traits>::_value_t> parser<
-    string_t, map_t, parsing_t, accel_traits>::parse(const parsing_t& content)
+template <__json_template, typename parsing_t, typename accel_traits>
+inline __json_constexpr std::optional<basic_value<__json_template_arg>> parser<
+    __json_template_arg, parsing_t, accel_traits>::parse(const parsing_t& content)
 {
-    return parser<string_t, map_t, parsing_t, accel_traits>(content.cbegin(), content.cend()).parse();
+    return parser<__json_template_arg, parsing_t, accel_traits>(content.cbegin(), content.cend()).parse();
 }
 
-template <typename string_t, template <typename...> typename map_t, typename parsing_t, typename accel_traits>
-inline __json_constexpr std::optional<typename parser<string_t, map_t, parsing_t, accel_traits>::_value_t> parser<
-    string_t, map_t, parsing_t, accel_traits>::parse()
+template <__json_template, typename parsing_t, typename accel_traits>
+inline __json_constexpr std::optional<basic_value<__json_template_arg>> parser<__json_template_arg, parsing_t,
+                                                                               accel_traits>::parse()
 {
     if (!skip_whitespace()) {
         return std::nullopt;
     }
 
-    _value_t result_value;
+    basic_value<__json_template_arg> result_value;
     switch (*_cur) {
     case '[':
         result_value = parse_array();
@@ -2302,9 +2188,9 @@ inline __json_constexpr std::optional<typename parser<string_t, map_t, parsing_t
     return result_value;
 }
 
-template <typename string_t, template <typename...> typename map_t, typename parsing_t, typename accel_traits>
-inline __json_constexpr typename parser<string_t, map_t, parsing_t, accel_traits>::_value_t parser<
-    string_t, map_t, parsing_t, accel_traits>::parse_value()
+template <__json_template, typename parsing_t, typename accel_traits>
+inline __json_constexpr basic_value<__json_template_arg> parser<__json_template_arg, parsing_t,
+                                                                accel_traits>::parse_value()
 {
     switch (*_cur) {
     case 'n':
@@ -2331,29 +2217,29 @@ inline __json_constexpr typename parser<string_t, map_t, parsing_t, accel_traits
     case '{':
         return parse_object();
     default:
-        return invalid_value<string_t>();
+        return invalid_value<__json_template_arg>();
     }
 }
 
-template <typename string_t, template <typename...> typename map_t, typename parsing_t, typename accel_traits>
-inline __json_constexpr typename parser<string_t, map_t, parsing_t, accel_traits>::_value_t parser<
-    string_t, map_t, parsing_t, accel_traits>::parse_null()
+template <__json_template, typename parsing_t, typename accel_traits>
+inline __json_constexpr basic_value<__json_template_arg> parser<__json_template_arg, parsing_t,
+                                                                accel_traits>::parse_null()
 {
     for (const auto& ch : null_string<string_t>()) {
         if (_cur != _end && *_cur == ch) {
             ++_cur;
         }
         else {
-            return invalid_value<string_t>();
+            return invalid_value<__json_template_arg>();
         }
     }
 
-    return _value_t();
+    return basic_value<__json_template_arg>();
 }
 
-template <typename string_t, template <typename...> typename map_t, typename parsing_t, typename accel_traits>
-inline __json_constexpr typename parser<string_t, map_t, parsing_t, accel_traits>::_value_t parser<
-    string_t, map_t, parsing_t, accel_traits>::parse_boolean()
+template <__json_template, typename parsing_t, typename accel_traits>
+inline __json_constexpr basic_value<__json_template_arg> parser<__json_template_arg, parsing_t,
+                                                                accel_traits>::parse_boolean()
 {
     switch (*_cur) {
     case 't':
@@ -2362,7 +2248,7 @@ inline __json_constexpr typename parser<string_t, map_t, parsing_t, accel_traits
                 ++_cur;
             }
             else {
-                return invalid_value<string_t>();
+                return invalid_value<__json_template_arg>();
             }
         }
         return true;
@@ -2372,18 +2258,18 @@ inline __json_constexpr typename parser<string_t, map_t, parsing_t, accel_traits
                 ++_cur;
             }
             else {
-                return invalid_value<string_t>();
+                return invalid_value<__json_template_arg>();
             }
         }
         return false;
     default:
-        return invalid_value<string_t>();
+        return invalid_value<__json_template_arg>();
     }
 }
 
-template <typename string_t, template <typename...> typename map_t, typename parsing_t, typename accel_traits>
-inline __json_constexpr typename parser<string_t, map_t, parsing_t, accel_traits>::_value_t parser<
-    string_t, map_t, parsing_t, accel_traits>::parse_number()
+template <__json_template, typename parsing_t, typename accel_traits>
+inline __json_constexpr basic_value<__json_template_arg> parser<__json_template_arg, parsing_t,
+                                                                accel_traits>::parse_number()
 {
     const auto first = _cur;
     if (*_cur == '-') {
@@ -2392,76 +2278,78 @@ inline __json_constexpr typename parser<string_t, map_t, parsing_t, accel_traits
 
     // numbers cannot have leading zeroes
     if (_cur != _end && *_cur == '0' && _cur + 1 != _end && std::isdigit(*(_cur + 1))) {
-        return invalid_value<string_t>();
+        return invalid_value<__json_template_arg>();
     }
 
     if (!skip_digit()) {
-        return invalid_value<string_t>();
+        return invalid_value<__json_template_arg>();
     }
 
     if (*_cur == '.') {
         ++_cur;
         if (!skip_digit()) {
-            return invalid_value<string_t>();
+            return invalid_value<__json_template_arg>();
         }
     }
 
     if (*_cur == 'e' || *_cur == 'E') {
         if (++_cur == _end) {
-            return invalid_value<string_t>();
+            return invalid_value<__json_template_arg>();
         }
         if (*_cur == '+' || *_cur == '-') {
             ++_cur;
         }
         if (!skip_digit()) {
-            return invalid_value<string_t>();
+            return invalid_value<__json_template_arg>();
         }
     }
 
-    return _value_t(_value_t::value_type::number, string_t(first, _cur));
+    return basic_value<__json_template_arg>(basic_value<__json_template_arg>::value_type::number,
+                                            string_t(first, _cur));
 }
 
-template <typename string_t, template <typename...> typename map_t, typename parsing_t, typename accel_traits>
-inline __json_constexpr typename parser<string_t, map_t, parsing_t, accel_traits>::_value_t parser<
-    string_t, map_t, parsing_t, accel_traits>::parse_string()
+template <__json_template, typename parsing_t, typename accel_traits>
+inline __json_constexpr basic_value<__json_template_arg> parser<__json_template_arg, parsing_t,
+                                                                accel_traits>::parse_string()
 {
     auto string_opt = parse_stdstring();
     if (!string_opt) {
-        return invalid_value<string_t>();
+        return invalid_value<__json_template_arg>();
     }
-    return _value_t(_value_t::value_type::string, std::move(string_opt).value());
+    return basic_value<__json_template_arg>(basic_value<__json_template_arg>::value_type::string,
+                                            std::move(string_opt).value());
 }
 
-template <typename string_t, template <typename...> typename map_t, typename parsing_t, typename accel_traits>
-inline __json_constexpr typename parser<string_t, map_t, parsing_t, accel_traits>::_value_t parser<
-    string_t, map_t, parsing_t, accel_traits>::parse_array()
+template <__json_template, typename parsing_t, typename accel_traits>
+inline __json_constexpr basic_value<__json_template_arg> parser<__json_template_arg, parsing_t,
+                                                                accel_traits>::parse_array()
 {
     if (*_cur == '[') {
         ++_cur;
     }
     else {
-        return invalid_value<string_t>();
+        return invalid_value<__json_template_arg>();
     }
 
     if (!skip_whitespace()) {
-        return invalid_value<string_t>();
+        return invalid_value<__json_template_arg>();
     }
     else if (*_cur == ']') {
         ++_cur;
         // empty basic_array
-        return _array_t();
+        return basic_array<__json_template_arg>();
     }
 
-    typename _array_t::raw_array result;
+    typename basic_array<__json_template_arg>::raw_array result;
     while (true) {
         if (!skip_whitespace()) {
-            return invalid_value<string_t>();
+            return invalid_value<__json_template_arg>();
         }
 
-        _value_t val = parse_value();
+        basic_value<__json_template_arg> val = parse_value();
 
         if (!val.valid() || !skip_whitespace()) {
-            return invalid_value<string_t>();
+            return invalid_value<__json_template_arg>();
         }
 
         result.emplace_back(std::move(val));
@@ -2478,36 +2366,36 @@ inline __json_constexpr typename parser<string_t, map_t, parsing_t, accel_traits
         ++_cur;
     }
     else {
-        return invalid_value<string_t>();
+        return invalid_value<__json_template_arg>();
     }
 
-    return _array_t(std::move(result));
+    return basic_array<__json_template_arg>(std::move(result));
 }
 
-template <typename string_t, template <typename...> typename map_t, typename parsing_t, typename accel_traits>
-inline __json_constexpr typename parser<string_t, map_t, parsing_t, accel_traits>::_value_t parser<
-    string_t, map_t, parsing_t, accel_traits>::parse_object()
+template <__json_template, typename parsing_t, typename accel_traits>
+inline __json_constexpr basic_value<__json_template_arg> parser<__json_template_arg, parsing_t,
+                                                                accel_traits>::parse_object()
 {
     if (*_cur == '{') {
         ++_cur;
     }
     else {
-        return invalid_value<string_t>();
+        return invalid_value<__json_template_arg>();
     }
 
     if (!skip_whitespace()) {
-        return invalid_value<string_t>();
+        return invalid_value<__json_template_arg>();
     }
     else if (*_cur == '}') {
         ++_cur;
         // empty basic_object
-        return _object_t();
+        return basic_object<__json_template_arg>();
     }
 
-    typename _object_t::raw_object result;
+    typename basic_object<__json_template_arg>::raw_object result;
     while (true) {
         if (!skip_whitespace()) {
-            return invalid_value<string_t>();
+            return invalid_value<__json_template_arg>();
         }
 
         auto key_opt = parse_stdstring();
@@ -2516,17 +2404,17 @@ inline __json_constexpr typename parser<string_t, map_t, parsing_t, accel_traits
             ++_cur;
         }
         else {
-            return invalid_value<string_t>();
+            return invalid_value<__json_template_arg>();
         }
 
         if (!skip_whitespace()) {
-            return invalid_value<string_t>();
+            return invalid_value<__json_template_arg>();
         }
 
-        _value_t val = parse_value();
+        basic_value<__json_template_arg> val = parse_value();
 
         if (!val.valid() || !skip_whitespace()) {
-            return invalid_value<string_t>();
+            return invalid_value<__json_template_arg>();
         }
 
         result.emplace(std::move(*key_opt), std::move(val));
@@ -2543,14 +2431,14 @@ inline __json_constexpr typename parser<string_t, map_t, parsing_t, accel_traits
         ++_cur;
     }
     else {
-        return invalid_value<string_t>();
+        return invalid_value<__json_template_arg>();
     }
 
-    return _object_t(std::move(result));
+    return basic_object<__json_template_arg>(std::move(result));
 }
 
-template <typename string_t, template <typename...> typename map_t, typename parsing_t, typename accel_traits>
-inline __json_constexpr std::optional<string_t> parser<string_t, map_t, parsing_t, accel_traits>::parse_stdstring()
+template <__json_template, typename parsing_t, typename accel_traits>
+inline __json_constexpr std::optional<string_t> parser<__json_template_arg, parsing_t, accel_traits>::parse_stdstring()
 {
     if (*_cur == '"') {
         ++_cur;
@@ -2625,8 +2513,8 @@ inline __json_constexpr std::optional<string_t> parser<string_t, map_t, parsing_
     return std::nullopt;
 }
 
-template <typename string_t, template <typename...> typename map_t, typename parsing_t, typename accel_traits>
-inline __json_constexpr bool parser<string_t, map_t, parsing_t, accel_traits>::skip_string_literal_with_accel()
+template <__json_template, typename parsing_t, typename accel_traits>
+inline __json_constexpr bool parser<__json_template_arg, parsing_t, accel_traits>::skip_string_literal_with_accel()
 {
     if constexpr (sizeof(*_cur) != 1) {
         return false;
@@ -2651,8 +2539,8 @@ inline __json_constexpr bool parser<string_t, map_t, parsing_t, accel_traits>::s
     return _cur != _end;
 }
 
-template <typename string_t, template <typename...> typename map_t, typename parsing_t, typename accel_traits>
-inline __json_constexpr bool parser<string_t, map_t, parsing_t, accel_traits>::skip_whitespace() noexcept
+template <__json_template, typename parsing_t, typename accel_traits>
+inline __json_constexpr bool parser<__json_template_arg, parsing_t, accel_traits>::skip_whitespace() noexcept
 {
     while (_cur != _end) {
         switch (*_cur) {
@@ -2671,18 +2559,29 @@ inline __json_constexpr bool parser<string_t, map_t, parsing_t, accel_traits>::s
     return false;
 }
 
-template <typename string_t, template <typename...> typename map_t, typename parsing_t, typename accel_traits>
-inline __json_constexpr bool parser<string_t, map_t, parsing_t, accel_traits>::skip_digit()
+template <typename elem_t>
+__json_constexpr bool wrap_is_digit(elem_t ch)
+{
+#ifdef __json_enable_constexpr
+    if (std::is_constant_evaluated()) {
+        return soft_is_digit(ch);
+    }
+#endif
+    return std::isdigit(ch);
+}
+
+template <__json_template, typename parsing_t, typename accel_traits>
+inline __json_constexpr bool parser<__json_template_arg, parsing_t, accel_traits>::skip_digit()
 {
     // At least one digit
-    if (_cur != _end && std::isdigit(*_cur)) {
+    if (_cur != _end && wrap_is_digit(*_cur)) {
         ++_cur;
     }
     else {
         return false;
     }
 
-    while (_cur != _end && std::isdigit(*_cur)) {
+    while (_cur != _end && wrap_is_digit(*_cur)) {
         ++_cur;
     }
 
@@ -2702,8 +2601,17 @@ template <typename parsing_t>
 __json_constexpr auto parse(const parsing_t& content)
 {
     using string_t = std::basic_string<typename parsing_t::value_type>;
-    return parser<string_t, std::map, parsing_t>::parse(content);
+    return parser<string_t, default_map_t, default_unique_ptr_t, parsing_t>::parse(content);
 }
+
+#ifdef __json_enable_constexpr
+template <typename parsing_t>
+__json_constexpr auto cparse(const parsing_t& content)
+{
+    using string_t = std::basic_string<typename parsing_t::value_type>;
+    return parser<string_t, constexpr_map, constexpr_unique_ptr, parsing_t>::parse(content);
+}
+#endif
 
 template <typename char_t>
 __json_constexpr auto parse(char_t* content)
@@ -2743,7 +2651,7 @@ auto open(const path_t& filepath, bool check_bom)
 {
     using char_t = typename ifstream_t::char_type;
     using string_t = std::basic_string<char_t>;
-    using json_t = json::basic_value<string_t, std::map>;
+    using json_t = json::basic_value<string_t, default_map_t>;
     using return_t = std::optional<json_t>;
 
     ifstream_t ifs(filepath, std::ios::in);
@@ -2755,32 +2663,32 @@ auto open(const path_t& filepath, bool check_bom)
     return opt;
 }
 
-template <typename ostream_t, typename string_t, template <typename...> typename map_t,
+template <typename ostream_t, __json_template,
           typename std_ostream_t =
               std::basic_ostream<typename string_t::value_type, std::char_traits<typename string_t::value_type>>,
           typename enable_t = typename std::enable_if_t<std::is_same_v<std_ostream_t, ostream_t> ||
                                                         std::is_base_of_v<std_ostream_t, ostream_t>>>
-ostream_t& operator<<(ostream_t& out, const basic_value<string_t, map_t>& val)
+ostream_t& operator<<(ostream_t& out, const basic_value<__json_template_arg>& val)
 {
     out << val.format();
     return out;
 }
-template <typename ostream_t, typename string_t, template <typename...> typename map_t,
+template <typename ostream_t, __json_template,
           typename std_ostream_t =
               std::basic_ostream<typename string_t::value_type, std::char_traits<typename string_t::value_type>>,
           typename enable_t =
               std::enable_if_t<std::is_same_v<std_ostream_t, ostream_t> || std::is_base_of_v<std_ostream_t, ostream_t>>>
-ostream_t& operator<<(ostream_t& out, const basic_array<string_t, map_t>& arr)
+ostream_t& operator<<(ostream_t& out, const basic_array<__json_template_arg>& arr)
 {
     out << arr.format();
     return out;
 }
-template <typename ostream_t, typename string_t, template <typename...> typename map_t,
+template <typename ostream_t, __json_template,
           typename std_ostream_t =
               std::basic_ostream<typename string_t::value_type, std::char_traits<typename string_t::value_type>>,
           typename enable_t =
               std::enable_if_t<std::is_same_v<std_ostream_t, ostream_t> || std::is_base_of_v<std_ostream_t, ostream_t>>>
-ostream_t& operator<<(ostream_t& out, const basic_object<string_t, map_t>& obj)
+ostream_t& operator<<(ostream_t& out, const basic_object<__json_template_arg>& obj)
 {
     out << obj.format();
     return out;
@@ -2827,13 +2735,37 @@ namespace literals
         auto val = parse(std::wstring_view(str, len)).value_or(wvalue());
         return val.is_object() ? val.as_object() : wobject();
     }
+
+#ifdef __json_enable_constexpr
+    inline __json_constexpr cvalue operator""_cjson(const char* str, size_t len)
+    {
+        return operator""_cjvalue(str, len);
+    }
+
+    inline __json_constexpr cvalue operator""_cjvalue(const char* str, size_t len)
+    {
+        return cparse(std::string_view(str, len)).value_or(cvalue());
+    }
+
+    inline __json_constexpr carray operator""_cjarray(const char* str, size_t len)
+    {
+        auto val = cparse(std::string_view(str, len)).value_or(cvalue());
+        return val.is_array() ? val.as_array() : carray();
+    }
+
+    inline __json_constexpr cobject operator""_cjobject(const char* str, size_t len)
+    {
+        auto val = cparse(std::string_view(str, len)).value_or(cvalue());
+        return val.is_object() ? val.as_object() : cobject();
+    }
+#endif
 } // namespace literals
 
-template <typename string_t, template <typename...> typename map_t>
-__json_constexpr const basic_value<string_t, map_t> invalid_value()
+template <__json_template>
+__json_constexpr const basic_value<__json_template_arg> invalid_value()
 {
-    return basic_value<string_t, map_t>(basic_value<string_t, map_t>::value_type::invalid,
-                                        typename basic_value<string_t, map_t>::var_t());
+    return basic_value<__json_template_arg>(basic_value<__json_template_arg>::value_type::invalid,
+                                            typename basic_value<__json_template_arg>::var_t());
 }
 
 namespace _serialization_helper
@@ -2914,26 +2846,25 @@ namespace _serialization_helper
     }
 } // namespace _serialization_helper
 
-template <bool loose, typename any_t, typename string_t, template <typename...> typename map_t,
-          typename string_converter_t>
-__json_constexpr basic_value<string_t, map_t> serialize(any_t&& arg, string_converter_t&& string_converter)
+template <bool loose, typename any_t, __json_template, typename string_converter_t>
+__json_constexpr basic_value<__json_template_arg> serialize(any_t&& arg, string_converter_t&& string_converter)
 {
     using namespace _serialization_helper;
 
-    if constexpr (std::is_constructible_v<basic_value<string_t, map_t>, any_t>) {
-        return basic_value<string_t, map_t>(std::forward<any_t>(arg));
+    if constexpr (std::is_constructible_v<basic_value<__json_template_arg>, any_t>) {
+        return basic_value<__json_template_arg>(std::forward<any_t>(arg));
     }
-    else if constexpr (std::is_constructible_v<basic_array<string_t, map_t>, any_t>) {
-        return basic_array<string_t, map_t>(std::forward<any_t>(arg));
+    else if constexpr (std::is_constructible_v<basic_array<__json_template_arg>, any_t>) {
+        return basic_array<__json_template_arg>(std::forward<any_t>(arg));
     }
-    else if constexpr (std::is_constructible_v<basic_object<string_t, map_t>, any_t>) {
-        return basic_object<string_t, map_t>(std::forward<any_t>(arg));
+    else if constexpr (std::is_constructible_v<basic_object<__json_template_arg>, any_t>) {
+        return basic_object<__json_template_arg>(std::forward<any_t>(arg));
     }
     else if constexpr (std::decay_t<string_converter_t>::template is_convertible<any_t>) {
         return string_converter(std::forward<any_t>(arg));
     }
     else if constexpr (is_collection<std::decay_t<any_t>>) {
-        basic_value<string_t, map_t> result;
+        basic_value<__json_template_arg> result;
         for (auto&& val : arg) {
             using value_t = decltype(val);
 
@@ -2943,7 +2874,7 @@ __json_constexpr basic_value<string_t, map_t> serialize(any_t&& arg, string_conv
         return result;
     }
     else if constexpr (is_map<std::decay_t<any_t>>) {
-        basic_value<string_t, map_t> result;
+        basic_value<__json_template_arg> result;
         for (auto&& [key, val] : arg) {
             using key_t = decltype(key);
             using value_t = decltype(val);
