@@ -35,6 +35,17 @@ if (BUILD_TESTING)
         test/*.hpp
     )
     add_executable(testing ${testing_src} include/json.hpp)
+    
+    file(GLOB testing20_src
+        test20/*.cpp
+        test20/*.h
+        test20/*.hpp
+    )
+    add_executable(testing20 ${testing20_src} include/json.hpp)
+    set_target_properties(testing20
+        PROPERTIES
+        CXX_STANDARD 20
+    )
 endif()
 
 if (BUILD_BENCHMARK)
