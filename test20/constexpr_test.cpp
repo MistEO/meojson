@@ -13,7 +13,7 @@ using namespace json::literals;
 // constexpr json::value empty;
 // constexpr json::object wempty = wrap_obj(empty);
 
-constexpr size_t test()
+constexpr std::string test()
 {
     auto empty = "{ \"abc\": 1 }"_cjobject;
     // json::cobject empty = { { "abc", 1 } };
@@ -22,33 +22,26 @@ constexpr size_t test()
     empty["float"] = -1234.567890987654321;
     empty.emplace("float", 1);
 
-    return empty.to_string().size();
+    return empty.to_string();
 }
 
-template <size_t sz>
-constexpr std::array<char, sz + 1> test2()
+constexpr size_t get_size(std::string str)
 {
-    auto empty = "{ \"abc\": 1 }"_cjobject;
-    // json::cobject empty = { { "abc", 1 } };
+    return str.size();
+}
 
-    empty["def"] = 123;
-    empty["float"] = -1234.567890987654321;
-    empty.emplace("float", 1);
-
-    // json::cvalue v = json::cobject { { "abc", 1 } };
-
-    std::array<char, sz + 1> buf;
-    auto str = empty.to_string();
-    for (size_t i = 0; i < sz; i++) {
-        buf[i] = str[i];
-    }
-    buf[sz] = 0;
-    return buf;
+template <size_t N>
+constexpr std::array<char, N + 1> get_data(std::string str)
+{
+    std::array<char, N + 1> result;
+    std::copy(str.begin(), str.end(), result.begin());
+    result[N] = 0;
+    return result;
 }
 
 int main()
 {
-    constexpr auto v = test();
-    constexpr auto str = test2<v>();
-    std::cout << str.data() << std::endl;
+    constexpr auto size = get_size(test());
+    constexpr auto arr = get_data<size>(test());
+    std::cout << arr.data() << std::endl;
 }
