@@ -28,14 +28,18 @@
         template <typename...> \
         typename map_t,        \
         template <typename...> \
-        typename unique_ptr_t
+        typename unique_ptr_t, \
+        template <typename...> \
+        typename variant_t
 #define __json_template_default              \
     typename string_t = default_string_t,    \
              template <typename...>          \
              typename map_t = default_map_t, \
              template <typename...>          \
-             typename unique_ptr_t = default_unique_ptr_t
-#define __json_template_arg string_t, map_t, unique_ptr_t
+             typename unique_ptr_t = default_unique_ptr_t, \
+             template <typename...>          \
+             typename variant_t = default_variant_t
+#define __json_template_arg string_t, map_t, unique_ptr_t, variant_t
 
 namespace json
 {
@@ -52,20 +56,22 @@ template <typename... _>
 using default_map_t = std::map<_...>;
 template <typename... _>
 using default_unique_ptr_t = std::unique_ptr<_...>;
+template <typename... _>
+using default_variant_t = std::variant<_...>;
 
-using value = basic_value<default_string_t, default_map_t, default_unique_ptr_t>;
-using array = basic_array<default_string_t, default_map_t, default_unique_ptr_t>;
-using object = basic_object<default_string_t, default_map_t, default_unique_ptr_t>;
+using value = basic_value<default_string_t, default_map_t, default_unique_ptr_t, default_variant_t>;
+using array = basic_array<default_string_t, default_map_t, default_unique_ptr_t, default_variant_t>;
+using object = basic_object<default_string_t, default_map_t, default_unique_ptr_t, default_variant_t>;
 
-using wvalue = basic_value<std::wstring, default_map_t, default_unique_ptr_t>;
-using warray = basic_array<std::wstring, default_map_t, default_unique_ptr_t>;
-using wobject = basic_object<std::wstring, default_map_t, default_unique_ptr_t>;
+using wvalue = basic_value<std::wstring, default_map_t, default_unique_ptr_t, default_variant_t>;
+using warray = basic_array<std::wstring, default_map_t, default_unique_ptr_t, default_variant_t>;
+using wobject = basic_object<std::wstring, default_map_t, default_unique_ptr_t, default_variant_t>;
 
 #ifdef __json_enable_constexpr
 
-using cvalue = basic_value<default_string_t, constexpr_map, constexpr_unique_ptr>;
-using carray = basic_array<default_string_t, constexpr_map, constexpr_unique_ptr>;
-using cobject = basic_object<default_string_t, constexpr_map, constexpr_unique_ptr>;
+using cvalue = basic_value<default_string_t, constexpr_map, constexpr_unique_ptr, constexpr_variant>;
+using carray = basic_array<default_string_t, constexpr_map, constexpr_unique_ptr, constexpr_variant>;
+using cobject = basic_object<default_string_t, constexpr_map, constexpr_unique_ptr, constexpr_variant>;
 
 #endif
 
@@ -103,7 +109,7 @@ public:
         object
     };
 
-    using var_t = std::variant<string_t, array_ptr, object_ptr>;
+    using var_t = variant_t<string_t, array_ptr, object_ptr>;
     using char_t = typename string_t::value_type;
 
 public:
@@ -2601,7 +2607,7 @@ template <typename parsing_t>
 __json_constexpr auto parse(const parsing_t& content)
 {
     using string_t = std::basic_string<typename parsing_t::value_type>;
-    return parser<string_t, default_map_t, default_unique_ptr_t, parsing_t>::parse(content);
+    return parser<string_t, default_map_t, default_unique_ptr_t, default_variant_t, parsing_t>::parse(content);
 }
 
 #ifdef __json_enable_constexpr
@@ -2609,7 +2615,7 @@ template <typename parsing_t>
 __json_constexpr auto cparse(const parsing_t& content)
 {
     using string_t = std::basic_string<typename parsing_t::value_type>;
-    return parser<string_t, constexpr_map, constexpr_unique_ptr, parsing_t>::parse(content);
+    return parser<string_t, constexpr_map, constexpr_unique_ptr, constexpr_variant, parsing_t>::parse(content);
 }
 #endif
 
@@ -2651,7 +2657,7 @@ auto open(const path_t& filepath, bool check_bom)
 {
     using char_t = typename ifstream_t::char_type;
     using string_t = std::basic_string<char_t>;
-    using json_t = json::basic_value<string_t, default_map_t, default_unique_ptr_t>;
+    using json_t = json::basic_value<string_t, default_map_t, default_unique_ptr_t, default_variant_t>;
     using return_t = std::optional<json_t>;
 
     ifstream_t ifs(filepath, std::ios::in);

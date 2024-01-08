@@ -4,6 +4,7 @@
 
 #include "constexpr_map.hpp"
 #include "constexpr_unique_ptr.hpp"
+#include "constexpr_variant.hpp"
 
 namespace json
 {
