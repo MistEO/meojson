@@ -26,14 +26,16 @@ constexpr std::string test()
     return empty.to_string();
 }
 
-constexpr size_t get_size(std::string str)
+constexpr size_t get_size()
 {
+    auto str = test();
     return str.size();
 }
 
 template <size_t N>
-constexpr std::array<char, N + 1> get_data(std::string str)
+constexpr std::array<char, N + 1> get_data()
 {
+    auto str = test();
     std::array<char, N + 1> result;
     std::copy(str.begin(), str.end(), result.begin());
     result[N] = 0;
@@ -42,7 +44,7 @@ constexpr std::array<char, N + 1> get_data(std::string str)
 
 int main()
 {
-    constexpr auto size = get_size(test());
-    constexpr auto arr = get_data<size>(test());
+    constexpr auto size = get_size();
+    constexpr auto arr = get_data<size>();
     std::cout << arr.data() << std::endl;
 }
