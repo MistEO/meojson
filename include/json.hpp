@@ -481,8 +481,8 @@ public:
     }
     template <typename value_t>
     __json_constexpr bool all() const;
-    template <typename value_t, template <typename...> typename map_t = default_map_t>
-    __json_constexpr map_t<string_t, value_t> to_map() const;
+    template <typename value_t, template <typename...> typename another_map_t = default_map_t>
+    __json_constexpr another_map_t<string_t, value_t> to_map() const;
 
     // Usage: get(key_1, key_2, ..., default_value);
     template <typename... key_then_default_value_t>
@@ -687,7 +687,7 @@ __json_constexpr string_t to_basic_string(any_t&& arg)
 {
 #ifdef __json_enable_constexpr
     if (std::is_constant_evaluated()) {
-        return soft_to_string_t<string_t> {}.to_string(std::forward<any_t>(arg));
+        return soft_to_string<string_t>(std::forward<any_t>(arg));
     }
 #endif
     if constexpr (std::is_same_v<string_t, std::string>) {
@@ -2634,9 +2634,9 @@ __json_constexpr auto parse(istream_t& ifs, bool check_bom)
 
     if (check_bom) {
         using uchar = unsigned char;
-        static constexpr uchar Bom_0 = 0xEF;
-        static constexpr uchar Bom_1 = 0xBB;
-        static constexpr uchar Bom_2 = 0xBF;
+        constexpr uchar Bom_0 = 0xEF;
+        constexpr uchar Bom_1 = 0xBB;
+        constexpr uchar Bom_2 = 0xBF;
 
         if (str.size() >= 3 && static_cast<uchar>(str.at(0)) == Bom_0 && static_cast<uchar>(str.at(1)) == Bom_1 &&
             static_cast<uchar>(str.at(2)) == Bom_2) {
@@ -2651,7 +2651,7 @@ auto open(const path_t& filepath, bool check_bom)
 {
     using char_t = typename ifstream_t::char_type;
     using string_t = std::basic_string<char_t>;
-    using json_t = json::basic_value<string_t, default_map_t>;
+    using json_t = json::basic_value<string_t, default_map_t, default_unique_ptr_t>;
     using return_t = std::optional<json_t>;
 
     ifstream_t ifs(filepath, std::ios::in);
