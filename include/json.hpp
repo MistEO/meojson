@@ -1451,7 +1451,7 @@ inline __json_constexpr typename basic_value<__json_template_arg>::var_t basic_v
 {
     var_t dst;
     if (const auto string_ptr = std::get_if<string_t>(&src)) {
-        dst = *string_ptr;
+        dst = string_t(*string_ptr);
     }
     else if (const auto arr_ptr = std::get_if<array_ptr>(&src)) {
         dst = unique_ptr_t<basic_array<__json_template_arg>>(new basic_array<__json_template_arg>(**arr_ptr));
