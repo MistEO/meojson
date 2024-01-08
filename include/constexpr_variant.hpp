@@ -2,6 +2,8 @@
 
 #include <tuple>
 
+#ifdef _LIBCPP_VERSION
+
 namespace json
 {
 
@@ -124,3 +126,17 @@ constexpr const elem_t& get(const json::constexpr_variant<elems_t...>& v)
 }
 
 }
+
+#else
+
+#include <variant>
+
+namespace json
+{
+
+template <typename... _>
+using constexpr_variant = std::variant<_...>;
+
+}
+
+#endif
