@@ -16,9 +16,10 @@ using namespace json::literals;
 constexpr std::string test()
 {
     auto empty = "{ \"abc\": 1 }"_cjobject;
+    constexpr auto obj2 = json::cparse("{ \"axxbc\": {} }").value().to_string().size();
     // json::cobject empty = { { "abc", 1 } };
 
-    empty["def"] = 123;
+    empty["def"] = obj2;
     empty["float"] = -1234.567890987654321;
     empty.emplace("float", 1);
 

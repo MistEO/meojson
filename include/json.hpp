@@ -2625,6 +2625,14 @@ __json_constexpr auto parse(char_t* content)
     return parse(std::basic_string_view<std::decay_t<char_t>> { content });
 }
 
+#ifdef __json_enable_constexpr
+template <typename char_t>
+__json_constexpr auto cparse(char_t* content)
+{
+    return cparse(std::basic_string_view<std::decay_t<char_t>> { content });
+}
+#endif
+
 template <typename istream_t, typename _>
 __json_constexpr auto parse(istream_t& ifs, bool check_bom)
 {
