@@ -12,23 +12,23 @@ template <typename... elems_t>
 class constexpr_variant
 {
 public:
-    constexpr constexpr_variant() { __index = 0; }
+    constexpr constexpr_variant() { _index = 0; }
 
-    constexpr constexpr_variant(const constexpr_variant& v) : __data(v.__data) { __index = v.__index; }
+    constexpr constexpr_variant(const constexpr_variant& v) : _data(v._data), _index(v._index) {}
 
-    constexpr constexpr_variant(constexpr_variant&& v) : __data(std::move(v.__data)) { __index = v.__index; }
+    constexpr constexpr_variant(constexpr_variant&& v) : _data(std::move(v._data)), _index(v._index) {}
 
     constexpr constexpr_variant& operator=(const constexpr_variant& v)
     {
-        __index = v.__index;
-        __data = v.__data;
+        _index = v._index;
+        _data = v._data;
         return *this;
     }
 
     constexpr constexpr_variant& operator=(constexpr_variant&& v)
     {
-        __index = v.__index;
-        __data = std::move(v.__data);
+        _index = v._index;
+        _data = std::move(v._data);
         return *this;
     }
 
@@ -39,8 +39,8 @@ public:
     constexpr constexpr_variant(elem_t&& elem)
     {
         constexpr size_t index = index_of<elem_t>();
-        std::get<index>(__data) = std::move(elem);
-        __index = index;
+        std::get<index>(_data) = std::forward<elem_t&&>(elem);
+        _index = index;
     }
 
     template <typename elem_t>
@@ -48,8 +48,8 @@ public:
     constexpr constexpr_variant& operator=(elem_t&& elem)
     {
         constexpr size_t index = index_of<elem_t>();
-        std::get<index>(__data) = std::move(elem);
-        __index = index;
+        std::get<index>(_data) = std::forward<elem_t&&>(elem);
+        _index = index;
         return *this;
     }
 
@@ -78,8 +78,8 @@ public:
     constexpr const elem_t* get_if() const
     {
         constexpr size_t index = index_of<elem_t>();
-        if (__index == index) {
-            return &std::get<index>(__data);
+        if (_index == index) {
+            return &std::get<index>(_data);
         }
         else {
             return nullptr;
@@ -91,8 +91,8 @@ public:
     constexpr const elem_t& get() const
     {
         constexpr size_t index = index_of<elem_t>();
-        if (__index == index) {
-            return std::get<index>(__data);
+        if (_index == index) {
+            return std::get<index>(_data);
         }
         else {
             throw std::bad_variant_access();
@@ -100,8 +100,8 @@ public:
     }
 
 private:
-    std::tuple<elems_t...> __data;
-    size_t __index;
+    std::tuple<elems_t...> _data;
+    size_t _index = 0;
 };
 
 } // namespace json

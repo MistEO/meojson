@@ -666,7 +666,8 @@ namespace _serialization_helper
     template <bool loose, typename string_t>
     struct string_converter;
 }
-template <bool loose, typename any_t, typename string_t = default_string_t, typename traits_t = default_container_traits,
+template <bool loose, typename any_t, typename string_t = default_string_t,
+          typename traits_t = default_container_traits,
           typename string_converter_t = _serialization_helper::string_converter<loose, string_t>>
 __json_constexpr basic_value<string_t, traits_t> serialize(any_t&& arg, string_converter_t&& string_converter = {});
 
@@ -788,21 +789,21 @@ inline __json_constexpr basic_value<string_t, traits_t>::basic_value(string_t st
 
 template <typename string_t, typename traits_t>
 inline __json_constexpr basic_value<string_t, traits_t>::basic_value(basic_array<string_t, traits_t> arr)
-    : _type(value_type::array),
-      _raw_data(typename traits_t::template unique_ptr_t<basic_array<string_t, traits_t>>(new basic_array<string_t, traits_t>(std::move(arr))))
+    : _type(value_type::array), _raw_data(typename traits_t::template unique_ptr_t<basic_array<string_t, traits_t>>(
+                                    new basic_array<string_t, traits_t>(std::move(arr))))
 {}
 
 template <typename string_t, typename traits_t>
 inline __json_constexpr basic_value<string_t, traits_t>::basic_value(basic_object<string_t, traits_t> obj)
-    : _type(value_type::object),
-      _raw_data(typename traits_t::template unique_ptr_t<basic_object<string_t, traits_t>>(new basic_object<string_t, traits_t>(std::move(obj))))
+    : _type(value_type::object), _raw_data(typename traits_t::template unique_ptr_t<basic_object<string_t, traits_t>>(
+                                     new basic_object<string_t, traits_t>(std::move(obj))))
 {}
 
 template <typename string_t, typename traits_t>
 inline __json_constexpr basic_value<string_t, traits_t>::basic_value(
     std::initializer_list<basic_value<string_t, traits_t>> init_list)
-    : _type(value_type::object),
-      _raw_data(typename traits_t::template unique_ptr_t<basic_object<string_t, traits_t>>(new basic_object<string_t, traits_t>(init_list)))
+    : _type(value_type::object), _raw_data(typename traits_t::template unique_ptr_t<basic_object<string_t, traits_t>>(
+                                     new basic_object<string_t, traits_t>(init_list)))
 {}
 
 // for Pimpl
@@ -895,8 +896,8 @@ inline __json_constexpr auto basic_value<string_t, traits_t>::get(
 template <typename string_t, typename traits_t>
 template <typename value_t, typename first_key_t, typename... rest_keys_t>
 inline __json_constexpr auto basic_value<string_t, traits_t>::get_helper(const value_t& default_value,
-                                                                          first_key_t&& first,
-                                                                          rest_keys_t&&... rest) const
+                                                                         first_key_t&& first,
+                                                                         rest_keys_t&&... rest) const
 {
     if constexpr (std::is_constructible_v<string_t, first_key_t>) {
         return is_object() ? as_object().get_helper(default_value, std::forward<first_key_t>(first),
@@ -916,7 +917,7 @@ inline __json_constexpr auto basic_value<string_t, traits_t>::get_helper(const v
 template <typename string_t, typename traits_t>
 template <typename value_t, typename unique_key_t>
 inline __json_constexpr auto basic_value<string_t, traits_t>::get_helper(const value_t& default_value,
-                                                                          unique_key_t&& first) const
+                                                                         unique_key_t&& first) const
 {
     if constexpr (std::is_constructible_v<string_t, unique_key_t>) {
         return is_object() ? as_object().get_helper(default_value, std::forward<unique_key_t>(first)) : default_value;
@@ -1458,10 +1459,12 @@ inline __json_constexpr typename basic_value<string_t, traits_t>::var_t basic_va
         dst = string_t(*string_ptr);
     }
     else if (const auto arr_ptr = std::get_if<array_ptr>(&src)) {
-        dst = typename traits_t::template unique_ptr_t<basic_array<string_t, traits_t>>(new basic_array<string_t, traits_t>(**arr_ptr));
+        dst = typename traits_t::template unique_ptr_t<basic_array<string_t, traits_t>>(
+            new basic_array<string_t, traits_t>(**arr_ptr));
     }
     else if (const auto obj_ptr = std::get_if<object_ptr>(&src)) {
-        dst = typename traits_t::template unique_ptr_t<basic_object<string_t, traits_t>>(new basic_object<string_t, traits_t>(**obj_ptr));
+        dst = typename traits_t::template unique_ptr_t<basic_object<string_t, traits_t>>(
+            new basic_object<string_t, traits_t>(**obj_ptr));
     }
     else {
         // maybe invalid_value
@@ -1616,7 +1619,7 @@ inline __json_constexpr vector_t<value_t> basic_array<string_t, traits_t>::to_ve
 template <typename string_t, typename traits_t>
 template <typename value_t, typename... rest_keys_t>
 inline __json_constexpr auto basic_array<string_t, traits_t>::get_helper(const value_t& default_value, size_t pos,
-                                                                          rest_keys_t&&... rest) const
+                                                                         rest_keys_t&&... rest) const
 {
     constexpr bool is_json = std::is_same_v<basic_value<string_t, traits_t>, value_t> ||
                              std::is_same_v<basic_array<string_t, traits_t>, value_t> ||
@@ -1637,8 +1640,7 @@ inline __json_constexpr auto basic_array<string_t, traits_t>::get_helper(const v
 
 template <typename string_t, typename traits_t>
 template <typename value_t>
-inline __json_constexpr auto basic_array<string_t, traits_t>::get_helper(const value_t& default_value,
-                                                                          size_t pos) const
+inline __json_constexpr auto basic_array<string_t, traits_t>::get_helper(const value_t& default_value, size_t pos) const
 {
     constexpr bool is_json = std::is_same_v<basic_value<string_t, traits_t>, value_t> ||
                              std::is_same_v<basic_array<string_t, traits_t>, value_t> ||
@@ -1687,15 +1689,15 @@ inline __json_constexpr std::optional<value_t> basic_array<string_t, traits_t>::
 }
 
 template <typename string_t, typename traits_t>
-inline __json_constexpr typename basic_array<string_t, traits_t>::iterator basic_array<
-    string_t, traits_t>::begin() noexcept
+inline __json_constexpr typename basic_array<string_t, traits_t>::iterator basic_array<string_t,
+                                                                                       traits_t>::begin() noexcept
 {
     return _array_data.begin();
 }
 
 template <typename string_t, typename traits_t>
-inline __json_constexpr typename basic_array<string_t, traits_t>::iterator basic_array<
-    string_t, traits_t>::end() noexcept
+inline __json_constexpr typename basic_array<string_t, traits_t>::iterator basic_array<string_t,
+                                                                                       traits_t>::end() noexcept
 {
     return _array_data.end();
 }
@@ -1708,8 +1710,8 @@ inline __json_constexpr typename basic_array<string_t, traits_t>::const_iterator
 }
 
 template <typename string_t, typename traits_t>
-inline __json_constexpr typename basic_array<string_t, traits_t>::const_iterator basic_array<
-    string_t, traits_t>::end() const noexcept
+inline __json_constexpr typename basic_array<string_t, traits_t>::const_iterator basic_array<string_t, traits_t>::end()
+    const noexcept
 {
     return _array_data.end();
 }
@@ -1722,8 +1724,8 @@ inline __json_constexpr typename basic_array<string_t, traits_t>::const_iterator
 }
 
 template <typename string_t, typename traits_t>
-inline __json_constexpr typename basic_array<string_t, traits_t>::const_iterator basic_array<
-    string_t, traits_t>::cend() const noexcept
+inline __json_constexpr typename basic_array<string_t, traits_t>::const_iterator basic_array<string_t, traits_t>::cend()
+    const noexcept
 {
     return _array_data.cend();
 }
@@ -1968,8 +1970,8 @@ inline __json_constexpr another_map_t<string_t, value_t> basic_object<string_t, 
 template <typename string_t, typename traits_t>
 template <typename value_t, typename... rest_keys_t>
 inline __json_constexpr auto basic_object<string_t, traits_t>::get_helper(const value_t& default_value,
-                                                                           const string_t& key,
-                                                                           rest_keys_t&&... rest) const
+                                                                          const string_t& key,
+                                                                          rest_keys_t&&... rest) const
 {
     constexpr bool is_json = std::is_same_v<basic_value<string_t, traits_t>, value_t> ||
                              std::is_same_v<basic_array<string_t, traits_t>, value_t> ||
@@ -1991,7 +1993,7 @@ inline __json_constexpr auto basic_object<string_t, traits_t>::get_helper(const 
 template <typename string_t, typename traits_t>
 template <typename value_t>
 inline __json_constexpr auto basic_object<string_t, traits_t>::get_helper(const value_t& default_value,
-                                                                           const string_t& key) const
+                                                                          const string_t& key) const
 {
     constexpr bool is_json = std::is_same_v<basic_value<string_t, traits_t>, value_t> ||
                              std::is_same_v<basic_array<string_t, traits_t>, value_t> ||
@@ -2041,15 +2043,15 @@ inline __json_constexpr std::optional<value_t> basic_object<string_t, traits_t>:
 }
 
 template <typename string_t, typename traits_t>
-inline __json_constexpr typename basic_object<string_t, traits_t>::iterator basic_object<
-    string_t, traits_t>::begin() noexcept
+inline __json_constexpr typename basic_object<string_t, traits_t>::iterator basic_object<string_t,
+                                                                                         traits_t>::begin() noexcept
 {
     return _object_data.begin();
 }
 
 template <typename string_t, typename traits_t>
-inline __json_constexpr typename basic_object<string_t, traits_t>::iterator basic_object<
-    string_t, traits_t>::end() noexcept
+inline __json_constexpr typename basic_object<string_t, traits_t>::iterator basic_object<string_t,
+                                                                                         traits_t>::end() noexcept
 {
     return _object_data.end();
 }
@@ -2167,7 +2169,7 @@ inline __json_constexpr std::optional<basic_value<string_t, traits_t>> parser<
 
 template <typename string_t, typename traits_t, typename parsing_t, typename accel_traits>
 inline __json_constexpr std::optional<basic_value<string_t, traits_t>> parser<string_t, traits_t, parsing_t,
-                                                                               accel_traits>::parse()
+                                                                              accel_traits>::parse()
 {
     if (!skip_whitespace()) {
         return std::nullopt;
@@ -2200,7 +2202,7 @@ inline __json_constexpr std::optional<basic_value<string_t, traits_t>> parser<st
 
 template <typename string_t, typename traits_t, typename parsing_t, typename accel_traits>
 inline __json_constexpr basic_value<string_t, traits_t> parser<string_t, traits_t, parsing_t,
-                                                                accel_traits>::parse_value()
+                                                               accel_traits>::parse_value()
 {
     switch (*_cur) {
     case 'n':
@@ -2233,7 +2235,7 @@ inline __json_constexpr basic_value<string_t, traits_t> parser<string_t, traits_
 
 template <typename string_t, typename traits_t, typename parsing_t, typename accel_traits>
 inline __json_constexpr basic_value<string_t, traits_t> parser<string_t, traits_t, parsing_t,
-                                                                accel_traits>::parse_null()
+                                                               accel_traits>::parse_null()
 {
     for (const auto& ch : null_string<string_t>()) {
         if (_cur != _end && *_cur == ch) {
@@ -2249,7 +2251,7 @@ inline __json_constexpr basic_value<string_t, traits_t> parser<string_t, traits_
 
 template <typename string_t, typename traits_t, typename parsing_t, typename accel_traits>
 inline __json_constexpr basic_value<string_t, traits_t> parser<string_t, traits_t, parsing_t,
-                                                                accel_traits>::parse_boolean()
+                                                               accel_traits>::parse_boolean()
 {
     switch (*_cur) {
     case 't':
@@ -2279,7 +2281,7 @@ inline __json_constexpr basic_value<string_t, traits_t> parser<string_t, traits_
 
 template <typename string_t, typename traits_t, typename parsing_t, typename accel_traits>
 inline __json_constexpr basic_value<string_t, traits_t> parser<string_t, traits_t, parsing_t,
-                                                                accel_traits>::parse_number()
+                                                               accel_traits>::parse_number()
 {
     const auto first = _cur;
     if (*_cur == '-') {
@@ -2314,25 +2316,24 @@ inline __json_constexpr basic_value<string_t, traits_t> parser<string_t, traits_
         }
     }
 
-    return basic_value<string_t, traits_t>(basic_value<string_t, traits_t>::value_type::number,
-                                            string_t(first, _cur));
+    return basic_value<string_t, traits_t>(basic_value<string_t, traits_t>::value_type::number, string_t(first, _cur));
 }
 
 template <typename string_t, typename traits_t, typename parsing_t, typename accel_traits>
 inline __json_constexpr basic_value<string_t, traits_t> parser<string_t, traits_t, parsing_t,
-                                                                accel_traits>::parse_string()
+                                                               accel_traits>::parse_string()
 {
     auto string_opt = parse_stdstring();
     if (!string_opt) {
         return invalid_value<string_t, traits_t>();
     }
     return basic_value<string_t, traits_t>(basic_value<string_t, traits_t>::value_type::string,
-                                            std::move(string_opt).value());
+                                           std::move(string_opt).value());
 }
 
 template <typename string_t, typename traits_t, typename parsing_t, typename accel_traits>
 inline __json_constexpr basic_value<string_t, traits_t> parser<string_t, traits_t, parsing_t,
-                                                                accel_traits>::parse_array()
+                                                               accel_traits>::parse_array()
 {
     if (*_cur == '[') {
         ++_cur;
@@ -2384,7 +2385,7 @@ inline __json_constexpr basic_value<string_t, traits_t> parser<string_t, traits_
 
 template <typename string_t, typename traits_t, typename parsing_t, typename accel_traits>
 inline __json_constexpr basic_value<string_t, traits_t> parser<string_t, traits_t, parsing_t,
-                                                                accel_traits>::parse_object()
+                                                               accel_traits>::parse_object()
 {
     if (*_cur == '{') {
         ++_cur;
@@ -2570,7 +2571,7 @@ inline __json_constexpr bool parser<string_t, traits_t, parsing_t, accel_traits>
 }
 
 template <typename elem_t>
-__json_constexpr bool wrap_is_digit(elem_t ch)
+__json_constexpr bool dispatch_is_digit(elem_t ch)
 {
 #ifdef __json_enable_constexpr
     if (std::is_constant_evaluated()) {
@@ -2584,14 +2585,14 @@ template <typename string_t, typename traits_t, typename parsing_t, typename acc
 inline __json_constexpr bool parser<string_t, traits_t, parsing_t, accel_traits>::skip_digit()
 {
     // At least one digit
-    if (_cur != _end && wrap_is_digit(*_cur)) {
+    if (_cur != _end && dispatch_is_digit(*_cur)) {
         ++_cur;
     }
     else {
         return false;
     }
 
-    while (_cur != _end && wrap_is_digit(*_cur)) {
+    while (_cur != _end && dispatch_is_digit(*_cur)) {
         ++_cur;
     }
 
@@ -2783,7 +2784,7 @@ template <typename string_t, typename traits_t>
 __json_constexpr const basic_value<string_t, traits_t> invalid_value()
 {
     return basic_value<string_t, traits_t>(basic_value<string_t, traits_t>::value_type::invalid,
-                                            typename basic_value<string_t, traits_t>::var_t());
+                                           typename basic_value<string_t, traits_t>::var_t());
 }
 
 namespace _serialization_helper

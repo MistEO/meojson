@@ -11,15 +11,15 @@ class constexpr_unique_ptr
 public:
     constexpr void reset()
     {
-        delete data;
-        data = nullptr;
+        delete _data;
+        _data = nullptr;
     }
 
     constexpr constexpr_unique_ptr() = default;
-    constexpr constexpr_unique_ptr(elem_t* p) : data(p) {}
+    constexpr constexpr_unique_ptr(elem_t* p) : _data(p) {}
 
     constexpr constexpr_unique_ptr(const constexpr_unique_ptr&) = delete;
-    constexpr constexpr_unique_ptr(constexpr_unique_ptr&& another) : data(std::exchange(another.data, nullptr)) {}
+    constexpr constexpr_unique_ptr(constexpr_unique_ptr&& another) : _data(std::exchange(another._data, nullptr)) {}
 
     constexpr constexpr_unique_ptr& operator=(const constexpr_unique_ptr&) = delete;
     constexpr constexpr_unique_ptr& operator=(constexpr_unique_ptr&& another)
@@ -28,18 +28,18 @@ public:
             return *this;
         }
         reset();
-        data = std::exchange(another.data, nullptr);
+        _data = std::exchange(another._data, nullptr);
         return *this;
     }
 
     constexpr ~constexpr_unique_ptr() { reset(); }
 
-    constexpr elem_t* operator->() const { return data; }
-    constexpr elem_t& operator*() const { return *data; }
-    constexpr elem_t* get() const { return data; }
+    constexpr elem_t* operator->() const { return _data; }
+    constexpr elem_t& operator*() const { return *_data; }
+    constexpr elem_t* get() const { return _data; }
 
 private:
-    elem_t* data;
+    elem_t* _data;
 };
 
 }

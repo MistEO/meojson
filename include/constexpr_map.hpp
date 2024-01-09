@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 
 namespace json
@@ -22,8 +23,7 @@ public:
                 return data.second;
             }
         }
-        this->emplace_back(key, mapped_type {});
-        return this->back().second;
+        return this->emplace_back(key, mapped_type {}).second;
     }
 
     constexpr mapped_type& operator[](key_t&& key)
@@ -33,16 +33,20 @@ public:
                 return data.second;
             }
         }
-        this->emplace_back(key, mapped_type {});
-        return this->back().second;
+        return this->emplace_back(std::forward<key_t&&>(key), mapped_type {}).second;
     }
 
     template <typename... Args>
-    constexpr std::pair<const key_t, value_t> emplace(Args&&... args)
+    constexpr std::pair<typename std::vector<std::pair<const key_t, value_t>>::iterator, bool> emplace(Args&&... args)
     {
-        std::pair<const key_t, value_t> p(args...);
-        this->operator[](p.first) = p.second;
-        return p;
+        std::pair<const key_t, value_t> p(std::forward<Args&&>(args)...);
+        for (auto it = this->begin(); it != this->end(); it++) {
+            if (it->first == p.first) {
+                return std::make_pair(it, false);
+            }
+        }
+        this->push_back(std::move(p));
+        return std::make_pair(this->end() - 1, true);
     }
 };
 }
