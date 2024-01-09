@@ -698,7 +698,7 @@ __json_constexpr string_t to_basic_string(any_t&& arg)
 {
 #ifdef __json_enable_constexpr
     if (std::is_constant_evaluated()) {
-        return soft_to_string<string_t>(std::forward<any_t>(arg));
+        return soft_impl::to_string<string_t>(std::forward<any_t>(arg));
     }
 #endif
     if constexpr (std::is_same_v<string_t, std::string>) {
@@ -2575,7 +2575,7 @@ __json_constexpr bool dispatch_is_digit(elem_t ch)
 {
 #ifdef __json_enable_constexpr
     if (std::is_constant_evaluated()) {
-        return soft_is_digit(ch);
+        return soft_impl::is_digit(ch);
     }
 #endif
     return std::isdigit(ch);
