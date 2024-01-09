@@ -39,7 +39,7 @@ public:
     constexpr elem_t* get() const { return _data; }
 
 private:
-    elem_t* _data;
+    elem_t* _data = nullptr;
 };
 
 }

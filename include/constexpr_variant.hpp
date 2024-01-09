@@ -12,7 +12,7 @@ template <typename... elems_t>
 class constexpr_variant
 {
 public:
-    constexpr constexpr_variant() { _index = 0; }
+    constexpr constexpr_variant() = default;
 
     constexpr constexpr_variant(const constexpr_variant& v) : _data(v._data), _index(v._index) {}
 

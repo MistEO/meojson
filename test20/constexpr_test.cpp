@@ -21,6 +21,8 @@ constexpr std::string test()
 
     empty["def"] = obj2;
     empty["float"] = -1234.567890987654321;
+    empty["float2"] = 0.00012345678998765;
+    empty["float3"] = 123456789876543211234.;
     empty.emplace("float", 1);
 
     return empty.to_string();

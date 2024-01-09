@@ -9,6 +9,8 @@
 namespace json
 {
 
+constexpr int soft_to_string_double_precision = 14;
+
 template <typename elem_t>
 constexpr bool soft_is_digit(elem_t ch)
 {
@@ -58,10 +60,27 @@ constexpr string_t soft_to_string(double value)
     }
     int precision = 14;
     double base = 1;
-    while (base < value) {
+    int log_base = 0;
+    while (base <= value) {
         base *= 10;
+        log_base++;
+    }
+    if (log_base == 0) {
+        while (base > value) {
+            base /= 10;
+            log_base--;
+        }
+        log_base++;
+        base *= 10;
+
+        result.push_back('0');
+        result.push_back('.');
+        for (int k = 0; k > log_base; k--) {
+            result.push_back('0');
+        }
     }
     while (precision--) {
+        log_base--;
         base /= 10;
         char c = '0';
         while (value >= base) {
@@ -69,9 +88,16 @@ constexpr string_t soft_to_string(double value)
             c++;
         }
         result.push_back(c);
-        if (base == 1) {
+        if (log_base == 0) {
             result.push_back('.');
         }
+    }
+    if (log_base > 0) {
+        while (log_base > 0) {
+            result.push_back('0');
+            log_base--;
+        }
+        result.push_back('.');
     }
     return result;
 }
