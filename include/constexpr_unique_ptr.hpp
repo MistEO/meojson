@@ -43,3 +43,21 @@ private:
 };
 
 }
+
+template <typename elem_t>
+constexpr bool operator==(const json::constexpr_unique_ptr<elem_t>& x, const json::constexpr_unique_ptr<elem_t>& y)
+{
+    if (!x.get() || !y.get()) {
+        return false;
+    }
+    if (x.get() == y.get()) {
+        return true;
+    }
+    return *x == *y;
+}
+
+template <typename elem_t>
+constexpr bool operator!=(const json::constexpr_unique_ptr<elem_t>& x, const json::constexpr_unique_ptr<elem_t>& y)
+{
+    return !(x == y);
+}

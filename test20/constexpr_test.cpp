@@ -25,7 +25,13 @@ constexpr std::string test()
     empty["float3"] = 123456789876543211234.;
     empty.emplace("float", 1);
 
-    return empty.to_string();
+    auto test1 = "{ \"k1\": 2 }"_cjobject;
+    auto test2 = json::cobject { { "k1", 2 } };
+    if (test1 == test2) {
+        return empty.to_string();
+    } else {
+        return "error!";
+    }
 }
 
 constexpr size_t get_size()

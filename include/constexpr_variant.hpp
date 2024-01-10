@@ -5,8 +5,8 @@
 namespace json
 {
 
-template <typename T, typename... Types>
-concept contains_type = (std::same_as<T, Types> || ...);
+template <typename T, typename... elems_t>
+concept contains_type = (std::same_as<T, elems_t> || ...);
 
 template <typename... elems_t>
 class constexpr_variant
@@ -99,10 +99,37 @@ public:
         }
     }
 
+    constexpr size_t index() const { return _index; }
+
+    constexpr const std::tuple<elems_t...>& data() const { return _data; }
+
 private:
     std::tuple<elems_t...> _data;
     size_t _index = 0;
 };
+
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-value"
+#endif
+
+template <typename tuple_t, std::size_t... Is>
+constexpr bool compare_at_indexs(const tuple_t& t1, const tuple_t& t2, std::size_t index, std::index_sequence<Is...>)
+{
+    bool result = false;
+    (..., (Is == index ? (result = (std::get<Is>(t1) == std::get<Is>(t2)), true) : false));
+    return result;
+}
+
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif
+
+template <typename... elems_t>
+constexpr bool compare_at_index(const std::tuple<elems_t...>& t1, const std::tuple<elems_t...>& t2, std::size_t index)
+{
+    return compare_at_indexs(t1, t2, index, std::index_sequence_for<elems_t...> {});
+}
 
 } // namespace json
 
@@ -123,4 +150,19 @@ constexpr const elem_t& get(const json::constexpr_variant<elems_t...>& v)
     return v.template get<elem_t>();
 }
 
+}
+
+template <typename... elems_t>
+constexpr bool operator==(const json::constexpr_variant<elems_t...>& x, const json::constexpr_variant<elems_t...>& y)
+{
+    if (x.index() != y.index()) {
+        return false;
+    }
+    return compare_at_index(x.data(), y.data(), x.index());
+}
+
+template <typename... elems_t>
+constexpr bool operator!=(const json::constexpr_variant<elems_t...>& x, const json::constexpr_variant<elems_t...>& y)
+{
+    return !(x == y);
 }
