@@ -28,22 +28,6 @@ constexpr std::string test()
     return empty.to_string();
 }
 
-constexpr size_t get_size()
-{
-    auto str = test();
-    return str.size();
-}
-
-template <size_t N>
-constexpr std::array<char, N + 1> get_data()
-{
-    auto str = test();
-    std::array<char, N + 1> result;
-    std::copy(str.begin(), str.end(), result.begin());
-    result[N] = 0;
-    return result;
-}
-
 template <std::string (*F)()>
 constexpr auto auto_get()
 {
