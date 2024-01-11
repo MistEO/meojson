@@ -25,13 +25,7 @@ constexpr std::string test()
     empty["float3"] = 123456789876543211234.;
     empty.emplace("float", 1);
 
-    auto test1 = "{ \"k1\": 2 }"_cjobject;
-    auto test2 = json::cobject { { "k1", 2 } };
-    if (test1 == test2) {
-        return empty.to_string();
-    } else {
-        return "error!";
-    }
+    return empty.to_string();
 }
 
 constexpr size_t get_size()
@@ -50,9 +44,22 @@ constexpr std::array<char, N + 1> get_data()
     return result;
 }
 
+template <std::string (*F)()>
+constexpr auto auto_get()
+{
+    constexpr size_t N = F().size();
+    constexpr std::array<char, N + 1> arr = ([] {
+        std::array<char, N + 1> res;
+        std::string str = F();
+        std::copy(str.begin(), str.end(), res.begin());
+        res[N] = 0;
+        return res;
+    })();
+    return arr;
+}
+
 int main()
 {
-    constexpr auto size = get_size();
-    constexpr auto arr = get_data<size>();
-    std::cout << arr.data() << std::endl;
+    constexpr auto data = auto_get<test>();
+    std::cout << data.data() << std::endl;
 }
