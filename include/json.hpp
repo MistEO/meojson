@@ -138,7 +138,8 @@ public:
 
     __json_constexpr basic_value(basic_array<string_t, traits_t> arr);
     __json_constexpr basic_value(basic_object<string_t, traits_t> obj);
-    __json_constexpr basic_value(std::initializer_list<basic_value<string_t, traits_t>> init_list);
+    __json_constexpr basic_value(
+        std::initializer_list<typename basic_object<string_t, traits_t>::value_type> init_list);
 
     // Constructed from raw data
     template <typename... args_t>
@@ -801,7 +802,7 @@ inline __json_constexpr basic_value<string_t, traits_t>::basic_value(basic_objec
 
 template <typename string_t, typename traits_t>
 inline __json_constexpr basic_value<string_t, traits_t>::basic_value(
-    std::initializer_list<basic_value<string_t, traits_t>> init_list)
+    std::initializer_list<typename basic_object<string_t, traits_t>::value_type> init_list)
     : _type(value_type::object), _raw_data(typename traits_t::template unique_ptr_t<basic_object<string_t, traits_t>>(
                                      new basic_object<string_t, traits_t>(init_list)))
 {}
