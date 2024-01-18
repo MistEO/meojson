@@ -7,13 +7,12 @@ namespace json
 {
 
 template <typename Iter, typename Val, typename Pred>
-inline constexpr Iter lower_bound_fix(Iter begin, Iter end, const Val& val, Pred pred) {
+inline constexpr Iter lower_bound_fix(Iter begin, Iter end, const Val& val, Pred pred)
+{
 #ifdef __GLIBCXX__
-// lower_bound实现的有问题
-// https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algobase.h#L1023
-    return std::__lower_bound(begin, end, val, [](auto iter, const auto& val) {
-        return pred(*iter, val);
-    });
+    // lower_bound实现的有问题
+    // https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algobase.h#L1023
+    return std::__lower_bound(begin, end, val, [&pred](auto iter, const auto& val) { return pred(*iter, val); });
 #else
     return std::lower_bound(begin, end, val, pred);
 #endif
@@ -141,14 +140,14 @@ public:
     constexpr iterator find(const key_t& key)
     {
         auto ptr = lower_bound_fix(begin(), end(), key,
-                                    [](const value_type& elem, const key_type& val) { return elem.first < val; });
+                                   [](const value_type& elem, const key_type& val) { return elem.first < val; });
         return ptr->first == key ? ptr : end();
     }
 
     constexpr const_iterator find(const key_t& key) const
     {
         auto ptr = lower_bound_fix(cbegin(), cend(), key,
-                                    [](const value_type& elem, const key_type& val) { return elem.first < val; });
+                                   [](const value_type& elem, const key_type& val) { return elem.first < val; });
         return ptr->first == key ? ptr : cend();
     }
 
@@ -157,7 +156,7 @@ public:
     {
         value_type p(std::forward<Args&&>(args)...);
         auto ptr = lower_bound_fix(begin(), end(), p.first,
-                                    [](const value_type& elem, const key_type& val) { return elem.first < val; });
+                                   [](const value_type& elem, const key_type& val) { return elem.first < val; });
         if (ptr != end() && ptr->first == p.first) {
             return std::make_pair(ptr, false);
         }
