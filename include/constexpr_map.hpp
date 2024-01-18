@@ -6,6 +6,19 @@
 namespace json
 {
 
+template <typename Iter, typename Val, typename Pred>
+inline constexpr Iter lower_bound_fix(Iter begin, Iter end, const Val& val, Pred pred) {
+#ifdef __GLIBCXX__
+// lower_bound实现的有问题
+// https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algobase.h#L1023
+    return std::__lower_bound(begin, end, val, [](auto iter, const auto& val) {
+        return pred(*iter, val);
+    });
+#else
+    return std::lower_bound(begin, end, val, pred);
+#endif
+}
+
 template <typename key_t, typename value_t>
 class constexpr_map
 {
@@ -125,22 +138,16 @@ public:
         return emplace(std::forward<key_t&&>(key), mapped_type {}).first->second;
     }
 
-#ifdef __GLIBCXX__
-// lower_bound实现的有问题
-// https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algobase.h#L1023
-#define lower_bound __lower_bound
-#endif
-
     constexpr iterator find(const key_t& key)
     {
-        auto ptr = std::lower_bound(begin(), end(), key,
+        auto ptr = lower_bound_fix(begin(), end(), key,
                                     [](const value_type& elem, const key_type& val) { return elem.first < val; });
         return ptr->first == key ? ptr : end();
     }
 
     constexpr const_iterator find(const key_t& key) const
     {
-        auto ptr = std::lower_bound(cbegin(), cend(), key,
+        auto ptr = lower_bound_fix(cbegin(), cend(), key,
                                     [](const value_type& elem, const key_type& val) { return elem.first < val; });
         return ptr->first == key ? ptr : cend();
     }
@@ -149,7 +156,7 @@ public:
     constexpr std::pair<iterator, bool> emplace(Args&&... args)
     {
         value_type p(std::forward<Args&&>(args)...);
-        auto ptr = std::lower_bound(begin(), end(), p.first,
+        auto ptr = lower_bound_fix(begin(), end(), p.first,
                                     [](const value_type& elem, const key_type& val) { return elem.first < val; });
         if (ptr != end() && ptr->first == p.first) {
             return std::make_pair(ptr, false);
@@ -158,10 +165,6 @@ public:
             return std::make_pair(_data.insert(ptr._iter, std::move(p)), true);
         }
     }
-
-#ifdef lower_bound
-#undef lower_bound
-#endif
 
 private:
     container_type _data;
