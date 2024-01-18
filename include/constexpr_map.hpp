@@ -125,6 +125,12 @@ public:
         return emplace(std::forward<key_t&&>(key), mapped_type {}).first->second;
     }
 
+#ifdef __GLIBCXX__
+// lower_bound实现的有问题
+// https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algobase.h#L1023
+#define lower_bound __lower_bound
+#endif
+
     constexpr iterator find(const key_t& key)
     {
         auto ptr = std::lower_bound(begin(), end(), key,
@@ -152,6 +158,10 @@ public:
             return std::make_pair(_data.insert(ptr._iter, std::move(p)), true);
         }
     }
+
+#ifdef lower_bound
+#undef lower_bound
+#endif
 
 private:
     container_type _data;
