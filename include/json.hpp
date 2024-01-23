@@ -2860,8 +2860,8 @@ static constexpr string_t unescape_string(const string_t& str)
 #define _MEOJSON_ARG_TO_PAIR(x) { _MEOJSON_STRINGIZE(x), json::serialize<false>(x) },
 
 #define _MEOJSON_ARG_FROM_JSON(x)                \
-    if (auto x##opt = raw.find<decltype(x)>(#x)) \
-        x = *std::move(x##opt);                  \
+    if (auto _MEOJSON_CONCATENATE(x, _opt) = raw.find<decltype(x)>(#x)) \
+        x = *std::move(_MEOJSON_CONCATENATE(x, _opt));                  \
     else                                         \
         return false;
 
