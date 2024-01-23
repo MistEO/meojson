@@ -11,7 +11,7 @@ option(BUILD_TESTING "Build testing" ON)
 set(CMAKE_CXX_STANDARD 17)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
-    add_compile_options("/utf-8" "/W4" "/WX")
+    add_compile_options("/utf-8" "/W4" "/WX" "/Zc:preprocessor")
 else()
     add_compile_options("-Wall;-Wextra;-Wpedantic;-Werror;-mtune=native")
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64|EM64T|x86_64")

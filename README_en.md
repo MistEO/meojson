@@ -256,3 +256,39 @@ void serializing()
     ofs.close();
 }
 ```
+
+### JSONization
+
+```c++
+void test_jsonization()
+{
+    struct MyStruct
+    {
+        std::vector<int> vec;
+        std::map<std::string, int> map;
+
+        int i = 0;
+        double d = 0;
+
+        // if you are using MSVC, please add "/Zc:preprocessor" to your project
+        MEO_JSONIZATION(vec, map, i, d);
+    };
+
+    MyStruct a;
+    a.vec = { 1, 2, 3, 4, 5 };
+    a.map = { { "key", 5 } };
+    a.i = 100;
+    a.d = 0.5;
+
+    json::object j = a.dump_to_json();
+
+    // output: { "d" : 0.500000, "i" : 100, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
+    std::cout << j << std::endl;
+
+    MyStruct b;
+    b.load_from_json(j);
+
+    // output: { "d" : 0.500000, "i" : 100, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
+    std::cout << b.dump_to_json() << std::endl;
+}
+```
