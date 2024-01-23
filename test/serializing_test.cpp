@@ -43,13 +43,13 @@ bool serializing()
         std::cerr << "not all int: " << root["arr"].as_string() << std::endl;
         return false;
     }
-    auto to_vec = root["arr"].to_vector<int>();
-    auto to_vec_2 = root["arr"].to_vector<int, std::vector>();
-    auto to_list = root["arr"].to_vector<int, std::list>();
-    auto to_set = root["arr"].to_vector<int, std::set>();
-    auto to_hashset = root["arr"].to_vector<int, std::unordered_set>();
-    auto to_deque = root["arr"].to_vector<int, std::deque>();
-    auto to_q = root["arr"].to_vector<int, std::queue>();
+    auto to_vec = root["arr"].as_collection<int>();
+    auto to_vec_2 = root["arr"].as_collection<int, std::vector>();
+    auto to_list = root["arr"].as_collection<int, std::list>();
+    auto to_set = root["arr"].as_collection<int, std::set>();
+    auto to_hashset = root["arr"].as_collection<int, std::unordered_set>();
+    auto to_deque = root["arr"].as_collection<int, std::deque>();
+    auto to_q = root["arr"].as_collection<int, std::queue>();
     
 
     std::vector<int> vec = { 1, 2, 3, 4, 5 };
@@ -69,9 +69,9 @@ bool serializing()
         std::cerr << "not all int: " << root["obj from map"].as_string() << std::endl;
         return false;
     }
-    auto to_map = root["obj from map"].to_map<int>();
-    auto to_map_2 = root["obj from map"].to_map<int, std::map>();
-    auto to_hashmap = root["obj from map"].to_map<int, std::unordered_map>();
+    auto as_map = root["obj from map"].as_map<int>();
+    auto as_map_2 = root["obj from map"].as_map<int, std::map>();
+    auto to_hashmap = root["obj from map"].as_map<int, std::unordered_map>();
 
     std::vector<std::list<std::set<int>>> complex { { { 1, 2, 3 }, { 4, 5 } }, { { 6 }, { 7, 8 } } };
     root["complex"] = json::serialize<false>(complex);

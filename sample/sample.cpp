@@ -3,8 +3,8 @@
 #include <list>
 #include <map>
 #include <set>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include "json.hpp"
 
@@ -103,16 +103,36 @@ bool parsing()
     auto opt_v = value.find("not_exists");
     std::cout << "Did we find the \"not_exists\"? " << opt_v.has_value() << std::endl;
 
-    std::vector<int> to_vec = value["list"].to_vector<int>();
-    std::list<int> to_list = value["list"].to_vector<int, std::list>();
-    std::set<int> to_set = value["list"].to_vector<int, std::set>();
-    // Output: 1, 2, 3
-    for (auto&& i : to_vec) {
-        std::cout << i << std::endl;
+    bool is_vec = value["list"].is<std::vector<int>>();
+    if (is_vec) {
+        std::vector<int> to_vec = value["list"].as_collection<int>();
+        to_vec = (std::vector<int>)value["list"];
+        to_vec = value["list"].as<std::vector<int>>();
+
+        // Output: 1, 2, 3
+        for (auto&& i : to_vec) {
+            std::cout << i << std::endl;
+        }
     }
 
-    std::map<std::string, std::string> to_map = value["author"].to_map<std::string>();
-    auto to_hashmap = value["author"].to_map<std::string, std::unordered_map>();
+    std::list<int> to_list = value["list"].as_collection<int, std::list>();
+    to_list = (std::list<int>)value["list"];
+    to_list = value["list"].as<std::list<int>>();
+
+    std::set<int> to_set = value["list"].as_collection<int, std::set>();
+    to_set = (std::set<int>)value["list"];
+    to_set = value["list"].as<std::set<int>>();
+
+    bool is_map = value["author"].is<std::map<std::string, std::string>>();
+    if (is_map) {
+        std::map<std::string, std::string> to_map = value["author"].as_map<std::string>();
+        to_map = (std::map<std::string, std::string>)value["author"];
+        to_map = value["author"].as<std::map<std::string, std::string>>();
+    }
+
+    auto to_hashmap = value["author"].as_map<std::string, std::unordered_map>();
+    to_hashmap = (std::unordered_map<std::string, std::string>)value["author"];
+    to_hashmap = value["author"].as<std::unordered_map<std::string, std::string>>();
 
     using namespace json::literals;
     json::value val = "{\"hi\":\"literals\"}"_json;

@@ -111,15 +111,34 @@ void parsing()
     auto opt_v = value.find("not_exists");
     std::cout << "Did we find the \"not_exists\"? " << opt_v.has_value() << std::endl;
 
-    std::vector<int> to_vec = value["list"].to_vector<int>();
-    std::list<int> to_list = value["list"].to_vector<int, std::list>();
-    std::set<int> to_set = value["list"].to_vector<int, std::set>();
+    bool is_vec = value["list"].is<std::vector<int>>();
+
+    std::vector<int> to_vec = value["list"].as_collection<int>();
+    to_vec = (std::vector<int>)value["list"];       // same as above
+    to_vec = value["list"].as<std::vector<int>>();  // same as above
+
     // Output: 1, 2, 3
     for (auto&& i : to_vec) {
         std::cout << i << std::endl;
     }
-    std::map<std::string, std::string> to_map = value["author"].to_map<std::string>();
-    auto to_hashmap = value["author"].to_map<std::string, std::unordered_map>();
+
+    std::list<int> to_list = value["list"].as_collection<int, std::list>();
+    to_list = (std::list<int>)value["list"];        // same as above
+    to_list = value["list"].as<std::list<int>>();   // same as above
+
+    std::set<int> to_set = value["list"].as_collection<int, std::set>();
+    to_set = (std::set<int>)value["list"];          // same as above
+    to_set = value["list"].as<std::set<int>>();     // same as above
+    
+    bool is_map = value["author"].is<std::map<std::string, std::string>>();
+
+    std::map<std::string, std::string> to_map = value["author"].as_map<std::string>();
+    to_map = (std::map<std::string, std::string>)value["author"];       // same as above
+    to_map = value["author"].as<std::map<std::string, std::string>>();  // same as above
+
+    auto to_hashmap = value["author"].as_map<std::string, std::unordered_map>();
+    to_hashmap = (std::unordered_map<std::string, std::string>)value["author"];     // same as above
+    to_hashmap = value["author"].as<std::unordered_map<std::string, std::string>>();// same as above
 
     // Output: "literals"
     using namespace json::literals;

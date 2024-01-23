@@ -43,6 +43,22 @@ namespace utils
     using iter_value_t = typename std::iterator_traits<remove_cvref_t<T>>::value_type;
     template <typename R>
     using range_value_t = iter_value_t<iterator_t<R>>;
+
+    template <typename T, typename = void>
+    constexpr bool is_container = false;
+    template <typename T>
+    constexpr bool is_container<T, std::void_t<typename T::value_type, utils::range_value_t<T>>> =
+        std::is_same_v<typename T::value_type, utils::range_value_t<T>>;
+
+    template <typename T, typename = void>
+    constexpr bool is_map = false;
+    template <typename T>
+    constexpr bool is_map<T, std::void_t<typename T::key_type, typename T::mapped_type>> = is_container<T>;
+
+    template <typename T, typename = void>
+    constexpr bool is_collection = false;
+    template <typename T>
+    constexpr bool is_collection<T> = is_container<T> && !is_map<T>;
 }
 
 // *********************************
@@ -132,6 +148,9 @@ public:
     template <typename value_t>
     bool is() const noexcept;
 
+    template <typename value_t>
+    bool all() const;
+
     bool contains(const string_t& key) const;
     bool contains(size_t pos) const;
     bool exists(const string_t& key) const { return contains(key); }
@@ -165,6 +184,12 @@ public:
     string_t as_string() const;
     const basic_array<string_t>& as_array() const;
     const basic_object<string_t>& as_object() const;
+
+    template <typename value_t, template <typename...> typename collection_t = std::vector>
+    collection_t<value_t> as_collection() const;
+    template <typename value_t, template <typename...> typename map_t = std::map>
+    map_t<string_t, value_t> as_map() const;
+
     template <typename value_t>
     value_t as() const;
 
@@ -194,12 +219,18 @@ public:
         return format(indent, 0);
     }
 
-    template <typename value_t>
-    bool all() const;
     template <typename value_t, template <typename...> typename vector_t = std::vector>
-    vector_t<value_t> to_vector() const;
+    // deprecated, please use `as_collection` instead.
+    vector_t<value_t> to_vector() const
+    {
+        return to_vector<value_t, vector_t>();
+    }
     template <typename value_t, template <typename...> typename map_t = std::map>
-    map_t<string_t, value_t> to_map() const;
+    // deprecated, please use `as_map` instead.
+    map_t<string_t, value_t> to_map() const
+    {
+        return as_map<value_t, map_t>();
+    }
 
     basic_value<string_t>& operator=(const basic_value<string_t>& rhs);
     basic_value<string_t>& operator=(basic_value<string_t>&&) noexcept;
@@ -239,6 +270,19 @@ public:
     explicit operator double() const { return as_double(); }
     explicit operator long double() const { return as_long_double(); }
     explicit operator string_t() const { return as_string(); }
+
+    template <typename value_t, template <typename...> typename collection_t = std::vector,
+              typename _ = std::enable_if_t<utils::is_collection<collection_t<value_t>>>>
+    explicit operator collection_t<value_t>() const
+    {
+        return as_collection<value_t, collection_t>();
+    }
+    template <typename value_t, template <typename...> typename map_t = std::map,
+              typename _ = std::enable_if_t<utils::is_map<map_t<string_t, value_t>>>>
+    explicit operator map_t<string_t, value_t>() const
+    {
+        return as_map<value_t, map_t>();
+    }
 
 private:
     friend class basic_array<string_t>;
@@ -317,8 +361,8 @@ public:
     }
     template <typename value_t>
     bool all() const;
-    template <typename value_t, template <typename...> typename vector_t = std::vector>
-    vector_t<value_t> to_vector() const;
+    template <typename value_t, template <typename...> typename collection_t = std::vector>
+    collection_t<value_t> as_collection() const;
 
     // Usage: get(key_1, key_2, ..., default_value);
     template <typename... key_then_default_value_t>
@@ -432,7 +476,7 @@ public:
     template <typename value_t>
     bool all() const;
     template <typename value_t, template <typename...> typename map_t = std::map>
-    map_t<string_t, value_t> to_map() const;
+    map_t<string_t, value_t> as_map() const;
 
     // Usage: get(key_1, key_2, ..., default_value);
     template <typename... key_then_default_value_t>
@@ -733,19 +777,26 @@ inline bool basic_value<string_t>::is() const noexcept
         return true;
     }
     else if constexpr (std::is_same_v<bool, value_t>) {
-        return _type == value_type::boolean;
+        return is_boolean();
     }
     else if constexpr (std::is_arithmetic_v<value_t>) {
-        return _type == value_type::number;
+        return is_number();
     }
     else if constexpr (std::is_same_v<basic_array<string_t>, value_t>) {
-        return _type == value_type::array;
+        return is_array();
+    }
+    else if constexpr (utils::is_collection<value_t>) {
+        return is_array() && all<typename value_t::value_type>();
     }
     else if constexpr (std::is_same_v<basic_object<string_t>, value_t>) {
-        return _type == value_type::object;
+        return is_object();
+    }
+    else if constexpr (utils::is_map<value_t>) {
+        return is_object() && std::is_constructible_v<string_t, typename value_t::key_type> &&
+               all<typename value_t::mapped_type>();
     }
     else if constexpr (std::is_constructible_v<string_t, value_t>) {
-        return _type == value_type::string;
+        return is_string();
     }
     else {
         static_assert(!sizeof(value_t), "Unsupported type");
@@ -1174,17 +1225,17 @@ inline bool basic_value<string_t>::all() const
 }
 
 template <typename string_t>
-template <typename value_t, template <typename...> typename vector_t>
-inline vector_t<value_t> basic_value<string_t>::to_vector() const
+template <typename value_t, template <typename...> typename collection_t>
+inline collection_t<value_t> basic_value<string_t>::as_collection() const
 {
-    return as_array().template to_vector<value_t, vector_t>();
+    return as_array().template as_collection<value_t, collection_t>();
 }
 
 template <typename string_t>
 template <typename value_t, template <typename...> typename map_t>
-inline map_t<string_t, value_t> basic_value<string_t>::to_map() const
+inline map_t<string_t, value_t> basic_value<string_t>::as_map() const
 {
-    return as_object().template to_map<value_t, map_t>();
+    return as_object().template as_map<value_t, map_t>();
 }
 
 template <typename string_t>
@@ -1465,7 +1516,7 @@ inline bool basic_array<string_t>::all() const
     return true;
 }
 
-namespace _to_vector_helper
+namespace _as_collection_helper
 {
     template <typename T>
     class has_emplace_back
@@ -1482,12 +1533,12 @@ namespace _to_vector_helper
 }
 
 template <typename string_t>
-template <typename value_t, template <typename...> typename vector_t>
-inline vector_t<value_t> basic_array<string_t>::to_vector() const
+template <typename value_t, template <typename...> typename collection_t>
+inline collection_t<value_t> basic_array<string_t>::as_collection() const
 {
 
-    vector_t<value_t> result;
-    if constexpr (_to_vector_helper::has_emplace_back<vector_t<value_t>>::value) {
+    collection_t<value_t> result;
+    if constexpr (_as_collection_helper::has_emplace_back<collection_t<value_t>>::value) {
         for (const auto& elem : _array_data) {
             result.emplace_back(elem.template as<value_t>());
         }
@@ -1819,7 +1870,7 @@ inline bool basic_object<string_t>::all() const
 
 template <typename string_t>
 template <typename value_t, template <typename...> typename map_t>
-inline map_t<string_t, value_t> basic_object<string_t>::to_map() const
+inline map_t<string_t, value_t> basic_object<string_t>::as_map() const
 {
     map_t<string_t, value_t> result;
     for (const auto& [key, val] : _object_data) {
@@ -2586,22 +2637,6 @@ namespace _serialization_helper
         static constexpr bool value = decltype(test<T>(0))::value;
     };
 
-    template <typename T, typename = void>
-    constexpr bool is_container = false;
-    template <typename T>
-    constexpr bool is_container<T, std::void_t<typename T::value_type, utils::range_value_t<T>>> =
-        std::is_same_v<typename T::value_type, utils::range_value_t<T>>;
-
-    template <typename T, typename = void>
-    constexpr bool is_map = false;
-    template <typename T>
-    constexpr bool is_map<T, std::void_t<typename T::key_type, typename T::mapped_type>> = is_container<T>;
-
-    template <typename T, typename = void>
-    constexpr bool is_collection = false;
-    template <typename T>
-    constexpr bool is_collection<T> = is_container<T> && !is_map<T>;
-
     template <bool loose, typename string_t>
     struct string_converter
     {
@@ -2664,7 +2699,7 @@ basic_value<string_t> serialize(any_t&& arg, string_converter_t&& string_convert
     else if constexpr (std::decay_t<string_converter_t>::template is_convertible<any_t>) {
         return string_converter(std::forward<any_t>(arg));
     }
-    else if constexpr (is_collection<std::decay_t<any_t>>) {
+    else if constexpr (utils::is_collection<std::decay_t<any_t>>) {
         basic_value<string_t> result;
         for (auto&& val : arg) {
             using value_t = decltype(val);
@@ -2674,7 +2709,7 @@ basic_value<string_t> serialize(any_t&& arg, string_converter_t&& string_convert
         }
         return result;
     }
-    else if constexpr (is_map<std::decay_t<any_t>>) {
+    else if constexpr (utils::is_map<std::decay_t<any_t>>) {
         basic_value<string_t> result;
         for (auto&& [key, val] : arg) {
             using key_t = decltype(key);
