@@ -2924,7 +2924,7 @@ namespace json::_private_macro
     if constexpr (std::is_same_v<std::decay_t<decltype(x)>, json::_jsonization_helper::next_is_optional>) { \
         _MEOJSON_VARNAME(next_is_optional) = true;                                                          \
     }                                                                                                       \
-    else if (auto _MEOJSON_VARNAME(opt) = _MEOJSON_VARNAME(input).find(_MEOJSON_STRINGIZE(x))) {      \
+    else if (auto _MEOJSON_VARNAME(opt) = _MEOJSON_VARNAME(input).find(_MEOJSON_STRINGIZE(x))) {            \
         if (!_MEOJSON_VARNAME(opt)->is<decltype(x)>()) {                                                    \
             _MEOJSON_VARNAME(error_key) = _MEOJSON_STRINGIZE(x);                                            \
             return false;                                                                                   \
@@ -2957,6 +2957,10 @@ namespace json::_private_macro
         [[maybe_unused]] bool _MEOJSON_VARNAME(next_is_optional) = false;                                      \
         _MEOJSON_FOR_EACH(_MEOJSON_LOAD_ARG, __VA_ARGS__)                                                      \
         return true;                                                                                           \
+    }                                                                                                          \
+    explicit operator json::object() const                                                                     \
+    {                                                                                                          \
+        return dump_to_json();                                                                                 \
     }
 
 #define MEO_OPTIONAL json::_jsonization_helper::next_is_optional(),
