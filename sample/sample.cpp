@@ -326,7 +326,7 @@ void test_jsonization()
     json::object j = a.to_json();
     std::cout << j << std::endl;
 
-    // for test MEO_OPTIONAL
+    // for test MEO_OPT
     j.erase("i");
 
     MyStruct b;

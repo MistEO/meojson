@@ -271,24 +271,29 @@ void test_jsonization()
         double d = 0;
 
         // 如果你正在使用 MSVC, 请添加 "/Zc:preprocessor" 到项目设置中
-        MEO_JSONIZATION(vec, map, i, d);
+        MEO_JSONIZATION(vec, map, MEO_OPT i, d);
     };
 
     MyStruct a;
-    a.vec = { 1, 2, 3, 4, 5 };
+    a.vec = { 1, 2, 3 };
     a.map = { { "key", 5 } };
     a.i = 100;
     a.d = 0.5;
 
-    json::object j = a.dump_to_json();
+    json::object dumps = a.to_json();
 
     // output: { "d" : 0.500000, "i" : 100, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
-    std::cout << j << std::endl;
+    std::cout << dumps << std::endl;
+
+    // MEO_OPT 表示该变量是一个可选项
+    // 即使输入中不存在该字段依然可以读取
+    dumps.erase("i")
 
     MyStruct b;
-    b.load_from_json(j);
+    b.from_json(dumps);
 
-    // output: { "d" : 0.500000, "i" : 100, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
-    std::cout << b.dump_to_json() << std::endl;
+    // output: { "d" : 0.500000, "i" : 0, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
+    // 我们从 dumps 中删除了 "i", 所以 "i" 是 0
+    std::cout << b.to_json() << std::endl;
 }
 ```

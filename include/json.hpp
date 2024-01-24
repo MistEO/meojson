@@ -2779,49 +2779,6 @@ static constexpr string_t unescape_string(const string_t& str)
 
     return result;
 }
-
-namespace _jsonization_helper
-{
-    struct required_tag
-    {
-        constexpr static bool required = true;
-    };
-    struct optional_tag
-    {
-        constexpr static bool required = false;
-    };
-}
-
-struct bind_helper
-{
-    void __to_json(json::object&) const {}
-
-    bool __from_json(const json::object&) { return true; }
-
-    template <typename Tag, typename Var, typename... Rest>
-    void __to_json(json::object& obj, Tag, const Var& var, const char* name, Rest&&... rest) const
-    {
-        obj[name] = json::serialize<false>(var);
-        __to_json(obj, std::forward<Rest>(rest)...);
-    }
-
-    template <typename Tag, typename Var, typename... Rest>
-    bool __from_json(const json::object& raw, Tag, Var& var, const char* name, Rest&&... rest)
-    {
-        if (auto opt = raw.find(name)) {
-            if (!opt->is<Var>()) {
-                return false;
-            }
-            var = std::move(opt)->as<Var>();
-        }
-        else {
-            if constexpr (Tag::required) {
-                return false;
-            }
-        }
-        return __from_json(raw, std::forward<Rest>(rest)...);
-    }
-};
 } // namespace json
 
 namespace json::_jsonization_helper
@@ -2837,7 +2794,7 @@ public:
     template <typename var_t, typename... rest_t>
     json::object to_json(const char* key, const var_t& var, rest_t&&... rest) const
     {
-        auto result = to_json(std::forward<rest_t>(rest)...);
+        json::object result = to_json(std::forward<rest_t>(rest)...);
         if constexpr (!std::is_same_v<next_is_optional_t, var_t>) {
             result.emplace(key, json::serialize<false>(var));
         }
@@ -2989,10 +2946,6 @@ namespace json::_private_macro
         return json::_jsonization_helper::loader().from_json(_MEOJSON_VARNAME(in), _MEOJSON_VARNAME(error_key), \
                                                              _MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__) \
                                                                  json::_jsonization_helper::va_arg_end());      \
-    }                                                                                                           \
-    explicit operator json::object() const                                                                      \
-    {                                                                                                           \
-        return to_json();                                                                                       \
     }
 
 #define MEO_OPT json::_jsonization_helper::next_is_optional_t {},
