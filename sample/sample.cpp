@@ -314,9 +314,7 @@ void test_jsonization()
         int i = 0;
         double d = 0;
 
-        AAA aaa;
-
-        MEO_JSONIZATION(vec, map, MEO_OPTIONAL i, MEO_OPTIONAL d, aaa);
+        MEO_JSONIZATION(vec, map, MEO_OPT i, MEO_OPT d);
     };
 
     MyStruct a;
@@ -325,15 +323,15 @@ void test_jsonization()
     a.i = 100;
     a.d = 0.5;
 
-    json::object j = a.dump_to_json();
+    json::object j = a.to_json();
     std::cout << j << std::endl;
 
     // for test MEO_OPTIONAL
     j.erase("i");
 
     MyStruct b;
-    bool loaded = b.load_from_json(j);
+    bool loaded = b.from_json(j);
 
     std::cout << "loaded: " << loaded << std::endl;
-    std::cout << b.dump_to_json() << std::endl;
+    std::cout << b.to_json() << std::endl;
 }
