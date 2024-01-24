@@ -299,14 +299,41 @@ bool serializing()
 
 void test_jsonization()
 {
-    struct MyStruct : json::bind_helper
+    struct AAA
     {
-        int aaa = 100;
+        int a_i = 100;
 
-        MEO_JSONIZATION(aaa);
+        MEO_JSONIZATION(a_i);
+    };
+
+    struct MyStruct
+    {
+        std::vector<int> vec;
+        std::map<std::string, int> map;
+
+        int i = 0;
+        double d = 0;
+
+        AAA aaa;
+
+        MEO_JSONIZATION(vec, map, MEO_OPTIONAL i, MEO_OPTIONAL d, aaa);
     };
 
     MyStruct a;
-    auto j1 = a.operator json::object();
-    auto j2 = (json::object)a;  // error
+    a.vec = { 1, 2, 3 };
+    a.map = { { "key", 5 } };
+    a.i = 100;
+    a.d = 0.5;
+
+    json::object j = a.dump_to_json();
+    std::cout << j << std::endl;
+
+    // for test MEO_OPTIONAL
+    j.erase("i");
+
+    MyStruct b;
+    bool loaded = b.load_from_json(j);
+
+    std::cout << "loaded: " << loaded << std::endl;
+    std::cout << b.dump_to_json() << std::endl;
 }

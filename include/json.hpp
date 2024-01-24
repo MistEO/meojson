@@ -271,6 +271,9 @@ public:
     explicit operator long double() const { return as_long_double(); }
     explicit operator string_t() const { return as_string(); }
 
+    explicit operator basic_array<string_t>() const { return as_array(); }
+    explicit operator basic_object<string_t>() const { return as_object(); }
+
     template <typename value_t, template <typename...> typename collection_t = std::vector,
               typename _ = std::enable_if_t<utils::is_collection<collection_t<value_t>>>>
     explicit operator collection_t<value_t>() const
@@ -334,8 +337,8 @@ public:
     basic_array(std::initializer_list<value_type> init_list);
     basic_array(typename raw_array::size_type size);
 
-    explicit basic_array(const basic_value<string_t>& val);
-    explicit basic_array(basic_value<string_t>&& val);
+    // explicit basic_array(const basic_value<string_t>& val);
+    // explicit basic_array(basic_value<string_t>&& val);
 
     template <typename collection_t,
               typename = std::enable_if_t<std::is_constructible_v<value_type, utils::range_value_t<collection_t>>>>
@@ -450,8 +453,10 @@ public:
     basic_object(const basic_object<string_t>& rhs) = default;
     basic_object(basic_object<string_t>&& rhs) noexcept = default;
     basic_object(std::initializer_list<value_type> init_list);
-    explicit basic_object(const basic_value<string_t>& val);
-    explicit basic_object(basic_value<string_t>&& val);
+
+    // explicit basic_object(const basic_value<string_t>& val);
+    // explicit basic_object(basic_value<string_t>&& val);
+
     template <typename map_t,
               typename = std::enable_if_t<std::is_constructible_v<value_type, utils::range_value_t<map_t>>>>
     basic_object(map_t map) : _object_data(std::make_move_iterator(map.begin()), std::make_move_iterator(map.end()))
@@ -1428,14 +1433,14 @@ template <typename string_t>
 inline basic_array<string_t>::basic_array(typename raw_array::size_type size) : _array_data(size)
 {}
 
-template <typename string_t>
-inline basic_array<string_t>::basic_array(const basic_value<string_t>& val) : basic_array<string_t>(val.as_array())
-{}
-
-template <typename string_t>
-inline basic_array<string_t>::basic_array(basic_value<string_t>&& val)
-    : basic_array<string_t>(std::move(val.as_array()))
-{}
+// template <typename string_t>
+// inline basic_array<string_t>::basic_array(const basic_value<string_t>& val) : basic_array<string_t>(val.as_array())
+//{}
+//
+// template <typename string_t>
+// inline basic_array<string_t>::basic_array(basic_value<string_t>&& val)
+//     : basic_array<string_t>(std::move(val.as_array()))
+//{}
 
 template <typename string_t>
 inline void basic_array<string_t>::clear() noexcept
@@ -1768,14 +1773,15 @@ inline basic_object<string_t>::basic_object(std::initializer_list<value_type> in
     : _object_data(std::make_move_iterator(init_list.begin()), std::make_move_iterator(init_list.end()))
 {}
 
-template <typename string_t>
-inline basic_object<string_t>::basic_object(const basic_value<string_t>& val) : basic_object<string_t>(val.as_object())
-{}
-
-template <typename string_t>
-inline basic_object<string_t>::basic_object(basic_value<string_t>&& val)
-    : basic_object<string_t>(std::move(val.as_object()))
-{}
+// template <typename string_t>
+// inline basic_object<string_t>::basic_object(const basic_value<string_t>& val) :
+// basic_object<string_t>(val.as_object())
+//{}
+//
+// template <typename string_t>
+// inline basic_object<string_t>::basic_object(basic_value<string_t>&& val)
+//     : basic_object<string_t>(std::move(val.as_object()))
+//{}
 
 template <typename string_t>
 inline bool basic_object<string_t>::contains(const string_t& key) const
