@@ -288,6 +288,9 @@ void test_jsonization()
     // MEO_OPT 表示该变量是一个可选项
     // 即使输入中不存在该字段依然可以读取
     dumps.erase("i")
+    
+    // output: { "d" : 0.500000, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
+    std::cout << dumps << std::endl;
 
     MyStruct b;
     b.from_json(dumps);

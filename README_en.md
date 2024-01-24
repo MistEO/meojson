@@ -288,6 +288,9 @@ void test_jsonization()
     // MEO_OPT means the var is optional
     // and can still be read even if the field doesn't exist in the input.
     dumps.erase("i")
+    
+    // output: { "d" : 0.500000, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
+    std::cout << dumps << std::endl;
 
     MyStruct b;
     b.from_json(dumps);
