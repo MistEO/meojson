@@ -297,27 +297,50 @@ bool serializing()
     return true;
 }
 
+struct StructureFromOtherLibrary // like cv::Mat
+{
+    int a_i = 100;
+};
+json::object to_json(const StructureFromOtherLibrary&)
+{
+    return { { "aaa", "ai" } };
+}
+bool from_json(const json::object&, StructureFromOtherLibrary& aa)
+{
+    aa.a_i = -1;
+    return true;
+}
+
+struct MyCustomStructure
+{
+    int b_i = 10;
+
+    json::object to_json() const { return { { "bbb", "bi" } }; }
+    bool from_json(const json::object& in)
+    {
+        std::ignore = in;
+        b_i = -100;
+        return true;
+    }
+};
+
 void test_jsonization()
 {
-    struct AAA
-    {
-        int a_i = 100;
-
-        MEO_JSONIZATION(a_i);
-    };
-
     struct MyStruct
     {
         std::vector<int> vec;
         std::map<std::string, int> map;
-
         int i = 0;
         double d = 0;
 
-        MEO_JSONIZATION(vec, map, MEO_OPT i, MEO_OPT d);
+        StructureFromOtherLibrary structureFromOtherLibrary;
+        MyCustomStructure myCustomStructure;
+
+        MEO_JSONIZATION(vec, map, MEO_OPT i, MEO_OPT d, structureFromOtherLibrary, myCustomStructure);
     };
 
     MyStruct a;
+
     a.vec = { 1, 2, 3 };
     a.map = { { "key", 5 } };
     a.i = 100;
@@ -333,5 +356,5 @@ void test_jsonization()
     bool loaded = b.from_json(j);
 
     std::cout << "loaded: " << loaded << std::endl;
-    std::cout << b.to_json() << std::endl;
+    std::cout << b.myCustomStructure.b_i << std::endl;
 }

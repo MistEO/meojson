@@ -266,11 +266,13 @@ void test_jsonization()
     {
         std::vector<int> vec;
         std::map<std::string, int> map;
-
         int i = 0;
         double d = 0;
 
         // 如果你正在使用 MSVC, 请添加 "/Zc:preprocessor" 到项目设置中
+        
+        // MEO_OPT 表示该变量是一个可选项
+        // 即使输入中不存在该字段依然可以读取
         MEO_JSONIZATION(vec, map, MEO_OPT i, d);
     };
 
@@ -285,13 +287,12 @@ void test_jsonization()
     // output: { "d" : 0.500000, "i" : 100, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
     std::cout << dumps << std::endl;
 
-    // MEO_OPT 表示该变量是一个可选项
-    // 即使输入中不存在该字段依然可以读取
     dumps.erase("i")
-    
     // output: { "d" : 0.500000, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
     std::cout << dumps << std::endl;
 
+    // MEO_OPT 表示该变量是一个可选项
+    // 即使输入中不存在该字段依然可以读取
     MyStruct b;
     b.from_json(dumps);
 

@@ -266,11 +266,13 @@ void test_jsonization()
     {
         std::vector<int> vec;
         std::map<std::string, int> map;
-
         int i = 0;
         double d = 0;
 
         // if you are using MSVC, please add "/Zc:preprocessor" to your project
+        
+        // MEO_OPT means the var is optional
+        // and can still be read even if the field doesn't exist in the input.
         MEO_JSONIZATION(vec, map, MEO_OPT i, d);
     };
 
@@ -285,13 +287,12 @@ void test_jsonization()
     // output: { "d" : 0.500000, "i" : 100, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
     std::cout << dumps << std::endl;
 
-    // MEO_OPT means the var is optional
-    // and can still be read even if the field doesn't exist in the input.
     dumps.erase("i")
-    
     // output: { "d" : 0.500000, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
     std::cout << dumps << std::endl;
 
+    // MEO_OPT means the var is optional
+    // and can still be read even if the field doesn't exist in the input.
     MyStruct b;
     b.from_json(dumps);
 

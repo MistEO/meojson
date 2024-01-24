@@ -2788,48 +2788,121 @@ struct next_is_optional_t
 struct va_arg_end
 {};
 
+template <typename T>
+class has_jsonization_in_member
+{
+    template <typename U>
+    static auto test(int) -> decltype(std::declval<U>().to_json(),
+                                      std::declval<U>().from_json(std::declval<json::object>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T>
+class has_jsonization_in_global
+{
+    template <typename U>
+    static auto test(int) -> decltype(to_json(std::declval<U>()),
+                                      from_json(std::declval<json::object>(), std::declval<U&>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+struct string_converter
+{
+    template <typename input_t>
+    static constexpr bool is_convertible =
+        has_jsonization_in_member<input_t>::value || has_jsonization_in_global<input_t>::value;
+
+    template <typename input_t>
+    auto operator()(input_t&& arg) const
+    {
+        if constexpr (has_jsonization_in_member<input_t>::value) {
+            return std::forward<input_t>(arg).to_json();
+        }
+        else if constexpr (has_jsonization_in_global<input_t>::value) {
+            return to_json(std::forward<input_t>(arg));
+        }
+        else {
+            static_assert(!sizeof(input_t), "Unable to convert");
+        }
+    }
+};
+
 class dumper
 {
 public:
     template <typename var_t, typename... rest_t>
-    json::object to_json(const char* key, const var_t& var, rest_t&&... rest) const
+    json::object _to_json(const char* key, const var_t& var, rest_t&&... rest) const
     {
-        json::object result = to_json(std::forward<rest_t>(rest)...);
-        if constexpr (!std::is_same_v<next_is_optional_t, var_t>) {
-            result.emplace(key, json::serialize<false>(var));
+        json::object result = _to_json(key, std::forward<rest_t>(rest)...);
+
+        if constexpr (has_jsonization_in_member<var_t>::value) {
+            result.emplace(key, var.to_json());
+        }
+        else if constexpr (has_jsonization_in_global<var_t>::value) {
+            result.emplace(key, to_json(var));
+        }
+        else if constexpr (!std::is_same_v<next_is_optional_t, var_t>) {
+            result.emplace(key, json::serialize<false>(var, _string_converter));
         }
         return result;
     }
-    json::object to_json(va_arg_end) const { return {}; }
+    json::object _to_json(const char*, va_arg_end) const { return {}; }
+
+private:
+    string_converter _string_converter {};
 };
 
 class loader
 {
 public:
     template <typename var_t, typename... rest_t>
-    bool from_json(const json::object& in, std::string& error_key, const char* key, var_t& var, rest_t&&... rest)
+    bool _from_json(const json::object& in, std::string& error_key, const char* key, var_t& var, rest_t&&... rest)
     {
         if (auto opt = in.find(key)) {
-            if (!opt->is<var_t>()) {
-                error_key = key;
-                return false;
+            if constexpr (has_jsonization_in_member<var_t>::value) {
+                if (!opt->is_object() || !var.from_json(opt->as_object())) {
+                    error_key = key;
+                    return false;
+                }
             }
-            var = std::move(opt)->as<var_t>();
+            else if constexpr (has_jsonization_in_global<var_t>::value) {
+                if (!opt->is_object() || !from_json(opt->as_object(), var)) {
+                    error_key = key;
+                    return false;
+                }
+            }
+            else {
+                if (!opt->is<var_t>()) {
+                    error_key = key;
+                    return false;
+                }
+                var = std::move(opt)->as<var_t>();
+            }
             _next_is_optional = false;
         }
         else if (!_next_is_optional) {
             error_key = key;
             return false;
         }
-        return from_json(in, error_key, std::forward<rest_t>(rest)...);
+        return _from_json(in, error_key, std::forward<rest_t>(rest)...);
     }
     template <typename... rest_t>
-    bool from_json(const json::object& in, std::string& error_key, const char*, next_is_optional_t, rest_t&&... rest)
+    bool _from_json(const json::object& in, std::string& error_key, const char*, next_is_optional_t, rest_t&&... rest)
     {
         _next_is_optional = true;
-        return from_json(in, error_key, std::forward<rest_t>(rest)...);
+        return _from_json(in, error_key, std::forward<rest_t>(rest)...);
     }
-    bool from_json(const json::object&, std::string&, va_arg_end) { return true; }
+    bool _from_json(const json::object&, std::string&, va_arg_end) { return true; }
 
 private:
     bool _next_is_optional = false;
@@ -2930,22 +3003,22 @@ namespace json::_private_macro
 } // namespace json::_private_macro
 
 // if you are using MSVC, please add "/Zc:preprocessor" to your project
-#define MEO_JSONIZATION(...)                                                                                    \
-    json::object to_json() const                                                                                \
-    {                                                                                                           \
-        return json::_jsonization_helper::dumper().to_json(_MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__)   \
-                                                               json::_jsonization_helper::va_arg_end());        \
-    }                                                                                                           \
-    bool from_json(const json::object& _MEOJSON_VARNAME(in))                                                    \
-    {                                                                                                           \
-        std::string _MEOJSON_VARNAME(error_key);                                                                \
-        return from_json(_MEOJSON_VARNAME(in), _MEOJSON_VARNAME(error_key));                                    \
-    }                                                                                                           \
-    bool from_json(const json::object& _MEOJSON_VARNAME(in), std::string& _MEOJSON_VARNAME(error_key))          \
-    {                                                                                                           \
-        return json::_jsonization_helper::loader().from_json(_MEOJSON_VARNAME(in), _MEOJSON_VARNAME(error_key), \
-                                                             _MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__) \
-                                                                 json::_jsonization_helper::va_arg_end());      \
+#define MEO_JSONIZATION(...)                                                                                     \
+    json::object to_json() const                                                                                 \
+    {                                                                                                            \
+        return json::_jsonization_helper::dumper()._to_json(_MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__)   \
+                                                                json::_jsonization_helper::va_arg_end());        \
+    }                                                                                                            \
+    bool from_json(const json::object& _MEOJSON_VARNAME(in))                                                     \
+    {                                                                                                            \
+        std::string _MEOJSON_VARNAME(error_key);                                                                 \
+        return from_json(_MEOJSON_VARNAME(in), _MEOJSON_VARNAME(error_key));                                     \
+    }                                                                                                            \
+    bool from_json(const json::object& _MEOJSON_VARNAME(in), std::string& _MEOJSON_VARNAME(error_key))           \
+    {                                                                                                            \
+        return json::_jsonization_helper::loader()._from_json(_MEOJSON_VARNAME(in), _MEOJSON_VARNAME(error_key), \
+                                                              _MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__) \
+                                                                  json::_jsonization_helper::va_arg_end());      \
     }
 
 #define MEO_OPT json::_jsonization_helper::next_is_optional_t {},
