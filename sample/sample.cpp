@@ -307,8 +307,7 @@ void test_jsonization()
         int i = 0;
         double d = 0;
 
-        // if you are using MSVC, please add "/Zc:preprocessor" to your project
-        MEO_JSONIZATION(vec, map, i, d);
+        MEO_JSONIZATION(vec, map, MEO_OPTIONAL i, MEO_OPTIONAL d);
     };
 
     MyStruct a;
@@ -320,8 +319,12 @@ void test_jsonization()
     json::object j = a.dump_to_json();
     std::cout << j << std::endl;
 
-    MyStruct b;
-    b.load_from_json(j);
+    // for test MEO_OPTIONAL
+    j.erase("i");
 
+    MyStruct b;
+    bool loaded = b.load_from_json(j);
+
+    std::cout << "loaded: " << loaded << std::endl;
     std::cout << b.dump_to_json() << std::endl;
 }

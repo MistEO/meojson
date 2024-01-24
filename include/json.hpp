@@ -1119,7 +1119,12 @@ template <typename string_t>
 template <typename value_t>
 inline value_t basic_value<string_t>::as() const
 {
-    return static_cast<value_t>(*this);
+    if constexpr (std::is_same_v<basic_value<string_t>, value_t>) {
+        return *this;
+    }
+    else {
+        return static_cast<value_t>(*this);
+    }
 }
 
 template <typename string_t>
@@ -2857,22 +2862,45 @@ static constexpr string_t unescape_string(const string_t& str)
 #define _MEOJSON_FOR_EACH_(N, what, ...) _MEOJSON_CONCATENATE(_MEOJSON_FOR_EACH_, N)(what, __VA_ARGS__)
 #define _MEOJSON_FOR_EACH(what, ...) _MEOJSON_FOR_EACH_(_MEOJSON_ARG_COUNT(__VA_ARGS__), what, __VA_ARGS__)
 
-#define _MEOJSON_ARG_TO_PAIR(x) { _MEOJSON_STRINGIZE(x), json::serialize<false>(x) },
+#define _MEOJSON_DUMP_ARG(x)                                                                                 \
+    if constexpr (!std::is_same_v<std::decay_t<decltype(x)>, json::_jsonization_helper::next_is_optional>) { \
+        result.emplace(_MEOJSON_STRINGIZE(x), json::serialize<false>(x));                                    \
+    }
 
-#define _MEOJSON_ARG_FROM_JSON(x)                \
-    if (auto _MEOJSON_CONCATENATE(x, _opt) = raw.find<decltype(x)>(#x)) \
-        x = *std::move(_MEOJSON_CONCATENATE(x, _opt));                  \
-    else                                         \
-        return false;
+#define _MEOJSON_LOAD_ARG(x)                                                                                \
+    if constexpr (std::is_same_v<std::decay_t<decltype(x)>, json::_jsonization_helper::next_is_optional>) { \
+        next_is_optional = true;                                                                            \
+    }                                                                                                       \
+    else if (auto opt = raw.find(_MEOJSON_STRINGIZE(x))) {                                                  \
+        if (!opt->is<decltype(x)>()) {                                                                      \
+            return false;                                                                                   \
+        }                                                                                                   \
+        x = std::move(opt)->as<decltype(x)>();                                                              \
+        next_is_optional = false;                                                                           \
+    }                                                                                                       \
+    else if (!next_is_optional) {                                                                           \
+        return false;                                                                                       \
+    }
+
+namespace json::_jsonization_helper
+{
+struct next_is_optional
+{};
+}
+
+#define MEO_OPTIONAL json::_jsonization_helper::next_is_optional(),
 
 // if you are using MSVC, please add "/Zc:preprocessor" to your project
-#define MEO_JSONIZATION(...)                                             \
-    json::object dump_to_json() const                                    \
-    {                                                                    \
-        return { _MEOJSON_FOR_EACH(_MEOJSON_ARG_TO_PAIR, __VA_ARGS__) }; \
-    }                                                                    \
-    bool load_from_json(const json::object& raw)                         \
-    {                                                                    \
-        _MEOJSON_FOR_EACH(_MEOJSON_ARG_FROM_JSON, __VA_ARGS__)           \
-        return true;                                                     \
+#define MEO_JSONIZATION(...)                              \
+    json::object dump_to_json() const                     \
+    {                                                     \
+        json::object result;                              \
+        _MEOJSON_FOR_EACH(_MEOJSON_DUMP_ARG, __VA_ARGS__) \
+        return result;                                    \
+    }                                                     \
+    bool load_from_json(const json::object& raw)          \
+    {                                                     \
+        [[maybe_unused]] bool next_is_optional = false;   \
+        _MEOJSON_FOR_EACH(_MEOJSON_LOAD_ARG, __VA_ARGS__) \
+        return true;                                      \
     }
