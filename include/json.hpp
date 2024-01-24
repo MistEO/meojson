@@ -1613,8 +1613,6 @@ template <typename string_t>
 template <typename value_t>
 inline std::optional<value_t> basic_array<string_t>::find(size_t pos) const
 {
-    static_assert(std::is_constructible_v<value_t, basic_value<string_t>>,
-                  "Type can NOT be constructed by basic_value");
     if (!contains(pos)) {
         return std::nullopt;
     }
@@ -1942,8 +1940,6 @@ template <typename string_t>
 template <typename value_t>
 inline std::optional<value_t> basic_object<string_t>::find(const string_t& key) const
 {
-    static_assert(std::is_constructible_v<value_t, basic_value<string_t>>,
-                  "value_t can NOT be constructed by basic_value");
     auto iter = _object_data.find(key);
     if (iter == _object_data.end()) {
         return std::nullopt;
