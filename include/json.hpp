@@ -2773,6 +2773,49 @@ static constexpr string_t unescape_string(const string_t& str)
 
     return result;
 }
+
+namespace _jsonization_helper
+{
+    struct required_tag
+    {
+        constexpr static bool required = true;
+    };
+    struct optional_tag
+    {
+        constexpr static bool required = false;
+    };
+}
+
+struct bind_helper
+{
+    void __to_json(json::object&) const {}
+
+    bool __from_json(const json::object&) { return true; }
+
+    template <typename Tag, typename Var, typename... Rest>
+    void __to_json(json::object& obj, Tag, const Var& var, const char* name, Rest&&... rest) const
+    {
+        obj[name] = json::serialize<false>(var);
+        __to_json(obj, std::forward<Rest>(rest)...);
+    }
+
+    template <typename Tag, typename Var, typename... Rest>
+    bool __from_json(const json::object& raw, Tag, Var& var, const char* name, Rest&&... rest)
+    {
+        if (auto opt = raw.find(name)) {
+            if (!opt->is<Var>()) {
+                return false;
+            }
+            var = std::move(opt)->as<Var>();
+        } else {
+            if constexpr (Tag::required) {
+                return false;
+            }
+        }
+        return __from_json(raw, std::forward<Rest>(rest)...);
+    }
+};
+
 } // namespace json
 
 namespace json::_jsonization_helper
@@ -2917,3 +2960,16 @@ namespace json::_private_macro
     }
 
 #define MEO_OPTIONAL json::_jsonization_helper::next_is_optional(),
+#define MEO_REQ(var) json::_jsonization_helper::required_tag {}, var, #var
+#define MEO_OPT(var) json::_jsonization_helper::optional_tag {}, var, #var
+#define MEO_JSONBIND(...)                                  \
+    json::object to_json() const                           \
+    {                                                      \
+        json::object res;                                  \
+        bind_helper::__to_json(res, __VA_ARGS__);          \
+        return res;                                        \
+    }                                                      \
+    bool from_json(const json::object& raw)                 \
+    {                                                      \
+        return bind_helper::__from_json(raw, __VA_ARGS__); \
+    }
