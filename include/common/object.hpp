@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <initializer_list>
 #include <map>
 #include <memory>
@@ -59,6 +60,7 @@ public:
 
     basic_value(const char_t* str);
     basic_value(string_t str);
+    basic_value(std::nullptr_t);
 
     basic_value(basic_array<string_t> arr);
     basic_value(basic_object<string_t> obj);
@@ -567,6 +569,10 @@ inline basic_value<string_t>::basic_value(const char_t* str) : _type(value_type:
 
 template <typename string_t>
 inline basic_value<string_t>::basic_value(string_t str) : _type(value_type::string), _raw_data(std::move(str))
+{}
+
+template <typename string_t>
+inline basic_value<string_t>::basic_value(std::nullptr_t) : _type(value_type::null)
 {}
 
 template <typename string_t>

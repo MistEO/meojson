@@ -16,6 +16,7 @@ bool serializing()
 
     root["hello"] = "meojson";
     root["Pi"] = 3.1416;
+    root["null"] = nullptr;
 
     root["obj"] = {
         { "obj_key1", "Hi" },
