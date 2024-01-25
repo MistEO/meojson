@@ -15,17 +15,17 @@ void test_jsonization();
 
 int main()
 {
-    std::cout << "\n****** Parsing ******\n" << std::endl;
+    // std::cout << "\n****** Parsing ******\n" << std::endl;
 
-    if (!parsing()) {
-        return -1;
-    }
+    // if (!parsing()) {
+    //     return -1;
+    // }
 
-    std::cout << "\n****** Serializing ******\n" << std::endl;
+    // std::cout << "\n****** Serializing ******\n" << std::endl;
 
-    if (!serializing()) {
-        return -1;
-    }
+    // if (!serializing()) {
+    //     return -1;
+    // }
 
     test_jsonization();
 
@@ -297,64 +297,72 @@ bool serializing()
     return true;
 }
 
-struct StructureFromOtherLibrary // like cv::Mat
+struct TypeFromOtherLibrary
 {
     int a_i = 100;
 };
-json::object to_json(const StructureFromOtherLibrary&)
+
+namespace json
 {
-    return { { "aaa", "ai" } };
+json::value to_json(const TypeFromOtherLibrary& t)
+{
+    return t.a_i;
 }
-bool from_json(const json::object&, StructureFromOtherLibrary& aa)
+bool check_json(const json::value& j, TypeFromOtherLibrary)
 {
-    aa.a_i = -1;
+    return j.is_number();
+}
+bool from_json(const json::value& j, TypeFromOtherLibrary& out)
+{
+    out.a_i = j.as_integer();
     return true;
 }
-
-struct MyCustomStructure
-{
-    int b_i = 10;
-
-    json::object to_json() const { return { { "bbb", "bi" } }; }
-    bool from_json(const json::object& in)
-    {
-        std::ignore = in;
-        b_i = -100;
-        return true;
-    }
-};
+}
 
 void test_jsonization()
 {
-    struct MyStruct
+    struct AAA
     {
-        std::vector<int> vec;
-        std::map<std::string, int> map;
-        int i = 0;
-        double d = 0;
+        int a_i = 100;
 
-        StructureFromOtherLibrary structureFromOtherLibrary;
-        MyCustomStructure myCustomStructure;
+        TypeFromOtherLibrary other;
 
-        MEO_JSONIZATION(vec, map, MEO_OPT i, MEO_OPT d, structureFromOtherLibrary, myCustomStructure);
+        MEO_JSONIZATION(a_i, other);
     };
 
-    MyStruct a;
+    struct BBB
+    {
+        int b_i = 10;
+        double b_d = 0.5;
 
-    a.vec = { 1, 2, 3 };
-    a.map = { { "key", 5 } };
-    a.i = 100;
-    a.d = 0.5;
+        AAA b_aaa;
 
-    json::object j = a.to_json();
+        MEO_JSONIZATION(b_i, MEO_OPT b_d, b_aaa);
+    };
+
+    std::vector<BBB> my_vec(3);
+    json::value j = my_vec;
     std::cout << j << std::endl;
 
-    // for test MEO_OPT
-    j.erase("i");
+    std::vector<BBB> result(j);
+    std::cout << json::value(result) << std::endl;
 
-    MyStruct b;
-    bool loaded = b.from_json(j);
+    // MyStruct a;
 
-    std::cout << "loaded: " << loaded << std::endl;
-    std::cout << b.myCustomStructure.b_i << std::endl;
+    // a.vec = { 1, 2, 3 };
+    // a.map = { { "key", 5 } };
+    // a.i = 100;
+    // a.d = 0.5;
+
+    // json::object j = a.to_json();
+    // std::cout << j << std::endl;
+
+    //// for test MEO_OPT
+    // j.erase("i");
+
+    // MyStruct b;
+    // bool loaded = b.from_json(j);
+
+    // std::cout << "loaded: " << loaded << std::endl;
+    // std::cout << b.myCustomStructure.b_i << std::endl;
 }
