@@ -371,6 +371,26 @@ public:
     {
         return as_map<value_t, map_t>();
     }
+    template <typename jsonization_t,
+              std::enable_if_t<utils::has_from_json_in_member<jsonization_t>::value, bool> = true>
+    explicit operator jsonization_t() const
+    {
+        jsonization_t dst;
+        if (!dst.from_json(*this)) {
+            throw exception("Wrong JSON");
+        }
+        return dst;
+    }
+    template <typename jsonization_t,
+              std::enable_if_t<utils::has_from_json_in_global<jsonization_t>::value, bool> = true>
+    explicit operator jsonization_t() const
+    {
+        jsonization_t dst;
+        if (!from_json(*this, dst)) {
+            throw exception("Wrong JSON");
+        }
+        return dst;
+    }
 
 private:
     friend class basic_array<string_t>;
@@ -1229,20 +1249,6 @@ inline value_t basic_value<string_t>::as() const
 {
     if constexpr (std::is_same_v<basic_value<string_t>, value_t>) {
         return *this;
-    }
-    else if constexpr (utils::has_from_json_in_member<value_t>::value) {
-        value_t val;
-        if (!val.from_json(*this)) {
-            throw exception("Wrong JSON");
-        }
-        return val;
-    }
-    else if constexpr (utils::has_from_json_in_global<value_t>::value) {
-        value_t val;
-        if (!from_json(*this, val)) {
-            throw exception("Wrong JSON");
-        }
-        return val;
     }
     else {
         return static_cast<value_t>(*this);
