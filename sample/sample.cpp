@@ -302,8 +302,6 @@ struct TypeFromOtherLibrary
     int a_i = 100;
 };
 
-namespace json
-{
 json::value to_json(const TypeFromOtherLibrary& t)
 {
     return t.a_i;
@@ -316,7 +314,6 @@ bool from_json(const json::value& j, TypeFromOtherLibrary& out)
 {
     out.a_i = j.as_integer();
     return true;
-}
 }
 
 void test_jsonization()
