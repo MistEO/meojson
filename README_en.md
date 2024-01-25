@@ -2,9 +2,9 @@
 
 # meojson
 
-现代化的全平台 Json/Json5 解析/生成器，Header-only，并附带大量语法糖！
+现代化的全平台 Json/Json5 解析/生成器，Header-only，并且使用了魔法！
 
-A modern all-platform Json/Json5 parser/serializer, which is header-only and contains lots of syntactic sugar!
+A modern all-platform Json/Json5 parser/serializer, which is header-only and used magic!
 
 </div>
 
@@ -14,32 +14,201 @@ A modern all-platform Json/Json5 parser/serializer, which is header-only and con
 
 - Include the header file in your project, and enjoy it!
 
-```cpp
+```c++
 #include "json.hpp"
 ```
 
 - If you want to parse JSON5, please include `json5.hpp`
 
-```cpp
+```c++
 #include "json5.hpp"
 ```
 
-- meojson only depends on STL, but requires c++17 standard
+- **meojson** only depends on STL, but requires c++17 standard
+- For MSVC, please add `/Zc:preprocessor` to your project
+- For AppleClang, please add `-Wno-gnu-zero-variadic-macro-arguments` to your project
 
-## Sample
+## Serializing
 
-### Parsing
+Here are some basic features:
 
-```cpp
-/***
- * from sample/sample.cpp
-***/
-#include <iostream>
-#include "json.hpp"
+```c++
+json::value j;
+j["pi"] = 3.14;
+j["happy"] = true;
+j["answer"]["everything"] = 42;
+j["object"] = { {"currency", "USD"}, {"value", 42.99} };
+```
 
-void parsing()
+And some interesting features:
+
+```c++
+std::set<int> set { 1, 2, 3 };
+j["set"] = set;
+
+// what a crazy type!
+std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map {
+    { "key_1", { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2", { 10 } } } } },
+};
+j["map"] = map;
+
+// output:
+// {"answer":{"everything":42},"happy":true,"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"object":{"currency":"USD","value":42.990000},"pi":3.140000,"set":[1,2,3]}
+std::cout << j << std::endl;
+```
+
+Then, don’t blink, we changed it back!
+
+```c++
+double pi = (double)j["pi"];
+int answer = (int)j["answer"]["everything"];
+
+std::set<int> new_set = (std::set<int>)j["set"];
+// this crazy type again
+auto new_map = (std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>>)j["map"];
+```
+
+However, for runtime json, we'd better check whether it can be converted first.
+
+```c++
+if (j["happy"].is<std::vector<int>>()) {
+    std::vector<int> vec = (std::vector<int>)j["happy"];
+}
+else {
+    std::cout << "`Oh my god, j[\"happy\"] is not an array." << std::endl;
+    std::cout << "`Fortunately, I checked it, otherwise it will crash!" << std::endl;
+}
+```
+
+I guess you have understood, yes, **meojson** is not only a json library, but also a serialization library!
+
+```c++
+struct MyStruct
 {
-    std::string content = R"(
+    int x = 0;
+    std::vector<double> vec;
+    // how come it's always you!
+    std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map;
+
+    // then we add a little magic
+    MEO_JSONIZATION(x, vec, map);
+};
+
+MyStruct mine;
+mine.vec.emplace_back(0.5);
+mine.map = { { "key_1", { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2", { 10 } } } } } };
+
+// yes, it’s that intuitive and smooth!
+json::value j_mine = mine;
+// output: {"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}
+std::cout << j_mine << std::endl;
+
+// exactly, we can also change it back!
+MyStruct new_mine = (MyStruct)j_mine;
+```
+
+Nested calls are also a no-brainer!
+
+```c++
+struct Outter
+{
+    int outter_a = 10;
+    std::vector<MyStruct> my_vec;
+
+    MEO_JSONIZATION(outter_a, my_vec);
+};
+
+Outter o;
+o.my_vec.emplace_back(mine);
+json::value j_o = o;
+// output: {"my_vec":[{"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}],"outter_a":10}
+std::cout << j_o << std::endl;
+
+// same deserialization
+Outter new_o = (Outter)j_o;
+```
+
+For optional fields, we can add `MEO_OPT` to it, so that when converting, if this fields does not exist in json, it will be skipped.
+
+```c++
+struct OptionalFields
+{
+    int a = 0;
+    double b = 0;
+    std::vector<int> c;
+
+    MEO_JSONIZATION(a, MEO_OPT b, MEO_OPT c);
+};
+
+json::value ja = {
+    { "a", 100 },
+};
+if (ja.is<OptionalFields>()) {
+    OptionalFields var = (OptionalFields)ja;
+    // output: 100
+    std::cout << var.a << std::endl;
+}
+```
+
+For third-party unhackable types, you need to implement `to_json`, `check_json`, `from_json`
+
+```c++
+struct ThirdPartyStruct
+{
+    int a = 100;
+};
+
+json::value to_json(const ThirdPartyStruct& t) { return t.a; }
+bool check_json(const json::value& j, const ThirdPartyStruct&) { return j.is_number(); }
+bool from_json(const json::value& j, ThirdPartyStruct& out) { out.a = j.as_integer(); return true; }
+
+// then you can use it as json
+ThirdPartyStruct third;
+json::value jthird = third;
+ThirdPartyStruct new_third = (ThirdPartyStruct)jthird;
+
+// or add to your sturcture
+struct Outter2
+{
+    int outter_a = 10;
+    ThirdPartyStruct third;
+
+    MEO_JSONIZATION(outter_a, my_vec, third);
+};
+```
+
+And some trivial features:
+
+```c++
+// add elements to an array or object via `emplace`
+j["set"].emplace(10);
+j["object"].emplace("key3", "value3");
+
+// merge two arrays
+j["set"] += json::array { 11, 12 };
+
+// merge two objects
+j["object"] |= {
+    { "key4", 4 },
+    { "key5", false },
+};
+
+// to string
+std::string oneline = j.dumps();
+std::string format = j.dumps(4);
+
+// save to file
+std::ofstream ofs("meo.json");
+ofs << j;
+ofs.close();
+```
+
+## Parsing
+
+Now let’s talk about parsing
+
+```c++
+std::string content = R"(
 {
     "repo": "meojson",
     "author": {
@@ -55,110 +224,99 @@ void parsing()
             { "C_str": "you found me!" }
         ]
     }
+})";
+
+// it's a std::optional<json::value>
+auto ret = json::parse(content);
+
+if (!ret) {
+    std::cerr << "Parsing failed" << std::endl;
+    return;
 }
-    )";
+json::value& value = *ret;
 
-    auto ret = json::parse(content);
+// Output: meojson
+std::cout << (std::string)value["repo"] << std::endl;
 
-    if (!ret) {
-        std::cerr << "Parsing failed" << std::endl;
-        return;
-    }
-    json::value& value = ret.value(); // you can use rvalues if needed, like
-                               // `auto value = std::move(ret).value();`
-    // Output: meojson
-    std::cout << value["repo"].as_string() << std::endl;
+/* Output:
+    ChingCdesu's homepage: https://github.com/ChingCdesu
+    MistEO's homepage: https://github.com/MistEO
+*/
+for (auto&& [name, homepage] : (json::object)value["author"]) {
+    std::cout << name << "'s homepage: " << (std::string)homepage << std::endl;
+}
+// num = 3.141600
+double num = (double)value["num"];
 
-    /* Output:
-        ChingCdesu's homepage: https://github.com/ChingCdesu
-        MistEO's homepage: https://github.com/MistEO
-    */
-    for (auto&& [name, homepage] : value["author"].as_object()) {
-        std::cout << name << "'s homepage: " << homepage.as_string() << std::endl;
-    }
+// get_value = "default_value"
+std::string get_value = value.get("maybe_exists", "default_value");
+std::cout << get_value << std::endl;
+```
 
-    // Output: abc
-    std::string str = (std::string)value["str"];    // it is equivalent to `value["str"].as_string()`
-    std::cout << str << std::endl;
+Like most parsing libraries, this is boring and you don't want to look at this.  
+So let me show you something interesting.
 
-    // Output: 3.141600
-    double num = value["num"].as_double();          // similarly, you can use `(double)value["num"]`
-    std::cout << num << std::endl;
+```c++
+// what a magical `get`, you can continuously enter keys or pos!
+// nested_get = you found me!
+std::string nested_get = value.get("A_obj", "B_arr", 1, "C_str", "default_value");
 
-    // Output: default_value
-    std::string get = value.get("maybe_exists", "default_value");
-    std::cout << get << std::endl;
 
-    // Output: you found me!
-    std::string nested_get = value.get("A_obj", "B_arr", 1, "C_str", "default_value");
-    std::cout << nested_get << std::endl;
-
-    // Output: 1, 2, 3
-    // If the "list" is not an array or not exists, it will be a invalid optional;
-    auto opt = value.find<json::array>("list");
-    if (opt) {
-        auto& arr = opt.value();
-        for (auto&& elem : arr) {
-            std::cout << elem.as_integer() << std::endl;
-        }
-    }
-    // more examples, it will output 3.141600
-    auto opt_n = value.find<double>("num");
-    if (opt_n) {
-        std::cout << opt_n.value() << std::endl;
-    }
-    // If you use the `find` without template argument, it will return a `std::optional<json::value>`
-    auto opt_v = value.find("not_exists");
-    std::cout << "Did we find the \"not_exists\"? " << opt_v.has_value() << std::endl;
-
-    bool is_vec = value["list"].is<std::vector<int>>();
-
-    std::vector<int> to_vec = value["list"].as_collection<int>();
-    to_vec = (std::vector<int>)value["list"];       // same as above
-    to_vec = value["list"].as<std::vector<int>>();  // same as above
-
-    // Output: 1, 2, 3
-    for (auto&& i : to_vec) {
-        std::cout << i << std::endl;
-    }
-
-    std::list<int> to_list = value["list"].as_collection<int, std::list>();
-    to_list = (std::list<int>)value["list"];        // same as above
-    to_list = value["list"].as<std::list<int>>();   // same as above
-
-    std::set<int> to_set = value["list"].as_collection<int, std::set>();
-    to_set = (std::set<int>)value["list"];          // same as above
-    to_set = value["list"].as<std::set<int>>();     // same as above
-    
-    bool is_map = value["author"].is<std::map<std::string, std::string>>();
-    
-    std::map<std::string, std::string> to_map = value["author"].as_map<std::string>();
-    to_map = (std::map<std::string, std::string>)value["author"];       // same as above
-    to_map = value["author"].as<std::map<std::string, std::string>>();  // same as above
-
-    auto to_hashmap = value["author"].as_map<std::string, std::unordered_map>();
-    to_hashmap = (std::unordered_map<std::string, std::string>)value["author"];     // same as above
-    to_hashmap = value["author"].as<std::unordered_map<std::string, std::string>>();// same as above
-
-    // Output: "literals"
-    using namespace json::literals;
-    auto val = "{\"hi\":\"literals\"}"_json;
-    std::cout << val["hi"] << std::endl;
+// `find` can help you find and check whether the type is correct
+// if there is no `num`, the opt_n will be std::nullopt
+auto opt_n = value.find<double>("num");
+if (opt_n) {
+    // output: 3.141600
+    std::cout << *opt_n << std::endl;
 }
 ```
 
-### Parsing Json5
+There are also a few tricks you've already seen with Serializing
 
-```cpp
-/***
- * from sample/json5_parse.cpp
-***/
-#include <iostream>
-#include "json5.hpp"
+```c++
+bool is_vec = value["list"].is<std::vector<int>>();
 
-void parsing()
-{
-    std::string_view content = R"(
+std::vector<int> to_vec = value["list"].as_collection<int>();
+to_vec = (std::vector<int>)value["list"];       // same as above
+to_vec = value["list"].as<std::vector<int>>();  // same as above
+
+// Output: 1, 2, 3
+for (auto&& i : to_vec) {
+    std::cout << i << std::endl;
+}
+
+std::list<int> to_list = value["list"].as_collection<int, std::list>();
+to_list = (std::list<int>)value["list"];        // same as above
+to_list = value["list"].as<std::list<int>>();   // same as above
+
+std::set<int> to_set = value["list"].as_collection<int, std::set>();
+to_set = (std::set<int>)value["list"];          // same as above
+to_set = value["list"].as<std::set<int>>();     // same as above
+
+bool is_map = value["author"].is<std::map<std::string, std::string>>();
+
+std::map<std::string, std::string> to_map = value["author"].as_map<std::string>();
+to_map = (std::map<std::string, std::string>)value["author"];       // same as above
+to_map = value["author"].as<std::map<std::string, std::string>>();  // same as above
+
+auto to_hashmap = value["author"].as_map<std::string, std::unordered_map>();
+to_hashmap = (std::unordered_map<std::string, std::string>)value["author"];     // same as above
+to_hashmap = value["author"].as<std::unordered_map<std::string, std::string>>();// same as above
+```
+
+And... some useless literal syntax
+
+```c++
+// Output: "literals"
+using namespace json::literals;
+auto val = "{\"hi\":\"literals\"}"_json;
+std::cout << val["hi"] << std::endl;
+```
+
+But the good news is that we can also parse json5!
+
+```c++
+std::string_view content5 = R"(
 // It's a Json5 content
 {
   名字: "MistEO",                  /* Key's quotes can be omitted */
@@ -171,132 +329,15 @@ void parsing()
   light_speed: +3e8,               // and scientific notation
 }
 )";
-    auto ret = json::parse5(content);
-    if (!ret) {
-        std::cerr << "Parsing failed" << std::endl;
-        return;
-    }
-    json::value& value = ret.value(); // you can use rvalues if needed, like
-                               // `auto value = std::move(ret).value();`
-
-    // Output: MistEO
-    std::cout << value["名字"] << std::endl;
-    // Output: value
-    std::string str = (std::string)value["key"][0];
-    std::cout << str << std::endl;
-    
-    // for more json::value usage, please refer to sample.cpp
+auto ret = json::parse5(content5);
+if (!ret) {
+    std::cerr << "Parsing failed" << std::endl;
+    return;
 }
-```
+json::value& value = *ret;
 
-### Serializing
-
-```cpp
-/***
- * from sample/sample.cpp
-***/
-#include <iostream>
-#include "json.hpp"
-
-void serializing()
-{
-    json::value root;
-
-    root["hello"] = "meojson";
-    root["Pi"] = 3.1416;
-
-    root["obj"] = {
-        { "obj_key1", "Hi" },
-        { "obj_key2", 123 },
-        { "obj_key3", true },
-    };
-    root["obj"].emplace("obj_key4", 789);
-
-    root["obj"].emplace("obj_key5", json::object { { "key4 child", "i am object value" } });
-    root["another_obj"]["child"]["grand"] = "i am grand";
-
-    // take union
-    root["obj"] |= json::object {
-        { "obj_key6", "i am string" },
-        { "obj_key7", json::array { "i", "am", "array" } },
-    };
-
-    root["arr"] = json::array { 1, 2, 3 };
-    root["arr"].emplace(4);
-    root["arr"].emplace(5);
-    root["arr"] += json::array { 6, 7 };
-
-    std::vector<int> vec = { 1, 2, 3, 4, 5 };
-    root["arr from vec"] = vec;
-
-    std::set<std::string> set = { "a", "bb\n\nb", "cc\t" };
-    root["arr from set"] = set;
-
-    std::map<std::string, int> map {
-        { "key1", 1 },
-        { "key2", 2 },
-    };
-    root["obj from map"] = map;
-
-    std::vector<std::list<std::set<int>>> complex { { { 1, 2, 3 }, { 4, 5 } }, { { 6 }, { 7, 8 } } };
-    root["complex"] = json::serialize<false>(complex);
-
-    std::map<std::string, std::map<int, std::vector<double>>> more_complex {
-        { "key1", { { 1, { 0.1, 0.2 } }, { 2, { 0.2, 0.3 } } } },
-        { "key2", { { 3, { 0.4 } }, { 4, { 0.5, 0.6, 0.7 } } } },
-    };
-    // the "std::map<int, xxx>" cannot be converted to json because the key is "int",
-    // you can set the template parameter "loose" of "serialize" to true, which will make a more relaxed conversion.
-    root["more_complex"] = json::serialize<true>(more_complex);
-
-    std::cout << root << std::endl;
-
-    std::ofstream ofs("meo.json");
-    ofs << root;
-    ofs.close();
-}
-```
-
-### JSONization
-
-```c++
-// if you are using MSVC, please add "/Zc:preprocessor" to your project
-// if you are using AppleClang, please add "-Wno-gnu-zero-variadic-macro-arguments" to your project
-void test_jsonization()
-{
-    struct MyStruct
-    {
-        std::vector<int> vec;
-        std::map<std::string, int> map;
-        int i = 0;
-        double d = 0;
-
-        // MEO_OPT means the var is optional
-        // and can still be read even if the field doesn't exist in the input.
-        MEO_JSONIZATION(vec, map, MEO_OPT i, d);
-    };
-
-    MyStruct a;
-    a.vec = { 1, 2, 3 };
-    a.map = { { "key", 5 } };
-    a.i = 100;
-    a.d = 0.5;
-
-    json::value dumps = a;
-
-    // output: { "d" : 0.500000, "i" : 100, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
-    std::cout << dumps << std::endl;
-
-    dumps.erase("i")
-    // output: { "d" : 0.500000, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
-    std::cout << dumps << std::endl;
-
-    // MEO_OPT means the var is optional
-    // and can still be read even if the field doesn't exist in the input.
-    MyStruct b(dumps);
-
-    // output: { "d" : 0.500000, "i" : 0, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
-    // "i" is 0 because we erase "i" from the dumps
-    std::cout << json::value(b) << std::endl;
-}
+// Output: MistEO
+std::cout << value["名字"] << std::endl;
+// str = "value"
+std::string str = (std::string)value["key"][0];
 ```

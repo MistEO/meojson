@@ -1,26 +1,24 @@
 #include <iostream>
 
+#include "json5_test.h"
 #include "json5.hpp"
 
 bool parsing();
 bool parsing_error();
 
-int main()
+bool test_json5()
 {
     /*** Parsing Json5 ***/
-    std::cout << "\n****** Parsing 5 ******\n" << std::endl;
 
     if (!parsing()) {
-        return -1;
+        return false;
     }
-
-    std::cout << "\n****** Parsing error 5 ******\n" << std::endl;
 
     if (!parsing_error()) {
-        return -1;
+        return false;
     }
 
-    return 0;
+    return true;
 }
 
 bool parsing()
@@ -48,16 +46,16 @@ bool parsing()
         std::cerr << error_message << std::endl;
         return false;
     }
-    {     
+    {
         auto another_ret = json::parse5(content, &error_message);
         if (!another_ret) {
             std::cerr << "Parsing failed" << std::endl;
             std::cerr << error_message << std::endl;
             return false;
-        }//C-style strings can also be used as input.
+        } // C-style strings can also be used as input.
     }
     json::value& value = ret.value(); // you can use rvalues if needed, like
-                               // `auto value = std::move(ret).value();`
+                                      // `auto value = std::move(ret).value();`
 
     // Output: MistEO
     std::cout << value["名字"].as_string() << std::endl;
@@ -83,8 +81,6 @@ bool parsing_error()
     std::string error_msg;
     auto err_ret = json::parse5(error_content, &error_msg);
     if (!err_ret) {
-        std::cout << "Parsing failed" << std::endl;
-        std::cout << error_msg << std::endl;
         return true;
     }
 
