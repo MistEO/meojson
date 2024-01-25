@@ -75,8 +75,8 @@ if (j["happy"].is<std::vector<int>>()) {
     std::vector<int> vec = (std::vector<int>)j["happy"];
 }
 else {
-    std::cout << "`Oh my god, j[\"happy\"] is not an array." << std::endl;
-    std::cout << "`Fortunately, I checked it, otherwise it will crash!" << std::endl;
+    std::cout << "Oh my god, j[\"happy\"] is not an array." << std::endl;
+    std::cout << "Fortunately, I checked it, otherwise it will crash!" << std::endl;
 }
 ```
 
@@ -100,6 +100,7 @@ mine.map = { { "key_1", { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2",
 
 // yes, it’s that intuitive and smooth!
 json::value j_mine = mine;
+
 // output: {"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}
 std::cout << j_mine << std::endl;
 
@@ -260,7 +261,6 @@ So let me show you something interesting.
 // what a magical `get`, you can continuously enter keys or pos!
 // nested_get = you found me!
 std::string nested_get = value.get("A_obj", "B_arr", 1, "C_str", "default_value");
-
 
 // `find` can help you find and check whether the type is correct
 // if there is no `num`, the opt_n will be std::nullopt

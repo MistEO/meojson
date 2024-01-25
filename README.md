@@ -75,8 +75,8 @@ if (j["happy"].is<std::vector<int>>()) {
     std::vector<int> vec = (std::vector<int>)j["happy"];
 }
 else {
-    std::cout << "`天啊, j[\"happy\"] 不是一个数组！" << std::endl;
-    std::cout << "`还好我检查了，不然就炸了！" << std::endl;
+    std::cout << "天啊, j[\"happy\"] 不是一个数组！" << std::endl;
+    std::cout << "还好我检查了，不然就炸了！" << std::endl;
 }
 ```
 
@@ -100,6 +100,7 @@ mine.map = { { "key_1", { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2",
 
 // 是的，它是那么直观和流畅！
 json::value j_mine = mine;
+
 // output: {"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}
 std::cout << j_mine << std::endl;
 
@@ -261,7 +262,6 @@ std::cout << get_value << std::endl;
 // 多么神奇的 `get`，你可以连续传参 key 或 pos！
 // nested_get = you found me!
 std::string nested_get = value.get("A_obj", "B_arr", 1, "C_str", "default_value");
-
 
 // `find` 可以帮助你找到并检查类型是否正确
 // 如果没有 `num`，则 opt_n 将为 std::nullopt

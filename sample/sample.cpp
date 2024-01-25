@@ -61,8 +61,8 @@ void serializing()
         std::vector<int> vec = (std::vector<int>)j["happy"];
     }
     else {
-        std::cout << "`Oh my god, j[\"happy\"] is not an array." << std::endl;
-        std::cout << "`Fortunately, I checked it, otherwise it will crash!" << std::endl;
+        std::cout << "Oh my god, j[\"happy\"] is not an array." << std::endl;
+        std::cout << "Fortunately, I checked it, otherwise it will crash!" << std::endl;
     }
 
     /* I guess you have understood, yes, **meojson** is not only a json library, but also a serialization library! */
@@ -84,6 +84,7 @@ void serializing()
 
     // yes, it’s that intuitive and smooth!
     json::value j_mine = mine;
+    
     // output: {"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}
     std::cout << j_mine << std::endl;
 
