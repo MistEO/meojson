@@ -26,7 +26,6 @@ jobs:
       - name: Run Testing
         run: |
           ./build/Debug/sample.exe
-          ./build/Debug/json5_parse_sample.exe
           ./build/Debug/testing.exe
 
       - uses: actions/upload-artifact@v3
@@ -50,7 +49,6 @@ jobs:
       - name: Run Testing
         run: |
           ./build/sample
-          ./build/json5_parse_sample
           ./build/testing
 
       - uses: actions/upload-artifact@v3

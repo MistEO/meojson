@@ -139,6 +139,29 @@ namespace utils
     };
 } // namespace utils
 
+// *******************************
+// *      exception declare      *
+// *******************************
+
+class exception : public std::exception
+{
+public:
+    exception() = default;
+    exception(const std::string& msg) : _what(msg) {}
+
+    exception(const exception&) = default;
+    exception& operator=(const exception&) = default;
+    exception(exception&&) = default;
+    exception& operator=(exception&&) = default;
+
+    virtual ~exception() noexcept override = default;
+
+    virtual const char* what() const noexcept override { return _what.empty() ? "Unknown exception" : _what.c_str(); }
+
+protected:
+    std::string _what;
+};
+
 // *********************************
 // *      basic_value declare      *
 // *********************************
@@ -695,29 +718,6 @@ private:
 private:
     parsing_iter_t _cur;
     parsing_iter_t _end;
-};
-
-// *******************************
-// *      exception declare      *
-// *******************************
-
-class exception : public std::exception
-{
-public:
-    exception() = default;
-    exception(const std::string& msg) : _what(msg) {}
-
-    exception(const exception&) = default;
-    exception& operator=(const exception&) = default;
-    exception(exception&&) = default;
-    exception& operator=(exception&&) = default;
-
-    virtual ~exception() noexcept override = default;
-
-    virtual const char* what() const noexcept override { return _what.empty() ? "Unknown exception" : _what.c_str(); }
-
-protected:
-    std::string _what;
 };
 
 // ***************************
