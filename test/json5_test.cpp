@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "json5_test.h"
 #include "json5.hpp"
+#include "json5_test.h"
 
 bool parsing();
 bool parsing_error();

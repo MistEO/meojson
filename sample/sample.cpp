@@ -110,7 +110,8 @@ void serializing()
     // same deserialization
     Outter new_o = (Outter)j_o;
 
-    /* For optional fields, we can add `MEO_OPT` to it, so that when converting, if this fields does not exist in json, it will be skipped. */
+    /* For optional fields, we can add `MEO_OPT` to it, so that when converting, if this fields does not exist in json,
+     * it will be skipped. */
 
     struct OptionalFields
     {

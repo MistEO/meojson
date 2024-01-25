@@ -26,8 +26,21 @@ if(ENABLE_NEON)
     add_compile_definitions(MEOJSON_ENABLE_NEON)
 endif()
 
+file(GLOB_RECURSE json_headers
+    include/*.h
+    include/*.hpp
+)
+
 if (BUILD_SAMPLE)
-    add_executable(sample sample/sample.cpp include/json.hpp)
+    file(GLOB sample_src
+        sample/*.cpp
+        sample/*.h
+        sample/*.hpp
+    )
+    add_executable(sample ${sample_src} ${json_headers})
+
+    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${json_headers})
+    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${sample_src})
 endif()
 
 if (BUILD_TESTING)
@@ -36,12 +49,23 @@ if (BUILD_TESTING)
         test/*.h
         test/*.hpp
     )
-    add_executable(testing ${testing_src} include/json.hpp)
+    add_executable(testing ${testing_src} ${json_headers})
+
+    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${json_headers})
+    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${testing_src})
 endif()
 
 if (BUILD_BENCHMARK)
     SET(CMAKE_BUILD_TYPE "Release")
-    add_executable(benchmark benchmark/benchmark.cpp include/json.hpp)
+    file(GLOB_RECURSE benchmark_src
+        benchmark/*.cpp
+        benchmark/*.h
+        benchmark/*.hpp
+    )
+    add_executable(benchmark ${benchmark_src} ${json_headers})
+    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${json_headers})
+    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${benchmark_src})
+
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64|EM64T|x86_64")
         if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
             target_compile_options(benchmark PRIVATE "/arch:AVX2")

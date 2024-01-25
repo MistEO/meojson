@@ -1,8 +1,8 @@
 #include <iostream>
 
 #include "include_test.h"
-#include "serializing_test.h"
 #include "json5_test.h"
+#include "serializing_test.h"
 
 int main()
 {

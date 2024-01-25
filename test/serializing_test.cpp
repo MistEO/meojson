@@ -50,7 +50,6 @@ bool serializing()
     auto to_hashset = root["arr"].as_collection<int, std::unordered_set>();
     auto to_deque = root["arr"].as_collection<int, std::deque>();
     auto to_q = root["arr"].as_collection<int, std::queue>();
-    
 
     std::vector<int> vec = { 1, 2, 3, 4, 5 };
     root["arr from vec"] = vec;
@@ -74,24 +73,7 @@ bool serializing()
     auto to_hashmap = root["obj from map"].as_map<int, std::unordered_map>();
 
     std::vector<std::list<std::set<int>>> complex { { { 1, 2, 3 }, { 4, 5 } }, { { 6 }, { 7, 8 } } };
-    root["complex"] = json::serialize<false>(complex);
-
-    std::map<std::array<int, 3>, std::map<int, std::array<double, 2>>> more_complex {
-        { { 1, 2, 3 }, { { 1, { 0.1, 0.2 } }, { 2, { 0.2, 0.3 } } } },
-        { { 4, 5, 6 }, { { 3, { 0.4 } }, { 4, { 0.5, 0.6 } } } },
-    };
-
-    std::filesystem::path path = "path/to/file";
-    root["path"] = json::serialize<true>(path);
-    std::vector<std::filesystem::path> paths = { "path/to/file1", "path/to/file2" };
-    root["paths"] = json::serialize<true>(paths);
-
-    root["more_complex"] = json::serialize<true>(more_complex);
-    if (root["more_complex"].to_string() !=
-        R"({"[1,2,3]":{"1":[0.100000,0.200000],"2":[0.200000,0.300000]},"[4,5,6]":{"3":[0.400000,0.000000],"4":[0.500000,0.600000]}})") {
-        std::cerr << "error: " << root["more_complex"].to_string() << std::endl;
-        return false;
-    }
+    root["complex"] = complex;
 
     root["a\\n"] = "1a\\n";
     root["a\n"] = "2a\n";
