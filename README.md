@@ -119,14 +119,17 @@ struct Outter
     MEO_JSONIZATION(outter_a, my_vec);
 };
 
-Outter o;
-o.my_vec.emplace_back(mine);
-json::value j_o = o;
-// output: {"my_vec":[{"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}],"outter_a":10}
-std::cout << j_o << std::endl;
+Outter outter;
+outter.my_vec.emplace_back(mine);
+
+json::value j_outter = outter;
+
+// output:
+// {"my_vec":[{"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}],"outter_a":10}
+std::cout << j_outter.to_string() << std::endl;
 
 // 同样的反序列化
-Outter new_o = (Outter)j_o;
+Outter new_o = (Outter)j_outter;
 ```
 
 对于可选字段，我们可以在其中添加 `MEO_OPT`，这样在转换时，如果此字段在 JSON 中不存在，它将被跳过。

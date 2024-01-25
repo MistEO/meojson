@@ -84,7 +84,7 @@ void serializing()
 
     // yes, it’s that intuitive and smooth!
     json::value j_mine = mine;
-    
+
     // output: {"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}
     std::cout << j_mine << std::endl;
 
@@ -101,15 +101,17 @@ void serializing()
         MEO_JSONIZATION(outter_a, my_vec);
     };
 
-    Outter o;
-    o.my_vec.emplace_back(mine);
-    json::value j_o = o;
+    Outter outter;
+    outter.my_vec.emplace_back(mine);
+
+    json::value j_outter = outter;
+    
     // output:
     // {"my_vec":[{"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}],"outter_a":10}
-    std::cout << j_o.to_string() << std::endl;
+    std::cout << j_outter.to_string() << std::endl;
 
     // same deserialization
-    Outter new_o = (Outter)j_o;
+    Outter new_o = (Outter)j_outter;
 
     /* For optional fields, we can add `MEO_OPT` to it, so that when converting, if this fields does not exist in json,
      * it will be skipped. */
