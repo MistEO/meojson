@@ -76,11 +76,12 @@ public:
     static constexpr bool value = decltype(test<T>(0))::value;
 };
 
-template <typename T>
+template <typename T, typename string_t>
 class has_check_json_in_member
 {
     template <typename U>
-    static auto test(int) -> decltype(std::declval<U>().check_json(std::declval<json::value>()), std::true_type());
+    static auto test(int)
+        -> decltype(std::declval<U>().check_json(std::declval<json::basic_value<string_t>>()), std::true_type());
 
     template <typename U>
     static std::false_type test(...);
@@ -89,11 +90,12 @@ public:
     static constexpr bool value = decltype(test<T>(0))::value;
 };
 
-template <typename T>
+template <typename T, typename string_t>
 class has_check_json_in_global
 {
     template <typename U>
-    static auto test(int) -> decltype(check_json(std::declval<json::value>(), std::declval<U>()), std::true_type());
+    static auto test(int)
+        -> decltype(check_json(std::declval<json::basic_value<string_t>>(), std::declval<U>()), std::true_type());
 
     template <typename U>
     static std::false_type test(...);
@@ -102,11 +104,12 @@ public:
     static constexpr bool value = decltype(test<T>(0))::value;
 };
 
-template <typename T>
+template <typename T, typename string_t>
 class has_from_json_in_member
 {
     template <typename U>
-    static auto test(int) -> decltype(std::declval<U>().from_json(std::declval<json::value>()), std::true_type());
+    static auto test(int)
+        -> decltype(std::declval<U>().from_json(std::declval<json::basic_value<string_t>>()), std::true_type());
 
     template <typename U>
     static std::false_type test(...);
@@ -115,11 +118,12 @@ public:
     static constexpr bool value = decltype(test<T>(0))::value;
 };
 
-template <typename T>
+template <typename T, typename string_t>
 class has_from_json_in_global
 {
     template <typename U>
-    static auto test(int) -> decltype(from_json(std::declval<json::value>(), std::declval<U&>()), std::true_type());
+    static auto test(int)
+        -> decltype(from_json(std::declval<json::basic_value<string_t>>(), std::declval<U&>()), std::true_type());
 
     template <typename U>
     static std::false_type test(...);

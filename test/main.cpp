@@ -14,6 +14,9 @@ int main()
     std::cout << "\n*** wstring_serializing ***\n" << std::endl;
     success &= wstring_serializing();
 
+    std::cout << "\n*** jsonizing ***\n" << std::endl;
+    success &= jsonizing();
+
     std::cout << "\n*** include_test ***\n" << std::endl;
     success &= include_test();
 

@@ -9,6 +9,7 @@
 #include <unordered_set>
 
 #include "json.hpp"
+#include "serializing_test.h"
 
 bool serializing()
 {
@@ -168,4 +169,39 @@ bool wstring_serializing()
     ofs.close();
 
     return true;
+}
+
+struct ThirdPartyStruct
+{
+    int a = 0;
+};
+json::wvalue to_json(const ThirdPartyStruct& t)
+{
+    return t.a;
+}
+bool check_json(const json::wvalue& j, const ThirdPartyStruct&)
+{
+    return j.is_number();
+}
+bool from_json(const json::wvalue& j, ThirdPartyStruct& out)
+{
+    out.a = j.as_integer();
+    return true;
+}
+bool jsonizing()
+{
+    // then you can use it as json
+    ThirdPartyStruct third { 100 };
+    json::wvalue jthird = third;
+    ThirdPartyStruct new_third = (ThirdPartyStruct)jthird;
+
+    //// or add to your sturcture
+    // struct Outter2
+    //{
+    //     int outter2_a = 10;
+    //     ThirdPartyStruct third;
+
+    //    MEO_JSONIZATION(outter2_a, third);
+    //};
+    return new_third.a == 100;
 }

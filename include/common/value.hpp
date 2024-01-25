@@ -220,7 +220,7 @@ public:
         return as_map<value_t, map_t>();
     }
     template <typename jsonization_t,
-              std::enable_if_t<utils::has_from_json_in_member<jsonization_t>::value, bool> = true>
+              std::enable_if_t<utils::has_from_json_in_member<jsonization_t, string_t>::value, bool> = true>
     explicit operator jsonization_t() const
     {
         jsonization_t dst;
@@ -230,7 +230,7 @@ public:
         return dst;
     }
     template <typename jsonization_t,
-              std::enable_if_t<utils::has_from_json_in_global<jsonization_t>::value, bool> = true>
+              std::enable_if_t<utils::has_from_json_in_global<jsonization_t, string_t>::value, bool> = true>
     explicit operator jsonization_t() const
     {
         jsonization_t dst;
@@ -386,10 +386,10 @@ inline bool basic_value<string_t>::is() const noexcept
     else if constexpr (std::is_constructible_v<string_t, value_t>) {
         return is_string();
     }
-    else if constexpr (utils::has_check_json_in_member<value_t>::value) {
+    else if constexpr (utils::has_check_json_in_member<value_t, string_t>::value) {
         return value_t().check_json(*this);
     }
-    else if constexpr (utils::has_check_json_in_global<value_t>::value) {
+    else if constexpr (utils::has_check_json_in_global<value_t, string_t>::value) {
         return check_json(*this, value_t());
     }
     else {
