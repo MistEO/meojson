@@ -160,38 +160,12 @@ public:
     template <typename... args_t>
     decltype(auto) emplace(args_t&&... args);
 
-    template <typename... args_t>
-    /*will be deprecated, please use `emplace` instead.*/
-    decltype(auto) array_emplace(args_t&&... args);
-    template <typename... args_t>
-    /*will be deprecated, please use `emplace` instead.*/
-    decltype(auto) object_emplace(args_t&&... args);
-
     void clear() noexcept;
 
     string_t dumps(std::optional<size_t> indent = std::nullopt) const { return indent ? format(*indent) : to_string(); }
     // return raw string
     string_t to_string() const;
-    string_t format() const { return format(4, 0); }
-    // format(bool) is deprecated now.
-    template <typename sz_t, typename = std::enable_if_t<std::is_integral_v<sz_t> && !std::is_same_v<sz_t, bool>>>
-    string_t format(sz_t indent) const
-    {
-        return format(indent, 0);
-    }
-
-    template <typename value_t, template <typename...> typename vector_t = std::vector>
-    // deprecated, please use `as_collection` instead.
-    vector_t<value_t> to_vector() const
-    {
-        return to_vector<value_t, vector_t>();
-    }
-    template <typename value_t, template <typename...> typename map_t = std::map>
-    // deprecated, please use `as_map` instead.
-    map_t<string_t, value_t> to_map() const
-    {
-        return as_map<value_t, map_t>();
-    }
+    string_t format(size_t indent = 4) const { return format(indent, 0); }
 
     basic_value<string_t>& operator=(const basic_value<string_t>& rhs);
     basic_value<string_t>& operator=(basic_value<string_t>&&) noexcept;
@@ -343,12 +317,7 @@ public:
 
     string_t dumps(std::optional<size_t> indent = std::nullopt) const { return indent ? format(*indent) : to_string(); }
     string_t to_string() const;
-    string_t format() const { return format(4, 0); }
-    template <typename sz_t, typename = std::enable_if_t<std::is_integral_v<sz_t> && !std::is_same_v<sz_t, bool>>>
-    string_t format(sz_t indent) const
-    {
-        return format(indent, 0);
-    }
+    string_t format(size_t indent = 4) const { return format(indent, 0); }
     template <typename value_t>
     bool all() const;
     template <typename value_t, template <typename...> typename collection_t = std::vector>
@@ -465,12 +434,7 @@ public:
 
     string_t dumps(std::optional<size_t> indent = std::nullopt) const { return indent ? format(*indent) : to_string(); }
     string_t to_string() const;
-    string_t format() const { return format(4, 0); }
-    template <typename sz_t, typename = std::enable_if_t<std::is_integral_v<sz_t> && !std::is_same_v<sz_t, bool>>>
-    string_t format(sz_t indent) const
-    {
-        return format(indent, 0);
-    }
+    string_t format(size_t indent = 4) const { return format(indent, 0); }
     template <typename value_t>
     bool all() const;
     template <typename value_t, template <typename...> typename map_t = std::map>
@@ -1015,20 +979,6 @@ inline decltype(auto) basic_value<string_t>::emplace(args_t&&... args)
     else if constexpr (is_object_args) {
         return as_object().emplace(std::forward<args_t>(args)...);
     }
-}
-
-template <typename string_t>
-template <typename... args_t>
-inline decltype(auto) basic_value<string_t>::array_emplace(args_t&&... args)
-{
-    return emplace(std::forward<args_t>(args)...);
-}
-
-template <typename string_t>
-template <typename... args_t>
-inline decltype(auto) basic_value<string_t>::object_emplace(args_t&&... args)
-{
-    return emplace(std::forward<args_t>(args)...);
 }
 
 template <typename string_t>
