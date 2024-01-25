@@ -308,7 +308,7 @@ json::value to_json(const TypeFromOtherLibrary& t)
 {
     return t.a_i;
 }
-bool check_json(const json::value& j, TypeFromOtherLibrary)
+bool check_json(const json::value& j, const TypeFromOtherLibrary&)
 {
     return j.is_number();
 }
@@ -335,7 +335,7 @@ void test_jsonization()
         int b_i = 10;
         double b_d = 0.5;
 
-        AAA b_aaa;
+        std::vector<AAA> b_aaa;
 
         MEO_JSONIZATION(b_i, MEO_OPT b_d, b_aaa);
     };

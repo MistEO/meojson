@@ -2905,9 +2905,8 @@ struct next_is_optional_t
 struct va_arg_end
 {};
 
-class dumper
+struct dumper
 {
-public:
     template <typename var_t, typename... rest_t>
     json::value _to_json(const char* key, const var_t& var, rest_t&&... rest) const
     {
@@ -2923,68 +2922,66 @@ public:
     json::value _to_json(va_arg_end) const { return {}; }
 };
 
-class checker
+struct checker
 {
-public:
     template <typename var_t, typename... rest_t>
-    bool _check_json(const json::value& in, std::string& error_key, const char* key, var_t&, rest_t&&... rest)
+    bool _check_json(const json::value& in, std::string& error_key, const char* key, const var_t&,
+                     rest_t&&... rest) const
     {
-        if (auto opt = in.find(key)) {
-            if (!opt->is<var_t>()) {
-                error_key = key;
-                return false;
-            }
-            _next_is_optional = false;
-        }
-        else if (!_next_is_optional) {
+        auto opt = in.find(key);
+        if (!opt || !opt->is<var_t>()) {
             error_key = key;
             return false;
         }
         return _check_json(in, error_key, std::forward<rest_t>(rest)...);
     }
-    template <typename... rest_t>
-    bool _check_json(const json::value& in, std::string& error_key, const char*, next_is_optional_t, rest_t&&... rest)
+    template <typename var_t, typename... rest_t>
+    bool _check_json(const json::value& in, std::string& error_key, const char*, next_is_optional_t, const char* key,
+                     const var_t&, rest_t&&... rest) const
     {
-        _next_is_optional = true;
+        auto opt = in.find(key);
+        if (opt) {
+            if (!opt->is<var_t>()) {
+                error_key = key;
+                return false;
+            }
+        } // next_is_optional_t, ignore key not found
+
         return _check_json(in, error_key, std::forward<rest_t>(rest)...);
     }
-    bool _check_json(const json::value&, std::string&, va_arg_end) { return true; }
-
-private:
-    bool _next_is_optional = false;
+    bool _check_json(const json::value&, std::string&, va_arg_end) const { return true; }
 };
 
-class loader
+struct loader
 {
-public:
     template <typename var_t, typename... rest_t>
-    bool _from_json(const json::value& in, std::string& error_key, const char* key, var_t& var, rest_t&&... rest)
+    bool _from_json(const json::value& in, std::string& error_key, const char* key, var_t& var, rest_t&&... rest) const
     {
-        if (auto opt = in.find(key)) {
+        auto opt = in.find(key);
+        if (!opt || !opt->is<var_t>()) {
+            error_key = key;
+            return false;
+        }
+        var = std::move(opt)->as<var_t>();
+
+        return _from_json(in, error_key, std::forward<rest_t>(rest)...);
+    }
+    template <typename var_t, typename... rest_t>
+    bool _from_json(const json::value& in, std::string& error_key, const char*, next_is_optional_t, const char* key,
+                    var_t& var, rest_t&&... rest) const
+    {
+        auto opt = in.find(key);
+        if (opt) {
             if (!opt->is<var_t>()) {
-                auto test = opt->dumps();
                 error_key = key;
                 return false;
             }
             var = std::move(opt)->as<var_t>();
-            _next_is_optional = false;
-        }
-        else if (!_next_is_optional) {
-            error_key = key;
-            return false;
-        }
-        return _from_json(in, error_key, std::forward<rest_t>(rest)...);
-    }
-    template <typename... rest_t>
-    bool _from_json(const json::value& in, std::string& error_key, const char*, next_is_optional_t, rest_t&&... rest)
-    {
-        _next_is_optional = true;
-        return _from_json(in, error_key, std::forward<rest_t>(rest)...);
-    }
-    bool _from_json(const json::value&, std::string&, va_arg_end) { return true; }
+        } // next_is_optional_t, ignore key not found
 
-private:
-    bool _next_is_optional = false;
+        return _from_json(in, error_key, std::forward<rest_t>(rest)...);
+    }
+    bool _from_json(const json::value&, std::string&, va_arg_end) const { return true; }
 };
 } // namespace json::_jsonization_helper
 
