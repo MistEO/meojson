@@ -57,7 +57,7 @@ j["map"] = map;
 std::cout << j << std::endl;
 ```
 
-然后，别眨眼，我们又转回来了！
+别眨眼，我们又转回来了！
 
 ```c++
 double pi = (double)j["pi"];
@@ -68,7 +68,7 @@ std::set<int> new_set = (std::set<int>)j["set"];
 auto new_map = (std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>>)j["map"];
 ```
 
-然而，对于运行时的 JSON，最好先检查它是否可以转换。
+然而对于运行时的 JSON，最好先检查它是否可以转换。
 
 ```c++
 if (j["happy"].is<std::vector<int>>()) {
@@ -80,7 +80,7 @@ else {
 }
 ```
 
-我猜你已经理解了，是的，**meojson** 不仅仅是一个 JSON 库，还是一个序列化库！
+我猜你已经明白了，是的，**meojson** 不仅仅是一个 JSON 库，还是一个序列化库！
 
 ```c++
 struct MyStruct
@@ -90,7 +90,7 @@ struct MyStruct
     // 怎么总是你！
     std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map;
 
-    // 我们加点魔法
+    // 让我们加点魔法
     MEO_JSONIZATION(x, vec, map);
 };
 
@@ -103,11 +103,11 @@ json::value j_mine = mine;
 // output: {"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}
 std::cout << j_mine << std::endl;
 
-// 恰恰，我们也可以把它变回来！
+// 恰恰，我们也可以把它转回来！
 MyStruct new_mine = (MyStruct)j_mine;
 ```
 
-嵌套调用也是易如反掌的！
+嵌套调用也是易如反掌！
 
 ```c++
 struct Outter
@@ -150,7 +150,7 @@ if (ja.is<OptionalFields>()) {
 }
 ```
 
-对于第三方不可侵入的类型，你需要实现 `to_json`, `check_json`, `from_json`
+对于第三方不可侵入的类型，则需要实现 `to_json`, `check_json`, `from_json`
 
 ```c++
 struct ThirdPartyStruct
@@ -162,12 +162,12 @@ json::value to_json(const ThirdPartyStruct& t) { return t.a; }
 bool check_json(const json::value& j, const ThirdPartyStruct&) { return j.is_number(); }
 bool from_json(const json::value& j, ThirdPartyStruct& out) { out.a = j.as_integer(); return true; }
 
-// 然后你可以将其用作 JSON
+// 然后可以将其用作 JSON
 ThirdPartyStruct third;
 json::value jthird = third;
 ThirdPartyStruct new_third = (ThirdPartyStruct)jthird;
 
-// 或者添加到你的结构中
+// 或者添加到结构中
 struct Outter2
 {
     int outter_a = 10;
@@ -254,11 +254,11 @@ std::string get_value = value.get("maybe_exists", "default_value");
 std::cout << get_value << std::endl;
 ```
 
-和大多数解析库一样，这很无聊，你肯定不想看这个。  
-所以让我给你看点有趣的东西。
+和大多数解析库一样，很无聊，你肯定不想看这个。  
+所以让我给你看点有趣的东西：
 
 ```c++
-// 多么神奇的 `get`，你可以连续输入 key 或 pos！
+// 多么神奇的 `get`，你可以连续传参 key 或 pos！
 // nested_get = you found me!
 std::string nested_get = value.get("A_obj", "B_arr", 1, "C_str", "default_value");
 
@@ -306,7 +306,7 @@ to_hashmap = (std::unordered_map<std::string, std::string>)value["author"];     
 to_hashmap = value["author"].as<std::unordered_map<std::string, std::string>>();// 与上面相同
 ```
 
-还有一些不知道有啥用的字面语法
+以及不知道有啥用的字面语法
 
 ```c++
 // Output: "literals"

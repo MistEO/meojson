@@ -57,7 +57,7 @@ j["map"] = map;
 std::cout << j << std::endl;
 ```
 
-Then, don’t blink, we changed it back!
+Don’t blink, we convert it back!
 
 ```c++
 double pi = (double)j["pi"];
@@ -103,7 +103,7 @@ json::value j_mine = mine;
 // output: {"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}
 std::cout << j_mine << std::endl;
 
-// exactly, we can also change it back!
+// exactly, we can also convert it back!
 MyStruct new_mine = (MyStruct)j_mine;
 ```
 
@@ -150,7 +150,7 @@ if (ja.is<OptionalFields>()) {
 }
 ```
 
-For third-party unhackable types, you need to implement `to_json`, `check_json`, `from_json`
+For third-party unhackable types, we need to implement `to_json`, `check_json`, `from_json`
 
 ```c++
 struct ThirdPartyStruct
@@ -162,12 +162,12 @@ json::value to_json(const ThirdPartyStruct& t) { return t.a; }
 bool check_json(const json::value& j, const ThirdPartyStruct&) { return j.is_number(); }
 bool from_json(const json::value& j, ThirdPartyStruct& out) { out.a = j.as_integer(); return true; }
 
-// then you can use it as json
+// then we can use it as json
 ThirdPartyStruct third;
 json::value jthird = third;
 ThirdPartyStruct new_third = (ThirdPartyStruct)jthird;
 
-// or add to your sturcture
+// or add to sturcture
 struct Outter2
 {
     int outter_a = 10;
