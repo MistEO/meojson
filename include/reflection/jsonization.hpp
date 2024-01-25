@@ -3,7 +3,7 @@
 #include <string>
 #include <type_traits>
 
-#include "../common/object.hpp"
+#include "../common/types.hpp"
 
 namespace json::_jsonization_helper
 {

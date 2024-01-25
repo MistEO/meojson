@@ -9,7 +9,7 @@
 #include <stack>
 #include <vector>
 
-#include "../common/object.hpp"
+#include "../common/types.hpp"
 #include "unicode.h"
 
 namespace json

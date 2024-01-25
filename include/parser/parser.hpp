@@ -6,7 +6,7 @@
 #include <string>
 #include <tuple>
 
-#include "../common/object.hpp"
+#include "../common/types.hpp"
 #include "packed_bytes.hpp"
 
 namespace json
