@@ -1,5 +1,5 @@
 #pragma once
 
 #include "common/object.hpp"
-#include "jsonization/jsonization.hpp"
+#include "reflection/jsonization.hpp"
 #include "parser/parser.hpp"
