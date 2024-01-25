@@ -77,7 +77,6 @@ jobs:
       - name: Run Testing
         run: |
           ./build/sample
-          ./build/json5_parse_sample
           ./build/testing
 
       - uses: actions/upload-artifact@v3
