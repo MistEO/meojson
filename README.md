@@ -256,3 +256,48 @@ void serializing()
     ofs.close();
 }
 ```
+
+### 序列化
+
+```c++
+// 如果使用 MSVC, 请添加 "/Zc:preprocessor" 到项目配置中
+// 如果使用 AppleClang, 请添加 "-Wno-gnu-zero-variadic-macro-arguments" 到项目配置中
+void test_jsonization()
+{
+    struct MyStruct
+    {
+        std::vector<int> vec;
+        std::map<std::string, int> map;
+        int i = 0;
+        double d = 0;
+
+        
+        // MEO_OPT 表示该变量是一个可选项
+        // 即使输入中不存在该字段依然可以读取
+        MEO_JSONIZATION(vec, map, MEO_OPT i, d);
+    };
+
+    MyStruct a;
+    a.vec = { 1, 2, 3 };
+    a.map = { { "key", 5 } };
+    a.i = 100;
+    a.d = 0.5;
+
+    json::value dumps = a;
+
+    // output: { "d" : 0.500000, "i" : 100, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
+    std::cout << dumps << std::endl;
+
+    dumps.erase("i")
+    // output: { "d" : 0.500000, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
+    std::cout << dumps << std::endl;
+
+    // MEO_OPT 表示该变量是一个可选项
+    // 即使输入中不存在该字段依然可以读取
+    MyStruct b(dumps);
+
+    // output: { "d" : 0.500000, "i" : 0, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
+    // 我们从 dumps 中删除了 "i", 所以 "i" 是 0
+    std::cout << json::value(b) << std::endl;
+}
+```

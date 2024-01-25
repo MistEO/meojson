@@ -11,20 +11,23 @@
 bool parsing();
 bool parsing_width();
 bool serializing();
+void test_jsonization();
 
 int main()
 {
-    std::cout << "\n****** Parsing ******\n" << std::endl;
+    // std::cout << "\n****** Parsing ******\n" << std::endl;
 
-    if (!parsing()) {
-        return -1;
-    }
+    // if (!parsing()) {
+    //     return -1;
+    // }
 
-    std::cout << "\n****** Serializing ******\n" << std::endl;
+    // std::cout << "\n****** Serializing ******\n" << std::endl;
 
-    if (!serializing()) {
-        return -1;
-    }
+    // if (!serializing()) {
+    //     return -1;
+    // }
+
+    test_jsonization();
 
     return 0;
 }
@@ -292,4 +295,71 @@ bool serializing()
     ofs.close();
 
     return true;
+}
+
+struct TypeFromOtherLibrary
+{
+    int a_i = 100;
+};
+
+json::value to_json(const TypeFromOtherLibrary& t)
+{
+    return t.a_i;
+}
+bool check_json(const json::value& j, const TypeFromOtherLibrary&)
+{
+    return j.is_number();
+}
+bool from_json(const json::value& j, TypeFromOtherLibrary& out)
+{
+    out.a_i = j.as_integer();
+    return true;
+}
+
+void test_jsonization()
+{
+    struct AAA
+    {
+        int a_i = 100;
+
+        TypeFromOtherLibrary other;
+
+        MEO_JSONIZATION(a_i, other);
+    };
+
+    struct BBB
+    {
+        int b_i = 10;
+        double b_d = 0.5;
+
+        std::vector<AAA> b_aaa;
+
+        MEO_JSONIZATION(b_i, MEO_OPT b_d, b_aaa);
+    };
+
+    std::vector<BBB> my_vec(3);
+    json::value j = my_vec;
+    std::cout << j << std::endl;
+
+    std::vector<BBB> result(j);
+    std::cout << json::value(result) << std::endl;
+
+    // MyStruct a;
+
+    // a.vec = { 1, 2, 3 };
+    // a.map = { { "key", 5 } };
+    // a.i = 100;
+    // a.d = 0.5;
+
+    // json::object j = a.to_json();
+    // std::cout << j << std::endl;
+
+    //// for test MEO_OPT
+    // j.erase("i");
+
+    // MyStruct b;
+    // bool loaded = b.from_json(j);
+
+    // std::cout << "loaded: " << loaded << std::endl;
+    // std::cout << b.myCustomStructure.b_i << std::endl;
 }
