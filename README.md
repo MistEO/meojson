@@ -260,6 +260,8 @@ void serializing()
 ### 序列化
 
 ```c++
+// 如果使用 MSVC, 请添加 "/Zc:preprocessor" 到项目配置中
+// 如果使用 AppleClang, 请添加 "-Wno-gnu-zero-variadic-macro-arguments" 到项目配置中
 void test_jsonization()
 {
     struct MyStruct
@@ -269,7 +271,6 @@ void test_jsonization()
         int i = 0;
         double d = 0;
 
-        // 如果你正在使用 MSVC, 请添加 "/Zc:preprocessor" 到项目设置中
         
         // MEO_OPT 表示该变量是一个可选项
         // 即使输入中不存在该字段依然可以读取
@@ -282,7 +283,7 @@ void test_jsonization()
     a.i = 100;
     a.d = 0.5;
 
-    json::object dumps = a.to_json();
+    json::value dumps = a;
 
     // output: { "d" : 0.500000, "i" : 100, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
     std::cout << dumps << std::endl;
@@ -293,11 +294,10 @@ void test_jsonization()
 
     // MEO_OPT 表示该变量是一个可选项
     // 即使输入中不存在该字段依然可以读取
-    MyStruct b;
-    b.from_json(dumps);
+    MyStruct b(dumps);
 
     // output: { "d" : 0.500000, "i" : 0, "map" : { "key" : 5 }, "vec" : [ 1, 2, 3 ] }
     // 我们从 dumps 中删除了 "i", 所以 "i" 是 0
-    std::cout << b.to_json() << std::endl;
+    std::cout << json::value(b) << std::endl;
 }
 ```
