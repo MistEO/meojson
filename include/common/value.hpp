@@ -68,20 +68,20 @@ public:
 
     template <typename collection_t,
               std::enable_if_t<std::is_constructible_v<typename basic_array<string_t>::value_type,
-                                                       utils::range_value_t<collection_t>>,
+                                                       _utils::range_value_t<collection_t>>,
                                bool> = true>
     basic_value(collection_t&& collection) : basic_value(basic_array<string_t>(std::forward<collection_t>(collection)))
     {}
     template <typename map_t, std::enable_if_t<std::is_constructible_v<typename basic_object<string_t>::value_type,
-                                                                       utils::range_value_t<map_t>>,
+                                                                       _utils::range_value_t<map_t>>,
                                                bool> = true>
     basic_value(map_t&& map) : basic_value(basic_object<string_t>(std::forward<map_t>(map)))
     {}
 
-    template <typename jsonization_t, std::enable_if_t<utils::has_to_json_in_member<jsonization_t>::value, bool> = true>
+    template <typename jsonization_t, std::enable_if_t<_utils::has_to_json_in_member<jsonization_t>::value, bool> = true>
     basic_value(const jsonization_t& jsonization) : basic_value(jsonization.to_json())
     {}
-    template <typename jsonization_t, std::enable_if_t<utils::has_to_json_in_global<jsonization_t>::value, bool> = true>
+    template <typename jsonization_t, std::enable_if_t<_utils::has_to_json_in_global<jsonization_t>::value, bool> = true>
     basic_value(const jsonization_t& jsonization) : basic_value(to_json(jsonization))
     {}
 
@@ -208,19 +208,19 @@ public:
     explicit operator basic_object<string_t>() const { return as_object(); }
 
     template <typename value_t, template <typename...> typename collection_t = std::vector,
-              typename _ = std::enable_if_t<utils::is_collection<collection_t<value_t>>>>
+              typename _ = std::enable_if_t<_utils::is_collection<collection_t<value_t>>>>
     explicit operator collection_t<value_t>() const
     {
         return as_collection<value_t, collection_t>();
     }
     template <typename value_t, template <typename...> typename map_t = std::map,
-              typename _ = std::enable_if_t<utils::is_map<map_t<string_t, value_t>>>>
+              typename _ = std::enable_if_t<_utils::is_map<map_t<string_t, value_t>>>>
     explicit operator map_t<string_t, value_t>() const
     {
         return as_map<value_t, map_t>();
     }
     template <typename jsonization_t,
-              std::enable_if_t<utils::has_from_json_in_member<jsonization_t, string_t>::value, bool> = true>
+              std::enable_if_t<_utils::has_from_json_in_member<jsonization_t, string_t>::value, bool> = true>
     explicit operator jsonization_t() const
     {
         jsonization_t dst;
@@ -230,7 +230,7 @@ public:
         return dst;
     }
     template <typename jsonization_t,
-              std::enable_if_t<utils::has_from_json_in_global<jsonization_t, string_t>::value, bool> = true>
+              std::enable_if_t<_utils::has_from_json_in_global<jsonization_t, string_t>::value, bool> = true>
     explicit operator jsonization_t() const
     {
         jsonization_t dst;
@@ -278,52 +278,52 @@ inline basic_value<string_t>::basic_value(basic_value<string_t>&& rhs) noexcept 
 template <typename string_t>
 inline basic_value<string_t>::basic_value(bool b)
     : _type(value_type::boolean),
-      _raw_data(string_t(b ? utils::true_string<string_t>() : utils::false_string<string_t>()))
+      _raw_data(string_t(b ? _utils::true_string<string_t>() : _utils::false_string<string_t>()))
 {}
 
 template <typename string_t>
 inline basic_value<string_t>::basic_value(int num)
-    : _type(value_type::number), _raw_data(utils::to_basic_string<string_t>(num))
+    : _type(value_type::number), _raw_data(_utils::to_basic_string<string_t>(num))
 {}
 
 template <typename string_t>
 inline basic_value<string_t>::basic_value(unsigned num)
-    : _type(value_type::number), _raw_data(utils::to_basic_string<string_t>(num))
+    : _type(value_type::number), _raw_data(_utils::to_basic_string<string_t>(num))
 {}
 
 template <typename string_t>
 inline basic_value<string_t>::basic_value(long num)
-    : _type(value_type::number), _raw_data(utils::to_basic_string<string_t>(num))
+    : _type(value_type::number), _raw_data(_utils::to_basic_string<string_t>(num))
 {}
 
 template <typename string_t>
 inline basic_value<string_t>::basic_value(unsigned long num)
-    : _type(value_type::number), _raw_data(utils::to_basic_string<string_t>(num))
+    : _type(value_type::number), _raw_data(_utils::to_basic_string<string_t>(num))
 {}
 
 template <typename string_t>
 inline basic_value<string_t>::basic_value(long long num)
-    : _type(value_type::number), _raw_data(utils::to_basic_string<string_t>(num))
+    : _type(value_type::number), _raw_data(_utils::to_basic_string<string_t>(num))
 {}
 
 template <typename string_t>
 inline basic_value<string_t>::basic_value(unsigned long long num)
-    : _type(value_type::number), _raw_data(utils::to_basic_string<string_t>(num))
+    : _type(value_type::number), _raw_data(_utils::to_basic_string<string_t>(num))
 {}
 
 template <typename string_t>
 inline basic_value<string_t>::basic_value(float num)
-    : _type(value_type::number), _raw_data(utils::to_basic_string<string_t>(num))
+    : _type(value_type::number), _raw_data(_utils::to_basic_string<string_t>(num))
 {}
 
 template <typename string_t>
 inline basic_value<string_t>::basic_value(double num)
-    : _type(value_type::number), _raw_data(utils::to_basic_string<string_t>(num))
+    : _type(value_type::number), _raw_data(_utils::to_basic_string<string_t>(num))
 {}
 
 template <typename string_t>
 inline basic_value<string_t>::basic_value(long double num)
-    : _type(value_type::number), _raw_data(utils::to_basic_string<string_t>(num))
+    : _type(value_type::number), _raw_data(_utils::to_basic_string<string_t>(num))
 {}
 
 template <typename string_t>
@@ -373,23 +373,23 @@ inline bool basic_value<string_t>::is() const noexcept
     else if constexpr (std::is_same_v<basic_array<string_t>, value_t>) {
         return is_array();
     }
-    else if constexpr (utils::is_collection<value_t>) {
+    else if constexpr (_utils::is_collection<value_t>) {
         return is_array() && all<typename value_t::value_type>();
     }
     else if constexpr (std::is_same_v<basic_object<string_t>, value_t>) {
         return is_object();
     }
-    else if constexpr (utils::is_map<value_t>) {
+    else if constexpr (_utils::is_map<value_t>) {
         return is_object() && std::is_constructible_v<string_t, typename value_t::key_type> &&
                all<typename value_t::mapped_type>();
     }
     else if constexpr (std::is_constructible_v<string_t, value_t>) {
         return is_string();
     }
-    else if constexpr (utils::has_check_json_in_member<value_t, string_t>::value) {
+    else if constexpr (_utils::has_check_json_in_member<value_t, string_t>::value) {
         return value_t().check_json(*this);
     }
-    else if constexpr (utils::has_check_json_in_global<value_t, string_t>::value) {
+    else if constexpr (_utils::has_check_json_in_global<value_t, string_t>::value) {
         return check_json(*this, value_t());
     }
     else {
@@ -504,10 +504,10 @@ template <typename string_t>
 inline bool basic_value<string_t>::as_boolean() const
 {
     if (is_boolean()) {
-        if (const string_t& b_str = as_basic_type_str(); b_str == utils::true_string<string_t>()) {
+        if (const string_t& b_str = as_basic_type_str(); b_str == _utils::true_string<string_t>()) {
             return true;
         }
-        else if (b_str == utils::false_string<string_t>()) {
+        else if (b_str == _utils::false_string<string_t>()) {
             return false;
         }
         else {
@@ -725,12 +725,12 @@ inline string_t basic_value<string_t>::to_string() const
 {
     switch (_type) {
     case value_type::null:
-        return utils::null_string<string_t>();
+        return _utils::null_string<string_t>();
     case value_type::boolean:
     case value_type::number:
         return as_basic_type_str();
     case value_type::string:
-        return char_t('"') + utils::unescape_string(as_basic_type_str()) + char_t('"');
+        return char_t('"') + _utils::unescape_string(as_basic_type_str()) + char_t('"');
     case value_type::array:
         return as_array().to_string();
     case value_type::object:

@@ -38,14 +38,14 @@ public:
     // explicit basic_array(basic_value<string_t>&& val);
 
     template <typename collection_t,
-              typename = std::enable_if_t<std::is_constructible_v<value_type, utils::range_value_t<collection_t>>>>
+              typename = std::enable_if_t<std::is_constructible_v<value_type, _utils::range_value_t<collection_t>>>>
     basic_array(collection_t arr)
         : _array_data(std::make_move_iterator(arr.begin()), std::make_move_iterator(arr.end()))
     {}
-    template <typename jsonization_t, std::enable_if_t<utils::has_to_json_in_member<jsonization_t>::value, bool> = true>
+    template <typename jsonization_t, std::enable_if_t<_utils::has_to_json_in_member<jsonization_t>::value, bool> = true>
     basic_array(const jsonization_t& jsonization) : basic_array(jsonization.to_json())
     {}
-    template <typename jsonization_t, std::enable_if_t<utils::has_to_json_in_global<jsonization_t>::value, bool> = true>
+    template <typename jsonization_t, std::enable_if_t<_utils::has_to_json_in_global<jsonization_t>::value, bool> = true>
     basic_array(const jsonization_t& jsonization) : basic_array(to_json(jsonization))
     {}
 

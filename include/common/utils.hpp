@@ -23,7 +23,7 @@ using warray = basic_array<std::wstring>;
 using wobject = basic_object<std::wstring>;
 }
 
-namespace json::utils
+namespace json::_utils
 {
 template <typename T>
 using iterator_t = decltype(std::declval<T&>().begin());
@@ -37,8 +37,8 @@ using range_value_t = iter_value_t<iterator_t<R>>;
 template <typename T, typename = void>
 constexpr bool is_container = false;
 template <typename T>
-constexpr bool is_container<T, std::void_t<typename T::value_type, utils::range_value_t<T>>> =
-    std::is_same_v<typename T::value_type, utils::range_value_t<T>>;
+constexpr bool is_container<T, std::void_t<typename T::value_type, range_value_t<T>>> =
+    std::is_same_v<typename T::value_type, range_value_t<T>>;
 
 template <typename T, typename = void>
 constexpr bool is_map = false;
