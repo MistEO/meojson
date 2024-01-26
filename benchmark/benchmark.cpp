@@ -9,18 +9,19 @@
 #include <string>
 
 #include "json.hpp"
+#include "json5.hpp"
 
-template <typename accel, typename tag_type>
-void do_benchmark(const std::string& content, const tag_type& tag)
+template <typename parser>
+void do_benchmark(const std::string& content, const std::string& tag)
 {
     std::vector<double> iteration_time_ms;
     iteration_time_ms.reserve(10000);
     auto start = std::chrono::steady_clock::now();
     bool parsed = false;
-
-    while (true) {
+    while (true)
+    {
         auto t0 = std::chrono::steady_clock::now();
-        auto opt = json::parser<std::string, std::string, accel>::parse(content);
+        auto opt = parser::parse(content);
         parsed = opt.has_value();
 
         auto t1 = std::chrono::steady_clock::now();
@@ -49,7 +50,8 @@ void do_benchmark(const std::string& content, const tag_type& tag)
         median = iteration_time_ms[loop_times / 2];
     }
 
-    std::cout << tag << "," << std::boolalpha << parsed << "," << loop_times << "," << mean << "," << median << "," << stdev << std::endl;
+    std::cout << tag << ", " << std::boolalpha << parsed << ", " << loop_times << ", " << mean << ", " << median << ", "
+              << stdev << std::endl;
 }
 
 int main(int argc, char** argv)
@@ -59,7 +61,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    std::cout << "file,parsed,acceleration,sample_count,mean,median,stdev" << std::endl;
+    std::cout << "file, parser, ret, sample_count, mean, median, stdev" << std::endl;
 
     for (int i = 1; i < argc; ++i) {
         std::filesystem::path path(argv[i]);
@@ -77,16 +79,23 @@ int main(int argc, char** argv)
 
         using namespace json::_packed_bytes;
 
-        do_benchmark<packed_bytes_trait_none>(content, path.filename().string() + ",none");
-        do_benchmark<packed_bytes_trait_uint32>(content, path.filename().string() + ",bits32");
-        do_benchmark<packed_bytes_trait_uint64>(content, path.filename().string() + ",bits64");
+        do_benchmark<json::parser<std::string, std::string, packed_bytes_trait_none>>(
+            content, path.filename().string() + ", none");
+        do_benchmark<json::parser<std::string, std::string, packed_bytes_trait_uint32>>(
+            content, path.filename().string() + ", bits32");
+        do_benchmark<json::parser<std::string, std::string, packed_bytes_trait_uint64>>(
+            content, path.filename().string() + ", bits64");
 
         if constexpr (packed_bytes_trait<16>::available) {
-            do_benchmark<packed_bytes_trait<16>>(content, path.filename().string() + ",simd128");
+            do_benchmark<json::parser<std::string, std::string, packed_bytes_trait<16>>>(
+                content, path.filename().string() + ", simd128");
         }
         if constexpr (packed_bytes_trait<32>::available) {
-            do_benchmark<packed_bytes_trait<32>>(content, path.filename().string() + ",simd256");
+            do_benchmark<json::parser<std::string, std::string, packed_bytes_trait<32>>>(
+                content, path.filename().string() + ", simd256");
         }
+
+        do_benchmark<json::parser5<std::string>>(content, path.filename().string() + ", json5");
     }
 
     return 0;
