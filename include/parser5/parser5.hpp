@@ -18,11 +18,11 @@ namespace json
 // *         declare       *
 // *************************
 
-template <typename StringT>
+template <typename string_t = default_string_t>
 class parser5
 {
 private:
-    using StringIterT = typename StringT::const_iterator;
+    using string_iter_t = typename string_t::const_iterator;
     using u8char = uint64_t;
 
     /* exceptions */
@@ -101,8 +101,8 @@ private:
         static bool isDigit(u8char ch);
         static bool isHexDigit(u8char ch);
         static u8char toUnicode(u8char ch);
-        template <typename ArrT>
-        static bool findInRange(const ArrT& range, /* unicode code point */ u8char codePoint);
+        template <typename array_t>
+        static bool findInRange(const array_t& range, /* unicode code point */ u8char codePoint);
     };
 
     enum class LexState
@@ -172,17 +172,17 @@ private:
     /* constrators and callers */
 public:
     ~parser5() noexcept = default;
-    static std::optional<value> parse(const StringT& content, std::string* error = nullptr);
+    static std::optional<value> parse(const string_t& content, std::string* error = nullptr);
 
 private:
-    parser5(StringIterT cbegin, StringIterT cend) noexcept : _cur(cbegin), _end(cend), _line_begin_cur(cbegin) {}
+    parser5(string_iter_t cbegin, string_iter_t cend) noexcept : _cur(cbegin), _end(cend), _line_begin_cur(cbegin) {}
     std::optional<value> parse();
 
 private:
     /* utf-8 reader */
-    static u8char peek(const StringIterT& begin, const StringIterT& end, size_t* len = nullptr);
+    static u8char peek(const string_iter_t& begin, const string_iter_t& end, size_t* len = nullptr);
     static u8char peek(const std::string& str);
-    typename parser5<StringT>::u8char read();
+    typename parser5<string_t>::u8char read();
     static std::string StringFromCharCode(u8char code);
     /* escape and format */
     void literal(const std::string& s);
@@ -241,8 +241,8 @@ private:
     void pop();
 
 private:
-    StringIterT _cur, _end;
-    StringIterT _line_begin_cur;
+    string_iter_t _cur, _end;
+    string_iter_t _line_begin_cur;
     size_t _line = 1, _col = 0, _print_len = 0;
     ParseState _parse_state = ParseState::start;
     std::stack<value*> _stack;
@@ -261,44 +261,44 @@ private:
 // *    implementation     *
 // *************************
 
-/* parser5<StringT>::unicode */
+/* parser5<string_t>::unicode */
 
-template <typename StringT>
-inline bool parser5<StringT>::unicode::isSpaceSeparator(u8char ch)
+template <typename string_t>
+inline bool parser5<string_t>::unicode::isSpaceSeparator(u8char ch)
 {
     return findInRange(json::unicode::space_separator, toUnicode(ch));
 }
 
-template <typename StringT>
-inline bool parser5<StringT>::unicode::isIdStartChar(u8char ch)
+template <typename string_t>
+inline bool parser5<string_t>::unicode::isIdStartChar(u8char ch)
 {
     return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch == '$') || (ch == '_') ||
            findInRange(json::unicode::id_start, toUnicode(ch));
 }
 
-template <typename StringT>
-inline bool parser5<StringT>::unicode::isIdContinueChar(u8char ch)
+template <typename string_t>
+inline bool parser5<string_t>::unicode::isIdContinueChar(u8char ch)
 {
     return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || (ch == '$') ||
            (ch == '_') || findInRange(json::unicode::id_continue, toUnicode(ch));
 }
 
-template <typename StringT>
-inline bool parser5<StringT>::unicode::isDigit(u8char ch)
+template <typename string_t>
+inline bool parser5<string_t>::unicode::isDigit(u8char ch)
 {
     auto str = StringFromCharCode(ch);
     return std::regex_search(str, std::regex(R"([0-9])"));
 }
 
-template <typename StringT>
-inline bool parser5<StringT>::unicode::isHexDigit(u8char ch)
+template <typename string_t>
+inline bool parser5<string_t>::unicode::isHexDigit(u8char ch)
 {
     auto str = StringFromCharCode(ch);
     return std::regex_search(str, std::regex(R"([0-9A-Fa-f])"));
 }
 
-template <typename StringT>
-inline uint64_t parser5<StringT>::unicode::toUnicode(u8char ch)
+template <typename string_t>
+inline uint64_t parser5<string_t>::unicode::toUnicode(u8char ch)
 {
     std::stack<uint8_t> coded;
     if (ch == 0) {
@@ -332,9 +332,9 @@ inline uint64_t parser5<StringT>::unicode::toUnicode(u8char ch)
     return charcode;
 }
 
-template <typename StringT>
-template <typename ArrT>
-inline bool parser5<StringT>::unicode::findInRange(const ArrT& range, u8char codePoint)
+template <typename string_t>
+template <typename array_t>
+inline bool parser5<string_t>::unicode::findInRange(const array_t& range, u8char codePoint)
 {
     const auto begin = std::begin(range);
     const auto end = std::end(range);
@@ -351,10 +351,10 @@ inline bool parser5<StringT>::unicode::findInRange(const ArrT& range, u8char cod
 }
 
 /* constrators and callers */
-template <typename StringT>
-std::optional<value> parse5(const StringT& content, std::string* error = nullptr)
+template <typename string_t>
+std::optional<value> parse5(const string_t& content, std::string* error = nullptr)
 {
-    return parser5<StringT>::parse(content, error);
+    return parser5<string_t>::parse(content, error);
 }
 
 /* Wrapper for handling input of C-style strings. */
@@ -364,13 +364,13 @@ std::optional<value> parse5(CharT* content, std::string* error = nullptr)
     return parse5(std::basic_string_view<std::decay_t<CharT>> { content }, error);
 }
 
-template <typename StringT>
-inline std::optional<value> parser5<StringT>::parse(const StringT& content, std::string* error)
+template <typename string_t>
+inline std::optional<value> parser5<string_t>::parse(const string_t& content, std::string* error)
 {
     try {
-        return parser5<StringT>(content.cbegin(), content.cend()).parse();
+        return parser5<string_t>(content.cbegin(), content.cend()).parse();
     }
-    catch (json::parser5<StringT>::exception& ex) {
+    catch (json::parser5<string_t>::exception& ex) {
         if (error) {
             *error = ex.what();
         }
@@ -378,8 +378,8 @@ inline std::optional<value> parser5<StringT>::parse(const StringT& content, std:
     return std::nullopt;
 }
 
-template <typename StringT>
-inline std::optional<value> parser5<StringT>::parse()
+template <typename string_t>
+inline std::optional<value> parser5<string_t>::parse()
 {
     do {
         _token = lex();
@@ -390,8 +390,8 @@ inline std::optional<value> parser5<StringT>::parse()
 }
 
 /* escape and format */
-template <typename StringT>
-inline void parser5<StringT>::literal(const std::string& s)
+template <typename string_t>
+inline void parser5<string_t>::literal(const std::string& s)
 {
     for (const auto& ch : s) {
         char p = static_cast<char>(read());
@@ -401,8 +401,8 @@ inline void parser5<StringT>::literal(const std::string& s)
     }
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::u8char> parser5<StringT>::escape()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::u8char> parser5<string_t>::escape()
 {
     auto c = peek(_cur, _end);
     switch (c) {
@@ -479,8 +479,8 @@ inline std::optional<typename parser5<StringT>::u8char> parser5<StringT>::escape
     return read();
 }
 
-template <typename StringT>
-inline typename parser5<StringT>::u8char parser5<StringT>::hexEscape()
+template <typename string_t>
+inline typename parser5<string_t>::u8char parser5<string_t>::hexEscape()
 {
     std::string buffer = "";
     auto c = peek(_cur, _end);
@@ -501,8 +501,8 @@ inline typename parser5<StringT>::u8char parser5<StringT>::hexEscape()
     return std::stoi(buffer, nullptr, 16);
 }
 
-template <typename StringT>
-inline typename parser5<StringT>::u8char parser5<StringT>::unicodeEscape()
+template <typename string_t>
+inline typename parser5<string_t>::u8char parser5<string_t>::unicodeEscape()
 {
     std::string buffer;
     int count = 4;
@@ -518,8 +518,8 @@ inline typename parser5<StringT>::u8char parser5<StringT>::unicodeEscape()
 }
 
 /* utf-8 reader */
-template <typename StringT>
-inline typename parser5<StringT>::u8char parser5<StringT>::peek(const StringIterT& begin, const StringIterT& end,
+template <typename string_t>
+inline typename parser5<string_t>::u8char parser5<string_t>::peek(const string_iter_t& begin, const string_iter_t& end,
                                                                 size_t* plen)
 {
     if (begin == end) {
@@ -544,8 +544,8 @@ inline typename parser5<StringT>::u8char parser5<StringT>::peek(const StringIter
     return ch;
 }
 
-template <typename StringT>
-inline typename parser5<StringT>::u8char parser5<StringT>::peek(const std::string& str)
+template <typename string_t>
+inline typename parser5<string_t>::u8char parser5<string_t>::peek(const std::string& str)
 {
     return peek(str.cbegin(), str.cend());
 }
@@ -553,8 +553,8 @@ inline constexpr size_t operator"" _sz(unsigned long long size)
 {
     return size;
 }
-template <typename StringT>
-inline typename parser5<StringT>::u8char parser5<StringT>::read()
+template <typename string_t>
+inline typename parser5<string_t>::u8char parser5<string_t>::read()
 {
     size_t len = 0;
     _current_char = peek(_cur, _end, &len);
@@ -578,8 +578,8 @@ inline typename parser5<StringT>::u8char parser5<StringT>::read()
     return _current_char;
 }
 
-template <typename StringT>
-inline std::string parser5<StringT>::StringFromCharCode(typename parser5<StringT>::u8char code)
+template <typename string_t>
+inline std::string parser5<string_t>::StringFromCharCode(typename parser5<string_t>::u8char code)
 {
     if (code == 0) return "";
     std::string str;
@@ -593,8 +593,8 @@ inline std::string parser5<StringT>::StringFromCharCode(typename parser5<StringT
 
 /* lex, parse, token */
 
-template <typename StringT>
-inline typename parser5<StringT>::Token parser5<StringT>::newToken(TokenType type, value value)
+template <typename string_t>
+inline typename parser5<string_t>::Token parser5<string_t>::newToken(TokenType type, value value)
 {
     Token token;
     token.type = type;
@@ -604,8 +604,8 @@ inline typename parser5<StringT>::Token parser5<StringT>::newToken(TokenType typ
     return token;
 }
 
-template <typename StringT>
-inline typename parser5<StringT>::Token parser5<StringT>::lex()
+template <typename string_t>
+inline typename parser5<string_t>::Token parser5<string_t>::lex()
 {
     _lex_state = LexState::default_;
     _buffer = "";
@@ -625,8 +625,8 @@ inline typename parser5<StringT>::Token parser5<StringT>::lex()
     return Token { TokenType::eof, value(), _line, _col };
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_default()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_default()
 {
     switch (_current_char) {
     case '\t':
@@ -664,8 +664,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_def
     return lexStates((LexState)_parse_state);
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_comment()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_comment()
 {
     switch (_current_char) {
     case '*':
@@ -682,8 +682,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_com
     throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_multiLineComment()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_multiLineComment()
 {
     if (_current_char == '*') {
         read();
@@ -699,8 +699,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_mul
     return std::nullopt;
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_multiLineCommentAsterisk()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_multiLineCommentAsterisk()
 {
     switch (_current_char) {
     case '*':
@@ -723,8 +723,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_mul
     return std::nullopt;
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_singleLineComment()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_singleLineComment()
 {
     switch (_current_char) {
     case '\n':
@@ -742,8 +742,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_sin
     return std::nullopt;
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_value()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_value()
 {
     switch (_current_char) {
     case '{':
@@ -807,8 +807,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_val
     throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_identifierNameStartEscape()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_identifierNameStartEscape()
 {
     if (_current_char != 'u') {
         throw InvalidChar(_current_char, exceptionDetailInfo());
@@ -830,8 +830,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_ide
     return std::nullopt;
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_identifierName()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_identifierName()
 {
     switch (_current_char) {
     case '$':
@@ -854,8 +854,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_ide
     return newToken(TokenType::identifier, _buffer);
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_identifierNameEscape()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_identifierNameEscape()
 {
     if (_current_char != 'u') {
         throw InvalidChar(_current_char, exceptionDetailInfo());
@@ -879,8 +879,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_ide
     return std::nullopt;
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_sign()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_sign()
 {
     switch (_current_char) {
     case '.':
@@ -919,8 +919,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_sig
     throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_zero()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_zero()
 {
     switch (_current_char) {
     case '.':
@@ -943,8 +943,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_zer
     return newToken(TokenType::numeric, _sign * 0);
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_decimalInteger()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_decimalInteger()
 {
     switch (_current_char) {
     case '.':
@@ -966,8 +966,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_dec
     return newToken(TokenType::numeric, value(value::value_type::number, std::move(number)));
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_decimalPointLeading()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_decimalPointLeading()
 {
     if (unicode::isDigit(_current_char)) {
         _buffer += StringFromCharCode(read());
@@ -977,8 +977,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_dec
     throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_decimalPoint()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_decimalPoint()
 {
     switch (_current_char) {
     case 'e':
@@ -997,8 +997,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_dec
     return newToken(TokenType::numeric, value(value::value_type::number, std::move(number)));
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_decimalFraction()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_decimalFraction()
 {
     switch (_current_char) {
     case 'e':
@@ -1016,8 +1016,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_dec
     return newToken(TokenType::numeric, value(value::value_type::number, std::move(number)));
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_decimalExponent()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_decimalExponent()
 {
     switch (_current_char) {
     case '+':
@@ -1035,8 +1035,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_dec
     throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_decimalExponentSign()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_decimalExponentSign()
 {
     if (unicode::isDigit(_current_char)) {
         _buffer += StringFromCharCode(read());
@@ -1046,8 +1046,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_dec
     throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_decimalExponentInteger()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_decimalExponentInteger()
 {
     if (unicode::isDigit(_current_char)) {
         _buffer += StringFromCharCode(read());
@@ -1058,8 +1058,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_dec
     return newToken(TokenType::numeric, value(value::value_type::number, std::move(number)));
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_hexadecimal()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_hexadecimal()
 {
     if (unicode::isHexDigit(_current_char)) {
         _buffer += StringFromCharCode(read());
@@ -1069,8 +1069,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_hex
     throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_hexdecimalInteger()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_hexdecimalInteger()
 {
     if (unicode::isHexDigit(_current_char)) {
         _buffer += StringFromCharCode(read());
@@ -1081,8 +1081,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_hex
     return newToken(TokenType::numeric, value(value::value_type::number, std::move(number)));
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_string()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_string()
 {
     switch (_current_char) {
     case '\\':
@@ -1119,8 +1119,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_str
     return std::nullopt;
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_start()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_start()
 {
     switch (_current_char) {
     case '{':
@@ -1132,8 +1132,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_sta
     return std::nullopt;
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_beforePropertyName()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_beforePropertyName()
 {
     switch (_current_char) {
     case '$':
@@ -1163,8 +1163,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_bef
     throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_afterPropertyName()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_afterPropertyName()
 {
     if (_current_char == ':') {
         return newToken(TokenType::punctuator, StringFromCharCode(read()));
@@ -1172,15 +1172,15 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_aft
     throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_beforePropertyValue()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_beforePropertyValue()
 {
     _lex_state = LexState::value;
     return std::nullopt;
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_afterPropertyValue()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_afterPropertyValue()
 {
     switch (_current_char) {
     case ',':
@@ -1190,8 +1190,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_aft
     throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_beforeArrayValue()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_beforeArrayValue()
 {
     if (_current_char == ']') {
         return newToken(TokenType::punctuator, StringFromCharCode(read()));
@@ -1200,8 +1200,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_bef
     return std::nullopt;
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_afterArrayValue()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_afterArrayValue()
 {
     switch (_current_char) {
     case ',':
@@ -1212,14 +1212,14 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_aft
     throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lex_end()
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_end()
 {
     throw InvalidChar(_current_char, exceptionDetailInfo());
 }
 
-template <typename StringT>
-inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lexStates(LexState state)
+template <typename string_t>
+inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lexStates(LexState state)
 {
     switch (state) {
     case LexState::default_:
@@ -1286,8 +1286,8 @@ inline std::optional<typename parser5<StringT>::Token> parser5<StringT>::lexStat
     return std::nullopt;
 }
 
-template <typename StringT>
-inline void parser5<StringT>::parse_start()
+template <typename string_t>
+inline void parser5<string_t>::parse_start()
 {
     if (_token->type == TokenType::eof) {
         throw InvalidEOF("EOF", exceptionDetailInfo());
@@ -1296,8 +1296,8 @@ inline void parser5<StringT>::parse_start()
     push();
 }
 
-template <typename StringT>
-inline void parser5<StringT>::parse_beforePropertyName()
+template <typename string_t>
+inline void parser5<string_t>::parse_beforePropertyName()
 {
     switch (_token->type) {
     case TokenType::identifier:
@@ -1317,8 +1317,8 @@ inline void parser5<StringT>::parse_beforePropertyName()
     }
 }
 
-template <typename StringT>
-inline void parser5<StringT>::parse_afterPropertyName()
+template <typename string_t>
+inline void parser5<string_t>::parse_afterPropertyName()
 {
     if (_token->type == TokenType::eof) {
         throw InvalidEOF("EOF", exceptionDetailInfo());
@@ -1327,8 +1327,8 @@ inline void parser5<StringT>::parse_afterPropertyName()
     _parse_state = ParseState::beforePropertyValue;
 }
 
-template <typename StringT>
-inline void parser5<StringT>::parse_beforePropertyValue()
+template <typename string_t>
+inline void parser5<string_t>::parse_beforePropertyValue()
 {
     if (_token->type == TokenType::eof) {
         throw InvalidEOF("EOF", exceptionDetailInfo());
@@ -1336,8 +1336,8 @@ inline void parser5<StringT>::parse_beforePropertyValue()
     push();
 }
 
-template <typename StringT>
-inline void parser5<StringT>::parse_beforeArrayValue()
+template <typename string_t>
+inline void parser5<string_t>::parse_beforeArrayValue()
 {
     if (_token->type == TokenType::eof) {
         throw InvalidEOF("EOF", exceptionDetailInfo());
@@ -1351,8 +1351,8 @@ inline void parser5<StringT>::parse_beforeArrayValue()
     push();
 }
 
-template <typename StringT>
-inline void parser5<StringT>::parse_afterPropertyValue()
+template <typename string_t>
+inline void parser5<string_t>::parse_afterPropertyValue()
 {
     if (_token->type == TokenType::eof) {
         throw InvalidEOF("EOF", exceptionDetailInfo());
@@ -1368,8 +1368,8 @@ inline void parser5<StringT>::parse_afterPropertyValue()
     }
 }
 
-template <typename StringT>
-inline void parser5<StringT>::parse_afterArrayValue()
+template <typename string_t>
+inline void parser5<string_t>::parse_afterArrayValue()
 {
     if (_token->type == TokenType::eof) {
         throw InvalidEOF("EOF", exceptionDetailInfo());
@@ -1384,12 +1384,12 @@ inline void parser5<StringT>::parse_afterArrayValue()
     }
 }
 
-template <typename StringT>
-inline void parser5<StringT>::parse_end()
+template <typename string_t>
+inline void parser5<string_t>::parse_end()
 {}
 
-template <typename StringT>
-inline void parser5<StringT>::parseStates(ParseState state)
+template <typename string_t>
+inline void parser5<string_t>::parseStates(ParseState state)
 {
     switch (state) {
     case ParseState::start:
@@ -1418,8 +1418,8 @@ inline void parser5<StringT>::parseStates(ParseState state)
     }
 }
 /* stack operation */
-template <typename StringT>
-inline void parser5<StringT>::push()
+template <typename string_t>
+inline void parser5<string_t>::push()
 {
     value v;
     value* pv = nullptr; // only for access
@@ -1484,8 +1484,8 @@ inline void parser5<StringT>::push()
     }
 }
 
-template <typename StringT>
-inline void parser5<StringT>::pop()
+template <typename string_t>
+inline void parser5<string_t>::pop()
 {
     _stack.pop();
 
