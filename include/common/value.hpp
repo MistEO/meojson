@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma once
-
 #include <cstddef>
 #include <initializer_list>
 #include <memory>

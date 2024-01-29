@@ -10,7 +10,8 @@
 #include "json.hpp"
 
 void serializing();
-void third_party_jsonization();
+void third_party_jsonization_1();
+void third_party_jsonization_2();
 void parsing();
 
 int main()
@@ -105,7 +106,7 @@ void serializing()
     outter.my_vec.emplace_back(mine);
 
     json::value j_outter = outter;
-    
+
     // output:
     // {"my_vec":[{"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}],"outter_a":10}
     std::cout << j_outter.to_string() << std::endl;
@@ -133,8 +134,8 @@ void serializing()
         std::cout << var.a << std::endl;
     }
 
-    /* For third-party unhackable types, you need to implement `to_json`, `check_json`, `from_json` */
-    third_party_jsonization();
+    third_party_jsonization_1();
+    third_party_jsonization_2();
 
     /* And some trivial features: */
 
@@ -180,8 +181,10 @@ bool from_json(const json::value& j, ThirdPartyStruct& out)
     return true;
 }
 
-void third_party_jsonization()
+void third_party_jsonization_1()
 {
+    /* For third-party unhackable types, you need to implement `to_json`, `check_json`, `from_json` */
+
     // then you can use it as json
     ThirdPartyStruct third;
     json::value jthird = third;
@@ -195,6 +198,18 @@ void third_party_jsonization()
 
         MEO_JSONIZATION(outter2_a, third);
     };
+    Outter2 o_2;
+}
+
+void third_party_jsonization_2()
+{
+    struct Serializer
+    {
+        json::value operator()(const ThirdPartyStruct& t) const { return t.a; }
+    };
+
+    ThirdPartyStruct third;
+    json::value jthird = json::serialize(third, Serializer {});
 }
 
 void parsing()
