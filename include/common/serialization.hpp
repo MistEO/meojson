@@ -85,7 +85,7 @@ namespace _serialization_helper
 
 template <typename in_t, typename serializer_t = _serialization_helper::empty_serializer,
           typename string_t = default_string_t>
-basic_value<string_t> serialize(in_t&& in, const serializer_t& serializer)
+basic_value<string_t> serialize(in_t&& in, const serializer_t& serializer = {})
 {
     if constexpr (_serialization_helper::is_serializable<in_t, serializer_t>::value) {
         return serializer(std::forward<in_t>(in));
@@ -119,4 +119,50 @@ basic_value<string_t> serialize(in_t&& in, const serializer_t& serializer)
     }
 }
 
+template <typename out_t, typename deserializer_t = _serialization_helper::empty_deserializer,
+          typename string_t = default_string_t>
+bool deserialize(const basic_value<string_t>& in, out_t& out, const deserializer_t& deserializer = {})
+{
+    if constexpr (_serialization_helper::is_deserializable<out_t, deserializer_t>::value) {
+        return deserializer(in, out);
+    }
+    else if constexpr (std::is_constructible_v<out_t, basic_value<string_t>>) {
+        out = in;
+        return true;
+    }
+    else if constexpr (_utils::is_collection<std::decay_t<out_t>>) {
+        if (!in.is_array()) {
+            return false;
+        }
+        for (auto&& j_elem : in.as_array()) {
+            typename out_t::value_type elem;
+            if (!deserialize(j_elem, elem, deserializer)) {
+                return false;
+            }
+            if constexpr (_as_collection_helper::has_emplace_back<out_t>::value) {
+                out.emplace_back(std::move(elem));
+            }
+            else {
+                out.emplace(std::move(elem));
+            }
+        }
+        return true;
+    }
+    else if constexpr (_utils::is_map<std::decay_t<out_t>>) {
+        if (!in.is_object()) {
+            return false;
+        }
+        for (auto&& [key, j_elem] : in.as_object()) {
+            typename out_t::value_type elem;
+            if (!deserialize(j_elem, elem, deserializer)) {
+                return false;
+            }
+            out.emplace(std::move(elem));
+        }
+        return true;
+    }
+    else {
+        _serialization_helper::unable_to_deserialize<out_t>();
+    }
+}
 } // namespace json

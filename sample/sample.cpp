@@ -207,9 +207,24 @@ void third_party_jsonization_2()
     {
         json::value operator()(const ThirdPartyStruct& t) const { return t.a; }
     };
+    struct Deserializer
+    {
+        bool operator()(const json::value& j, ThirdPartyStruct& t) const
+        {
+            if (!j.is_number()) {
+                return false;
+            }
+
+            t.a = j.as_integer();
+            return true;
+        }
+    };
 
     ThirdPartyStruct third;
     json::value jthird = json::serialize(third, Serializer {});
+
+    ThirdPartyStruct new_third;
+    bool ret = json::deserialize(jthird, new_third, Deserializer {});
 }
 
 void parsing()
