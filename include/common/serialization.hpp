@@ -13,7 +13,7 @@ namespace _serialization_helper
     class is_serializable
     {
         template <typename U>
-        static auto test(int) -> decltype(std::declval<serializer_t>()(std::declval<in_t>()), std::true_type());
+        static auto test(int) -> decltype(std::declval<serializer_t>()(std::declval<U>()), std::true_type());
 
         template <typename U>
         static std::false_type test(...);
@@ -51,7 +51,7 @@ namespace _serialization_helper
     {
         template <typename U>
         static auto test(int)
-            -> decltype(std::declval<deserializer_t>()(std::declval<basic_value<string_t>>(), std::declval<out_t&>()),
+            -> decltype(std::declval<deserializer_t>()(std::declval<basic_value<string_t>>(), std::declval<U&>()),
                         std::true_type());
 
         template <typename U>
@@ -127,7 +127,7 @@ bool deserialize(const basic_value<string_t>& in, out_t& out, const deserializer
         return deserializer(in, out);
     }
     else if constexpr (std::is_constructible_v<out_t, basic_value<string_t>>) {
-        out = in;
+        out = out_t(in);
         return true;
     }
     else if constexpr (_utils::is_collection<std::decay_t<out_t>>) {

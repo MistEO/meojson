@@ -211,19 +211,19 @@ void third_party_jsonization_2()
     {
         bool operator()(const json::value& j, ThirdPartyStruct& t) const
         {
-            if (!j.is_number()) {
-                return false;
-            }
-
+            if (!j.is_number()) return false;
             t.a = j.as_integer();
             return true;
         }
     };
 
-    ThirdPartyStruct third;
+    std::map<std::string, ThirdPartyStruct> third;
+    third["key"] = { 100 };
     json::value jthird = json::serialize(third, Serializer {});
 
-    ThirdPartyStruct new_third;
+    std::cout << jthird << std::endl;
+
+    std::map<std::string, ThirdPartyStruct> new_third;
     bool ret = json::deserialize(jthird, new_third, Deserializer {});
 }
 
