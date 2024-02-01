@@ -203,6 +203,8 @@ void third_party_jsonization_1()
 
 void third_party_jsonization_2()
 {
+    /* If you don't like stupid invasive function, you can use `json::serialize` and `json::deserialize`
+     * for more elegant conversion: */
     struct Serializer
     {
         json::value operator()(const ThirdPartyStruct& t) const { return t.a; }
