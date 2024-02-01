@@ -181,7 +181,7 @@ struct Outter2
 };
 ```
 
-如果你不喜欢愚蠢的侵入式函数，你可以使用 `json::serialize` 和 `json::deserialize` 进行更优雅的转换:
+如果你不喜欢愚蠢的侵入式函数，也可以使用 `json::serialize` 和 `json::deserialize` 进行更优雅的转换:
 
 ```c++
 struct Serializer
