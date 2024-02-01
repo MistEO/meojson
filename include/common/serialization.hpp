@@ -96,9 +96,9 @@ basic_value<string_t> serialize(in_t&& in, const serializer_t& serializer = {})
     else if constexpr (_utils::is_collection<std::decay_t<in_t>>) {
         basic_array<string_t> arr;
         for (auto&& elem : in) {
-            using elem_t = std::decay_t<decltype(elem)>;
+            using elem_t = decltype(elem);
 
-            auto j_elem = serialize<string_t>(std::forward<elem_t>(elem), serializer);
+            auto j_elem = serialize<elem_t, serializer_t, string_t>(std::forward<elem_t>(elem), serializer);
             arr.emplace_back(std::move(j_elem));
         }
         return arr;
@@ -106,10 +106,10 @@ basic_value<string_t> serialize(in_t&& in, const serializer_t& serializer = {})
     else if constexpr (_utils::is_map<std::decay_t<in_t>>) {
         basic_object<string_t> obj;
         for (auto&& [key, elem] : in) {
-            using key_t = std::decay_t<decltype(key)>;
-            using elem_t = std::decay_t<decltype(elem)>;
+            using key_t = decltype(key);
+            using elem_t = decltype(elem);
 
-            auto j_elem = serialize<string_t>(std::forward<elem_t>(elem), serializer);
+            auto j_elem = serialize<elem_t, serializer_t, string_t>(std::forward<elem_t>(elem), serializer);
             obj.emplace(std::forward<key_t>(key), std::move(j_elem));
         }
         return obj;
@@ -135,8 +135,9 @@ bool deserialize(const basic_value<string_t>& in, out_t& out, const deserializer
             return false;
         }
         for (auto&& j_elem : in.as_array()) {
-            typename out_t::value_type elem;
-            if (!deserialize(j_elem, elem, deserializer)) {
+            using elem_t = typename out_t::value_type;
+            elem_t elem;
+            if (!deserialize<elem_t, deserializer_t, string_t>(j_elem, elem, deserializer)) {
                 return false;
             }
             if constexpr (_as_collection_helper::has_emplace_back<out_t>::value) {
@@ -153,8 +154,9 @@ bool deserialize(const basic_value<string_t>& in, out_t& out, const deserializer
             return false;
         }
         for (auto&& [key, j_elem] : in.as_object()) {
-            typename out_t::value_type elem;
-            if (!deserialize(j_elem, elem, deserializer)) {
+            using elem_t = typename out_t::value_type;
+            elem_t elem;
+            if (!deserialize<elem_t, deserializer_t, string_t>(j_elem, elem, deserializer)) {
                 return false;
             }
             out.emplace(std::move(elem));
