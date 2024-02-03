@@ -43,7 +43,7 @@ public:
     template <typename jsonization_t, std::enable_if_t<_utils::has_to_json_in_member<jsonization_t>::value, bool> = true>
     basic_object(const jsonization_t& jsonization) : basic_object(jsonization.to_json())
     {}
-    template <typename jsonization_t, std::enable_if_t<_utils::has_to_json_in_global<jsonization_t>::value, bool> = true>
+    template <typename jsonization_t, std::enable_if_t<_utils::has_to_json_in_templ_spec<jsonization_t>::value, bool> = true>
     basic_object(const jsonization_t& jsonization) : basic_object(to_json(jsonization))
     {}
 

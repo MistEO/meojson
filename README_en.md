@@ -162,9 +162,21 @@ struct ThirdPartyStruct
     int a = 100;
 };
 
-json::value to_json(const ThirdPartyStruct& t) { return t.a; }
-bool check_json(const json::value& j, const ThirdPartyStruct&) { return j.is_number(); }
-bool from_json(const json::value& j, ThirdPartyStruct& out) { out.a = j.as_integer(); return true; }
+namespace json
+{
+template <>
+class serialization<ThirdPartyStruct>
+{
+public:
+    json::value to_json(const ThirdPartyStruct& t) { return t.a; }
+    bool check_json(const json::value& j, const ThirdPartyStruct&) { return j.is_number(); }
+    bool from_json(const json::value& j, ThirdPartyStruct& out)
+    {
+        out.a = j.as_integer();
+        return true;
+    }
+};
+} // namespace json
 
 // then we can use it as json
 ThirdPartyStruct third;

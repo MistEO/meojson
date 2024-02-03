@@ -81,8 +81,8 @@ public:
     basic_value(const jsonization_t& jsonization) : basic_value(jsonization.to_json())
     {}
     template <typename jsonization_t,
-              std::enable_if_t<_utils::has_to_json_in_global<jsonization_t>::value, bool> = true>
-    basic_value(const jsonization_t& jsonization) : basic_value(to_json(jsonization))
+              std::enable_if_t<_utils::has_to_json_in_templ_spec<jsonization_t>::value, bool> = true>
+    basic_value(const jsonization_t& jsonization) : basic_value(serialization<jsonization_t>().to_json(jsonization))
     {}
 
     template <typename value_t, std::enable_if_t<!std::is_convertible_v<value_t, basic_value<string_t>>, bool> = true>
@@ -230,11 +230,11 @@ public:
         return dst;
     }
     template <typename jsonization_t,
-              std::enable_if_t<_utils::has_from_json_in_global<jsonization_t, string_t>::value, bool> = true>
+              std::enable_if_t<_utils::has_from_json_in_templ_spec<jsonization_t, string_t>::value, bool> = true>
     explicit operator jsonization_t() const
     {
         jsonization_t dst;
-        if (!from_json(*this, dst)) {
+        if (!serialization<jsonization_t>().from_json(*this, dst)) {
             throw exception("Wrong JSON");
         }
         return dst;
@@ -389,8 +389,8 @@ inline bool basic_value<string_t>::is() const noexcept
     else if constexpr (_utils::has_check_json_in_member<value_t, string_t>::value) {
         return value_t().check_json(*this);
     }
-    else if constexpr (_utils::has_check_json_in_global<value_t, string_t>::value) {
-        return check_json(*this, value_t());
+    else if constexpr (_utils::has_check_json_in_templ_spec<value_t, string_t>::value) {
+        return serialization<value_t>().check_json(*this, value_t());
     }
     else {
         static_assert(!sizeof(value_t), "Unsupported type");

@@ -23,6 +23,18 @@ using warray = basic_array<std::wstring>;
 using wobject = basic_object<std::wstring>;
 }
 
+namespace json
+{
+template <typename T, typename string_t = default_string_t>
+class serialization
+{
+public:
+    // basic_value<string_t> to_json(const T&) const { static_assert(!sizeof(T), "Not Implemented"); }
+    // bool check_json(const basic_value<string_t>&, const T&) { static_assert(!sizeof(T), "Not Implemented"); }
+    // bool from_json(const basic_value<string_t>&, T&) { static_assert(!sizeof(T), "Not Implemented"); }
+};
+}
+
 namespace json::_utils
 {
 template <typename T>
@@ -64,10 +76,10 @@ public:
 };
 
 template <typename T>
-class has_to_json_in_global
+class has_to_json_in_templ_spec
 {
     template <typename U>
-    static auto test(int) -> decltype(to_json(std::declval<U>()), std::true_type());
+    static auto test(int) -> decltype(std::declval<serialization<U>>().to_json(std::declval<U>()), std::true_type());
 
     template <typename U>
     static std::false_type test(...);
@@ -91,11 +103,13 @@ public:
 };
 
 template <typename T, typename string_t>
-class has_check_json_in_global
+class has_check_json_in_templ_spec
 {
     template <typename U>
     static auto test(int)
-        -> decltype(check_json(std::declval<json::basic_value<string_t>>(), std::declval<U>()), std::true_type());
+        -> decltype(std::declval<serialization<U>>().check_json(std::declval<json::basic_value<string_t>>(),
+                                                                std::declval<U>()),
+                    std::true_type());
 
     template <typename U>
     static std::false_type test(...);
@@ -119,11 +133,13 @@ public:
 };
 
 template <typename T, typename string_t>
-class has_from_json_in_global
+class has_from_json_in_templ_spec
 {
     template <typename U>
     static auto test(int)
-        -> decltype(from_json(std::declval<json::basic_value<string_t>>(), std::declval<U&>()), std::true_type());
+        -> decltype(std::declval<serialization<U>>().from_json(std::declval<json::basic_value<string_t>>(),
+                                                               std::declval<U&>()),
+                    std::true_type());
 
     template <typename U>
     static std::false_type test(...);
@@ -211,4 +227,4 @@ string_t to_basic_string(any_t&& arg)
         static_assert(!sizeof(any_t), "Unsupported type");
     }
 }
-} // namespace json::utils
+} // namespace json::_utils
