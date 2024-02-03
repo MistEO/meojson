@@ -162,7 +162,7 @@ struct ThirdPartyStruct
     int a = 100;
 };
 
-namespace json
+namespace json::ext
 {
 template <>
 class jsonization<ThirdPartyStruct>
@@ -176,7 +176,7 @@ public:
         return true;
     }
 };
-} // namespace json
+} // namespace json::ext
 
 // then we can use it as json
 ThirdPartyStruct third;
