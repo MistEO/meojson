@@ -25,7 +25,6 @@ A modern all-platform Json/Json5 parser/serializer, which is header-only and use
 ```
 
 - **meojson** 仅依赖 STL, 但需要 c++17 标准
-- 若使用 MSVC，请在项目中添加 `/Zc:preprocessor`
 - 若使用 AppleClang，请在项目中添加 `-Wno-gnu-zero-variadic-macro-arguments`
 
 ## 序列化

@@ -204,20 +204,25 @@ bool jsonizing()
 
     struct MyStruct
     {
-        std::string str;
+        std::string str1;
+        std::string str2;
+        std::string str3;
         std::vector<double> vec;
         std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map;
 
-        MEO_JSONIZATION(str, vec, map);
+        MEO_JSONIZATION(str1, str2, str3, vec, map);
     };
 
     MyStruct mine;
-    mine.str = "Hello";
+    mine.str1 = "Hello";
+    mine.str2 = "World";
+    mine.str3 = "!";
     mine.vec.emplace_back(0.5);
     mine.map = { { "key_1", { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2", { 10 } } } } } };
 
     json::value j_mine = mine;
     MyStruct new_mine = (MyStruct)j_mine;
 
-    return new_third.a == 100 && new_mine.str == "Hello";
+    return new_third.a == 100 && new_mine.str1 == "Hello" && new_mine.str2 == "World" && new_mine.str3 == "!" &&
+           new_mine.vec[0] == 0.5 && new_mine.map["key_1"].size() == 2;
 }
