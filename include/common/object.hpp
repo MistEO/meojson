@@ -40,11 +40,13 @@ public:
               typename = std::enable_if_t<std::is_constructible_v<value_type, _utils::range_value_t<map_t>>>>
     basic_object(map_t map) : _object_data(std::make_move_iterator(map.begin()), std::make_move_iterator(map.end()))
     {}
-    template <typename jsonization_t, std::enable_if_t<_utils::has_to_json_in_member<jsonization_t>::value, bool> = true>
-    basic_object(const jsonization_t& jsonization) : basic_object(jsonization.to_json())
+    template <typename jsonization_t,
+              std::enable_if_t<_utils::has_to_json_in_member<jsonization_t>::value, bool> = true>
+    basic_object(const jsonization_t& value) : basic_object(value.to_json())
     {}
-    template <typename jsonization_t, std::enable_if_t<_utils::has_to_json_in_templ_spec<jsonization_t>::value, bool> = true>
-    basic_object(const jsonization_t& jsonization) : basic_object(to_json(jsonization))
+    template <typename jsonization_t,
+              std::enable_if_t<_utils::has_to_json_in_templ_spec<jsonization_t>::value, bool> = true>
+    basic_object(const jsonization_t& value) : basic_object(ext::jsonization<jsonization_t>().to_json(value))
     {}
 
     ~basic_object() = default;

@@ -23,10 +23,10 @@ using warray = basic_array<std::wstring>;
 using wobject = basic_object<std::wstring>;
 }
 
-namespace json
+namespace json::ext
 {
-template <typename T, typename string_t = default_string_t>
-class serialization
+template <typename T>
+class jsonization
 {
 public:
     // json::value to_json(const T&) const;
@@ -79,7 +79,7 @@ template <typename T>
 class has_to_json_in_templ_spec
 {
     template <typename U>
-    static auto test(int) -> decltype(std::declval<serialization<U>>().to_json(std::declval<U>()), std::true_type());
+    static auto test(int) -> decltype(std::declval<ext::jsonization<U>>().to_json(std::declval<U>()), std::true_type());
 
     template <typename U>
     static std::false_type test(...);
@@ -107,7 +107,7 @@ class has_check_json_in_templ_spec
 {
     template <typename U>
     static auto test(int)
-        -> decltype(std::declval<serialization<U>>().check_json(std::declval<json::basic_value<string_t>>()),
+        -> decltype(std::declval<ext::jsonization<U>>().check_json(std::declval<json::basic_value<string_t>>()),
                     std::true_type());
 
     template <typename U>
@@ -136,8 +136,8 @@ class has_from_json_in_templ_spec
 {
     template <typename U>
     static auto test(int)
-        -> decltype(std::declval<serialization<U>>().from_json(std::declval<json::basic_value<string_t>>(),
-                                                               std::declval<U&>()),
+        -> decltype(std::declval<ext::jsonization<U>>().from_json(std::declval<json::basic_value<string_t>>(),
+                                                                  std::declval<U&>()),
                     std::true_type());
 
     template <typename U>

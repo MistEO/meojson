@@ -42,11 +42,13 @@ public:
     basic_array(collection_t arr)
         : _array_data(std::make_move_iterator(arr.begin()), std::make_move_iterator(arr.end()))
     {}
-    template <typename jsonization_t, std::enable_if_t<_utils::has_to_json_in_member<jsonization_t>::value, bool> = true>
-    basic_array(const jsonization_t& jsonization) : basic_array(jsonization.to_json())
+    template <typename jsonization_t,
+              std::enable_if_t<_utils::has_to_json_in_member<jsonization_t>::value, bool> = true>
+    basic_array(const jsonization_t& value) : basic_array(value.to_json())
     {}
-    template <typename jsonization_t, std::enable_if_t<_utils::has_to_json_in_templ_spec<jsonization_t>::value, bool> = true>
-    basic_array(const jsonization_t& jsonization) : basic_array(to_json(jsonization))
+    template <typename jsonization_t,
+              std::enable_if_t<_utils::has_to_json_in_templ_spec<jsonization_t>::value, bool> = true>
+    basic_array(const jsonization_t& value) : basic_array(ext::jsonization<jsonization_t>().to_json(value))
     {}
 
     ~basic_array() noexcept = default;

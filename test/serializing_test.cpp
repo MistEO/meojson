@@ -175,19 +175,23 @@ struct ThirdPartyStruct
 {
     int a = 0;
 };
-json::wvalue to_json(const ThirdPartyStruct& t)
+
+namespace json::ext
 {
-    return t.a;
-}
-bool check_json(const json::wvalue& j, const ThirdPartyStruct&)
+template <>
+class jsonization<ThirdPartyStruct>
 {
-    return j.is_number();
-}
-bool from_json(const json::wvalue& j, ThirdPartyStruct& out)
-{
-    out.a = j.as_integer();
-    return true;
-}
+public:
+    json::wvalue to_json(const ThirdPartyStruct& t) const { return t.a; }
+    bool check_json(const json::wvalue& j) const { return j.is_number(); }
+    bool from_json(const json::wvalue& j, ThirdPartyStruct& out) const
+    {
+        out.a = j.as_integer();
+        return true;
+    }
+};
+} // namespace json::ext
+
 bool jsonizing()
 {
     // then you can use it as json
@@ -195,13 +199,25 @@ bool jsonizing()
     json::wvalue jthird = third;
     ThirdPartyStruct new_third = (ThirdPartyStruct)jthird;
 
-    //// or add to your sturcture
-    // struct Outter2
-    //{
-    //     int outter2_a = 10;
-    //     ThirdPartyStruct third;
+    json::warray arr = { third, new_third };
+    json::wobject obj = { { L"third", third }, { L"new_third", new_third } };
 
-    //    MEO_JSONIZATION(outter2_a, third);
-    //};
-    return new_third.a == 100;
+    struct MyStruct
+    {
+        std::string str;
+        std::vector<double> vec;
+        std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map;
+
+        MEO_JSONIZATION(str, vec, map);
+    };
+
+    MyStruct mine;
+    mine.str = "Hello";
+    mine.vec.emplace_back(0.5);
+    mine.map = { { "key_1", { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2", { 10 } } } } } };
+
+    json::value j_mine = mine;
+    MyStruct new_mine = (MyStruct)j_mine;
+
+    return new_third.a == 100 && new_mine.str == "Hello";
 }
