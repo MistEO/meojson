@@ -162,9 +162,21 @@ struct ThirdPartyStruct
     int a = 100;
 };
 
-json::value to_json(const ThirdPartyStruct& t) { return t.a; }
-bool check_json(const json::value& j, const ThirdPartyStruct&) { return j.is_number(); }
-bool from_json(const json::value& j, ThirdPartyStruct& out) { out.a = j.as_integer(); return true; }
+namespace json::ext
+{
+template <>
+class jsonization<ThirdPartyStruct>
+{
+public:
+    json::value to_json(const ThirdPartyStruct& t) const { return t.a; }
+    bool check_json(const json::value& j) const { return j.is_number(); }
+    bool from_json(const json::value& j, ThirdPartyStruct& out) const
+    {
+        out.a = j.as_integer();
+        return true;
+    }
+};
+} // namespace json::ext
 
 // 然后可以将其用作 JSON
 ThirdPartyStruct third;
@@ -232,7 +244,6 @@ std::string format = j.dumps(4);
 std::ofstream ofs("meo.json");
 ofs << j;
 ofs.close();
-
 ```
 
 ## 解析
@@ -297,43 +308,25 @@ std::string nested_get = value.get("A_obj", "B_arr", 1, "C_str", "default_value"
 // 如果没有 `num`，则 opt_n 将为 std::nullopt
 auto opt_n = value.find<double>("num");
 if (opt_n) {
-    // 输出: 3.141600
+    // Output: 3.141600
     std::cout << *opt_n << std::endl;
 }
-
 ```
 
 还有一些你在序列化中已经见过的技巧
 
 ```c++
 bool is_vec = value["list"].is<std::vector<int>>();
-
 std::vector<int> to_vec = value["list"].as_collection<int>();
-to_vec = (std::vector<int>)value["list"];       // 与上面相同
-to_vec = value["list"].as<std::vector<int>>();  // 与上面相同
-
-// 输出: 1, 2, 3
+// Output: 1, 2, 3
 for (auto&& i : to_vec) {
     std::cout << i << std::endl;
 }
 
 std::list<int> to_list = value["list"].as_collection<int, std::list>();
-to_list = (std::list<int>)value["list"];        // 与上面相同
-to_list = value["list"].as<std::list<int>>();   // 与上面相同
-
-std::set<int> to_set = value["list"].as_collection<int, std::set>();
-to_set = (std::set<int>)value["list"];          // 与上面相同
-to_set = value["list"].as<std::set<int>>();     // 与上面相同
-
-bool is_map = value["author"].is<std::map<std::string, std::string>>();
-
-std::map<std::string, std::string> to_map = value["author"].as_map<std::string>();
-to_map = (std::map<std::string, std::string>)value["author"];       // 与上面相同
-to_map = value["author"].as<std::map<std::string, std::string>>();  // 与上面相同
-
+to_list = (std::list<int>)value["list"]; // 和上面相同
+auto to_map = value["author"].as<std::map<std::string, std::string>>();
 auto to_hashmap = value["author"].as_map<std::string, std::unordered_map>();
-to_hashmap = (std::unordered_map<std::string, std::string>)value["author"];     // 与上面相同
-to_hashmap = value["author"].as<std::unordered_map<std::string, std::string>>();// 与上面相同
 ```
 
 以及不知道有啥用的字面语法

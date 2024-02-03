@@ -167,19 +167,21 @@ struct ThirdPartyStruct
     int a = 100;
 };
 
-json::value to_json(const ThirdPartyStruct& t)
+namespace json::ext
 {
-    return t.a;
-}
-bool check_json(const json::value& j, const ThirdPartyStruct&)
+template <>
+class jsonization<ThirdPartyStruct>
 {
-    return j.is_number();
-}
-bool from_json(const json::value& j, ThirdPartyStruct& out)
-{
-    out.a = j.as_integer();
-    return true;
-}
+public:
+    json::value to_json(const ThirdPartyStruct& t) const { return t.a; }
+    bool check_json(const json::value& j) const { return j.is_number(); }
+    bool from_json(const json::value& j, ThirdPartyStruct& out) const
+    {
+        out.a = j.as_integer();
+        return true;
+    }
+};
+} // namespace json::ext
 
 void third_party_jsonization_1()
 {
@@ -295,33 +297,16 @@ void parsing()
     /* There are also a few tricks you've already seen with Serializing */
 
     bool is_vec = value["list"].is<std::vector<int>>();
-
     std::vector<int> to_vec = value["list"].as_collection<int>();
-    to_vec = (std::vector<int>)value["list"];      // same as above
-    to_vec = value["list"].as<std::vector<int>>(); // same as above
-
     // Output: 1, 2, 3
     for (auto&& i : to_vec) {
         std::cout << i << std::endl;
     }
 
     std::list<int> to_list = value["list"].as_collection<int, std::list>();
-    to_list = (std::list<int>)value["list"];      // same as above
-    to_list = value["list"].as<std::list<int>>(); // same as above
-
-    std::set<int> to_set = value["list"].as_collection<int, std::set>();
-    to_set = (std::set<int>)value["list"];      // same as above
-    to_set = value["list"].as<std::set<int>>(); // same as above
-
-    bool is_map = value["author"].is<std::map<std::string, std::string>>();
-
-    std::map<std::string, std::string> to_map = value["author"].as_map<std::string>();
-    to_map = (std::map<std::string, std::string>)value["author"];      // same as above
-    to_map = value["author"].as<std::map<std::string, std::string>>(); // same as above
-
+    to_list = (std::list<int>)value["list"]; // same as above
+    auto to_map = value["author"].as<std::map<std::string, std::string>>();
     auto to_hashmap = value["author"].as_map<std::string, std::unordered_map>();
-    to_hashmap = (std::unordered_map<std::string, std::string>)value["author"];      // same as above
-    to_hashmap = value["author"].as<std::unordered_map<std::string, std::string>>(); // same as above
 
     /* And... some useless literal syntax */
 
