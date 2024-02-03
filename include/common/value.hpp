@@ -390,7 +390,7 @@ inline bool basic_value<string_t>::is() const noexcept
         return value_t().check_json(*this);
     }
     else if constexpr (_utils::has_check_json_in_templ_spec<value_t, string_t>::value) {
-        return serialization<value_t>().check_json(*this, value_t());
+        return serialization<value_t>().check_json(*this);
     }
     else {
         static_assert(!sizeof(value_t), "Unsupported type");

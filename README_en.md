@@ -168,9 +168,9 @@ template <>
 class serialization<ThirdPartyStruct>
 {
 public:
-    json::value to_json(const ThirdPartyStruct& t) { return t.a; }
-    bool check_json(const json::value& j, const ThirdPartyStruct&) { return j.is_number(); }
-    bool from_json(const json::value& j, ThirdPartyStruct& out)
+    json::value to_json(const ThirdPartyStruct& t) const { return t.a; }
+    bool check_json(const json::value& j) const { return j.is_number(); }
+    bool from_json(const json::value& j, ThirdPartyStruct& out) const
     {
         out.a = j.as_integer();
         return true;

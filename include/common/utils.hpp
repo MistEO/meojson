@@ -29,9 +29,9 @@ template <typename T, typename string_t = default_string_t>
 class serialization
 {
 public:
-    // basic_value<string_t> to_json(const T&) const { static_assert(!sizeof(T), "Not Implemented"); }
-    // bool check_json(const basic_value<string_t>&, const T&) { static_assert(!sizeof(T), "Not Implemented"); }
-    // bool from_json(const basic_value<string_t>&, T&) { static_assert(!sizeof(T), "Not Implemented"); }
+    // json::value to_json(const T&) const;
+    // bool check_json(const json::value&) const;
+    // bool from_json(const json::value&, T&) const;
 };
 }
 
@@ -107,8 +107,7 @@ class has_check_json_in_templ_spec
 {
     template <typename U>
     static auto test(int)
-        -> decltype(std::declval<serialization<U>>().check_json(std::declval<json::basic_value<string_t>>(),
-                                                                std::declval<U>()),
+        -> decltype(std::declval<serialization<U>>().check_json(std::declval<json::basic_value<string_t>>()),
                     std::true_type());
 
     template <typename U>
