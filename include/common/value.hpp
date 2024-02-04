@@ -65,13 +65,15 @@ public:
     basic_value(value_type type, args_t&&... args);
 
     template <typename collection_t,
-              std::enable_if_t<std::is_constructible_v<typename basic_array<string_t>::value_type,
-                                                       _utils::range_value_t<collection_t>>,
+              std::enable_if_t<_utils::is_collection<collection_t> &&
+                                   std::is_constructible_v<typename basic_array<string_t>::value_type,
+                                                           _utils::range_value_t<collection_t>>,
                                bool> = true>
     basic_value(collection_t&& collection) : basic_value(basic_array<string_t>(std::forward<collection_t>(collection)))
     {}
-    template <typename map_t, std::enable_if_t<std::is_constructible_v<typename basic_object<string_t>::value_type,
-                                                                       _utils::range_value_t<map_t>>,
+    template <typename map_t, std::enable_if_t<_utils::is_map<map_t> &&
+                                                   std::is_constructible_v<typename basic_object<string_t>::value_type,
+                                                                           _utils::range_value_t<map_t>>,
                                                bool> = true>
     basic_value(map_t&& map) : basic_value(basic_object<string_t>(std::forward<map_t>(map)))
     {}
@@ -167,6 +169,16 @@ public:
 
     basic_value<string_t>& operator=(const basic_value<string_t>& rhs);
     basic_value<string_t>& operator=(basic_value<string_t>&&) noexcept;
+    template <typename value_t, std::enable_if_t<std::is_convertible_v<value_t, basic_value<string_t>>, bool> = true>
+    basic_value<string_t>& operator=(const value_t& rhs)
+    {
+        return *this = basic_value<string_t>(rhs);
+    }
+    template <typename value_t, std::enable_if_t<std::is_convertible_v<value_t, basic_value<string_t>>, bool> = true>
+    basic_value<string_t>& operator=(value_t&& rhs)
+    {
+        return *this = basic_value<string_t>(std::move(rhs));
+    }
 
     bool operator==(const basic_value<string_t>& rhs) const;
     bool operator!=(const basic_value<string_t>& rhs) const { return !(*this == rhs); }

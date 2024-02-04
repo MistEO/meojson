@@ -38,7 +38,9 @@ public:
     // explicit basic_array(basic_value<string_t>&& val);
 
     template <typename collection_t,
-              std::enable_if_t<std::is_constructible_v<value_type, _utils::range_value_t<collection_t>>, bool> = true>
+              std::enable_if_t<_utils::is_collection<collection_t> &&
+                                   std::is_constructible_v<value_type, _utils::range_value_t<collection_t>>,
+                               bool> = true>
     basic_array(collection_t arr)
         : _array_data(std::make_move_iterator(arr.begin()), std::make_move_iterator(arr.end()))
     {}

@@ -190,7 +190,19 @@ public:
         return true;
     }
 };
-} // namespace json::ext
+template <>
+class jsonization<std::filesystem::path>
+{
+public:
+    json::value to_json(const std::filesystem::path& path) const { return path.string(); }
+    bool check_json(const json::value& json) const { return json.is_string(); }
+    bool from_json(const json::value& json, std::filesystem::path& path) const
+    {
+        path = json.as_string();
+        return true;
+    }
+};
+}
 
 bool jsonizing()
 {
@@ -198,6 +210,10 @@ bool jsonizing()
     ThirdPartyStruct third { 100 };
     json::wvalue jthird = third;
     ThirdPartyStruct new_third = (ThirdPartyStruct)jthird;
+    if (new_third.a != 100) {
+        std::cerr << "error new_third.a: " << new_third.a << std::endl;
+        return false;
+    }
 
     json::warray arr = { third, new_third };
     json::wobject obj = { { L"third", third }, { L"new_third", new_third } };
@@ -223,6 +239,20 @@ bool jsonizing()
     json::value j_mine = mine;
     MyStruct new_mine = (MyStruct)j_mine;
 
-    return new_third.a == 100 && new_mine.str1 == "Hello" && new_mine.str2 == "World" && new_mine.str3 == "!" &&
-           new_mine.vec[0] == 0.5 && new_mine.map["key_1"].size() == 2;
+    bool ret = new_mine.str1 == "Hello" && new_mine.str2 == "World" && new_mine.str3 == "!" && new_mine.vec[0] == 0.5 &&
+               new_mine.map["key_1"].size() == 2;
+    if (!ret) {
+        std::cerr << "error new_mine" << std::endl;
+        return false;
+    }
+
+    std::filesystem::path path = "/root/dir1/dir2/filename";
+    json::value jpath = path;
+    std::filesystem::path new_path = (std::filesystem::path)jpath;
+    if (new_path != path) {
+        std::cerr << "error new_path: " << new_path << std::endl;
+        return false;
+    }
+
+    return true;
 }
