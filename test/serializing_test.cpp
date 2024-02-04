@@ -254,5 +254,22 @@ bool jsonizing()
         return false;
     }
 
+    std::vector<std::filesystem::path> paths = { "/root/dir1/dir2/filename", "/root/dir1/dir2/filename2" };
+    json::array jpaths = paths;
+    std::vector<std::filesystem::path> new_paths = (std::vector<std::filesystem::path>)jpaths;
+    if (new_paths != paths) {
+        std::cerr << "error new_paths" << std::endl;
+        return false;
+    }
+
+    std::map<std::string, std::filesystem::path> path_map = { { "key1", "/root/dir1/dir2/filename" },
+                                                              { "key2", "/root/dir1/dir2/filename2" } };
+    json::object jpath_map = path_map;
+    std::map<std::string, std::filesystem::path> new_path_map = (std::map<std::string, std::filesystem::path>)jpath_map;
+    if (new_path_map != path_map) {
+        std::cerr << "error new_path_map" << std::endl;
+        return false;
+    }
+
     return true;
 }

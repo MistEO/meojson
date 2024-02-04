@@ -106,6 +106,33 @@ public:
     bool operator==(const basic_object<string_t>& rhs) const;
     bool operator!=(const basic_object<string_t>& rhs) const { return !(*this == rhs); }
 
+    template <typename value_t, template <typename...> typename map_t = std::map,
+              std::enable_if_t<_utils::is_map<map_t<string_t, value_t>>, bool> = true>
+    explicit operator map_t<string_t, value_t>() const
+    {
+        return as_map<value_t, map_t>();
+    }
+    template <typename jsonization_t,
+              std::enable_if_t<_utils::has_from_json_in_member<jsonization_t, string_t>::value, bool> = true>
+    explicit operator jsonization_t() const
+    {
+        jsonization_t dst {};
+        if (!dst.from_json(*this)) {
+            throw exception("Wrong JSON");
+        }
+        return dst;
+    }
+    template <typename jsonization_t,
+              std::enable_if_t<_utils::has_from_json_in_templ_spec<jsonization_t, string_t>::value, bool> = true>
+    explicit operator jsonization_t() const
+    {
+        jsonization_t dst {};
+        if (!ext::jsonization<jsonization_t>().from_json(*this, dst)) {
+            throw exception("Wrong JSON");
+        }
+        return dst;
+    }
+
 private:
     template <typename... key_then_default_value_t, size_t... keys_indexes_t>
     auto get(std::tuple<key_then_default_value_t...> keys_then_default_value,
