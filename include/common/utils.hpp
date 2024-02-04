@@ -152,7 +152,7 @@ static constexpr string_t unescape_string(const string_t& str)
 {
     using char_t = typename string_t::value_type;
 
-    string_t result;
+    string_t result {};
     auto cur = str.cbegin();
     auto end = str.cend();
     auto no_escape_beg = cur;

@@ -520,7 +520,7 @@ inline typename parser5<string_t>::u8char parser5<string_t>::unicodeEscape()
 /* utf-8 reader */
 template <typename string_t>
 inline typename parser5<string_t>::u8char parser5<string_t>::peek(const string_iter_t& begin, const string_iter_t& end,
-                                                                size_t* plen)
+                                                                  size_t* plen)
 {
     if (begin == end) {
         if (plen) *plen = 0;
@@ -596,7 +596,7 @@ inline std::string parser5<string_t>::StringFromCharCode(typename parser5<string
 template <typename string_t>
 inline typename parser5<string_t>::Token parser5<string_t>::newToken(TokenType type, value value)
 {
-    Token token;
+    Token token {};
     token.type = type;
     token._value = value;
     token.line = _line;
