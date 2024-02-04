@@ -37,7 +37,7 @@ public:
     // explicit basic_object(basic_value<string_t>&& val);
 
     template <typename map_t,
-              typename = std::enable_if_t<std::is_constructible_v<value_type, _utils::range_value_t<map_t>>>>
+              std::enable_if_t<std::is_constructible_v<value_type, _utils::range_value_t<map_t>>, bool> = true>
     basic_object(map_t map) : _object_data(std::make_move_iterator(map.begin()), std::make_move_iterator(map.end()))
     {}
     template <typename jsonization_t,

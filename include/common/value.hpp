@@ -208,13 +208,13 @@ public:
     explicit operator basic_object<string_t>() const { return as_object(); }
 
     template <typename value_t, template <typename...> typename collection_t = std::vector,
-              typename _ = std::enable_if_t<_utils::is_collection<collection_t<value_t>>>>
+              std::enable_if_t<_utils::is_collection<collection_t<value_t>>, bool> = true>
     explicit operator collection_t<value_t>() const
     {
         return as_collection<value_t, collection_t>();
     }
     template <typename value_t, template <typename...> typename map_t = std::map,
-              typename _ = std::enable_if_t<_utils::is_map<map_t<string_t, value_t>>>>
+              std::enable_if_t<_utils::is_map<map_t<string_t, value_t>>, bool> = true>
     explicit operator map_t<string_t, value_t>() const
     {
         return as_map<value_t, map_t>();
@@ -963,8 +963,8 @@ inline typename basic_value<string_t>::var_t basic_value<string_t>::deep_copy(co
 template <typename ostream_t, typename string_t,
           typename std_ostream_t =
               std::basic_ostream<typename string_t::value_type, std::char_traits<typename string_t::value_type>>,
-          typename enable_t = typename std::enable_if_t<std::is_same_v<std_ostream_t, ostream_t> ||
-                                                        std::is_base_of_v<std_ostream_t, ostream_t>>>
+          typename =
+              std::enable_if_t<std::is_same_v<std_ostream_t, ostream_t> || std::is_base_of_v<std_ostream_t, ostream_t>>>
 ostream_t& operator<<(ostream_t& out, const basic_value<string_t>& val)
 {
     out << val.format();
