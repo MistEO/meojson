@@ -25,7 +25,6 @@ A modern all-platform Json/Json5 parser/serializer, which is header-only and use
 ```
 
 - **meojson** only depends on STL, but requires c++17 standard
-- For AppleClang, please add `-Wno-gnu-zero-variadic-macro-arguments` to your project
 
 ## Serializing
 
