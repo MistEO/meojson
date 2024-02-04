@@ -328,7 +328,7 @@ inline uint64_t parser5<string_t>::unicode::toUnicode(u8char ch)
         charcode |= coded.top() & ((1 << other_bits) - 1);
         coded.pop();
     }
-    charcode |= ((t >> high_bit_shift) & high_bit_mask) << total_bits;
+    charcode |= static_cast<uint64_t>((t >> high_bit_shift) & high_bit_mask) << total_bits;
     return charcode;
 }
 
