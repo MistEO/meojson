@@ -264,7 +264,8 @@ std::string content = R"(
             { "C_str": "i am a distraction" },
             { "C_str": "you found me!" }
         ]
-    }
+    },
+    "my_type": { "i": 99 }
 })";
 
 // 它是一个 std::optional<json::value>
@@ -309,6 +310,16 @@ if (opt_n) {
     // Output: 3.141600
     std::cout << *opt_n << std::endl;
 }
+
+// 如你所想，`get` and `find` 也可以用于自定义类型
+struct MyType
+{
+    int i = 0;
+
+    MEO_JSONIZATION(i);
+};
+MyType get_custom_value = value.get("my_type", MyType {});
+auto find_custom_opt = value.find<MyType>("my_type");
 ```
 
 还有一些你在序列化中已经见过的技巧

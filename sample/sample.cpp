@@ -250,7 +250,8 @@ void parsing()
             { "C_str": "i am a distraction" },
             { "C_str": "you found me!" }
         ]
-    }
+    },
+    "my_type": { "i": 99 }
 })";
 
     // it's a std::optional<json::value>
@@ -293,6 +294,16 @@ void parsing()
         // output: 3.141600
         std::cout << *opt_n << std::endl;
     }
+
+    // following your intuition, `get` and `find can also be used for custom types
+    struct MyType
+    {
+        int i = 0;
+
+        MEO_JSONIZATION(i);
+    };
+    MyType get_custom_value = value.get("my_type", MyType {});
+    auto find_custom_opt = value.find<MyType>("my_type");
 
     /* There are also a few tricks you've already seen with Serializing */
 
