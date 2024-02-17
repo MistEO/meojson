@@ -40,6 +40,12 @@ bool serializing()
     root["arr"].emplace(5);
     root["arr"] += json::array { 6, 7 };
 
+    auto jarr = root.get("arr", json::array());
+    if (jarr.size() != 7) {
+        std::cerr << "error: " << jarr.size() << std::endl;
+        return false;
+    }
+
     bool is_int_array = root["arr"].is_array() && root["arr"].all<int>();
     if (!is_int_array) {
         std::cerr << "not all int: " << root["arr"].as_string() << std::endl;
