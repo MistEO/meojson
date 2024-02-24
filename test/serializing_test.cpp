@@ -40,6 +40,31 @@ bool serializing()
     root["arr"].emplace(5);
     root["arr"] += json::array { 6, 7 };
 
+    std::string str = "hello";
+    root["str"] = str;
+    if (str != root["str"].as_string()) {
+        std::cerr << "error: " << root["str"].as_string() << std::endl;
+        return false;
+    }
+    std::vector<int> vec_op = { 1, 2, 3, 4, 5 };
+    root["arr from vec"] = vec_op;
+    json::array vec_obj = vec_op;
+    if (vec_obj.as_collection<int>() != root["arr from vec"].as_collection<int>()) {
+        std::cerr << "error: " << root["arr from vec"].as_string() << std::endl;
+        return false;
+    }
+
+    std::map<std::string, int> map_op {
+        { "key1", 1 },
+        { "key2", 2 },
+    };
+    root["obj from map"] = map_op;
+    json::object map_obj = map_op;
+    if (map_obj.as_map<int>() != root["obj from map"].as_map<int>()) {
+        std::cerr << "error: " << root["obj from map"].as_string() << std::endl;
+        return false;
+    }
+
     auto jarr = root.get("arr", json::array());
     if (jarr.size() != 7) {
         std::cerr << "error: " << jarr.size() << std::endl;
