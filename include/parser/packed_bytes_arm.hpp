@@ -50,7 +50,8 @@ struct packed_bytes_trait_neon
         return vmaxvq_u8(x) == 0;
 #else
         auto fold64 = vorr_u64(
-            vget_high_u64(vreinterpretq_u8_u64(x), 0), vget_low_u64(vreinterpretq_u8_u64(x), 1));
+            vget_high_u64(vreinterpretq_u8_u64(x), 0),
+            vget_low_u64(vreinterpretq_u8_u64(x), 1));
         auto fold32 = vget_lane_u32(vreinterpret_u64_u32(fold64), 0)
                       | vget_lane_u32(vreinterpret_u64_u32(fold64), 1);
         return fold32 == 0;

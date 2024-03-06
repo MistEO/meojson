@@ -51,7 +51,9 @@ public:
     public:
         InvalidChar(u8char ch = 0, const std::string& detail = "")
             : exception(
-                "Invalid Char", "Unexpected token \'" + StringFromCharCode(ch) + "\'", detail)
+                "Invalid Char",
+                "Unexpected token \'" + StringFromCharCode(ch) + "\'",
+                detail)
         {
         }
     };

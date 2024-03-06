@@ -410,43 +410,46 @@ namespace json::_private_macro
 #define _MEOJSON_KEY_VALUE(x) _MEOJSON_STRINGIZE(x), x,
 } // namespace json::_private_macro
 
-#define MEO_TOJSON(...)                                                                        \
-    json::value to_json() const                                                                \
-    {                                                                                          \
-        return json::_jsonization_helper::dumper()._to_json(_MEOJSON_EXPAND(_MEOJSON_FOR_EACH( \
-            _MEOJSON_KEY_VALUE, __VA_ARGS__)) json::_jsonization_helper::va_arg_end {});       \
+#define MEO_TOJSON(...)                                                         \
+    json::value to_json() const                                                 \
+    {                                                                           \
+        return json::_jsonization_helper::dumper()._to_json(                    \
+            _MEOJSON_EXPAND(_MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__)) \
+                json::_jsonization_helper::va_arg_end {});                      \
     }
 
-#define MEO_CHECKJSON(...)                                                                       \
-    bool check_json(const json::value& _MEOJSON_VARNAME(in)) const                               \
-    {                                                                                            \
-        std::string _MEOJSON_VARNAME(error_key);                                                 \
-        return check_json(_MEOJSON_VARNAME(in), _MEOJSON_VARNAME(error_key));                    \
-    }                                                                                            \
-    bool check_json(                                                                             \
-        const json::value& _MEOJSON_VARNAME(in), std::string& _MEOJSON_VARNAME(error_key)) const \
-    {                                                                                            \
-        return json::_jsonization_helper::checker()._check_json(                                 \
-            _MEOJSON_VARNAME(in),                                                                \
-            _MEOJSON_VARNAME(error_key),                                                         \
-            _MEOJSON_EXPAND(_MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__))                  \
-                json::_jsonization_helper::va_arg_end {});                                       \
+#define MEO_CHECKJSON(...)                                                      \
+    bool check_json(const json::value& _MEOJSON_VARNAME(in)) const              \
+    {                                                                           \
+        std::string _MEOJSON_VARNAME(error_key);                                \
+        return check_json(_MEOJSON_VARNAME(in), _MEOJSON_VARNAME(error_key));   \
+    }                                                                           \
+    bool check_json(                                                            \
+        const json::value& _MEOJSON_VARNAME(in),                                \
+        std::string& _MEOJSON_VARNAME(error_key)) const                         \
+    {                                                                           \
+        return json::_jsonization_helper::checker()._check_json(                \
+            _MEOJSON_VARNAME(in),                                               \
+            _MEOJSON_VARNAME(error_key),                                        \
+            _MEOJSON_EXPAND(_MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__)) \
+                json::_jsonization_helper::va_arg_end {});                      \
     }
 
-#define MEO_FROMJSON(...)                                                                  \
-    bool from_json(const json::value& _MEOJSON_VARNAME(in))                                \
-    {                                                                                      \
-        std::string _MEOJSON_VARNAME(error_key);                                           \
-        return from_json(_MEOJSON_VARNAME(in), _MEOJSON_VARNAME(error_key));               \
-    }                                                                                      \
-    bool from_json(                                                                        \
-        const json::value& _MEOJSON_VARNAME(in), std::string& _MEOJSON_VARNAME(error_key)) \
-    {                                                                                      \
-        return json::_jsonization_helper::loader()._from_json(                             \
-            _MEOJSON_VARNAME(in),                                                          \
-            _MEOJSON_VARNAME(error_key),                                                   \
-            _MEOJSON_EXPAND(_MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__))            \
-                json::_jsonization_helper::va_arg_end {});                                 \
+#define MEO_FROMJSON(...)                                                       \
+    bool from_json(const json::value& _MEOJSON_VARNAME(in))                     \
+    {                                                                           \
+        std::string _MEOJSON_VARNAME(error_key);                                \
+        return from_json(_MEOJSON_VARNAME(in), _MEOJSON_VARNAME(error_key));    \
+    }                                                                           \
+    bool from_json(                                                             \
+        const json::value& _MEOJSON_VARNAME(in),                                \
+        std::string& _MEOJSON_VARNAME(error_key))                               \
+    {                                                                           \
+        return json::_jsonization_helper::loader()._from_json(                  \
+            _MEOJSON_VARNAME(in),                                               \
+            _MEOJSON_VARNAME(error_key),                                        \
+            _MEOJSON_EXPAND(_MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__)) \
+                json::_jsonization_helper::va_arg_end {});                      \
     }
 
 #define MEO_JSONIZATION(...)                    \

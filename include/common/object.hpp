@@ -180,7 +180,8 @@ private:
 template <typename string_t>
 inline basic_object<string_t>::basic_object(std::initializer_list<value_type> init_list)
     : _object_data(
-        std::make_move_iterator(init_list.begin()), std::make_move_iterator(init_list.end()))
+        std::make_move_iterator(init_list.begin()),
+        std::make_move_iterator(init_list.end()))
 {
 }
 
@@ -324,7 +325,9 @@ inline auto basic_object<string_t>::get(
 template <typename string_t>
 template <typename value_t, typename... rest_keys_t>
 inline auto basic_object<string_t>::get_helper(
-    const value_t& default_value, const string_t& key, rest_keys_t&&... rest) const
+    const value_t& default_value,
+    const string_t& key,
+    rest_keys_t&&... rest) const
 {
     constexpr bool is_json = std::is_same_v<basic_value<string_t>, value_t>
                              || std::is_same_v<basic_array<string_t>, value_t>
@@ -459,7 +462,8 @@ inline basic_object<string_t> basic_object<string_t>::operator|(basic_object<str
     basic_object<string_t> temp = *this;
     // temp._object_data.merge(std::move(rhs._object_data));
     temp._object_data.insert(
-        std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
+        std::make_move_iterator(rhs.begin()),
+        std::make_move_iterator(rhs.end()));
     return temp;
 }
 

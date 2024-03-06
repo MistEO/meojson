@@ -534,7 +534,9 @@ inline auto basic_value<string_t>::get(
 template <typename string_t>
 template <typename value_t, typename first_key_t, typename... rest_keys_t>
 inline auto basic_value<string_t>::get_helper(
-    const value_t& default_value, first_key_t&& first, rest_keys_t&&... rest) const
+    const value_t& default_value,
+    first_key_t&& first,
+    rest_keys_t&&... rest) const
 {
     if constexpr (std::is_constructible_v<string_t, first_key_t>) {
         return is_object() ? as_object().get_helper(
@@ -571,7 +573,8 @@ inline auto
     }
     else {
         static_assert(
-            !sizeof(unique_key_t), "Parameter must be integral or string_t constructible");
+            !sizeof(unique_key_t),
+            "Parameter must be integral or string_t constructible");
     }
 }
 
@@ -810,7 +813,8 @@ inline decltype(auto) basic_value<string_t>::emplace(args_t&&... args)
         std::is_constructible_v<typename basic_object<string_t>::value_type, args_t...>;
 
     static_assert(
-        is_array_args || is_object_args, "Args can not constructure a array or object value");
+        is_array_args || is_object_args,
+        "Args can not constructure a array or object value");
 
     if constexpr (is_array_args) {
         return as_array().emplace_back(std::forward<args_t>(args)...);
@@ -1050,7 +1054,8 @@ inline basic_value<string_t>::basic_value(value_type type, args_t&&... args)
     , _raw_data(std::forward<args_t>(args)...)
 {
     static_assert(
-        std::is_constructible_v<var_t, args_t...>, "Parameter can't be used to construct a var_t");
+        std::is_constructible_v<var_t, args_t...>,
+        "Parameter can't be used to construct a var_t");
 }
 
 template <typename string_t>

@@ -263,7 +263,8 @@ inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_st
         return invalid_value<string_t>();
     }
     return basic_value<string_t>(
-        basic_value<string_t>::value_type::string, std::move(string_opt).value());
+        basic_value<string_t>::value_type::string,
+        std::move(string_opt).value());
 }
 
 template <typename string_t, typename parsing_t, typename accel_traits>
@@ -636,6 +637,7 @@ template <typename string_t>
 const basic_value<string_t> invalid_value()
 {
     return basic_value<string_t>(
-        basic_value<string_t>::value_type::invalid, typename basic_value<string_t>::var_t());
+        basic_value<string_t>::value_type::invalid,
+        typename basic_value<string_t>::var_t());
 }
 } // namespace json

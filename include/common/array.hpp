@@ -350,7 +350,9 @@ inline auto basic_array<string_t>::get(
 template <typename string_t>
 template <typename value_t, typename... rest_keys_t>
 inline auto basic_array<string_t>::get_helper(
-    const value_t& default_value, size_t pos, rest_keys_t&&... rest) const
+    const value_t& default_value,
+    size_t pos,
+    rest_keys_t&&... rest) const
 {
     constexpr bool is_json = std::is_same_v<basic_value<string_t>, value_t>
                              || std::is_same_v<basic_array<string_t>, value_t>

@@ -297,7 +297,8 @@ bool jsonizing()
     }
 
     std::map<std::string, std::filesystem::path> path_map = {
-        { "key1", "/root/dir1/dir2/filename" }, { "key2", "/root/dir1/dir2/filename2" }
+        { "key1", "/root/dir1/dir2/filename" },
+        { "key2", "/root/dir1/dir2/filename2" }
     };
     json::object jpath_map = path_map;
     std::map<std::string, std::filesystem::path> new_path_map =

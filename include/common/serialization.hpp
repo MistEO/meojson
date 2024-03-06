@@ -132,7 +132,9 @@ template <
     typename deserializer_t = _serialization_helper::empty_deserializer,
     typename string_t = default_string_t>
 bool deserialize(
-    const basic_value<string_t>& in, out_t& out, const deserializer_t& deserializer = {})
+    const basic_value<string_t>& in,
+    out_t& out,
+    const deserializer_t& deserializer = {})
 {
     if constexpr (_serialization_helper::is_deserializable<out_t, deserializer_t>::value) {
         return deserializer(in, out);
