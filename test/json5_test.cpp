@@ -52,7 +52,7 @@ bool parsing()
             std::cerr << "Parsing failed" << std::endl;
             std::cerr << error_message << std::endl;
             return false;
-        } // C-style strings can also be used as input.
+        }                             // C-style strings can also be used as input.
     }
     json::value& value = ret.value(); // you can use rvalues if needed, like
                                       // `auto value = std::move(ret).value();`

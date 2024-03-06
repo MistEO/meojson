@@ -50,8 +50,10 @@ public:
     {
     public:
         InvalidChar(u8char ch = 0, const std::string& detail = "")
-            : exception("Invalid Char", "Unexpected token \'" + StringFromCharCode(ch) + "\'", detail)
-        {}
+            : exception(
+                "Invalid Char", "Unexpected token \'" + StringFromCharCode(ch) + "\'", detail)
+        {
+        }
     };
 
     class InvalidIdentifier : public exception
@@ -59,14 +61,17 @@ public:
     public:
         InvalidIdentifier(const std::string& msg = "", const std::string& detail = "")
             : exception("Invalid Identifier", msg, detail)
-        {}
+        {
+        }
     };
 
     class InvalidEOF : public exception
     {
     public:
-        InvalidEOF(const std::string& msg = "", const std::string& detail = "") : exception("Invalid EOF", msg, detail)
-        {}
+        InvalidEOF(const std::string& msg = "", const std::string& detail = "")
+            : exception("Invalid EOF", msg, detail)
+        {
+        }
     };
 
 public:
@@ -175,7 +180,12 @@ public:
     static std::optional<value> parse(const string_t& content, std::string* error = nullptr);
 
 private:
-    parser5(string_iter_t cbegin, string_iter_t cend) noexcept : _cur(cbegin), _end(cend), _line_begin_cur(cbegin) {}
+    parser5(string_iter_t cbegin, string_iter_t cend) noexcept
+        : _cur(cbegin)
+        , _end(cend)
+        , _line_begin_cur(cbegin)
+    {
+    }
     std::optional<value> parse();
 
 private:
@@ -272,15 +282,15 @@ inline bool parser5<string_t>::unicode::isSpaceSeparator(u8char ch)
 template <typename string_t>
 inline bool parser5<string_t>::unicode::isIdStartChar(u8char ch)
 {
-    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch == '$') || (ch == '_') ||
-           findInRange(json::unicode::id_start, toUnicode(ch));
+    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch == '$') || (ch == '_')
+           || findInRange(json::unicode::id_start, toUnicode(ch));
 }
 
 template <typename string_t>
 inline bool parser5<string_t>::unicode::isIdContinueChar(u8char ch)
 {
-    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || (ch == '$') ||
-           (ch == '_') || findInRange(json::unicode::id_continue, toUnicode(ch));
+    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9')
+           || (ch == '$') || (ch == '_') || findInRange(json::unicode::id_continue, toUnicode(ch));
 }
 
 template <typename string_t>
@@ -346,7 +356,8 @@ inline bool parser5<string_t>::unicode::findInRange(const array_t& range, u8char
         return false;
     }
     // set 中保存的是类似于 { start1, end1, start2, end2, ... } 的形式, 区间可表示为[start, end)
-    // 判断lb是否位于start的位置, 如果是, 则表示codePoint在某个区间的内部, 如果不是, 则表示codePoint在两个区间中间
+    // 判断lb是否位于start的位置, 如果是, 则表示codePoint在某个区间的内部, 如果不是,
+    // 则表示codePoint在两个区间中间
     return std::distance(begin, lb) % 2 == 0;
 }
 
@@ -519,11 +530,13 @@ inline typename parser5<string_t>::u8char parser5<string_t>::unicodeEscape()
 
 /* utf-8 reader */
 template <typename string_t>
-inline typename parser5<string_t>::u8char parser5<string_t>::peek(const string_iter_t& begin, const string_iter_t& end,
-                                                                  size_t* plen)
+inline typename parser5<string_t>::u8char
+    parser5<string_t>::peek(const string_iter_t& begin, const string_iter_t& end, size_t* plen)
 {
     if (begin == end) {
-        if (plen) *plen = 0;
+        if (plen) {
+            *plen = 0;
+        }
         return 0;
     }
     uint8_t head = *begin;
@@ -581,11 +594,15 @@ inline typename parser5<string_t>::u8char parser5<string_t>::read()
 template <typename string_t>
 inline std::string parser5<string_t>::StringFromCharCode(typename parser5<string_t>::u8char code)
 {
-    if (code == 0) return "";
+    if (code == 0) {
+        return "";
+    }
     std::string str;
     for (auto i = 0; i < 8; ++i) {
         auto ch = (0xff & code);
-        if (ch) str.insert(0, 1, static_cast<char>(ch));
+        if (ch) {
+            str.insert(0, 1, static_cast<char>(ch));
+        }
         code >>= 8;
     }
     return str;
@@ -700,7 +717,8 @@ inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_m
 }
 
 template <typename string_t>
-inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_multiLineCommentAsterisk()
+inline std::optional<typename parser5<string_t>::Token>
+    parser5<string_t>::lex_multiLineCommentAsterisk()
 {
     switch (_current_char) {
     case '*':
@@ -808,7 +826,8 @@ inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_v
 }
 
 template <typename string_t>
-inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_identifierNameStartEscape()
+inline std::optional<typename parser5<string_t>::Token>
+    parser5<string_t>::lex_identifierNameStartEscape()
 {
     if (_current_char != 'u') {
         throw InvalidChar(_current_char, exceptionDetailInfo());
@@ -855,7 +874,8 @@ inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_i
 }
 
 template <typename string_t>
-inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_identifierNameEscape()
+inline std::optional<typename parser5<string_t>::Token>
+    parser5<string_t>::lex_identifierNameEscape()
 {
     if (_current_char != 'u') {
         throw InvalidChar(_current_char, exceptionDetailInfo());
@@ -1047,7 +1067,8 @@ inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_d
 }
 
 template <typename string_t>
-inline std::optional<typename parser5<string_t>::Token> parser5<string_t>::lex_decimalExponentInteger()
+inline std::optional<typename parser5<string_t>::Token>
+    parser5<string_t>::lex_decimalExponentInteger()
 {
     if (unicode::isDigit(_current_char)) {
         _buffer += StringFromCharCode(read());
@@ -1386,7 +1407,8 @@ inline void parser5<string_t>::parse_afterArrayValue()
 
 template <typename string_t>
 inline void parser5<string_t>::parse_end()
-{}
+{
+}
 
 template <typename string_t>
 inline void parser5<string_t>::parseStates(ParseState state)

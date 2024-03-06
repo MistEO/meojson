@@ -105,7 +105,8 @@ bool serializing()
     auto as_map_2 = root["obj from map"].as_map<int, std::map>();
     auto to_hashmap = root["obj from map"].as_map<int, std::unordered_map>();
 
-    std::vector<std::list<std::set<int>>> complex { { { 1, 2, 3 }, { 4, 5 } }, { { 6 }, { 7, 8 } } };
+    std::vector<std::list<std::set<int>>> complex { { { 1, 2, 3 }, { 4, 5 } },
+                                                    { { 6 }, { 7, 8 } } };
     root["complex"] = complex;
 
     root["a\\n"] = "1a\\n";
@@ -265,13 +266,14 @@ bool jsonizing()
     mine.str2 = "World";
     mine.str3 = "!";
     mine.vec.emplace_back(0.5);
-    mine.map = { { "key_1", { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2", { 10 } } } } } };
+    mine.map = { { "key_1",
+                   { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2", { 10 } } } } } };
 
     json::value j_mine = mine;
     MyStruct new_mine = (MyStruct)j_mine;
 
-    bool ret = new_mine.str1 == "Hello" && new_mine.str2 == "World" && new_mine.str3 == "!" && new_mine.vec[0] == 0.5 &&
-               new_mine.map["key_1"].size() == 2;
+    bool ret = new_mine.str1 == "Hello" && new_mine.str2 == "World" && new_mine.str3 == "!"
+               && new_mine.vec[0] == 0.5 && new_mine.map["key_1"].size() == 2;
     if (!ret) {
         std::cerr << "error new_mine" << std::endl;
         return false;
@@ -285,7 +287,8 @@ bool jsonizing()
         return false;
     }
 
-    std::vector<std::filesystem::path> paths = { "/root/dir1/dir2/filename", "/root/dir1/dir2/filename2" };
+    std::vector<std::filesystem::path> paths = { "/root/dir1/dir2/filename",
+                                                 "/root/dir1/dir2/filename2" };
     json::array jpaths = paths;
     std::vector<std::filesystem::path> new_paths = (std::vector<std::filesystem::path>)jpaths;
     if (new_paths != paths) {
@@ -293,10 +296,12 @@ bool jsonizing()
         return false;
     }
 
-    std::map<std::string, std::filesystem::path> path_map = { { "key1", "/root/dir1/dir2/filename" },
-                                                              { "key2", "/root/dir1/dir2/filename2" } };
+    std::map<std::string, std::filesystem::path> path_map = {
+        { "key1", "/root/dir1/dir2/filename" }, { "key2", "/root/dir1/dir2/filename2" }
+    };
     json::object jpath_map = path_map;
-    std::map<std::string, std::filesystem::path> new_path_map = (std::map<std::string, std::filesystem::path>)jpath_map;
+    std::map<std::string, std::filesystem::path> new_path_map =
+        (std::map<std::string, std::filesystem::path>)jpath_map;
     if (new_path_map != path_map) {
         std::cerr << "error new_path_map" << std::endl;
         return false;
