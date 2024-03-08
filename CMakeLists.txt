@@ -28,13 +28,16 @@ file(GLOB_RECURSE json_headers
     include/*.hpp
 )
 
+add_library(meojson INTERFACE ${json_headers})
+
 if (BUILD_SAMPLE)
     file(GLOB sample_src
         sample/*.cpp
         sample/*.h
         sample/*.hpp
     )
-    add_executable(sample ${sample_src} ${json_headers})
+    add_executable(sample ${sample_src})
+    target_link_libraries(sample meojson)
 
     source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${json_headers})
     source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${sample_src})
@@ -46,7 +49,8 @@ if (BUILD_TESTING)
         test/*.h
         test/*.hpp
     )
-    add_executable(testing ${testing_src} ${json_headers})
+    add_executable(testing ${testing_src})
+    target_link_libraries(testing meojson)
 
     source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${json_headers})
     source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${testing_src})
@@ -59,7 +63,9 @@ if (BUILD_BENCHMARK)
         benchmark/*.h
         benchmark/*.hpp
     )
-    add_executable(benchmark ${benchmark_src} ${json_headers})
+    add_executable(benchmark ${benchmark_src})
+    target_link_libraries(benchmark meojson)
+
     source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${json_headers})
     source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${benchmark_src})
 
