@@ -262,8 +262,9 @@ bool jsonizing()
         std::string str3;
         std::vector<double> vec;
         std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map;
+        std::array<int, 5> arr;
 
-        MEO_JSONIZATION(str1, str2, str3, vec, map);
+        MEO_JSONIZATION(str1, str2, str3, vec, map, arr);
     };
 
     MyStruct mine;
@@ -311,6 +312,28 @@ bool jsonizing()
     if (new_path_map != path_map) {
         std::cerr << "error new_path_map" << std::endl;
         return false;
+    }
+
+    std::array<int, 10> stdarr { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    json::value jarr = stdarr;
+    std::array<int, 10> new_std_arr;
+    if (jarr.is<std::array<int, 10>>()) {
+        new_std_arr = jarr.as_collection<int, 10>();
+    }
+    else {
+        std::cerr << "error std::array" << std::endl;
+        return false;
+    }
+
+    if (new_std_arr.back() != 10) {
+        std::cerr << "error std::array value" << std::endl;
+        return false;
+    }
+
+    if (jarr.is<std::array<int, 5>>()) {
+        std::cerr << "error std::array size" << std::endl;
+        return false;
+
     }
 
     return true;

@@ -89,6 +89,8 @@ public:
     bool all() const;
     template <typename value_t, template <typename...> typename collection_t = std::vector>
     collection_t<value_t> as_collection() const;
+    template <typename value_t, size_t Size>
+    std::array<value_t, Size> as_collection() const;
 
     // Usage: get(key_1, key_2, ..., default_value);
     template <typename... key_then_default_value_t>
@@ -153,6 +155,12 @@ public:
     explicit operator collection_t<value_t>() const
     {
         return as_collection<value_t, collection_t>();
+    }
+
+    template <typename value_t, size_t Size>
+    explicit operator std::array<value_t, Size>() const
+    {
+        return as_collection<value_t, Size>();
     }
 
     template <
@@ -335,6 +343,21 @@ inline collection_t<value_t> basic_array<string_t>::as_collection() const
         for (const auto& elem : _array_data) {
             result.emplace(elem.template as<value_t>());
         }
+    }
+    return result;
+}
+
+template <typename string_t>
+template <typename value_t, size_t Size>
+inline std::array<value_t, Size> basic_array<string_t>::as_collection() const
+{
+    if (size() != Size) {
+        throw exception("Wrong array size");
+    }
+
+    std::array<value_t, Size> result;
+    for (size_t i = 0; i < Size; ++i) {
+        result.at(i) = _array_data.at(i).template as<value_t>();
     }
     return result;
 }

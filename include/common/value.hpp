@@ -181,6 +181,8 @@ public:
 
     template <typename value_t, template <typename...> typename collection_t = std::vector>
     collection_t<value_t> as_collection() const;
+    template <typename value_t, size_t Size>
+    std::array<value_t, Size> as_collection() const;
     template <typename value_t, template <typename...> typename map_t = std::map>
     map_t<string_t, value_t> as_map() const;
 
@@ -274,6 +276,12 @@ public:
     explicit operator collection_t<value_t>() const
     {
         return as_collection<value_t, collection_t>();
+    }
+
+    template <typename value_t, size_t Size>
+    explicit operator std::array<value_t, Size>() const
+    {
+        return as_collection<value_t, Size>();
     }
 
     template <
@@ -490,6 +498,10 @@ inline bool basic_value<string_t>::is() const noexcept
     }
     else if constexpr (std::is_same_v<basic_array<string_t>, value_t>) {
         return is_array();
+    }
+    else if constexpr (_utils::is_std_array<value_t>) {
+        return is_array() && all<typename value_t::value_type>()
+               && as_array().size() == _utils::std_array_size<value_t>;
     }
     else if constexpr (_utils::is_collection<value_t>) {
         return is_array() && all<typename value_t::value_type>();
@@ -920,6 +932,13 @@ template <typename value_t, template <typename...> typename collection_t>
 inline collection_t<value_t> basic_value<string_t>::as_collection() const
 {
     return as_array().template as_collection<value_t, collection_t>();
+}
+
+template <typename string_t>
+template <typename value_t, size_t Size>
+inline std::array<value_t, Size> basic_value<string_t>::as_collection() const
+{
+    return as_array().template as_collection<value_t, Size>();
 }
 
 template <typename string_t>
