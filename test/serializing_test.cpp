@@ -315,7 +315,7 @@ bool jsonizing()
     }
 
     std::array<int, 10> stdarr { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-    json::value jarr = json::array(stdarr);
+    json::value jarr = stdarr;
     std::array<int, 10> new_std_arr;
     if (jarr.is<std::array<int, 10>>()) {
         new_std_arr = (std::array<int, 10>)jarr;
