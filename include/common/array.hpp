@@ -51,8 +51,8 @@ public:
     template <
         typename fixed_array_t,
         std::enable_if_t<_utils::is_fixed_array<fixed_array_t>, bool> = true>
-    basic_array(fixed_array_t arr)
-        : _array_data(std::make_move_iterator(arr.begin()), std::make_move_iterator(arr.end()))
+    basic_array(const fixed_array_t& arr)
+        : _array_data(arr.begin(), arr.end())
     {
     }
 

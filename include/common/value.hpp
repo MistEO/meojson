@@ -80,8 +80,8 @@ public:
     template <
         typename fixed_array_t,
         std::enable_if_t<_utils::is_fixed_array<fixed_array_t>, bool> = true>
-    basic_value(fixed_array_t arr)
-        : basic_value(basic_array<string_t>(std::move(arr)))
+    basic_value(const fixed_array_t& arr)
+        : basic_value(basic_array<string_t>(arr))
     {
     }
 
