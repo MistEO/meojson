@@ -315,10 +315,10 @@ bool jsonizing()
     }
 
     std::array<int, 10> stdarr { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-    json::value jarr = stdarr;
+    json::value jarr = json::array(stdarr);
     std::array<int, 10> new_std_arr;
     if (jarr.is<std::array<int, 10>>()) {
-        new_std_arr = jarr.as_collection<int, 10>();
+        new_std_arr = (std::array<int, 10>)jarr;
     }
     else {
         std::cerr << "error std::array" << std::endl;

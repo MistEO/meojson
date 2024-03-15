@@ -78,6 +78,14 @@ public:
     }
 
     template <
+        typename fixed_array_t,
+        std::enable_if_t<_utils::is_fixed_array<fixed_array_t>, bool> = true>
+    basic_value(fixed_array_t&& arr)
+        : basic_value(basic_array<string_t>(std::forward<fixed_array_t>(arr)))
+    {
+    }
+
+    template <
         typename map_t,
         std::enable_if_t<
             _utils::is_map<map_t>
@@ -182,7 +190,7 @@ public:
     template <typename value_t, template <typename...> typename collection_t = std::vector>
     collection_t<value_t> as_collection() const;
     template <typename value_t, size_t Size>
-    std::array<value_t, Size> as_collection() const;
+    std::array<value_t, Size> as_fixed_array() const;
     template <typename value_t, template <typename...> typename map_t = std::map>
     map_t<string_t, value_t> as_map() const;
 
@@ -281,7 +289,7 @@ public:
     template <typename value_t, size_t Size>
     explicit operator std::array<value_t, Size>() const
     {
-        return as_collection<value_t, Size>();
+        return as_fixed_array<value_t, Size>();
     }
 
     template <
@@ -499,12 +507,12 @@ inline bool basic_value<string_t>::is() const noexcept
     else if constexpr (std::is_same_v<basic_array<string_t>, value_t>) {
         return is_array();
     }
-    else if constexpr (_utils::is_std_array<value_t>) {
-        return is_array() && all<typename value_t::value_type>()
-               && as_array().size() == _utils::std_array_size<value_t>;
-    }
     else if constexpr (_utils::is_collection<value_t>) {
         return is_array() && all<typename value_t::value_type>();
+    }
+    else if constexpr (_utils::is_fixed_array<value_t>) {
+        return is_array() && all<typename value_t::value_type>()
+               && as_array().size() == _utils::fixed_array_size<value_t>;
     }
     else if constexpr (std::is_same_v<basic_object<string_t>, value_t>) {
         return is_object();
@@ -584,16 +592,16 @@ inline auto basic_value<string_t>::get_helper(
 {
     if constexpr (std::is_constructible_v<string_t, first_key_t>) {
         return is_object() ? as_object().get_helper(
-                   default_value,
-                   std::forward<first_key_t>(first),
-                   std::forward<rest_keys_t>(rest)...)
+                                 default_value,
+                                 std::forward<first_key_t>(first),
+                                 std::forward<rest_keys_t>(rest)...)
                            : default_value;
     }
     else if constexpr (std::is_integral_v<std::decay_t<first_key_t>>) {
         return is_array() ? as_array().get_helper(
-                   default_value,
-                   std::forward<first_key_t>(first),
-                   std::forward<rest_keys_t>(rest)...)
+                                default_value,
+                                std::forward<first_key_t>(first),
+                                std::forward<rest_keys_t>(rest)...)
                           : default_value;
     }
     else {
@@ -936,9 +944,9 @@ inline collection_t<value_t> basic_value<string_t>::as_collection() const
 
 template <typename string_t>
 template <typename value_t, size_t Size>
-inline std::array<value_t, Size> basic_value<string_t>::as_collection() const
+inline std::array<value_t, Size> basic_value<string_t>::as_fixed_array() const
 {
-    return as_array().template as_collection<value_t, Size>();
+    return as_array().template as_fixed_array<value_t, Size>();
 }
 
 template <typename string_t>

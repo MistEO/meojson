@@ -13,8 +13,8 @@ template <typename in_t, typename serializer_t>
 class is_serializable
 {
     template <typename U>
-    static auto test(int)
-        -> decltype(std::declval<serializer_t>()(std::declval<U>()), std::true_type());
+    static auto
+        test(int) -> decltype(std::declval<serializer_t>()(std::declval<U>()), std::true_type());
 
     template <typename U>
     static std::false_type test(...);
@@ -99,7 +99,8 @@ basic_value<string_t> serialize(in_t&& in, const serializer_t& serializer = {})
     else if constexpr (std::is_constructible_v<basic_value<string_t>, in_t>) {
         return basic_value<string_t>(std::forward<in_t>(in));
     }
-    else if constexpr (_utils::is_collection<std::decay_t<in_t>>) {
+    else if constexpr (
+        _utils::is_collection<std::decay_t<in_t>> || _utils::is_fixed_array<std::decay_t<in_t>>) {
         basic_array<string_t> arr;
         for (auto&& elem : in) {
             using elem_t = decltype(elem);
@@ -159,6 +160,27 @@ bool deserialize(
             else {
                 out.emplace(std::move(elem));
             }
+        }
+        return true;
+    }
+    else if constexpr (_utils::is_fixed_array<std::decay_t<out_t>>) {
+        if (!in.is_array()) {
+            return false;
+        }
+        auto&& in_as_arr = in.as_array();
+        constexpr size_t out_size = _utils::fixed_array_size<out_t>;
+        if (in_as_arr.size() != out_size) {
+            return false;
+        }
+
+        for (size_t i = 0; i < out_size; ++i) {
+            auto&& j_elem = in_as_arr.at(i);
+            using elem_t = typename out_t::value_type;
+            elem_t elem {};
+            if (!deserialize<elem_t, deserializer_t, string_t>(j_elem, elem, deserializer)) {
+                return false;
+            }
+            out.at(i) = std::move(elem);
         }
         return true;
     }

@@ -49,6 +49,14 @@ public:
     }
 
     template <
+        typename fixed_array_t,
+        std::enable_if_t<_utils::is_fixed_array<fixed_array_t>, bool> = true>
+    basic_array(fixed_array_t arr)
+        : _array_data(std::make_move_iterator(arr.begin()), std::make_move_iterator(arr.end()))
+    {
+    }
+
+    template <
         typename jsonization_t,
         std::enable_if_t<_utils::has_to_json_in_member<jsonization_t>::value, bool> = true>
     basic_array(const jsonization_t& value)
@@ -90,7 +98,7 @@ public:
     template <typename value_t, template <typename...> typename collection_t = std::vector>
     collection_t<value_t> as_collection() const;
     template <typename value_t, size_t Size>
-    std::array<value_t, Size> as_collection() const;
+    std::array<value_t, Size> as_fixed_array() const;
 
     // Usage: get(key_1, key_2, ..., default_value);
     template <typename... key_then_default_value_t>
@@ -160,7 +168,7 @@ public:
     template <typename value_t, size_t Size>
     explicit operator std::array<value_t, Size>() const
     {
-        return as_collection<value_t, Size>();
+        return as_fixed_array<value_t, Size>();
     }
 
     template <
@@ -349,7 +357,7 @@ inline collection_t<value_t> basic_array<string_t>::as_collection() const
 
 template <typename string_t>
 template <typename value_t, size_t Size>
-inline std::array<value_t, Size> basic_array<string_t>::as_collection() const
+inline std::array<value_t, Size> basic_array<string_t>::as_fixed_array() const
 {
     if (size() != Size) {
         throw exception("Wrong array size");

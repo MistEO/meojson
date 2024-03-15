@@ -65,19 +65,19 @@ constexpr bool is_map<T, std::void_t<typename T::key_type, typename T::mapped_ty
     is_container<T>;
 
 template <typename T, typename = void>
+constexpr bool is_fixed_array = false;
+template <typename T, size_t Size>
+constexpr bool is_fixed_array<std::array<T, Size>> = true;
+
+template <typename T, typename = void>
+constexpr size_t fixed_array_size = 0;
+template <typename T, size_t Size>
+constexpr size_t fixed_array_size<std::array<T, Size>> = Size;
+
+template <typename T, typename = void>
 constexpr bool is_collection = false;
 template <typename T>
-constexpr bool is_collection<T> = is_container<T> && !is_map<T>;
-
-template <typename T, typename = void>
-constexpr bool is_std_array = false;
-template <typename T, size_t Size>
-constexpr bool is_std_array<std::array<T, Size>> = true;
-
-template <typename T, typename = void>
-constexpr size_t std_array_size = 0;
-template <typename T, size_t Size>
-constexpr size_t std_array_size<std::array<T, Size>> = Size;
+constexpr bool is_collection<T> = is_container<T> && !is_map<T> && !is_fixed_array<T>;
 
 template <typename T>
 class has_to_json_in_member
