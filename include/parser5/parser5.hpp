@@ -31,6 +31,7 @@ public:
     {
     public:
         exception() = default;
+
         exception(const std::string& type, const std::string& msg, const std::string& detail)
         {
             std::stringstream ss;
@@ -38,6 +39,7 @@ public:
             ss << detail << std::endl;
             _what = ss.str();
         }
+
         exception(const exception&) = default;
         exception& operator=(const exception&) = default;
         exception(exception&&) = default;
@@ -188,6 +190,7 @@ private:
         , _line_begin_cur(cbegin)
     {
     }
+
     std::optional<value> parse();
 
 private:
@@ -564,10 +567,12 @@ inline typename parser5<string_t>::u8char parser5<string_t>::peek(const std::str
 {
     return peek(str.cbegin(), str.cend());
 }
+
 inline constexpr size_t operator"" _sz(unsigned long long size)
 {
     return size;
 }
+
 template <typename string_t>
 inline typename parser5<string_t>::u8char parser5<string_t>::read()
 {
@@ -1441,6 +1446,7 @@ inline void parser5<string_t>::parseStates(ParseState state)
         break;
     }
 }
+
 /* stack operation */
 template <typename string_t>
 inline void parser5<string_t>::push()

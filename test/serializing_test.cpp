@@ -215,19 +215,24 @@ class jsonization<ThirdPartyStruct>
 {
 public:
     json::wvalue to_json(const ThirdPartyStruct& t) const { return t.a; }
+
     bool check_json(const json::wvalue& j) const { return j.is_number(); }
+
     bool from_json(const json::wvalue& j, ThirdPartyStruct& out) const
     {
         out.a = j.as_integer();
         return true;
     }
 };
+
 template <>
 class jsonization<std::filesystem::path>
 {
 public:
     json::value to_json(const std::filesystem::path& path) const { return path.string(); }
+
     bool check_json(const json::value& json) const { return json.is_string(); }
+
     bool from_json(const json::value& json, std::filesystem::path& path) const
     {
         path = json.as_string();

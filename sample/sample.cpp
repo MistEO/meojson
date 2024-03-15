@@ -179,7 +179,9 @@ class jsonization<ThirdPartyStruct>
 {
 public:
     json::value to_json(const ThirdPartyStruct& t) const { return t.a; }
+
     bool check_json(const json::value& j) const { return j.is_number(); }
+
     bool from_json(const json::value& j, ThirdPartyStruct& out) const
     {
         out.a = j.as_integer();
@@ -206,6 +208,7 @@ void third_party_jsonization_1()
 
         MEO_JSONIZATION(outter2_a, third);
     };
+
     Outter2 o_2;
 }
 
@@ -217,6 +220,7 @@ void third_party_jsonization_2()
     {
         json::value operator()(const ThirdPartyStruct& t) const { return t.a; }
     };
+
     struct Deserializer
     {
         bool operator()(const json::value& j, ThirdPartyStruct& t) const
@@ -310,6 +314,7 @@ void parsing()
 
         MEO_JSONIZATION(i);
     };
+
     MyType get_custom_value = value.get("my_type", MyType {});
     auto find_custom_opt = value.find<MyType>("my_type");
 
