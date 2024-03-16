@@ -69,7 +69,7 @@ constexpr bool is_fixed_array = false;
 template <template <typename, size_t> typename arr_t, typename value_t, size_t size>
 constexpr bool is_fixed_array<arr_t<value_t, size>> = true;
 
-template <typename T, typename = void>
+template <typename T, typename = std::enable_if_t<is_fixed_array<T>>>
 constexpr size_t fixed_array_size = 0;
 template <template <typename, size_t> typename arr_t, typename value_t, size_t size>
 constexpr size_t fixed_array_size<arr_t<value_t, size>> = size;
