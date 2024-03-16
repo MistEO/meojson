@@ -66,13 +66,13 @@ constexpr bool is_map<T, std::void_t<typename T::key_type, typename T::mapped_ty
 
 template <typename T, typename = void>
 constexpr bool is_fixed_array = false;
-template <typename T, size_t Size>
-constexpr bool is_fixed_array<std::array<T, Size>> = true;
+template <template <typename, size_t> typename arr_t, typename value_t, size_t size>
+constexpr bool is_fixed_array<arr_t<value_t, size>> = true;
 
 template <typename T, typename = void>
 constexpr size_t fixed_array_size = 0;
-template <typename T, size_t Size>
-constexpr size_t fixed_array_size<std::array<T, Size>> = Size;
+template <template <typename, size_t> typename arr_t, typename value_t, size_t size>
+constexpr size_t fixed_array_size<arr_t<value_t, size>> = size;
 
 template <typename T, typename = void>
 constexpr bool is_collection = false;
