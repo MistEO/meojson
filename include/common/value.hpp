@@ -189,8 +189,11 @@ public:
 
     template <typename value_t, template <typename...> typename collection_t = std::vector>
     collection_t<value_t> as_collection() const;
-    template <typename value_t, size_t Size>
-    std::array<value_t, Size> as_fixed_array() const;
+    template <
+        typename value_t,
+        size_t Size,
+        template <typename, size_t> typename fixed_array_t = std::array>
+    fixed_array_t<value_t, Size> as_fixed_array() const;
     template <typename value_t, template <typename...> typename map_t = std::map>
     map_t<string_t, value_t> as_map() const;
 
@@ -286,10 +289,14 @@ public:
         return as_collection<value_t, collection_t>();
     }
 
-    template <typename value_t, size_t Size>
-    explicit operator std::array<value_t, Size>() const
+    template <
+        typename value_t,
+        size_t Size,
+        template <typename, size_t> typename fixed_array_t = std::array,
+        std::enable_if_t<_utils::is_fixed_array<fixed_array_t<value_t, Size>>, bool> = true>
+    explicit operator fixed_array_t<value_t, Size>() const
     {
-        return as_fixed_array<value_t, Size>();
+        return as_fixed_array<value_t, Size, fixed_array_t>();
     }
 
     template <
@@ -592,16 +599,16 @@ inline auto basic_value<string_t>::get_helper(
 {
     if constexpr (std::is_constructible_v<string_t, first_key_t>) {
         return is_object() ? as_object().get_helper(
-                                 default_value,
-                                 std::forward<first_key_t>(first),
-                                 std::forward<rest_keys_t>(rest)...)
+                   default_value,
+                   std::forward<first_key_t>(first),
+                   std::forward<rest_keys_t>(rest)...)
                            : default_value;
     }
     else if constexpr (std::is_integral_v<std::decay_t<first_key_t>>) {
         return is_array() ? as_array().get_helper(
-                                default_value,
-                                std::forward<first_key_t>(first),
-                                std::forward<rest_keys_t>(rest)...)
+                   default_value,
+                   std::forward<first_key_t>(first),
+                   std::forward<rest_keys_t>(rest)...)
                           : default_value;
     }
     else {
@@ -943,8 +950,8 @@ inline collection_t<value_t> basic_value<string_t>::as_collection() const
 }
 
 template <typename string_t>
-template <typename value_t, size_t Size>
-inline std::array<value_t, Size> basic_value<string_t>::as_fixed_array() const
+template <typename value_t, size_t Size, template <typename, size_t> typename fixed_array_t>
+inline fixed_array_t<value_t, Size> basic_value<string_t>::as_fixed_array() const
 {
     return as_array().template as_fixed_array<value_t, Size>();
 }

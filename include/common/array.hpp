@@ -97,8 +97,11 @@ public:
     bool all() const;
     template <typename value_t, template <typename...> typename collection_t = std::vector>
     collection_t<value_t> as_collection() const;
-    template <typename value_t, size_t Size>
-    std::array<value_t, Size> as_fixed_array() const;
+    template <
+        typename value_t,
+        size_t Size,
+        template <typename, size_t> typename fixed_array_t = std::array>
+    fixed_array_t<value_t, Size> as_fixed_array() const;
 
     // Usage: get(key_1, key_2, ..., default_value);
     template <typename... key_then_default_value_t>
@@ -165,10 +168,14 @@ public:
         return as_collection<value_t, collection_t>();
     }
 
-    template <typename value_t, size_t Size>
-    explicit operator std::array<value_t, Size>() const
+    template <
+        typename value_t,
+        size_t Size,
+        template <typename, size_t> typename fixed_array_t = std::array,
+        std::enable_if_t<_utils::is_fixed_array<fixed_array_t<value_t, Size>>, bool> = true>
+    explicit operator fixed_array_t<value_t, Size>() const
     {
-        return as_fixed_array<value_t, Size>();
+        return as_fixed_array<value_t, Size, fixed_array_t>();
     }
 
     template <
@@ -356,14 +363,14 @@ inline collection_t<value_t> basic_array<string_t>::as_collection() const
 }
 
 template <typename string_t>
-template <typename value_t, size_t Size>
-inline std::array<value_t, Size> basic_array<string_t>::as_fixed_array() const
+template <typename value_t, size_t Size, template <typename, size_t> typename fixed_array_t>
+inline fixed_array_t<value_t, Size> basic_array<string_t>::as_fixed_array() const
 {
     if (size() != Size) {
         throw exception("Wrong array size");
     }
 
-    std::array<value_t, Size> result;
+    fixed_array_t<value_t, Size> result;
     for (size_t i = 0; i < Size; ++i) {
         result.at(i) = _array_data.at(i).template as<value_t>();
     }
