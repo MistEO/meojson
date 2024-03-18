@@ -249,7 +249,8 @@ std::ostream& operator<<(std::ostream& os, const json::parse_visitor<std::string
     for (const auto& p : pos.path) {
         if (p.index() == 0) {
             os << std::get<0>(p) << ", ";
-        } else {
+        }
+        else {
             os << std::get<1>(p) << ", ";
         }
     }

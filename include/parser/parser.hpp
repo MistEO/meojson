@@ -7,7 +7,7 @@
 #include <tuple>
 
 #include "../common/types.hpp"
-#include "common/utils.hpp"
+#include "../common/utils.hpp"
 #include "packed_bytes.hpp"
 
 namespace json
@@ -265,7 +265,8 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
     typename parse_visitor<string_t>::position cur_pos;
     if constexpr (has_visitor) {
         cur_pos = _pos;
-    } else {
+    }
+    else {
         std::ignore = cur_pos;
     }
 
@@ -291,7 +292,8 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
     typename parse_visitor<string_t>::position cur_pos;
     if constexpr (has_visitor) {
         cur_pos = _pos;
-    } else {
+    }
+    else {
         std::ignore = cur_pos;
     }
 
@@ -337,7 +339,8 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
     typename parse_visitor<string_t>::position cur_pos;
     if constexpr (has_visitor) {
         cur_pos = _pos;
-    } else {
+    }
+    else {
         std::ignore = cur_pos;
     }
 
@@ -374,8 +377,9 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
         }
     }
 
-    auto value = basic_value<string_t>(basic_value<string_t>::value_type::number, string_t(first, _cur));
-    
+    auto value =
+        basic_value<string_t>(basic_value<string_t>::value_type::number, string_t(first, _cur));
+
     if constexpr (has_visitor) {
         _vis->value(value, cur_pos);
     }
@@ -389,7 +393,8 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
     typename parse_visitor<string_t>::position cur_pos;
     if constexpr (has_visitor) {
         cur_pos = _pos;
-    } else {
+    }
+    else {
         std::ignore = cur_pos;
     }
 
@@ -513,7 +518,8 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
                 _vis->property(key_opt.value(), pos);
                 _pos.path.push_back(key_opt.value());
             }
-        } else {
+        }
+        else {
             key_opt = parse_stdstring();
         }
 
