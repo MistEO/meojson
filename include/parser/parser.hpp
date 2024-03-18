@@ -7,6 +7,7 @@
 #include <tuple>
 
 #include "../common/types.hpp"
+#include "common/utils.hpp"
 #include "packed_bytes.hpp"
 
 namespace json
@@ -15,9 +16,43 @@ namespace json
 // *      parser declare      *
 // ****************************
 
+template <typename string_t = default_string_t>
+struct parse_visitor
+{
+    struct position
+    {
+        size_t offset;
+        size_t row, column;
+        std::vector<std::variant<std::string, size_t>> path;
+
+        void reset()
+        {
+            offset = 0;
+            row = 0;
+            column = 0;
+            path.clear();
+        }
+    };
+
+    virtual ~parse_visitor() = default;
+
+    virtual void property(const string_t& key, const position& pos) {}
+
+    virtual void value(const basic_value<string_t>& value, const position& pos) {}
+
+    virtual void object_enter(const position& pos) {}
+
+    virtual void object_leave(const position& pos) {}
+
+    virtual void array_enter(const position& pos) {}
+
+    virtual void array_leave(const position& pos) {}
+};
+
 template <
     typename string_t = default_string_t,
     typename parsing_t = void,
+    bool has_visitor = false,
     typename accel_traits = _packed_bytes::packed_bytes_trait_max>
 class parser
 {
@@ -28,11 +63,17 @@ public:
     ~parser() noexcept = default;
 
     static std::optional<basic_value<string_t>> parse(const parsing_t& content);
+    static std::optional<basic_value<string_t>>
+        parse(const parsing_t& content, parse_visitor<string_t>* visitor);
 
 private:
-    parser(parsing_iter_t cbegin, parsing_iter_t cend) noexcept
+    parser(
+        parsing_iter_t cbegin,
+        parsing_iter_t cend,
+        parse_visitor<string_t>* visitor = nullptr) noexcept
         : _cur(cbegin)
         , _end(cend)
+        , _vis(visitor)
     {
         ;
     }
@@ -55,9 +96,34 @@ private:
     bool skip_whitespace() noexcept;
     bool skip_digit();
 
+    parsing_iter_t move_cur()
+    {
+        if constexpr (has_visitor) {
+            _pos.offset++;
+            if (*_cur == '\n') {
+                _pos.row++;
+                _pos.column = 0;
+            }
+            else {
+                _pos.column++;
+            }
+        }
+        return ++_cur;
+    }
+
+    parsing_iter_t move_cur_old()
+    {
+        auto ret = _cur;
+        move_cur();
+        return ret;
+    }
+
 private:
     parsing_iter_t _cur;
     parsing_iter_t _end;
+
+    parse_visitor<string_t>* _vis;
+    typename parse_visitor<string_t>::position _pos;
 };
 
 // ***************************
@@ -101,16 +167,37 @@ const basic_value<string_t> invalid_value();
 // *      parser impl      *
 // *************************
 
-template <typename string_t, typename parsing_t, typename accel_traits>
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
 inline std::optional<basic_value<string_t>>
-    parser<string_t, parsing_t, accel_traits>::parse(const parsing_t& content)
+    parser<string_t, parsing_t, has_visitor, accel_traits>::parse(const parsing_t& content)
 {
-    return parser<string_t, parsing_t, accel_traits>(content.cbegin(), content.cend()).parse();
+    static_assert(!has_visitor, "has_visitor but visitor not provided");
+    return parser<string_t, parsing_t, has_visitor, accel_traits>(content.cbegin(), content.cend())
+        .parse();
 }
 
-template <typename string_t, typename parsing_t, typename accel_traits>
-inline std::optional<basic_value<string_t>> parser<string_t, parsing_t, accel_traits>::parse()
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline std::optional<basic_value<string_t>>
+    parser<string_t, parsing_t, has_visitor, accel_traits>::parse(
+        const parsing_t& content,
+        parse_visitor<string_t>* visitor)
 {
+    static_assert(has_visitor, "visitor provided but not has_visitor");
+    return parser<string_t, parsing_t, has_visitor, accel_traits>(
+               content.cbegin(),
+               content.cend(),
+               visitor)
+        .parse();
+}
+
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline std::optional<basic_value<string_t>>
+    parser<string_t, parsing_t, has_visitor, accel_traits>::parse()
+{
+    if constexpr (has_visitor) {
+        _pos.reset();
+    }
+
     if (!skip_whitespace()) {
         return std::nullopt;
     }
@@ -140,8 +227,8 @@ inline std::optional<basic_value<string_t>> parser<string_t, parsing_t, accel_tr
     return result_value;
 }
 
-template <typename string_t, typename parsing_t, typename accel_traits>
-inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_value()
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_value()
 {
     switch (*_cur) {
     case 'n':
@@ -172,56 +259,91 @@ inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_va
     }
 }
 
-template <typename string_t, typename parsing_t, typename accel_traits>
-inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_null()
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_null()
 {
+    typename parse_visitor<string_t>::position cur_pos;
+    if constexpr (has_visitor) {
+        cur_pos = _pos;
+    } else {
+        std::ignore = cur_pos;
+    }
+
     for (const auto& ch : _utils::null_string<string_t>()) {
         if (_cur != _end && *_cur == ch) {
-            ++_cur;
+            move_cur();
         }
         else {
             return invalid_value<string_t>();
         }
     }
 
+    if constexpr (has_visitor) {
+        _vis->value(basic_value<string_t>(), cur_pos);
+    }
+
     return basic_value<string_t>();
 }
 
-template <typename string_t, typename parsing_t, typename accel_traits>
-inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_boolean()
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_boolean()
 {
+    typename parse_visitor<string_t>::position cur_pos;
+    if constexpr (has_visitor) {
+        cur_pos = _pos;
+    } else {
+        std::ignore = cur_pos;
+    }
+
     switch (*_cur) {
     case 't':
         for (const auto& ch : _utils::true_string<string_t>()) {
             if (_cur != _end && *_cur == ch) {
-                ++_cur;
+                move_cur();
             }
             else {
                 return invalid_value<string_t>();
             }
         }
+
+        if constexpr (has_visitor) {
+            _vis->value(true, cur_pos);
+        }
+
         return true;
     case 'f':
         for (const auto& ch : _utils::false_string<string_t>()) {
             if (_cur != _end && *_cur == ch) {
-                ++_cur;
+                move_cur();
             }
             else {
                 return invalid_value<string_t>();
             }
         }
+
+        if constexpr (has_visitor) {
+            _vis->value(false, cur_pos);
+        }
+
         return false;
     default:
         return invalid_value<string_t>();
     }
 }
 
-template <typename string_t, typename parsing_t, typename accel_traits>
-inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_number()
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_number()
 {
+    typename parse_visitor<string_t>::position cur_pos;
+    if constexpr (has_visitor) {
+        cur_pos = _pos;
+    } else {
+        std::ignore = cur_pos;
+    }
+
     const auto first = _cur;
     if (*_cur == '-') {
-        ++_cur;
+        move_cur();
     }
 
     // numbers cannot have leading zeroes
@@ -234,44 +356,67 @@ inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_nu
     }
 
     if (*_cur == '.') {
-        ++_cur;
+        move_cur();
         if (!skip_digit()) {
             return invalid_value<string_t>();
         }
     }
 
     if (*_cur == 'e' || *_cur == 'E') {
-        if (++_cur == _end) {
+        if (move_cur() == _end) {
             return invalid_value<string_t>();
         }
         if (*_cur == '+' || *_cur == '-') {
-            ++_cur;
+            move_cur();
         }
         if (!skip_digit()) {
             return invalid_value<string_t>();
         }
     }
 
-    return basic_value<string_t>(basic_value<string_t>::value_type::number, string_t(first, _cur));
+    auto value = basic_value<string_t>(basic_value<string_t>::value_type::number, string_t(first, _cur));
+    
+    if constexpr (has_visitor) {
+        _vis->value(value, cur_pos);
+    }
+
+    return value;
 }
 
-template <typename string_t, typename parsing_t, typename accel_traits>
-inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_string()
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_string()
 {
+    typename parse_visitor<string_t>::position cur_pos;
+    if constexpr (has_visitor) {
+        cur_pos = _pos;
+    } else {
+        std::ignore = cur_pos;
+    }
+
     auto string_opt = parse_stdstring();
     if (!string_opt) {
         return invalid_value<string_t>();
     }
-    return basic_value<string_t>(
+    auto value = basic_value<string_t>(
         basic_value<string_t>::value_type::string,
         std::move(string_opt).value());
+
+    if constexpr (has_visitor) {
+        _vis->value(value, cur_pos);
+    }
+
+    return value;
 }
 
-template <typename string_t, typename parsing_t, typename accel_traits>
-inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_array()
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_array()
 {
+    if constexpr (has_visitor) {
+        _vis->array_enter(_pos);
+    }
+
     if (*_cur == '[') {
-        ++_cur;
+        move_cur();
     }
     else {
         return invalid_value<string_t>();
@@ -281,7 +426,7 @@ inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_ar
         return invalid_value<string_t>();
     }
     else if (*_cur == ']') {
-        ++_cur;
+        move_cur();
         // empty basic_array
         return basic_array<string_t>();
     }
@@ -292,6 +437,10 @@ inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_ar
             return invalid_value<string_t>();
         }
 
+        if constexpr (has_visitor) {
+            _pos.path.push_back(result.size());
+        }
+
         basic_value<string_t> val = parse_value();
 
         if (!val.valid() || !skip_whitespace()) {
@@ -300,8 +449,12 @@ inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_ar
 
         result.emplace_back(std::move(val));
 
+        if constexpr (has_visitor) {
+            _pos.path.pop_back();
+        }
+
         if (*_cur == ',') {
-            ++_cur;
+            move_cur();
         }
         else {
             break;
@@ -309,20 +462,28 @@ inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_ar
     }
 
     if (skip_whitespace() && *_cur == ']') {
-        ++_cur;
+        move_cur();
     }
     else {
         return invalid_value<string_t>();
     }
 
+    if constexpr (has_visitor) {
+        _vis->array_leave(_pos);
+    }
+
     return basic_array<string_t>(std::move(result));
 }
 
-template <typename string_t, typename parsing_t, typename accel_traits>
-inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_object()
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_object()
 {
+    if constexpr (has_visitor) {
+        _vis->object_enter(_pos);
+    }
+
     if (*_cur == '{') {
-        ++_cur;
+        move_cur();
     }
     else {
         return invalid_value<string_t>();
@@ -332,7 +493,7 @@ inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_ob
         return invalid_value<string_t>();
     }
     else if (*_cur == '}') {
-        ++_cur;
+        move_cur();
         // empty basic_object
         return basic_object<string_t>();
     }
@@ -343,10 +504,21 @@ inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_ob
             return invalid_value<string_t>();
         }
 
-        auto key_opt = parse_stdstring();
+        std::optional<string_t> key_opt;
+
+        if constexpr (has_visitor) {
+            auto pos = _pos;
+            key_opt = parse_stdstring();
+            if (key_opt) {
+                _vis->property(key_opt.value(), pos);
+                _pos.path.push_back(key_opt.value());
+            }
+        } else {
+            key_opt = parse_stdstring();
+        }
 
         if (key_opt && skip_whitespace() && *_cur == ':') {
-            ++_cur;
+            move_cur();
         }
         else {
             return invalid_value<string_t>();
@@ -364,8 +536,12 @@ inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_ob
 
         result.emplace(std::move(*key_opt), std::move(val));
 
+        if constexpr (has_visitor) {
+            _pos.path.pop_back();
+        }
+
         if (*_cur == ',') {
-            ++_cur;
+            move_cur();
         }
         else {
             break;
@@ -373,20 +549,25 @@ inline basic_value<string_t> parser<string_t, parsing_t, accel_traits>::parse_ob
     }
 
     if (skip_whitespace() && *_cur == '}') {
-        ++_cur;
+        move_cur();
     }
     else {
         return invalid_value<string_t>();
     }
 
+    if constexpr (has_visitor) {
+        _vis->object_leave(_pos);
+    }
+
     return basic_object<string_t>(std::move(result));
 }
 
-template <typename string_t, typename parsing_t, typename accel_traits>
-inline std::optional<string_t> parser<string_t, parsing_t, accel_traits>::parse_stdstring()
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline std::optional<string_t>
+    parser<string_t, parsing_t, has_visitor, accel_traits>::parse_stdstring()
 {
     if (*_cur == '"') {
-        ++_cur;
+        move_cur();
     }
     else {
         return std::nullopt;
@@ -407,7 +588,7 @@ inline std::optional<string_t> parser<string_t, parsing_t, accel_traits>::parse_
         case '\n':
             return std::nullopt;
         case '\\': {
-            result += string_t(no_escape_beg, _cur++);
+            result += string_t(no_escape_beg, move_cur_old());
             if (_cur == _end) {
                 return std::nullopt;
             }
@@ -443,23 +624,23 @@ inline std::optional<string_t> parser<string_t, parsing_t, accel_traits>::parse_
                 // Illegal backslash escape
                 return std::nullopt;
             }
-            no_escape_beg = ++_cur;
+            no_escape_beg = move_cur();
             break;
         }
         case '"': {
-            result += string_t(no_escape_beg, _cur++);
+            result += string_t(no_escape_beg, move_cur_old());
             return result;
         }
         default:
-            ++_cur;
+            move_cur();
             break;
         }
     }
     return std::nullopt;
 }
 
-template <typename string_t, typename parsing_t, typename accel_traits>
-inline bool parser<string_t, parsing_t, accel_traits>::skip_string_literal_with_accel()
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline bool parser<string_t, parsing_t, has_visitor, accel_traits>::skip_string_literal_with_accel()
 {
     if constexpr (sizeof(*_cur) != 1) {
         return false;
@@ -486,8 +667,8 @@ inline bool parser<string_t, parsing_t, accel_traits>::skip_string_literal_with_
     return _cur != _end;
 }
 
-template <typename string_t, typename parsing_t, typename accel_traits>
-inline bool parser<string_t, parsing_t, accel_traits>::skip_whitespace() noexcept
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline bool parser<string_t, parsing_t, has_visitor, accel_traits>::skip_whitespace() noexcept
 {
     while (_cur != _end) {
         switch (*_cur) {
@@ -495,7 +676,7 @@ inline bool parser<string_t, parsing_t, accel_traits>::skip_whitespace() noexcep
         case '\t':
         case '\r':
         case '\n':
-            ++_cur;
+            move_cur();
             break;
         case '\0':
             return false;
@@ -506,19 +687,19 @@ inline bool parser<string_t, parsing_t, accel_traits>::skip_whitespace() noexcep
     return false;
 }
 
-template <typename string_t, typename parsing_t, typename accel_traits>
-inline bool parser<string_t, parsing_t, accel_traits>::skip_digit()
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline bool parser<string_t, parsing_t, has_visitor, accel_traits>::skip_digit()
 {
     // At least one digit
     if (_cur != _end && std::isdigit(*_cur)) {
-        ++_cur;
+        move_cur();
     }
     else {
         return false;
     }
 
     while (_cur != _end && std::isdigit(*_cur)) {
-        ++_cur;
+        move_cur();
     }
 
     if (_cur != _end) {
@@ -544,6 +725,21 @@ template <typename char_t>
 auto parse(char_t* content)
 {
     return parse(std::basic_string_view<std::decay_t<char_t>> { content });
+}
+
+template <typename parsing_t>
+auto parse(
+    const parsing_t& content,
+    parse_visitor<std::basic_string<typename parsing_t::value_type>>* visitor)
+{
+    using string_t = std::basic_string<typename parsing_t::value_type>;
+    return parser<string_t, parsing_t, true>::parse(content, visitor);
+}
+
+template <typename char_t>
+auto parse(char_t* content, parse_visitor<std::basic_string_view<std::decay_t<char_t>>>* visitor)
+{
+    return parse(std::basic_string_view<std::decay_t<char_t>> { content }, visitor);
 }
 
 template <typename istream_t, typename _>

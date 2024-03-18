@@ -243,6 +243,52 @@ void third_party_jsonization_2()
     bool ret = json::deserialize(jthird, new_third, Deserializer {});
 }
 
+std::ostream& operator<<(std::ostream& os, const json::parse_visitor<std::string>::position& pos)
+{
+    os << pos.offset << ":" << pos.row << ":" << pos.column << " ";
+    for (const auto& p : pos.path) {
+        if (p.index() == 0) {
+            os << std::get<0>(p) << ", ";
+        } else {
+            os << std::get<1>(p) << ", ";
+        }
+    }
+    return os;
+}
+
+struct my_visitor : public json::parse_visitor<std::string>
+{
+    virtual void property(const std::string& key, const position& pos)
+    {
+        std::cout << "property found: " << key << " at " << pos << std::endl;
+    }
+
+    virtual void value(const json::basic_value<std::string>& value, const position& pos)
+    {
+        std::cout << "value found: " << value << " at " << pos << std::endl;
+    }
+
+    virtual void object_enter(const position& pos)
+    {
+        std::cout << "object enter at " << pos << std::endl;
+    }
+
+    virtual void object_leave(const position& pos)
+    {
+        std::cout << "object leave at " << pos << std::endl;
+    }
+
+    virtual void array_enter(const position& pos)
+    {
+        std::cout << "array enter at " << pos << std::endl;
+    }
+
+    virtual void array_leave(const position& pos)
+    {
+        std::cout << "array leave at " << pos << std::endl;
+    }
+};
+
 void parsing()
 {
     /* Now let’s talk about parsing */
@@ -268,6 +314,8 @@ void parsing()
 
     // it's a std::optional<json::value>
     auto ret = json::parse(content);
+
+    auto another = json::parse(content, new my_visitor());
 
     if (!ret) {
         std::cerr << "Parsing failed" << std::endl;
