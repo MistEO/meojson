@@ -16,7 +16,7 @@ void parsing();
 
 int main()
 {
-    serializing();
+    // serializing();
     parsing();
 
     return 0;
@@ -245,13 +245,21 @@ void third_party_jsonization_2()
 
 std::ostream& operator<<(std::ostream& os, const json::parse_visitor<std::string>::position& pos)
 {
-    os << pos.offset << ":" << pos.row << ":" << pos.column << " ";
-    for (const auto& p : pos.path) {
+    return os << pos.offset << ":" << pos.row << ":" << pos.column;
+}
+
+std::ostream& operator<<(std::ostream& os, const json::parse_visitor<std::string>::json_path& path)
+{
+    for (size_t i = 0; i < path.size(); i++) {
+        const auto& p = path[i];
+        if (i) {
+            os << ".";
+        }
         if (p.index() == 0) {
-            os << std::get<0>(p) << ", ";
+            os << std::get<0>(p);
         }
         else {
-            os << std::get<1>(p) << ", ";
+            os << std::get<1>(p);
         }
     }
     return os;
@@ -259,34 +267,51 @@ std::ostream& operator<<(std::ostream& os, const json::parse_visitor<std::string
 
 struct my_visitor : public json::parse_visitor<std::string>
 {
-    virtual void property(const std::string& key, const position& pos)
+    virtual void property(
+        const std::string& key,
+        const position& start,
+        const position& end,
+        const json_path& path)
     {
-        std::cout << "property found: " << key << " at " << pos << std::endl;
+        std::cout << "property found: " << key << "\n  from " << start << "\n  to " << end
+                  << "\n  at " << path << std::endl;
     }
 
-    virtual void value(const json::basic_value<std::string>& value, const position& pos)
+    virtual void value(
+        const json::basic_value<std::string>& value,
+        const position& start,
+        const position& end,
+        const json_path& path)
     {
-        std::cout << "value found: " << value << " at " << pos << std::endl;
+        std::cout << "value found: " << value << "\n  from " << start << "\n  to " << end
+                  << "\n  at " << path << std::endl;
+        ;
     }
 
-    virtual void object_enter(const position& pos)
+    virtual void object_enter(const position& start, const json_path& path)
     {
-        std::cout << "object enter at " << pos << std::endl;
+        std::cout << "object enter\n  from " << start << "\n  at " << path << std::endl;
+        ;
     }
 
-    virtual void object_leave(const position& pos)
+    virtual void object_leave(const position& start, const position& end, const json_path& path)
     {
-        std::cout << "object leave at " << pos << std::endl;
+        std::cout << "object leave\n  from " << start << "\n  to " << end << "\n  at " << path
+                  << std::endl;
+        ;
     }
 
-    virtual void array_enter(const position& pos)
+    virtual void array_enter(const position& start, const json_path& path)
     {
-        std::cout << "array enter at " << pos << std::endl;
+        std::cout << "array enter\n  from " << start << "\n  at " << path << std::endl;
+        ;
     }
 
-    virtual void array_leave(const position& pos)
+    virtual void array_leave(const position& start, const position& end, const json_path& path)
     {
-        std::cout << "array leave at " << pos << std::endl;
+        std::cout << "array leave\n  from " << start << "\n  to " << end << "\n  at " << path
+                  << std::endl;
+        ;
     }
 };
 
@@ -317,6 +342,8 @@ void parsing()
     auto ret = json::parse(content);
 
     auto another = json::parse(content, new my_visitor());
+
+    return;
 
     if (!ret) {
         std::cerr << "Parsing failed" << std::endl;
