@@ -23,30 +23,18 @@ struct parse_visitor
     {
         size_t offset;
         size_t row, column;
-        std::vector<std::variant<std::string, size_t>> path;
+        std::vector<std::variant<string_t, size_t>> path;
 
-        void reset()
-        {
-            offset = 0;
-            row = 0;
-            column = 0;
-            path.clear();
-        }
+        void reset();
     };
 
     virtual ~parse_visitor() = default;
-
-    virtual void property(const string_t& key, const position& pos) {}
-
-    virtual void value(const basic_value<string_t>& value, const position& pos) {}
-
-    virtual void object_enter(const position& pos) {}
-
-    virtual void object_leave(const position& pos) {}
-
-    virtual void array_enter(const position& pos) {}
-
-    virtual void array_leave(const position& pos) {}
+    virtual void property(const string_t& key, const position& pos);
+    virtual void value(const basic_value<string_t>& value, const position& pos);
+    virtual void object_enter(const position& pos);
+    virtual void object_leave(const position& pos);
+    virtual void array_enter(const position& pos);
+    virtual void array_leave(const position& pos);
 };
 
 template <
@@ -96,27 +84,8 @@ private:
     bool skip_whitespace() noexcept;
     bool skip_digit();
 
-    parsing_iter_t move_cur()
-    {
-        if constexpr (has_visitor) {
-            _pos.offset++;
-            if (*_cur == '\n') {
-                _pos.row++;
-                _pos.column = 0;
-            }
-            else {
-                _pos.column++;
-            }
-        }
-        return ++_cur;
-    }
-
-    parsing_iter_t move_cur_old()
-    {
-        auto ret = _cur;
-        move_cur();
-        return ret;
-    }
+    parsing_iter_t move_cur();
+    parsing_iter_t move_cur_old();
 
 private:
     parsing_iter_t _cur;
@@ -166,6 +135,53 @@ const basic_value<string_t> invalid_value();
 // *************************
 // *      parser impl      *
 // *************************
+
+template <typename string_t>
+inline void parse_visitor<string_t>::position::reset()
+{
+    offset = 0;
+    row = 0;
+    column = 0;
+    path.clear();
+}
+
+template <typename string_t>
+inline void parse_visitor<string_t>::property(const string_t& key, const position& pos)
+{
+    std::ignore = key;
+    std::ignore = pos;
+}
+
+template <typename string_t>
+inline void parse_visitor<string_t>::value(const basic_value<string_t>& value, const position& pos)
+{
+    std::ignore = value;
+    std::ignore = pos;
+}
+
+template <typename string_t>
+inline void parse_visitor<string_t>::object_enter(const position& pos)
+{
+    std::ignore = pos;
+}
+
+template <typename string_t>
+inline void parse_visitor<string_t>::object_leave(const position& pos)
+{
+    std::ignore = pos;
+}
+
+template <typename string_t>
+inline void parse_visitor<string_t>::array_enter(const position& pos)
+{
+    std::ignore = pos;
+}
+
+template <typename string_t>
+inline void parse_visitor<string_t>::array_leave(const position& pos)
+{
+    std::ignore = pos;
+}
 
 template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
 inline std::optional<basic_value<string_t>>
@@ -714,6 +730,32 @@ inline bool parser<string_t, parsing_t, has_visitor, accel_traits>::skip_digit()
     else {
         return false;
     }
+}
+
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline typename parser<string_t, parsing_t, has_visitor, accel_traits>::parsing_iter_t
+    parser<string_t, parsing_t, has_visitor, accel_traits>::move_cur()
+{
+    if constexpr (has_visitor) {
+        _pos.offset++;
+        if (*_cur == '\n') {
+            _pos.row++;
+            _pos.column = 0;
+        }
+        else {
+            _pos.column++;
+        }
+    }
+    return ++_cur;
+}
+
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline typename parser<string_t, parsing_t, has_visitor, accel_traits>::parsing_iter_t
+    parser<string_t, parsing_t, has_visitor, accel_traits>::move_cur_old()
+{
+    auto ret = _cur;
+    move_cur();
+    return ret;
 }
 
 // *************************
