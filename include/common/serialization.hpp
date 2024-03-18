@@ -96,9 +96,6 @@ basic_value<string_t> serialize(in_t&& in, const serializer_t& serializer = {})
     if constexpr (_serialization_helper::is_serializable<in_t, serializer_t>::value) {
         return serializer(std::forward<in_t>(in));
     }
-    else if constexpr (std::is_constructible_v<basic_value<string_t>, in_t>) {
-        return basic_value<string_t>(std::forward<in_t>(in));
-    }
     else if constexpr (
         _utils::is_collection<std::decay_t<in_t>> || _utils::is_fixed_array<std::decay_t<in_t>>) {
         basic_array<string_t> arr;
@@ -123,6 +120,9 @@ basic_value<string_t> serialize(in_t&& in, const serializer_t& serializer = {})
         }
         return obj;
     }
+    else if constexpr (std::is_constructible_v<basic_value<string_t>, in_t>) {
+        return basic_value<string_t>(std::forward<in_t>(in));
+    }
     else {
         _serialization_helper::unable_to_serialize<in_t>();
     }
@@ -139,10 +139,6 @@ bool deserialize(
 {
     if constexpr (_serialization_helper::is_deserializable<out_t, deserializer_t>::value) {
         return deserializer(in, out);
-    }
-    else if constexpr (std::is_constructible_v<out_t, basic_value<string_t>>) {
-        out = out_t(in);
-        return true;
     }
     else if constexpr (_utils::is_collection<std::decay_t<out_t>>) {
         if (!in.is_array()) {
@@ -189,13 +185,17 @@ bool deserialize(
             return false;
         }
         for (auto&& [key, j_elem] : in.as_object()) {
-            using elem_t = typename out_t::value_type;
+            using elem_t = typename out_t::mapped_type;
             elem_t elem {};
             if (!deserialize<elem_t, deserializer_t, string_t>(j_elem, elem, deserializer)) {
                 return false;
             }
-            out.emplace(std::move(elem));
+            out.emplace(std::forward<decltype(key)>(key), std::move(elem));
         }
+        return true;
+    }
+    else if constexpr (std::is_constructible_v<out_t, basic_value<string_t>>) {
+        out = out_t(in);
         return true;
     }
     else {
