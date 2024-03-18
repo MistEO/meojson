@@ -16,7 +16,7 @@ void parsing();
 
 int main()
 {
-    // serializing();
+    serializing();
     parsing();
 
     return 0;
@@ -342,8 +342,6 @@ void parsing()
     auto ret = json::parse(content);
 
     auto another = json::parse(content, new my_visitor());
-
-    return;
 
     if (!ret) {
         std::cerr << "Parsing failed" << std::endl;
