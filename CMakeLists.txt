@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 project(meojson CXX)
 
-include_directories(./include)
-
 option(BUILD_SAMPLE "Build sample in sample/sample.cpp" ON)
 option(BUILD_BENCHMARK "Build benchmark in benchmark/benchmark.cpp" OFF)
 option(ENABLE_NEON "Enable ARM NEON" OFF)
@@ -29,6 +27,7 @@ file(GLOB_RECURSE json_headers
 )
 
 add_library(meojson INTERFACE ${json_headers})
+target_include_directories(meojson INTERFACE include)
 
 if (BUILD_SAMPLE)
     file(GLOB sample_src
