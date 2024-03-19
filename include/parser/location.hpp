@@ -59,6 +59,10 @@ struct location_info
     range _self;
     std::variant<std::monostate, parse_array_info, parse_object_info> _info;
 
+    bool is_arr() const { return _info.index() == 1; }
+
+    bool is_obj() const { return _info.index() == 2; }
+
     parse_array_info& arr() { return std::get<1>(_info); }
 
     const parse_array_info& arr() const { return std::get<1>(_info); }
@@ -243,7 +247,7 @@ inline void location_info_generator<string_t>::object_enter(
     std::ignore = path;
 
     before_value();
-    cur()._info = location_info<string_t>::parse_object_info {};
+    cur()._info = typename location_info<string_t>::parse_object_info {};
 }
 
 template <typename string_t>
@@ -267,7 +271,7 @@ inline void location_info_generator<string_t>::array_enter(
     std::ignore = path;
 
     before_value();
-    cur()._info = location_info<string_t>::parse_array_info {};
+    cur()._info = typename location_info<string_t>::parse_array_info {};
 }
 
 template <typename string_t>
