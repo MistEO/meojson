@@ -27,6 +27,11 @@ struct parse_visitor
         size_t row, column;
     };
 
+    struct range
+    {
+        position start, end;
+    };
+
     virtual ~parse_visitor() = default;
     virtual void property(
         const string_t& key,
@@ -42,6 +47,66 @@ struct parse_visitor
     virtual void object_leave(const position& start, const position& end, const json_path& path);
     virtual void array_enter(const position& start, const json_path& path);
     virtual void array_leave(const position& start, const position& end, const json_path& path);
+};
+
+template <typename string_t = default_string_t>
+struct parse_info
+{
+    using range_t = typename parse_visitor<string_t>::range;
+
+    struct object_entry
+    {
+        range_t property;
+        parse_info info;
+    };
+
+    using parse_array_info = std::vector<parse_info>;
+    using parse_object_info = std::map<string_t, object_entry>;
+
+    range_t self;
+    std::variant<std::monostate, parse_array_info, parse_object_info> sub_info;
+
+    parse_array_info& arr() { return std::get<1>(sub_info); }
+
+    const parse_array_info& arr() const { return std::get<1>(sub_info); }
+
+    parse_object_info& obj() { return std::get<2>(sub_info); }
+
+    const parse_object_info& obj() const { return std::get<2>(sub_info); }
+};
+
+template <typename string_t = default_string_t>
+struct parse_info_generator : public parse_visitor<string_t>
+{
+    using json_path = typename parse_visitor<string_t>::json_path;
+    using position = typename parse_visitor<string_t>::position;
+
+    parse_info<string_t> info;
+    std::vector<parse_info<string_t>*> process;
+    typename parse_info<string_t>::object_entry* obj_entry;
+
+    void init();
+
+    void before_value();
+    void after_value();
+
+    void property(
+        const string_t& key,
+        const position& start,
+        const position& end,
+        const json_path& path) override;
+    void value(
+        const basic_value<string_t>& value,
+        const position& start,
+        const position& end,
+        const json_path& path) override;
+    void object_enter(const position& start, const json_path& path) override;
+    void object_leave(const position& start, const position& end, const json_path& path) override;
+    void array_enter(const position& start, const json_path& path) override;
+    void array_leave(const position& start, const position& end, const json_path& path) override;
+
+private:
+    parse_info<string_t>& cur() { return *process.back(); }
 };
 
 template <
@@ -92,6 +157,7 @@ private:
     bool skip_digit();
 
     parsing_iter_t move_cur();
+    void move_cur(size_t count);
     parsing_iter_t move_cur_old();
 
 private:
@@ -204,6 +270,126 @@ inline void parse_visitor<string_t>::array_leave(
     std::ignore = start;
     std::ignore = end;
     std::ignore = path;
+}
+
+template <typename string_t>
+inline void parse_info_generator<string_t>::init()
+{
+    process.clear();
+    obj_entry = nullptr;
+}
+
+template <typename string_t>
+inline void parse_info_generator<string_t>::before_value()
+{
+    if (process.empty()) {
+        process.push_back(&info);
+    }
+    else {
+        switch (cur().sub_info.index()) {
+        case 0:
+            throw "value inside value";
+        case 1:
+            cur().arr().push_back({});
+            process.push_back(&cur().arr().back());
+            break;
+        case 2:
+            if (!obj_entry) {
+                throw "obj_entry is null while sub_info is object";
+            }
+            process.push_back(&obj_entry->info);
+            obj_entry = nullptr;
+            break;
+        }
+    }
+}
+
+template <typename string_t>
+inline void parse_info_generator<string_t>::after_value()
+{
+    process.pop_back();
+}
+
+template <typename string_t>
+inline void parse_info_generator<string_t>::property(
+    const string_t& key,
+    const position& start,
+    const position& end,
+    const json_path& path)
+{
+    std::ignore = key;
+    std::ignore = start;
+    std::ignore = end;
+    std::ignore = path;
+
+    if (cur().sub_info.index() != 2) {
+        throw "property called without object_enter";
+    }
+    auto& sub_info = cur().obj()[key];
+    sub_info.property = { start, end };
+    obj_entry = &sub_info;
+}
+
+template <typename string_t>
+inline void parse_info_generator<string_t>::value(
+    const basic_value<string_t>& value,
+    const position& start,
+    const position& end,
+    const json_path& path)
+{
+    std::ignore = value;
+    std::ignore = path;
+
+    before_value();
+    cur().self = { start, end };
+    cur().sub_info = std::monostate {};
+    after_value();
+}
+
+template <typename string_t>
+inline void
+    parse_info_generator<string_t>::object_enter(const position& start, const json_path& path)
+{
+    std::ignore = start;
+    std::ignore = path;
+
+    before_value();
+    cur().sub_info = parse_info<string_t>::parse_object_info {};
+}
+
+template <typename string_t>
+inline void parse_info_generator<string_t>::object_leave(
+    const position& start,
+    const position& end,
+    const json_path& path)
+{
+    std::ignore = path;
+
+    cur().self = { start, end };
+    after_value();
+}
+
+template <typename string_t>
+inline void
+    parse_info_generator<string_t>::array_enter(const position& start, const json_path& path)
+{
+    std::ignore = start;
+    std::ignore = path;
+
+    before_value();
+    cur().sub_info = parse_info<string_t>::parse_array_info {};
+}
+
+template <typename string_t>
+inline void parse_info_generator<string_t>::array_leave(
+    const position& start,
+    const position& end,
+    const json_path& path)
+{
+    std::ignore = path;
+
+    cur().self = { start, end };
+    after_value();
 }
 
 template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
@@ -707,11 +893,11 @@ inline bool parser<string_t, parsing_t, has_visitor, accel_traits>::skip_string_
             accel_traits::bitwise_or(result, accel_traits::equal(pack, static_cast<uint8_t>('\\')));
 
         if (accel_traits::is_all_zero(result)) {
-            _cur += accel_traits::step;
+            move_cur(accel_traits::step);
         }
         else {
             auto index = accel_traits::first_nonzero_byte(result);
-            _cur += index;
+            move_cur(index);
             break;
         }
     }
@@ -780,6 +966,19 @@ inline typename parser<string_t, parsing_t, has_visitor, accel_traits>::parsing_
 }
 
 template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
+inline void parser<string_t, parsing_t, has_visitor, accel_traits>::move_cur(size_t count)
+{
+    if constexpr (has_visitor) {
+        while (count--) {
+            move_cur();
+        }
+    }
+    else {
+        _cur += count;
+    }
+}
+
+template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
 inline typename parser<string_t, parsing_t, has_visitor, accel_traits>::parsing_iter_t
     parser<string_t, parsing_t, has_visitor, accel_traits>::move_cur_old()
 {
@@ -821,7 +1020,10 @@ auto parse(char_t* content, parse_visitor<std::basic_string_view<std::decay_t<ch
 }
 
 template <typename istream_t, typename _>
-auto parse(istream_t& ifs, bool check_bom)
+auto parse(
+    istream_t& ifs,
+    bool check_bom,
+    parse_visitor<std::basic_string<typename istream_t::char_type>>* visitor = nullptr)
 {
     using string_t = std::basic_string<typename istream_t::char_type>;
 
@@ -844,7 +1046,12 @@ auto parse(istream_t& ifs, bool check_bom)
             str.assign(str.begin() + 3, str.end());
         }
     }
-    return parse(str);
+    if (visitor) {
+        return parse(str, visitor);
+    }
+    else {
+        return parse(str);
+    }
 }
 
 template <typename ifstream_t, typename path_t>

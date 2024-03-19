@@ -315,6 +315,43 @@ struct my_visitor : public json::parse_visitor<std::string>
     }
 };
 
+void dump_parse_info(
+    std::ostream& os,
+    const std::string& source,
+    const json::parse_info<std::string>& info,
+    size_t indent = 0)
+{
+    auto extract = [&source](const json::parse_info<std::string>::range_t& range) {
+        return source.substr(range.start.offset, range.end.offset - range.start.offset);
+    };
+
+    std::string indent_str(indent, ' ');
+    switch (info.sub_info.index()) {
+    case 0:
+        os << indent_str << "value " << info.self.start << '~' << info.self.end << ' '
+           << extract(info.self) << std::endl;
+        break;
+    case 1:
+        os << indent_str << "array " << info.self.start << '~' << info.self.end << " ["
+           << std::endl;
+        for (const auto& sub : info.arr()) {
+            dump_parse_info(os, source, sub, indent + 2);
+        }
+        os << indent_str << "]" << std::endl;
+        break;
+    case 2:
+        os << indent_str << "object " << info.self.start << '~' << info.self.end << " {"
+           << std::endl;
+        for (const auto& sub : info.obj()) {
+            os << indent_str << "  property " << sub.second.property.start << '~'
+               << sub.second.property.end << ' ' << extract(sub.second.property) << std::endl;
+            dump_parse_info(os, source, sub.second.info, indent + 2);
+        }
+        os << indent_str << "}" << std::endl;
+        break;
+    }
+}
+
 void parsing()
 {
     /* Now let’s talk about parsing */
@@ -342,6 +379,13 @@ void parsing()
     auto ret = json::parse(content);
 
     auto another = json::parse(content, new my_visitor());
+
+    json::parse_info_generator gen;
+    gen.init();
+
+    json::parse(content, &gen);
+
+    dump_parse_info(std::cout, content, gen.info);
 
     if (!ret) {
         std::cerr << "Parsing failed" << std::endl;
