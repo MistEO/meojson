@@ -555,16 +555,16 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
 
         std::optional<string_t> key_opt;
 
-        typename parse_visitor<string_t>::position cur_pos;
+        typename parse_visitor<string_t>::position cur_pos2;
         if constexpr (has_visitor) {
-            cur_pos = _pos;
+            cur_pos2 = _pos;
         }
 
         key_opt = parse_stdstring();
 
         if constexpr (has_visitor) {
             if (key_opt) {
-                _vis->property(key_opt.value(), cur_pos, _pos, _path);
+                _vis->property(key_opt.value(), cur_pos2, _pos, _path);
                 _path.push_back(key_opt.value());
             }
         }
