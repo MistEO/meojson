@@ -243,12 +243,12 @@ void third_party_jsonization_2()
     bool ret = json::deserialize(jthird, new_third, Deserializer {});
 }
 
-std::ostream& operator<<(std::ostream& os, const json::parse_visitor<std::string>::position& pos)
+std::ostream& operator<<(std::ostream& os, const json::location::position& pos)
 {
     return os << pos.offset << ":" << pos.row << ":" << pos.column;
 }
 
-std::ostream& operator<<(std::ostream& os, const json::parse_visitor<std::string>::json_path& path)
+std::ostream& operator<<(std::ostream& os, const json::location::json_path<std::string>& path)
 {
     for (size_t i = 0; i < path.size(); i++) {
         const auto& p = path[i];
@@ -265,13 +265,13 @@ std::ostream& operator<<(std::ostream& os, const json::parse_visitor<std::string
     return os;
 }
 
-struct my_visitor : public json::parse_visitor<std::string>
+struct my_visitor : public json::location::visitor<std::string>
 {
     virtual void property(
         const std::string& key,
-        const position& start,
-        const position& end,
-        const json_path& path)
+        const json::location::position& start,
+        const json::location::position& end,
+        const json::location::json_path<std::string>& path)
     {
         std::cout << "property found: " << key << "\n  from " << start << "\n  to " << end
                   << "\n  at " << path << std::endl;
@@ -279,35 +279,45 @@ struct my_visitor : public json::parse_visitor<std::string>
 
     virtual void value(
         const json::basic_value<std::string>& value,
-        const position& start,
-        const position& end,
-        const json_path& path)
+        const json::location::position& start,
+        const json::location::position& end,
+        const json::location::json_path<std::string>& path)
     {
         std::cout << "value found: " << value << "\n  from " << start << "\n  to " << end
                   << "\n  at " << path << std::endl;
         ;
     }
 
-    virtual void object_enter(const position& start, const json_path& path)
+    virtual void object_enter(
+        const json::location::position& start,
+        const json::location::json_path<std::string>& path)
     {
         std::cout << "object enter\n  from " << start << "\n  at " << path << std::endl;
         ;
     }
 
-    virtual void object_leave(const position& start, const position& end, const json_path& path)
+    virtual void object_leave(
+        const json::location::position& start,
+        const json::location::position& end,
+        const json::location::json_path<std::string>& path)
     {
         std::cout << "object leave\n  from " << start << "\n  to " << end << "\n  at " << path
                   << std::endl;
         ;
     }
 
-    virtual void array_enter(const position& start, const json_path& path)
+    virtual void array_enter(
+        const json::location::position& start,
+        const json::location::json_path<std::string>& path)
     {
         std::cout << "array enter\n  from " << start << "\n  at " << path << std::endl;
         ;
     }
 
-    virtual void array_leave(const position& start, const position& end, const json_path& path)
+    virtual void array_leave(
+        const json::location::position& start,
+        const json::location::position& end,
+        const json::location::json_path<std::string>& path)
     {
         std::cout << "array leave\n  from " << start << "\n  to " << end << "\n  at " << path
                   << std::endl;
@@ -318,21 +328,21 @@ struct my_visitor : public json::parse_visitor<std::string>
 void dump_parse_info(
     std::ostream& os,
     const std::string& source,
-    const json::parse_info<std::string>& info,
+    const json::location::location_info<std::string>& info,
     size_t indent = 0)
 {
-    auto extract = [&source](const json::parse_info<std::string>::range_t& range) {
+    auto extract = [&source](const json::location::range& range) {
         return source.substr(range.start.offset, range.end.offset - range.start.offset);
     };
 
     std::string indent_str(indent, ' ');
-    switch (info.sub_info.index()) {
+    switch (info._info.index()) {
     case 0:
-        os << indent_str << "value " << info.self.start << '~' << info.self.end << ' '
-           << extract(info.self) << std::endl;
+        os << indent_str << "value " << info._self.start << '~' << info._self.end << ' '
+           << extract(info._self) << std::endl;
         break;
     case 1:
-        os << indent_str << "array " << info.self.start << '~' << info.self.end << " ["
+        os << indent_str << "array " << info._self.start << '~' << info._self.end << " ["
            << std::endl;
         for (const auto& sub : info.arr()) {
             dump_parse_info(os, source, sub, indent + 2);
@@ -340,7 +350,7 @@ void dump_parse_info(
         os << indent_str << "]" << std::endl;
         break;
     case 2:
-        os << indent_str << "object " << info.self.start << '~' << info.self.end << " {"
+        os << indent_str << "object " << info._self.start << '~' << info._self.end << " {"
            << std::endl;
         for (const auto& sub : info.obj()) {
             os << indent_str << "  property " << sub.second.property.start << '~'
@@ -380,12 +390,11 @@ void parsing()
 
     auto another = json::parse(content, new my_visitor());
 
-    json::parse_info_generator gen;
-    gen.init();
+    json::location::location_info_generator gen;
 
     json::parse(content, &gen);
 
-    dump_parse_info(std::cout, content, gen.info);
+    dump_parse_info(std::cout, content, gen.info());
 
     if (!ret) {
         std::cerr << "Parsing failed" << std::endl;

@@ -8,6 +8,7 @@
 
 #include "../common/types.hpp"
 #include "../common/utils.hpp"
+#include "location.hpp"
 #include "packed_bytes.hpp"
 
 namespace json
@@ -15,99 +16,6 @@ namespace json
 // ****************************
 // *      parser declare      *
 // ****************************
-
-template <typename string_t = default_string_t>
-struct parse_visitor
-{
-    using json_path = std::vector<std::variant<string_t, size_t>>;
-
-    struct position
-    {
-        size_t offset;
-        size_t row, column;
-    };
-
-    struct range
-    {
-        position start, end;
-    };
-
-    virtual ~parse_visitor() = default;
-    virtual void property(
-        const string_t& key,
-        const position& start,
-        const position& end,
-        const json_path& path);
-    virtual void value(
-        const basic_value<string_t>& value,
-        const position& start,
-        const position& end,
-        const json_path& path);
-    virtual void object_enter(const position& start, const json_path& path);
-    virtual void object_leave(const position& start, const position& end, const json_path& path);
-    virtual void array_enter(const position& start, const json_path& path);
-    virtual void array_leave(const position& start, const position& end, const json_path& path);
-};
-
-template <typename string_t = default_string_t>
-struct parse_info
-{
-    using range_t = typename parse_visitor<string_t>::range;
-
-    struct object_entry
-    {
-        range_t property;
-        parse_info info;
-    };
-
-    using parse_array_info = std::vector<parse_info>;
-    using parse_object_info = std::map<string_t, object_entry>;
-
-    range_t self;
-    std::variant<std::monostate, parse_array_info, parse_object_info> sub_info;
-
-    parse_array_info& arr() { return std::get<1>(sub_info); }
-
-    const parse_array_info& arr() const { return std::get<1>(sub_info); }
-
-    parse_object_info& obj() { return std::get<2>(sub_info); }
-
-    const parse_object_info& obj() const { return std::get<2>(sub_info); }
-};
-
-template <typename string_t = default_string_t>
-struct parse_info_generator : public parse_visitor<string_t>
-{
-    using json_path = typename parse_visitor<string_t>::json_path;
-    using position = typename parse_visitor<string_t>::position;
-
-    parse_info<string_t> info;
-    std::vector<parse_info<string_t>*> process;
-    typename parse_info<string_t>::object_entry* obj_entry;
-
-    void init();
-
-    void before_value();
-    void after_value();
-
-    void property(
-        const string_t& key,
-        const position& start,
-        const position& end,
-        const json_path& path) override;
-    void value(
-        const basic_value<string_t>& value,
-        const position& start,
-        const position& end,
-        const json_path& path) override;
-    void object_enter(const position& start, const json_path& path) override;
-    void object_leave(const position& start, const position& end, const json_path& path) override;
-    void array_enter(const position& start, const json_path& path) override;
-    void array_leave(const position& start, const position& end, const json_path& path) override;
-
-private:
-    parse_info<string_t>& cur() { return *process.back(); }
-};
 
 template <
     typename string_t = default_string_t,
@@ -124,13 +32,13 @@ public:
 
     static std::optional<basic_value<string_t>> parse(const parsing_t& content);
     static std::optional<basic_value<string_t>>
-        parse(const parsing_t& content, parse_visitor<string_t>* visitor);
+        parse(const parsing_t& content, location::visitor<string_t>* visitor);
 
 private:
     parser(
         parsing_iter_t cbegin,
         parsing_iter_t cend,
-        parse_visitor<string_t>* visitor = nullptr) noexcept
+        location::visitor<string_t>* visitor = nullptr) noexcept
         : _cur(cbegin)
         , _end(cend)
         , _vis(visitor)
@@ -164,9 +72,9 @@ private:
     parsing_iter_t _cur;
     parsing_iter_t _end;
 
-    parse_visitor<string_t>* _vis;
-    typename parse_visitor<string_t>::position _pos;
-    typename parse_visitor<string_t>::json_path _path;
+    location::visitor<string_t>* _vis;
+    location::position _pos;
+    location::json_path<string_t> _path;
 };
 
 // ***************************
@@ -210,188 +118,6 @@ const basic_value<string_t> invalid_value();
 // *      parser impl      *
 // *************************
 
-template <typename string_t>
-inline void parse_visitor<string_t>::property(
-    const string_t& key,
-    const position& start,
-    const position& end,
-    const json_path& path)
-{
-    std::ignore = key;
-    std::ignore = start;
-    std::ignore = end;
-    std::ignore = path;
-}
-
-template <typename string_t>
-inline void parse_visitor<string_t>::value(
-    const basic_value<string_t>& value,
-    const position& start,
-    const position& end,
-    const json_path& path)
-{
-    std::ignore = value;
-    std::ignore = start;
-    std::ignore = end;
-    std::ignore = path;
-}
-
-template <typename string_t>
-inline void parse_visitor<string_t>::object_enter(const position& start, const json_path& path)
-{
-    std::ignore = start;
-    std::ignore = path;
-}
-
-template <typename string_t>
-inline void parse_visitor<string_t>::object_leave(
-    const position& start,
-    const position& end,
-    const json_path& path)
-{
-    std::ignore = start;
-    std::ignore = end;
-    std::ignore = path;
-}
-
-template <typename string_t>
-inline void parse_visitor<string_t>::array_enter(const position& start, const json_path& path)
-{
-    std::ignore = start;
-    std::ignore = path;
-}
-
-template <typename string_t>
-inline void parse_visitor<string_t>::array_leave(
-    const position& start,
-    const position& end,
-    const json_path& path)
-{
-    std::ignore = start;
-    std::ignore = end;
-    std::ignore = path;
-}
-
-template <typename string_t>
-inline void parse_info_generator<string_t>::init()
-{
-    process.clear();
-    obj_entry = nullptr;
-}
-
-template <typename string_t>
-inline void parse_info_generator<string_t>::before_value()
-{
-    if (process.empty()) {
-        process.push_back(&info);
-    }
-    else {
-        switch (cur().sub_info.index()) {
-        case 0:
-            throw "value inside value";
-        case 1:
-            cur().arr().push_back({});
-            process.push_back(&cur().arr().back());
-            break;
-        case 2:
-            if (!obj_entry) {
-                throw "obj_entry is null while sub_info is object";
-            }
-            process.push_back(&obj_entry->info);
-            obj_entry = nullptr;
-            break;
-        }
-    }
-}
-
-template <typename string_t>
-inline void parse_info_generator<string_t>::after_value()
-{
-    process.pop_back();
-}
-
-template <typename string_t>
-inline void parse_info_generator<string_t>::property(
-    const string_t& key,
-    const position& start,
-    const position& end,
-    const json_path& path)
-{
-    std::ignore = key;
-    std::ignore = start;
-    std::ignore = end;
-    std::ignore = path;
-
-    if (cur().sub_info.index() != 2) {
-        throw "property called without object_enter";
-    }
-    auto& sub_info = cur().obj()[key];
-    sub_info.property = { start, end };
-    obj_entry = &sub_info;
-}
-
-template <typename string_t>
-inline void parse_info_generator<string_t>::value(
-    const basic_value<string_t>& value,
-    const position& start,
-    const position& end,
-    const json_path& path)
-{
-    std::ignore = value;
-    std::ignore = path;
-
-    before_value();
-    cur().self = { start, end };
-    cur().sub_info = std::monostate {};
-    after_value();
-}
-
-template <typename string_t>
-inline void
-    parse_info_generator<string_t>::object_enter(const position& start, const json_path& path)
-{
-    std::ignore = start;
-    std::ignore = path;
-
-    before_value();
-    cur().sub_info = parse_info<string_t>::parse_object_info {};
-}
-
-template <typename string_t>
-inline void parse_info_generator<string_t>::object_leave(
-    const position& start,
-    const position& end,
-    const json_path& path)
-{
-    std::ignore = path;
-
-    cur().self = { start, end };
-    after_value();
-}
-
-template <typename string_t>
-inline void
-    parse_info_generator<string_t>::array_enter(const position& start, const json_path& path)
-{
-    std::ignore = start;
-    std::ignore = path;
-
-    before_value();
-    cur().sub_info = parse_info<string_t>::parse_array_info {};
-}
-
-template <typename string_t>
-inline void parse_info_generator<string_t>::array_leave(
-    const position& start,
-    const position& end,
-    const json_path& path)
-{
-    std::ignore = path;
-
-    cur().self = { start, end };
-    after_value();
-}
-
 template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
 inline std::optional<basic_value<string_t>>
     parser<string_t, parsing_t, has_visitor, accel_traits>::parse(const parsing_t& content)
@@ -405,7 +131,7 @@ template <typename string_t, typename parsing_t, bool has_visitor, typename acce
 inline std::optional<basic_value<string_t>>
     parser<string_t, parsing_t, has_visitor, accel_traits>::parse(
         const parsing_t& content,
-        parse_visitor<string_t>* visitor)
+        location::visitor<string_t>* visitor)
 {
     static_assert(has_visitor, "visitor provided but not has_visitor");
     return parser<string_t, parsing_t, has_visitor, accel_traits>(
@@ -488,7 +214,7 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
 template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
 inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_null()
 {
-    typename parse_visitor<string_t>::position cur_pos;
+    location::position cur_pos;
     if constexpr (has_visitor) {
         cur_pos = _pos;
     }
@@ -515,7 +241,7 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
 template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
 inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_boolean()
 {
-    typename parse_visitor<string_t>::position cur_pos;
+    location::position cur_pos;
     if constexpr (has_visitor) {
         cur_pos = _pos;
     }
@@ -562,7 +288,7 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
 template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
 inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_number()
 {
-    typename parse_visitor<string_t>::position cur_pos;
+    location::position cur_pos;
     if constexpr (has_visitor) {
         cur_pos = _pos;
     }
@@ -616,7 +342,7 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
 template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
 inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_string()
 {
-    typename parse_visitor<string_t>::position cur_pos;
+    location::position cur_pos;
     if constexpr (has_visitor) {
         cur_pos = _pos;
     }
@@ -642,7 +368,7 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
 template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
 inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_array()
 {
-    typename parse_visitor<string_t>::position cur_pos;
+    location::position cur_pos;
     if constexpr (has_visitor) {
         cur_pos = _pos;
         _vis->array_enter(cur_pos, _path);
@@ -711,7 +437,7 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
 template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
 inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_object()
 {
-    typename parse_visitor<string_t>::position cur_pos;
+    location::position cur_pos;
     if constexpr (has_visitor) {
         cur_pos = _pos;
         _vis->object_enter(cur_pos, _path);
@@ -741,7 +467,7 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
 
         std::optional<string_t> key_opt;
 
-        typename parse_visitor<string_t>::position cur_pos2;
+        location::position cur_pos2;
         if constexpr (has_visitor) {
             cur_pos2 = _pos;
         }
@@ -1007,14 +733,16 @@ auto parse(char_t* content)
 template <typename parsing_t>
 auto parse(
     const parsing_t& content,
-    parse_visitor<std::basic_string<typename parsing_t::value_type>>* visitor)
+    location::visitor<std::basic_string<typename parsing_t::value_type>>* visitor)
 {
     using string_t = std::basic_string<typename parsing_t::value_type>;
     return parser<string_t, parsing_t, true>::parse(content, visitor);
 }
 
 template <typename char_t>
-auto parse(char_t* content, parse_visitor<std::basic_string_view<std::decay_t<char_t>>>* visitor)
+auto parse(
+    char_t* content,
+    location::visitor<std::basic_string_view<std::decay_t<char_t>>>* visitor)
 {
     return parse(std::basic_string_view<std::decay_t<char_t>> { content }, visitor);
 }
@@ -1023,7 +751,7 @@ template <typename istream_t, typename _>
 auto parse(
     istream_t& ifs,
     bool check_bom,
-    parse_visitor<std::basic_string<typename istream_t::char_type>>* visitor = nullptr)
+    location::visitor<std::basic_string<typename istream_t::char_type>>* visitor = nullptr)
 {
     using string_t = std::basic_string<typename istream_t::char_type>;
 
