@@ -84,17 +84,27 @@ private:
 template <typename parsing_t>
 auto parse(const parsing_t& content);
 
+template <typename parsing_t, typename visitor_t>
+auto parse(const parsing_t& content, visitor_t* visitor);
+
 template <typename char_t>
 auto parse(char_t* content);
 
+template <typename char_t, typename visitor_t>
+auto parse(char_t* content, visitor_t* visitor);
+
 template <
     typename istream_t,
+    typename visitor_t,
     typename = std::enable_if_t<
         std::is_base_of_v<std::basic_istream<typename istream_t::char_type>, istream_t>>>
-auto parse(istream_t& istream, bool check_bom);
+auto parse(istream_t& istream, bool check_bom, visitor_t* visitor);
 
-template <typename ifstream_t = std::ifstream, typename path_t = void>
-auto open(const path_t& path, bool check_bom = false);
+template <
+    typename ifstream_t = std::ifstream,
+    typename visitor_t = json::location::visitor<std::string>,
+    typename path_t = void>
+auto open(const path_t& path, bool check_bom = false, visitor_t* visitor = nullptr);
 
 namespace literals
 {
@@ -724,36 +734,36 @@ auto parse(const parsing_t& content)
     return parser<string_t, parsing_t>::parse(content);
 }
 
+template <typename parsing_t, typename visitor_t>
+auto parse(const parsing_t& content, visitor_t* visitor)
+{
+    using string_t = std::basic_string<typename parsing_t::value_type>;
+    static_assert(
+        std::is_base_of_v<location::visitor<string_t>, visitor_t>,
+        "visitor type mismatch");
+
+    return parser<string_t, parsing_t, true>::parse(content, visitor);
+}
+
 template <typename char_t>
 auto parse(char_t* content)
 {
     return parse(std::basic_string_view<std::decay_t<char_t>> { content });
 }
 
-template <typename parsing_t>
-auto parse(
-    const parsing_t& content,
-    location::visitor<std::basic_string<typename parsing_t::value_type>>* visitor)
-{
-    using string_t = std::basic_string<typename parsing_t::value_type>;
-    return parser<string_t, parsing_t, true>::parse(content, visitor);
-}
-
-template <typename char_t>
-auto parse(
-    char_t* content,
-    location::visitor<std::basic_string_view<std::decay_t<char_t>>>* visitor)
+template <typename char_t, typename visitor_t>
+auto parse(char_t* content, visitor_t* visitor)
 {
     return parse(std::basic_string_view<std::decay_t<char_t>> { content }, visitor);
 }
 
-template <typename istream_t, typename _>
-auto parse(
-    istream_t& ifs,
-    bool check_bom,
-    location::visitor<std::basic_string<typename istream_t::char_type>>* visitor = nullptr)
+template <typename istream_t, typename visitor_t, typename _>
+auto parse(istream_t& ifs, bool check_bom, visitor_t* visitor)
 {
     using string_t = std::basic_string<typename istream_t::char_type>;
+    static_assert(
+        std::is_base_of_v<location::visitor<string_t>, visitor_t>,
+        "visitor type mismatch");
 
     ifs.seekg(0, std::ios::end);
     auto file_size = ifs.tellg();
@@ -782,8 +792,8 @@ auto parse(
     }
 }
 
-template <typename ifstream_t, typename path_t>
-auto open(const path_t& filepath, bool check_bom)
+template <typename ifstream_t, typename visitor_t, typename path_t>
+auto open(const path_t& filepath, bool check_bom, visitor_t* visitor)
 {
     using char_t = typename ifstream_t::char_type;
     using string_t = std::basic_string<char_t>;
@@ -794,7 +804,7 @@ auto open(const path_t& filepath, bool check_bom)
     if (!ifs.is_open()) {
         return return_t(std::nullopt);
     }
-    auto opt = parse(ifs, check_bom);
+    auto opt = parse(ifs, check_bom, visitor);
     ifs.close();
     return opt;
 }
