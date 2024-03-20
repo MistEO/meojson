@@ -224,12 +224,9 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
 template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
 inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_null()
 {
-    location::position cur_pos;
+    [[maybe_unused]] location::position cur_pos;
     if constexpr (has_visitor) {
         cur_pos = _pos;
-    }
-    else {
-        std::ignore = cur_pos;
     }
 
     for (const auto& ch : _utils::null_string<string_t>()) {
@@ -251,12 +248,9 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
 template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
 inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_boolean()
 {
-    location::position cur_pos;
+    [[maybe_unused]] location::position cur_pos;
     if constexpr (has_visitor) {
         cur_pos = _pos;
-    }
-    else {
-        std::ignore = cur_pos;
     }
 
     switch (*_cur) {
@@ -298,12 +292,9 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
 template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
 inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_number()
 {
-    location::position cur_pos;
+    [[maybe_unused]] location::position cur_pos;
     if constexpr (has_visitor) {
         cur_pos = _pos;
-    }
-    else {
-        std::ignore = cur_pos;
     }
 
     const auto first = _cur;
@@ -352,12 +343,9 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
 template <typename string_t, typename parsing_t, bool has_visitor, typename accel_traits>
 inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_traits>::parse_string()
 {
-    location::position cur_pos;
+    [[maybe_unused]] location::position cur_pos;
     if constexpr (has_visitor) {
         cur_pos = _pos;
-    }
-    else {
-        std::ignore = cur_pos;
     }
 
     auto string_opt = parse_stdstring();
@@ -477,7 +465,7 @@ inline basic_value<string_t> parser<string_t, parsing_t, has_visitor, accel_trai
 
         std::optional<string_t> key_opt;
 
-        location::position cur_pos2;
+        [[maybe_unused]] location::position cur_pos2;
         if constexpr (has_visitor) {
             cur_pos2 = _pos;
         }

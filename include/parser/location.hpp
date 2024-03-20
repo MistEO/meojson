@@ -13,8 +13,9 @@ using json_path = std::vector<std::variant<string_t, size_t>>;
 
 struct position
 {
-    size_t offset;
-    size_t row, column;
+    size_t offset = 0;
+    size_t row = 0;
+    size_t column = 0;
 };
 
 struct range
@@ -59,17 +60,12 @@ struct location_info
     range _self;
     std::variant<std::monostate, parse_array_info, parse_object_info> _info;
 
-    bool is_arr() const { return _info.index() == 1; }
-
-    bool is_obj() const { return _info.index() == 2; }
-
-    parse_array_info& arr() { return std::get<1>(_info); }
-
-    const parse_array_info& arr() const { return std::get<1>(_info); }
-
-    parse_object_info& obj() { return std::get<2>(_info); }
-
-    const parse_object_info& obj() const { return std::get<2>(_info); }
+    bool is_arr() const;
+    bool is_obj() const;
+    parse_array_info& arr();
+    const parse_array_info& arr() const;
+    parse_object_info& obj();
+    const parse_object_info& obj() const;
 };
 
 template <typename string_t = default_string_t>
@@ -111,64 +107,86 @@ private:
 
 template <typename string_t>
 inline void visitor<string_t>::property(
-    const string_t& key,
-    const position& start,
-    const position& end,
-    const json_path<string_t>& path)
+    [[maybe_unused]] const string_t& key,
+    [[maybe_unused]] const position& start,
+    [[maybe_unused]] const position& end,
+    [[maybe_unused]] const json_path<string_t>& path)
 {
-    std::ignore = key;
-    std::ignore = start;
-    std::ignore = end;
-    std::ignore = path;
 }
 
 template <typename string_t>
 inline void visitor<string_t>::value(
-    const basic_value<string_t>& value,
-    const position& start,
-    const position& end,
-    const json_path<string_t>& path)
+    [[maybe_unused]] const basic_value<string_t>& value,
+    [[maybe_unused]] const position& start,
+    [[maybe_unused]] const position& end,
+    [[maybe_unused]] const json_path<string_t>& path)
 {
-    std::ignore = value;
-    std::ignore = start;
-    std::ignore = end;
-    std::ignore = path;
 }
 
 template <typename string_t>
-inline void visitor<string_t>::object_enter(const position& start, const json_path<string_t>& path)
+inline void visitor<string_t>::object_enter(
+    [[maybe_unused]] const position& start,
+    [[maybe_unused]] const json_path<string_t>& path)
 {
-    std::ignore = start;
-    std::ignore = path;
 }
 
 template <typename string_t>
 inline void visitor<string_t>::object_leave(
-    const position& start,
-    const position& end,
-    const json_path<string_t>& path)
+    [[maybe_unused]] const position& start,
+    [[maybe_unused]] const position& end,
+    [[maybe_unused]] const json_path<string_t>& path)
 {
-    std::ignore = start;
-    std::ignore = end;
-    std::ignore = path;
 }
 
 template <typename string_t>
-inline void visitor<string_t>::array_enter(const position& start, const json_path<string_t>& path)
+inline void visitor<string_t>::array_enter(
+    [[maybe_unused]] const position& start,
+    [[maybe_unused]] const json_path<string_t>& path)
 {
-    std::ignore = start;
-    std::ignore = path;
 }
 
 template <typename string_t>
 inline void visitor<string_t>::array_leave(
-    const position& start,
-    const position& end,
-    const json_path<string_t>& path)
+    [[maybe_unused]] const position& start,
+    [[maybe_unused]] const position& end,
+    [[maybe_unused]] const json_path<string_t>& path)
 {
-    std::ignore = start;
-    std::ignore = end;
-    std::ignore = path;
+}
+
+template <typename string_t>
+bool location_info<string_t>::is_arr() const
+{
+    return _info.index() == 1;
+}
+
+template <typename string_t>
+bool location_info<string_t>::is_obj() const
+{
+    return _info.index() == 2;
+}
+
+template <typename string_t>
+typename location_info<string_t>::parse_array_info& location_info<string_t>::arr()
+{
+    return std::get<1>(_info);
+}
+
+template <typename string_t>
+const typename location_info<string_t>::parse_array_info& location_info<string_t>::arr() const
+{
+    return std::get<1>(_info);
+}
+
+template <typename string_t>
+typename location_info<string_t>::parse_object_info& location_info<string_t>::obj()
+{
+    return std::get<2>(_info);
+}
+
+template <typename string_t>
+const typename location_info<string_t>::parse_object_info& location_info<string_t>::obj() const
+{
+    return std::get<2>(_info);
 }
 
 template <typename string_t>
