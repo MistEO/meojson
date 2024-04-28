@@ -98,6 +98,12 @@ public:
     {
     }
 
+    template <typename enum_t, std::enable_if_t<std::is_enum_v<enum_t>, bool> = true>
+    basic_value(enum_t e)
+        : basic_value(static_cast<std::underlying_type_t<enum_t>>(e))
+    {
+    }
+
     template <
         typename jsonization_t,
         std::enable_if_t<_utils::has_to_json_in_member<jsonization_t>::value, bool> = true>
@@ -335,6 +341,12 @@ public:
         return dst;
     }
 
+    template <typename enum_t, std::enable_if_t<std::is_enum_v<enum_t>, bool> = true>
+    explicit operator enum_t() const
+    {
+        return static_cast<enum_t>(static_cast<std::underlying_type_t<enum_t>>(*this));
+    }
+
 private:
     friend class basic_array<string_t>;
     friend class basic_object<string_t>;
@@ -505,7 +517,7 @@ inline bool basic_value<string_t>::is() const noexcept
     else if constexpr (std::is_same_v<bool, value_t>) {
         return is_boolean();
     }
-    else if constexpr (std::is_arithmetic_v<value_t>) {
+    else if constexpr (std::is_arithmetic_v<value_t> || std::is_enum_v<value_t>) {
         return is_number();
     }
     else if constexpr (std::is_constructible_v<string_t, value_t>) {
@@ -599,16 +611,16 @@ inline auto basic_value<string_t>::get_helper(
 {
     if constexpr (std::is_constructible_v<string_t, first_key_t>) {
         return is_object() ? as_object().get_helper(
-                   default_value,
-                   std::forward<first_key_t>(first),
-                   std::forward<rest_keys_t>(rest)...)
+                                 default_value,
+                                 std::forward<first_key_t>(first),
+                                 std::forward<rest_keys_t>(rest)...)
                            : default_value;
     }
     else if constexpr (std::is_integral_v<std::decay_t<first_key_t>>) {
         return is_array() ? as_array().get_helper(
-                   default_value,
-                   std::forward<first_key_t>(first),
-                   std::forward<rest_keys_t>(rest)...)
+                                default_value,
+                                std::forward<first_key_t>(first),
+                                std::forward<rest_keys_t>(rest)...)
                           : default_value;
     }
     else {

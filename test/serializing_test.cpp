@@ -266,7 +266,14 @@ bool jsonizing()
         std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map;
         std::array<int, 5> arr;
 
-        MEO_JSONIZATION(str1, str2, str3, vec, map, arr);
+        enum class W
+        {
+            A,
+            B,
+            C,
+        } w = W::A;
+
+        MEO_JSONIZATION(str1, str2, str3, vec, map, arr, w);
     };
 
     MyStruct mine;
@@ -276,12 +283,16 @@ bool jsonizing()
     mine.vec.emplace_back(0.5);
     mine.map = { { "key_1",
                    { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2", { 10 } } } } } };
+    mine.w = MyStruct::W::C;
 
     json::value j_mine = mine;
+    std::cout << j_mine<< std::endl;
+
     MyStruct new_mine = (MyStruct)j_mine;
 
     bool ret = new_mine.str1 == "Hello" && new_mine.str2 == "World" && new_mine.str3 == "!"
-               && new_mine.vec[0] == 0.5 && new_mine.map["key_1"].size() == 2;
+               && new_mine.vec[0] == 0.5 && new_mine.map["key_1"].size() == 2
+               && new_mine.w == MyStruct::W::C;
     if (!ret) {
         std::cerr << "error new_mine" << std::endl;
         return false;
