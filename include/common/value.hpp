@@ -123,6 +123,14 @@ public:
     }
 
     template <
+        typename tuple_t,
+        std::enable_if_t<_utils::is_specialization<tuple_t, std::tuple>, bool> = true>
+    basic_value(tuple_t&& tup)
+        : basic_value(basic_array<string_t>(std::forward<tuple_t>(tup)))
+    {
+    }
+
+    template <
         typename value_t,
         std::enable_if_t<!std::is_convertible_v<value_t, basic_value<string_t>>, bool> = true>
     basic_value(value_t) = delete;
@@ -348,6 +356,14 @@ public:
     {
         return static_cast<enum_t>(static_cast<std::underlying_type_t<enum_t>>(*this));
     }
+
+    /*template <
+        typename tuple_t,
+        std::enable_if_t<_utils::is_specialization<tuple_t, std::tuple>, bool> = true>
+    explicit operator tuple_t() const
+    {
+        return as_array().as_tup
+    }*/
 
 private:
     friend class basic_array<string_t>;

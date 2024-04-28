@@ -104,6 +104,10 @@ public:
         size_t Size,
         template <typename, size_t> typename fixed_array_t = std::array>
     fixed_array_t<value_t, Size> as_fixed_array() const;
+    template <typename... elem_ts>
+    std::tuple<elem_ts...> as_tuple() const;
+    template <typename first_t, typename second_t>
+    std::pair<first_t, second_t> as_pair() const;
 
     // Usage: get(key_1, key_2, ..., default_value);
     template <typename... key_then_default_value_t>
@@ -216,6 +220,11 @@ private:
     auto get_helper(const value_t& default_value, size_t pos, rest_keys_t&&... rest) const;
     template <typename value_t>
     auto get_helper(const value_t& default_value, size_t pos) const;
+
+    template <typename tuple_t>
+    tuple_t as_tuple_templ() const;
+    template <size_t index, typename tuple_t>
+    void set_tuple(tuple_t& tup) const;
 
     string_t format(size_t indent, size_t indent_times) const;
 
@@ -377,6 +386,48 @@ inline fixed_array_t<value_t, Size> basic_array<string_t>::as_fixed_array() cons
         result.at(i) = _array_data.at(i).template as<value_t>();
     }
     return result;
+}
+
+template <typename string_t>
+template <size_t index, typename tuple_t>
+inline void basic_array<string_t>::set_tuple(tuple_t& tup) const
+{
+    using elem_t = std::tuple_element_t<index, tuple_t>;
+
+    if constexpr (index > 0) {
+        set_tuple<index - 1>(tup);
+    }
+
+    std::get<index>(tup) = static_cast<elem_t>(at(index));
+}
+
+template <typename string_t>
+template <typename tuple_t>
+inline tuple_t basic_array<string_t>::as_tuple_templ() const
+{
+    constexpr size_t tuple_size = std::tuple_size_v<tuple_t>;
+
+    if (size() != tuple_size) {
+        throw exception("Wrong array size");
+    }
+
+    tuple_t result;
+    set_tuple<tuple_size - 1>(result);
+    return result;
+}
+
+template <typename string_t>
+template <typename... elem_ts>
+inline std::tuple<elem_ts...> basic_array<string_t>::as_tuple() const
+{
+    return as_tuple_templ<std::tuple<elem_ts...>>();
+}
+
+template <typename string_t>
+template <typename first_t, typename second_t>
+inline std::pair<first_t, second_t> basic_array<string_t>::as_pair() const
+{
+    return as_tuple_templ<std::pair<first_t, second_t>>();
 }
 
 template <typename string_t>
