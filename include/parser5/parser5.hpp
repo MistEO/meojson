@@ -1,3 +1,5 @@
+// IWYU pragma: private, include <meojson/json5.hpp>
+
 #pragma once
 
 #include <algorithm>
