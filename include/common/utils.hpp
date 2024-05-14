@@ -2,6 +2,9 @@
 
 #pragma once
 
+#include <iomanip>
+#include <limits>
+#include <sstream>
 #include <string>
 #include <type_traits>
 
@@ -233,6 +236,21 @@ inline constexpr string_t null_string()
 template <typename string_t, typename any_t>
 inline string_t to_basic_string(any_t&& arg)
 {
+#ifdef MEOJSON_KEEP_FLOATING_PRECISION
+    using real_type = std::remove_reference_t<any_t>;
+    if constexpr (std::is_floating_point_v<real_type>) {
+        if constexpr (std::is_same_v<string_t, std::string>) {
+            std::ostringstream oss;
+            oss << std::setprecision(std::numeric_limits<real_type>::max_digits10) << arg;
+            return oss.str();
+        }
+        else if constexpr (std::is_same_v<string_t, std::wstring>) {
+            std::wostringstream oss;
+            oss << std::setprecision(std::numeric_limits<real_type>::max_digits10) << arg;
+            return oss.str();
+        }
+    }
+#endif
     if constexpr (std::is_same_v<string_t, std::string>) {
         return std::to_string(std::forward<any_t>(arg));
     }
