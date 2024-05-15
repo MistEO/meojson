@@ -4,6 +4,7 @@
 #include "json5_test.h"
 #include "precision_test.h"
 #include "serializing_test.h"
+#include "unicode_test.h"
 
 int main()
 {
@@ -26,6 +27,9 @@ int main()
 
     std::cout << "\n*** precision_test ***\n" << std::endl;
     success &= precision_test();
+
+    std::cout << "\n*** unicode_test ***\n" << std::endl;
+    success &= unicode_test();
 
     if (!success) {
         std::cout << "\n****** Test failed ******\n" << std::endl;
