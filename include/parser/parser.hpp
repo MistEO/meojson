@@ -483,7 +483,7 @@ inline std::optional<string_t> parser<string_t, parsing_t, accel_traits>::parse_
                     result.push_back(cp);
                 }
                 else {
-                    static_assert(false, "Unsupported type");
+                    static_assert(!sizeof(typename string_t::value_type), "Unsupported type");
                 }
                 break;
             }
