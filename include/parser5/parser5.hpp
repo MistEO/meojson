@@ -6,7 +6,6 @@
 #include <cctype>
 #include <cmath>
 #include <iomanip>
-#include <regex>
 #include <sstream>
 #include <stack>
 #include <vector>
@@ -303,15 +302,13 @@ inline bool parser5<string_t>::unicode::isIdContinueChar(u8char ch)
 template <typename string_t>
 inline bool parser5<string_t>::unicode::isDigit(u8char ch)
 {
-    auto str = StringFromCharCode(ch);
-    return std::regex_search(str, std::regex(R"([0-9])"));
+    return (ch >= '0' && ch <= '9');
 }
 
 template <typename string_t>
 inline bool parser5<string_t>::unicode::isHexDigit(u8char ch)
 {
-    auto str = StringFromCharCode(ch);
-    return std::regex_search(str, std::regex(R"([0-9A-Fa-f])"));
+    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9');
 }
 
 template <typename string_t>
