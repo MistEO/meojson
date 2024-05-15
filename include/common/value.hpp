@@ -1,3 +1,5 @@
+// IWYU pragma: private, include <meojson/json.hpp>
+
 #pragma once
 
 #include <cstddef>
@@ -611,16 +613,16 @@ inline auto basic_value<string_t>::get_helper(
 {
     if constexpr (std::is_constructible_v<string_t, first_key_t>) {
         return is_object() ? as_object().get_helper(
-                                 default_value,
-                                 std::forward<first_key_t>(first),
-                                 std::forward<rest_keys_t>(rest)...)
+                   default_value,
+                   std::forward<first_key_t>(first),
+                   std::forward<rest_keys_t>(rest)...)
                            : default_value;
     }
     else if constexpr (std::is_integral_v<std::decay_t<first_key_t>>) {
         return is_array() ? as_array().get_helper(
-                                default_value,
-                                std::forward<first_key_t>(first),
-                                std::forward<rest_keys_t>(rest)...)
+                   default_value,
+                   std::forward<first_key_t>(first),
+                   std::forward<rest_keys_t>(rest)...)
                           : default_value;
     }
     else {
