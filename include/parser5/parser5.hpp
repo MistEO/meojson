@@ -308,7 +308,7 @@ inline bool parser5<string_t>::unicode::isDigit(u8char ch)
 template <typename string_t>
 inline bool parser5<string_t>::unicode::isHexDigit(u8char ch)
 {
-    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9');
+    return (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F') || (ch >= '0' && ch <= '9');
 }
 
 template <typename string_t>
