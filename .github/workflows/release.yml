@@ -1,0 +1,16 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{  github.ref_name }}
