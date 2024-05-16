@@ -1,6 +1,6 @@
 #define MEOJSON_KEEP_FLOATING_PRECISION
 
-#include "../include/json.hpp"
+#include "json.hpp"
 
 #include <iomanip>
 #include <iostream>

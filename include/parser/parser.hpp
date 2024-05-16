@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <cctype>
 #include <fstream>
 #include <optional>
 #include <ostream>
@@ -438,9 +439,54 @@ inline std::optional<string_t> parser<string_t, parsing_t, accel_traits>::parse_
             case 't':
                 result.push_back('\t');
                 break;
-                // case 'u':
-                //     result.push_back('\u');
-                //     break;
+            case 'u': {
+                uint16_t cp = 0;
+                for (int i = 0; i < 4; i++) {
+                    ++_cur;
+                    if (_cur == _end) {
+                        return std::nullopt;
+                    }
+                    if (!std::isxdigit(static_cast<unsigned char>(*_cur))) {
+                        return std::nullopt;
+                    }
+                    cp <<= 4;
+                    if ('0' <= *_cur && *_cur <= '9') {
+                        cp |= *_cur - '0';
+                    }
+                    else if ('a' <= *_cur && *_cur <= 'f') {
+                        cp |= *_cur - 'a' + 10;
+                    }
+                    else if ('A' <= *_cur && *_cur <= 'F') {
+                        cp |= *_cur - 'A' + 10;
+                    }
+                    else {
+                        return std::nullopt;
+                    }
+                }
+                if constexpr (std::is_same_v<typename string_t::value_type, char>) {
+                    // utf8
+                    if (cp <= 0x7F) {
+                        result.push_back(static_cast<char>(cp));
+                    }
+                    else if (cp <= 0x7FF) {
+                        result.push_back(static_cast<char>(((cp >> 6) & 0b00011111) | 0b11000000u));
+                        result.push_back(static_cast<char>((cp & 0b00111111) | 0b10000000u));
+                    }
+                    else {
+                        result.push_back(
+                            static_cast<char>(((cp >> 12) & 0b00001111) | 0b11100000u));
+                        result.push_back(static_cast<char>(((cp >> 6) & 0b00111111) | 0b10000000u));
+                        result.push_back(static_cast<char>((cp & 0b00111111) | 0b10000000u));
+                    }
+                }
+                else if constexpr (std::is_same_v<typename string_t::value_type, wchar_t>) {
+                    result.push_back(cp);
+                }
+                else {
+                    static_assert(!sizeof(typename string_t::value_type), "Unsupported type");
+                }
+                break;
+            }
             default:
                 // Illegal backslash escape
                 return std::nullopt;
