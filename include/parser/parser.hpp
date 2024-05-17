@@ -509,11 +509,17 @@ inline std::optional<string_t> parser<string_t, parsing_t, accel_traits>::parse_
                     }
                 }
                 else if constexpr (std::is_same_v<typename string_t::value_type, wchar_t>) {
-                    if (ext_cp <= 0xFFFF) {
-                        result.push_back(static_cast<uint16_t>(ext_cp));
+                    if constexpr (sizeof (wchar_t) == 4) {
+                        result.push_back(static_cast<wchar_t>(ext_cp));
+                    } else if constexpr (sizeof (wchar_t) == 2) {
+                        if (ext_cp <= 0xFFFF) {
+                            result.push_back(static_cast<wchar_t>(ext_cp));
+                        } else {
+                            result.push_back(static_cast<wchar_t>(hi_cp));
+                            result.push_back(static_cast<wchar_t>(lo_cp));
+                        }
                     } else {
-                        result.push_back(hi_cp);
-                        result.push_back(lo_cp);
+                        static_assert(!sizeof(typename string_t::value_type), "Unsupported wchar");
                     }
                 }
                 else {
