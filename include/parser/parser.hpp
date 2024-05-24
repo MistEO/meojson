@@ -397,6 +397,7 @@ inline std::optional<string_t> parser<string_t, parsing_t, accel_traits>::parse_
 
     string_t result;
     auto no_escape_beg = _cur;
+    uint16_t pair_high = 0;
 
     while (_cur != _end) {
         if constexpr (sizeof(*_cur) == 1 && accel_traits::available) {
@@ -412,6 +413,9 @@ inline std::optional<string_t> parser<string_t, parsing_t, accel_traits>::parse_
         case '\\': {
             result += string_t(no_escape_beg, _cur++);
             if (_cur == _end) {
+                return std::nullopt;
+            }
+            if (pair_high && *_cur != 'u') {
                 return std::nullopt;
             }
             switch (*_cur) {
@@ -463,24 +467,60 @@ inline std::optional<string_t> parser<string_t, parsing_t, accel_traits>::parse_
                         return std::nullopt;
                     }
                 }
+                uint32_t ext_cp = cp;
+                uint16_t hi_cp = 0, lo_cp = 0;
+                if (0xD800 <= cp && cp <= 0xDBFF) {
+                    if (pair_high) {
+                        return std::nullopt;
+                    } else {
+                        pair_high = cp;
+                        break;
+                    }
+                } else if (0xDC00 <= cp && cp <= 0xDFFF) {
+                    if (!pair_high) {
+                        return std::nullopt;
+                    } else {
+                        ext_cp = (((pair_high - 0xD800) << 10) | (cp - 0xDC00)) + 0x10000;
+                        hi_cp = pair_high;
+                        lo_cp = cp;
+                        pair_high = 0;
+                    }
+                }
                 if constexpr (std::is_same_v<typename string_t::value_type, char>) {
                     // utf8
-                    if (cp <= 0x7F) {
-                        result.push_back(static_cast<char>(cp));
+                    if (ext_cp <= 0x7F) {
+                        result.push_back(static_cast<char>(ext_cp));
                     }
-                    else if (cp <= 0x7FF) {
-                        result.push_back(static_cast<char>(((cp >> 6) & 0b00011111) | 0b11000000u));
-                        result.push_back(static_cast<char>((cp & 0b00111111) | 0b10000000u));
+                    else if (ext_cp <= 0x7FF) {
+                        result.push_back(static_cast<char>(((ext_cp >> 6) & 0b00011111) | 0b11000000u));
+                        result.push_back(static_cast<char>((ext_cp & 0b00111111) | 0b10000000u));
                     }
-                    else {
+                    else if (ext_cp <= 0xFFFF) {
                         result.push_back(
-                            static_cast<char>(((cp >> 12) & 0b00001111) | 0b11100000u));
-                        result.push_back(static_cast<char>(((cp >> 6) & 0b00111111) | 0b10000000u));
-                        result.push_back(static_cast<char>((cp & 0b00111111) | 0b10000000u));
+                            static_cast<char>(((ext_cp >> 12) & 0b00001111) | 0b11100000u));
+                        result.push_back(static_cast<char>(((ext_cp >> 6) & 0b00111111) | 0b10000000u));
+                        result.push_back(static_cast<char>((ext_cp & 0b00111111) | 0b10000000u));
+                    } else {
+                        result.push_back(
+                            static_cast<char>(((ext_cp >> 18) & 0b00000111) | 0b11110000u));
+                        result.push_back(static_cast<char>(((ext_cp >> 12) & 0b00111111) | 0b10000000u));
+                        result.push_back(static_cast<char>(((ext_cp >> 6) & 0b00111111) | 0b10000000u));
+                        result.push_back(static_cast<char>((ext_cp & 0b00111111) | 0b10000000u));
                     }
                 }
                 else if constexpr (std::is_same_v<typename string_t::value_type, wchar_t>) {
-                    result.push_back(cp);
+                    if constexpr (sizeof (wchar_t) == 4) {
+                        result.push_back(static_cast<wchar_t>(ext_cp));
+                    } else if constexpr (sizeof (wchar_t) == 2) {
+                        if (ext_cp <= 0xFFFF) {
+                            result.push_back(static_cast<wchar_t>(ext_cp));
+                        } else {
+                            result.push_back(static_cast<wchar_t>(hi_cp));
+                            result.push_back(static_cast<wchar_t>(lo_cp));
+                        }
+                    } else {
+                        static_assert(!sizeof(typename string_t::value_type), "Unsupported wchar");
+                    }
                 }
                 else {
                     static_assert(!sizeof(typename string_t::value_type), "Unsupported type");
@@ -495,10 +535,16 @@ inline std::optional<string_t> parser<string_t, parsing_t, accel_traits>::parse_
             break;
         }
         case '"': {
+            if (pair_high) {
+                return std::nullopt;
+            }
             result += string_t(no_escape_beg, _cur++);
             return result;
         }
         default:
+            if (pair_high) {
+                return std::nullopt;
+            }
             ++_cur;
             break;
         }
