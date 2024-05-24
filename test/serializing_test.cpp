@@ -353,6 +353,12 @@ bool jsonizing()
         return false;
     }
 
+    json::array tuple_arr;
+    tuple_arr.emplace_back(1);
+    tuple_arr.emplace_back("aaabbbccc");
+    auto t = tuple_arr.as_tuple<int, std::string>();
+    auto p = tuple_arr.as_pair<int, std::string>();
+
     return true;
 }
 
