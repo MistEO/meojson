@@ -375,3 +375,7 @@ std::cout << value["名字"] << std::endl;
 // str = "value"
 std::string str = (std::string)value["key"][0];
 ```
+
+## Debug
+
+If you are using Visual Studio and want `json::value` to be more visible in the debugger, please add `tools/meojson.natvis` to your solution/project, ref to [Add a .natvis file to a C++ project](https://learn.microsoft.com/en-us/visualstudio/debugger/create-custom-views-of-native-objects?view=vs-2022#add-a-natvis-file-to-a-c-project).

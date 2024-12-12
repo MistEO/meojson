@@ -375,3 +375,7 @@ std::cout << value["名字"] << std::endl;
 // str = "value"
 std::string str = (std::string)value["key"][0];
 ```
+
+## 调试
+
+如果您正在使用 Visual Studio，并希望 `json::value` 在调试器中显示的更为直观，请为您的解决方案/项目添加 `tools/meojson.natvis`，详见 [将 .natvis 文件添加到 C++ 项目](https://learn.microsoft.com/zh-cn/visualstudio/debugger/create-custom-views-of-native-objects?view=vs-2022#add-a-natvis-file-to-a-c-project)。
