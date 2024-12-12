@@ -84,6 +84,16 @@ constexpr bool is_collection = false;
 template <typename T>
 constexpr bool is_collection<T> = is_container<T> && !is_map<T> && !is_fixed_array<T>;
 
+template <typename T, template <typename...> typename Ref, typename = void>
+constexpr bool is_specialization = false;
+template <template <typename...> typename T, template <typename...> typename Ref, typename... Args>
+constexpr bool is_specialization<T<Args...>, Ref> = std::is_same_v<T<Args...>, Ref<Args...>>;
+
+template <typename T, typename = void>
+constexpr bool is_tuple = false;
+template <typename T>
+constexpr bool is_tuple<T> = is_specialization<T, std::tuple> || is_specialization<T, std::pair>;
+
 template <typename T>
 class has_to_json_in_member
 {
