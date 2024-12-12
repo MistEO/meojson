@@ -184,6 +184,18 @@ public:
         return as_fixed_array<value_t, Size, fixed_array_t>();
     }
 
+    template <typename... elem_ts>
+    explicit operator std::tuple<elem_ts...>() const
+    {
+        return as_tuple<elem_ts...>();
+    }
+
+    template <typename elem1_t, typename elem2_t>
+    explicit operator std::pair<elem1_t, elem2_t>() const
+    {
+        return as_pair<elem1_t, elem2_t>();
+    }
+
     template <
         typename jsonization_t,
         std::enable_if_t<_utils::has_from_json_in_member<jsonization_t, string_t>::value, bool> =
