@@ -364,13 +364,13 @@ public:
     template <typename... elem_ts>
     explicit operator std::tuple<elem_ts...>() const
     {
-        return as_array().as_tuple<elem_ts...>();
+        return as_array().template as_tuple<elem_ts...>();
     }
     
     template <typename elem1_t, typename elem2_t>
     explicit operator std::pair<elem1_t, elem2_t>() const
     {
-        return as_array().as_pair<elem1_t, elem2_t>();
+        return as_array().template as_pair<elem1_t, elem2_t>();
     }
 
 private:
