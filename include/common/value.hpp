@@ -122,11 +122,15 @@ public:
     {
     }
 
-    template <
-        typename tuple_t,
-        std::enable_if_t<_utils::is_specialization<tuple_t, std::tuple>, bool> = true>
-    basic_value(tuple_t&& tup)
-        : basic_value(basic_array<string_t>(std::forward<tuple_t>(tup)))
+    template <typename... elem_ts>
+    basic_value(std::tuple<elem_ts...>&& tup)
+        : basic_value(basic_array<string_t>(std::forward<std::tuple<elem_ts...>>(tup)))
+    {
+    }
+
+    template <typename elem1_t, typename elem2_t>
+    basic_value(std::pair<elem1_t, elem2_t>&& pair)
+        : basic_value(basic_array<string_t>(std::pair<elem1_t, elem2_t>(pair)))
     {
     }
 

@@ -74,6 +74,17 @@ public:
     {
     }
 
+    template <typename... elem_ts>
+    basic_array(const std::tuple<elem_ts...>& tup)
+    {
+        foreach_tuple(tup, std::make_index_sequence<std::tuple_size_v<std::tuple<elem_ts...>>>());
+    }
+    template <typename first_t, typename second_t>
+    basic_array(std::pair<first_t, second_t> pair)
+        : _array_data({ std::move(pair.first), std::move(pair.second) })
+    {
+    }
+
     ~basic_array() noexcept = default;
 
     bool empty() const noexcept { return _array_data.empty(); }
@@ -237,6 +248,12 @@ private:
     tuple_t as_tuple_templ() const;
     template <size_t index, typename tuple_t>
     void set_tuple(tuple_t& tup) const;
+
+    template <typename Tuple, std::size_t... Is>
+    void foreach_tuple(const Tuple& t, std::index_sequence<Is...>)
+    {
+        (_array_data.emplace_back(std::get<Is>(t)), ...);
+    }
 
     string_t format(size_t indent, size_t indent_times) const;
 
