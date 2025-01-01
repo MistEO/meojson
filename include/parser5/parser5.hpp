@@ -314,34 +314,42 @@ inline bool parser5<string_t>::unicode::isHexDigit(u8char ch)
 template <typename string_t>
 inline uint64_t parser5<string_t>::unicode::toUnicode(u8char ch)
 {
-    std::stack<uint8_t> coded;
     if (ch == 0) {
         return ch;
     }
+
+    std::stack<uint8_t> coded;
     while (ch > 0) {
         coded.push(ch & 0xff);
-        ch = ch >> 8;
+        ch >>= 8;
     }
+
     u8char charcode = 0;
     uint8_t t = coded.top();
     coded.pop();
     if (t < 128) {
         return t;
     }
-    uint8_t high_bit_mask = (1 << 6) - 1;
+
+    uint8_t high_bit_mask = 0b00111111;
     uint8_t high_bit_shift = 0;
     int total_bits = 0;
     const int other_bits = 6;
+
     while ((t & 0xC0) == 0xC0) {
         t <<= 1;
         t &= 0xff;
-        total_bits += 6;
+        total_bits += other_bits;
         high_bit_mask >>= 1;
         high_bit_shift++;
-        charcode <<= other_bits;
-        charcode |= coded.top() & ((1 << other_bits) - 1);
-        coded.pop();
+
+        if (!coded.empty()) {
+            charcode <<= other_bits;
+            charcode |= coded.top() & ((1 << other_bits) - 1);
+            coded.pop();
+        }
     }
+
     charcode |= static_cast<uint64_t>((t >> high_bit_shift) & high_bit_mask) << total_bits;
     return charcode;
 }
