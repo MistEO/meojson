@@ -2,9 +2,9 @@
 
 # meojson
 
-现代化的全平台 Json/Json5 解析/生成器，Header-only，并且使用了魔法！
+✨下一代 C++ Json/Json5 序列化引擎 | 零依赖 | Header Only | 释放你的 JSON 潜能
 
-A modern all-platform Json/Json5 parser/serializer, which is header-only and used magic!
+✨ Next-gen C++ JSON/JSON5 Serialization Engine | Zero Dependency | Header-Only | Unleash JSON Potential
 
 </div>
 
