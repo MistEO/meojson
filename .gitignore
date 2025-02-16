@@ -44,3 +44,6 @@ package.json
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# Clangd
+.cache
