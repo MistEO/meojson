@@ -13,6 +13,11 @@
 
 bool serializing()
 {
+    std::variant<int, std::vector<int>> var = 1;
+    json::value k = var;
+    auto var2 = k.as<std::variant<int, std::vector<int>>>();
+    auto is_var = k.is<std::variant<int, std::vector<int>>>();
+
     json::value root;
 
     root["hello"] = "meojson";
@@ -286,7 +291,7 @@ bool jsonizing()
     mine.w = MyStruct::W::C;
 
     json::value j_mine = mine;
-    std::cout << j_mine<< std::endl;
+    std::cout << j_mine << std::endl;
 
     MyStruct new_mine = (MyStruct)j_mine;
 
