@@ -272,10 +272,10 @@ inline string_t to_basic_string(any_t&& arg)
 template <std::size_t id, typename string_t, typename variant_t>
 inline bool serialize_variant_impl(basic_value<string_t>& val, variant_t&& var)
 {
-    if (var.index() == id) {
-        val = basic_value<string_t>(std::get<id>(std::forward<variant_t>(var)));
+    if (var.index() != id) {
         return false;
     }
+    val = basic_value<string_t>(std::get<id>(std::forward<variant_t>(var)));
     return true;
 }
 
@@ -283,7 +283,7 @@ template <typename string_t, typename variant_t, std::size_t... ids>
 inline basic_value<string_t> serialize_variant(variant_t&& var, std::index_sequence<ids...>)
 {
     basic_value<string_t> val;
-    (serialize_variant_impl<ids>(val, std::forward<variant_t>(var)) && ...);
+    (serialize_variant_impl<ids>(val, std::forward<variant_t>(var)) || ...);
     return val;
 }
 
@@ -291,10 +291,10 @@ template <std::size_t id, typename string_t, typename variant_t>
 inline bool deserialize_variant_impl(const basic_value<string_t>& val, variant_t& var)
 {
     using alt_t = std::variant_alternative_t<id, variant_t>;
-    if (val.template is<alt_t>()) {
-        var = val.template as<alt_t>();
+    if (!val.template is<alt_t>()) {
         return false;
     }
+    var = val.template as<alt_t>();
     return true;
 }
 
@@ -302,7 +302,7 @@ template <typename string_t, typename variant_t, std::size_t... ids>
 inline variant_t deserialize_variant(const basic_value<string_t>& val, std::index_sequence<ids...>)
 {
     variant_t var;
-    (deserialize_variant_impl<ids>(val, var) && ...);
+    (deserialize_variant_impl<ids>(val, var) || ...);
     return var;
 }
 
@@ -318,7 +318,7 @@ inline bool detect_variant_impl(const basic_value<string_t>& val)
 template <typename string_t, typename variant_t, std::size_t... ids>
 inline bool detect_variant(const basic_value<string_t>& val, std::index_sequence<ids...>)
 {
-    return (detect_variant_impl<string_t, std::variant_alternative_t<ids, variant_t>>(val) && ...);
+    return (detect_variant_impl<string_t, std::variant_alternative_t<ids, variant_t>>(val) || ...);
 }
 
 } // namespace json::_utils

@@ -13,11 +13,6 @@
 
 bool serializing()
 {
-    std::variant<int, std::vector<int>> var = 1;
-    json::value k = var;
-    auto var2 = k.as<std::variant<int, std::vector<int>>>();
-    auto is_var = k.is<std::variant<int, std::vector<int>>>();
-
     json::value root;
 
     root["hello"] = "meojson";
@@ -373,6 +368,12 @@ bool jsonizing()
     auto new_tuple_val = (json::value)t;
     new_tuple_val.as<std::tuple<int, std::string>>();
     new_tuple_val.as<std::pair<int, std::string>>();
+    
+    using VarT = std::variant<bool, std::string, std::array<int, 4>>;
+    VarT var = std::string("abc");
+    json::value k = var;
+    auto var2 = k.as<VarT>();
+    auto is_var = k.is<VarT>();
 
     auto new_pair_arr = (json::array)p;
     auto new_pair_val = (json::value)p;
