@@ -270,7 +270,7 @@ inline string_t to_basic_string(any_t&& arg)
 }
 
 template <std::size_t id, typename string_t, typename variant_t>
-bool serialize_variant_impl(basic_value<string_t>& val, variant_t&& var)
+inline bool serialize_variant_impl(basic_value<string_t>& val, variant_t&& var)
 {
     if (var.index() == id) {
         val = basic_value<string_t>(std::get<id>(std::forward<variant_t>(var)));
@@ -280,7 +280,7 @@ bool serialize_variant_impl(basic_value<string_t>& val, variant_t&& var)
 }
 
 template <typename string_t, typename variant_t, std::size_t... ids>
-basic_value<string_t> serialize_variant(variant_t&& var, std::index_sequence<ids...>)
+inline basic_value<string_t> serialize_variant(variant_t&& var, std::index_sequence<ids...>)
 {
     basic_value<string_t> val;
     (serialize_variant_impl<ids>(val, std::forward<variant_t>(var)) && ...);
@@ -288,7 +288,7 @@ basic_value<string_t> serialize_variant(variant_t&& var, std::index_sequence<ids
 }
 
 template <std::size_t id, typename string_t, typename variant_t>
-bool deserialize_variant_impl(const basic_value<string_t>& val, variant_t& var)
+inline bool deserialize_variant_impl(const basic_value<string_t>& val, variant_t& var)
 {
     using alt_t = std::variant_alternative_t<id, variant_t>;
     if (val.template is<alt_t>()) {
@@ -299,7 +299,7 @@ bool deserialize_variant_impl(const basic_value<string_t>& val, variant_t& var)
 }
 
 template <typename string_t, typename variant_t, std::size_t... ids>
-variant_t deserialize_variant(const basic_value<string_t>& val, std::index_sequence<ids...>)
+inline variant_t deserialize_variant(const basic_value<string_t>& val, std::index_sequence<ids...>)
 {
     variant_t var;
     (deserialize_variant_impl<ids>(val, var) && ...);
@@ -307,7 +307,7 @@ variant_t deserialize_variant(const basic_value<string_t>& val, std::index_seque
 }
 
 template <typename string_t, typename alt_t>
-bool detect_variant_impl(const basic_value<string_t>& val)
+inline bool detect_variant_impl(const basic_value<string_t>& val)
 {
     if (val.template is<alt_t>()) {
         return true;
@@ -316,7 +316,7 @@ bool detect_variant_impl(const basic_value<string_t>& val)
 }
 
 template <typename string_t, typename variant_t, std::size_t... ids>
-bool detect_variant(const basic_value<string_t>& val, std::index_sequence<ids...>)
+inline bool detect_variant(const basic_value<string_t>& val, std::index_sequence<ids...>)
 {
     return (detect_variant_impl<string_t, std::variant_alternative_t<ids, variant_t>>(val) && ...);
 }
