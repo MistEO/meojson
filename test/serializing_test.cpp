@@ -374,7 +374,11 @@ bool jsonizing()
     VarT var = std::string("abc");
     json::value k = var;
     auto var2 = k.as<VarT>();
-    auto is_var = k.is<VarT>();
+    bool is_var = k.is<VarT>();
+    if (!is_var) {
+        std::cerr << "error is std::variant" << std::endl;
+        return false;
+    }
 
     auto new_pair_arr = (json::array)p;
     auto new_pair_val = (json::value)p;
