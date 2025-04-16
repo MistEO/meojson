@@ -138,11 +138,11 @@ public:
 
     template <
         typename variant_t,
-        std::enable_if_t<_utils::is_variant<std::remove_reference_t<variant_t>>, bool> = true>
+        std::enable_if_t<_utils::is_variant<std::decay_t<variant_t>>, bool> = true>
     basic_value(variant_t&& var)
         : basic_value(_utils::serialize_variant<string_t>(
               std::forward<variant_t>(var),
-              std::make_index_sequence<std::variant_size_v<std::remove_reference_t<variant_t>>>()))
+              std::make_index_sequence<std::variant_size_v<std::decay_t<variant_t>>>()))
     {
     }
 

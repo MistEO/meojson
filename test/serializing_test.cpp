@@ -265,6 +265,7 @@ bool jsonizing()
         std::vector<double> vec;
         std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map;
         std::array<int, 5> arr;
+        std::variant<bool, std::string, std::array<int, 4>> var;
 
         enum class W
         {
@@ -273,7 +274,7 @@ bool jsonizing()
             C,
         } w = W::A;
 
-        MEO_JSONIZATION(str1, str2, str3, vec, map, arr, w);
+        MEO_JSONIZATION(str1, str2, str3, vec, map, arr, w, var);
     };
 
     MyStruct mine;
