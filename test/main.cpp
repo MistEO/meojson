@@ -2,6 +2,7 @@
 
 #include "include_test.h"
 #include "json5_test.h"
+#include "parse_test.h"
 #include "precision_test.h"
 #include "serializing_test.h"
 #include "unicode_test.h"
@@ -10,8 +11,11 @@ int main()
 {
     std::cout << "\n****** Testing ******\n" << std::endl;
 
+    std::cout << "\n*** parsing ***\n" << std::endl;
+    bool success = parsing();
+
     std::cout << "\n*** serializing ***\n" << std::endl;
-    bool success = serializing();
+    success &= serializing();
 
     std::cout << "\n*** wstring_serializing ***\n" << std::endl;
     success &= wstring_serializing();

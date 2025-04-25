@@ -3,25 +3,25 @@
 #include "json5.hpp"
 #include "json5_test.h"
 
-bool parsing();
-bool parsing_error();
+bool parsing5();
+bool parsing5_error();
 
 bool test_json5()
 {
-    /*** Parsing Json5 ***/
+    /*** parsing5 Json5 ***/
 
-    if (!parsing()) {
+    if (!parsing5()) {
         return false;
     }
 
-    if (!parsing_error()) {
+    if (!parsing5_error()) {
         return false;
     }
 
     return true;
 }
 
-bool parsing()
+bool parsing5()
 {
     auto content_raw = R"(
 // 这是一段json5格式的信息
@@ -42,17 +42,17 @@ bool parsing()
     std::string error_message;
     auto ret = json::parse5(content, &error_message);
     if (!ret) {
-        std::cerr << "Parsing failed" << std::endl;
+        std::cerr << "parsing5 failed" << std::endl;
         std::cerr << error_message << std::endl;
         return false;
     }
     {
         auto another_ret = json::parse5(content, &error_message);
         if (!another_ret) {
-            std::cerr << "Parsing failed" << std::endl;
+            std::cerr << "parsing5 failed" << std::endl;
             std::cerr << error_message << std::endl;
             return false;
-        }                             // C-style strings can also be used as input.
+        } // C-style strings can also be used as input.
     }
     json::value& value = ret.value(); // you can use rvalues if needed, like
                                       // `auto value = std::move(ret).value();`
@@ -75,7 +75,7 @@ bool parsing()
     return true;
 }
 
-bool parsing_error()
+bool parsing5_error()
 {
     std::string error_content = "{ error }";
     std::string error_msg;
