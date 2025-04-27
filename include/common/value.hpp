@@ -597,7 +597,6 @@ inline bool basic_value<string_t>::is() const noexcept
                && at(1).template is<typename value_t::second_type>();
     }
     else if constexpr (_utils::is_tuple<value_t>) {
-        // 逐个检查tuple的每个元素类型
         return _utils::detect_tuple<string_t, value_t>(
             *this,
             std::make_index_sequence<std::tuple_size_v<value_t>>());

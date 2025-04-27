@@ -316,26 +316,16 @@ inline variant_t deserialize_variant(const basic_value<string_t>& val, std::inde
     return var;
 }
 
-template <typename string_t, typename alt_t>
-inline bool _detect_variant_impl(const basic_value<string_t>& val)
-{
-    if (!val.template is<alt_t>()) {
-        return false;
-    }
-    return true;
-}
-
 template <typename string_t, typename variant_t, std::size_t... ids>
 inline bool detect_variant(const basic_value<string_t>& val, std::index_sequence<ids...>)
 {
-    return (_detect_variant_impl<string_t, std::variant_alternative_t<ids, variant_t>>(val) || ...);
+    return (val.template is<std::variant_alternative_t<ids, variant_t>>() || ...);
 }
 
 template <typename string_t, typename tuple_t, std::size_t... ids>
 inline bool detect_tuple(const basic_value<string_t>& val, std::index_sequence<ids...>)
 {
     return val.is_array() && val.as_array().size() == std::tuple_size_v<tuple_t>
-           && (_detect_variant_impl<string_t, std::tuple_element_t<ids, tuple_t>>(val.at(ids))
-               || ...);
+           && (val.at(ids).template is<std::tuple_element_t<ids, tuple_t>>() || ...);
 }
 } // namespace json::_utils
