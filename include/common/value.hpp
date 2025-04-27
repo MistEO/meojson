@@ -592,8 +592,9 @@ inline bool basic_value<string_t>::is() const noexcept
             std::make_index_sequence<std::variant_size_v<value_t>>());
     }
     else if constexpr (_utils::is_pair<value_t>) {
-        return is_array() && as_array().size() == 2 && at(0).is<typename value_t::first_type>()
-               && at(1).is<typename value_t::second_type>();
+        return is_array() && as_array().size() == 2
+               && at(0).template is<typename value_t::first_type>()
+               && at(1).template is<typename value_t::second_type>();
     }
     else if constexpr (_utils::is_tuple<value_t>) {
         // 逐个检查tuple的每个元素类型
