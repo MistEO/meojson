@@ -364,12 +364,14 @@ bool jsonizing()
     json::value tuple_val = tuple_arr;
     auto t3 = std::tuple<int, std::string>(tuple_val);
     auto p3 = std::tuple<int, std::string>(tuple_val);
+    bool ist = tuple_val.is<std::tuple<int, std::string>>();
+    bool isp = tuple_val.is<std::pair<int, std::string>>();
 
     auto new_tuple_arr = (json::array)t;
     auto new_tuple_val = (json::value)t;
     new_tuple_val.as<std::tuple<int, std::string>>();
     new_tuple_val.as<std::pair<int, std::string>>();
-    
+
     using VarT = std::variant<bool, std::string, std::array<int, 4>>;
     VarT var = std::string("abc");
     json::value k = var;
