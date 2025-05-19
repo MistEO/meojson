@@ -47,3 +47,8 @@ pnpm-lock.yaml
 
 # Clangd
 .cache
+
+# Test output
+
+serializing.json
+wstring_serializing.json
