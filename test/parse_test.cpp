@@ -26,13 +26,13 @@ bool wrong_json()
 bool jsonc_trail_comma()
 {
     std::string obj_trail = R"({ "key": 1, })";
-    if (!json::parse(obj_trail, json::accept_jsonc_flag {})) {
+    if (!json::parsec(obj_trail)) {
         std::cerr << "Parsing failed:" << obj_trail << std::endl;
         return false;
     }
 
     std::string arr_trail = R"([ 1, 2, ])";
-    if (!json::parse(arr_trail, json::accept_jsonc_flag {})) {
+    if (!json::parsec(arr_trail)) {
         std::cerr << "Parsing failed:" << arr_trail << std::endl;
         return false;
     }
@@ -48,7 +48,7 @@ bool jsonc_comment()
  1, }
 /* trail */
 )";
-    if (!json::parse(json, json::accept_jsonc_flag {})) {
+    if (!json::parsec(json)) {
         std::cerr << "Parsing failed:" << json << std::endl;
         return false;
     }
