@@ -703,7 +703,9 @@ bool json::parser<accept_jsonc, string_t, parsing_t, accel_traits>::skip_comment
             break;
         }
     }
-    return false;
+
+    // _cur == _end
+    return t == comment_type::line;
 }
 
 template <bool accept_jsonc, typename string_t, typename parsing_t, typename accel_traits>

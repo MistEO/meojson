@@ -65,5 +65,11 @@ bool jsonc_comment()
         return false;
     }
 
+    std::string json2 = R"({}//)";
+
+    if (!json::parsec(json2)) {
+        std::cerr << "Parsing failed:" << json2 << std::endl;
+        return false;
+    }
     return true;
 }
