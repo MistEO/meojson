@@ -20,6 +20,17 @@ bool wrong_json()
         return false;
     }
 
+    std::string wrong_json_with_comments = R"({\)";
+    if (json::parse(wrong_json_with_comments)) {
+        std::cerr << "Parsing failed:" << wrong_json_with_comments << std::endl;
+        return false;
+    }
+    std::string wrong_json_with_comments2 = R"({\**)";
+    if (json::parse(wrong_json_with_comments2)) {
+        std::cerr << "Parsing failed:" << wrong_json_with_comments2 << std::endl;
+        return false;
+    }
+
     return true;
 }
 
@@ -47,6 +58,7 @@ bool jsonc_comment()
 123*/{ "key"://456/*789
  1, }
 /* trail */
+// 111
 )";
     if (!json::parsec(json)) {
         std::cerr << "Parsing failed:" << json << std::endl;

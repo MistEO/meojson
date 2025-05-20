@@ -57,6 +57,7 @@ private:
 
     bool skip_string_literal_with_accel();
     bool skip_whitespace() noexcept;
+    bool skip_comment() noexcept;
     bool skip_digit();
     bool skip_unicode_escape(uint16_t& pair_high, string_t& result);
 
@@ -144,8 +145,7 @@ inline std::optional<basic_value<string_t>>
         return std::nullopt;
     }
 
-    // After the parsing is complete, there should be no more content other than
-    // spaces behind
+    // After the parsing is complete, there should be no more content other than spaces behind
     if (skip_whitespace()) {
         return std::nullopt;
     }
@@ -629,74 +629,78 @@ inline bool
 template <bool accept_jsonc, typename string_t, typename parsing_t, typename accel_traits>
 inline bool parser<accept_jsonc, string_t, parsing_t, accel_traits>::skip_whitespace() noexcept
 {
-    if constexpr (accept_jsonc) {
-        enum
-        {
-            idle,
-            line,
-            block,
-        } state = idle;
-
-        while (_cur != _end) {
-            if (*_cur == '\0') {
+    while (_cur != _end) {
+        switch (*_cur) {
+        case ' ':
+        case '\t':
+        case '\r':
+        case '\n':
+            ++_cur;
+            break;
+        case '/':
+            if constexpr (accept_jsonc) {
+                if (!skip_comment()) {
+                    return false;
+                }
+                // else continue;
+            }
+            else {
                 return false;
             }
-            switch (state) {
-            case idle:
-                switch (*_cur) {
-                case ' ':
-                case '\t':
-                case '\r':
-                case '\n':
-                    ++_cur;
-                    break;
-                case '/':
-                    switch (*++_cur) {
-                    case '/':
-                        ++_cur;
-                        state = line;
-                        break;
-                    case '*':
-                        ++_cur;
-                        state = block;
-                        break;
-                    default:
-                        // `/` won't be in json, just fail
-                        return false;
-                    }
-                    break;
-                default:
-                    return true;
-                }
-                break;
-            case line:
-                if (*_cur++ == '\n') {
-                    state = idle;
-                }
-                break;
-            case block:
-                if (*_cur++ == '*' && *_cur == '/') {
-                    ++_cur;
-                    state = idle;
-                }
-                break;
-            }
+            break;
+        case '\0':
+            return false;
+        default:
+            return true;
         }
     }
-    else {
-        while (_cur != _end) {
-            switch (*_cur) {
-            case ' ':
-            case '\t':
-            case '\r':
-            case '\n':
-                ++_cur;
-                break;
-            case '\0':
-                return false;
-            default:
+    return false;
+}
+
+template <bool accept_jsonc, typename string_t, typename parsing_t, typename accel_traits>
+bool json::parser<accept_jsonc, string_t, parsing_t, accel_traits>::skip_comment() noexcept
+{
+    if (_cur == _end || *_cur != '/') {
+        return false;
+    }
+
+    if (++_cur == _end) {
+        return false;
+    }
+
+    enum class comment_type
+    {
+        invalid,
+        line,
+        block,
+    } t = comment_type::invalid;
+
+    switch (*_cur++) {
+    case '/':
+        t = comment_type::line;
+        break;
+    case '*':
+        t = comment_type::block;
+        break;
+    default:
+        return false;
+    }
+
+    while (_cur != _end) {
+        switch (*_cur++) {
+        case '\n':
+            if (t == comment_type::line) {
                 return true;
             }
+            break;
+        case '*':
+            if (t == comment_type::block && _cur != _end && *_cur == '/') {
+                ++_cur;
+                return true;
+            }
+            break;
+        default:
+            break;
         }
     }
     return false;
