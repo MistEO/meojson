@@ -120,23 +120,27 @@ void serializing()
     Outter new_o = (Outter)j_outter;
 
     /* For optional fields, we can add `MEO_OPT` to it, so that when converting, if this fields does
-     * not exist in json, it will be skipped. */
+     * not exist in json, it will be skipped.
+     * For fields with special names, we can use `MEO_KEY(key)` to explicit specific the name.
+     */
 
     struct OptionalFields
     {
         int a = 0;
         double b = 0;
         std::vector<int> c;
+        bool delete_ = false;
 
-        MEO_JSONIZATION(a, MEO_OPT b, MEO_OPT c);
+        MEO_JSONIZATION(a, MEO_OPT b, MEO_OPT c, MEO_KEY("delete") delete_);
     };
 
     json::value ja = {
         { "a", 100 },
+        { "delete", true }
     };
     if (ja.is<OptionalFields>()) {
         OptionalFields var = (OptionalFields)ja;
-        std::cout << var.a << std::endl;
+        std::cout << var.a << ' ' << var.delete_ << std::endl;
     }
 
     third_party_jsonization_1();

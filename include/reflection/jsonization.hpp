@@ -13,6 +13,11 @@ struct next_is_optional_t
 {
 };
 
+struct next_override_key_t
+{
+    const char* key;
+};
+
 struct va_arg_end
 {
 };
@@ -24,6 +29,20 @@ struct dumper
     {
         json::value result = _to_json(std::forward<rest_t>(rest)...);
         result.emplace(key, var);
+        return result;
+    }
+
+    template <typename var_t, typename... rest_t>
+    json::value _to_json(
+        const char*,
+        next_override_key_t override_key,
+        const char* key,
+        const var_t& var,
+        rest_t&&... rest) const
+    {
+        std::ignore = key;
+        json::value result = _to_json(std::forward<rest_t>(rest)...);
+        result.emplace(override_key.key, var);
         return result;
     }
 
@@ -75,6 +94,49 @@ struct checker
         return _check_json(in, error_key, std::forward<rest_t>(rest)...);
     }
 
+    template <typename var_t, typename... rest_t>
+    bool _check_json(
+        const json::value& in,
+        std::string& error_key,
+        const char*,
+        next_override_key_t override_key,
+        const char* key,
+        const var_t&,
+        rest_t&&... rest) const
+    {
+        std::ignore = key;
+        auto opt = in.find(override_key.key);
+        if (!opt || !opt->is<var_t>()) {
+            error_key = override_key.key;
+            return false;
+        }
+        return _check_json(in, error_key, std::forward<rest_t>(rest)...);
+    }
+
+    template <typename var_t, typename... rest_t>
+    bool _check_json(
+        const json::value& in,
+        std::string& error_key,
+        const char*,
+        next_is_optional_t,
+        const char*,
+        next_override_key_t override_key,
+        const char* key,
+        const var_t&,
+        rest_t&&... rest) const
+    {
+        std::ignore = key;
+        auto opt = in.find(override_key.key);
+        if (opt) {
+            if (!opt->is<var_t>()) {
+                error_key = override_key.key;
+                return false;
+            }
+        } // next_is_optional_t, ignore key not found
+
+        return _check_json(in, error_key, std::forward<rest_t>(rest)...);
+    }
+
     bool _check_json(const json::value&, std::string&, va_arg_end) const { return true; }
 };
 
@@ -112,6 +174,52 @@ struct loader
         if (opt) {
             if (!opt->is<var_t>()) {
                 error_key = key;
+                return false;
+            }
+            var = std::move(opt)->as<var_t>();
+        } // next_is_optional_t, ignore key not found
+
+        return _from_json(in, error_key, std::forward<rest_t>(rest)...);
+    }
+
+    template <typename var_t, typename... rest_t>
+    bool _from_json(
+        const json::value& in,
+        std::string& error_key,
+        const char*,
+        next_override_key_t override_key,
+        const char* key,
+        var_t& var,
+        rest_t&&... rest) const
+    {
+        std::ignore = key;
+        auto opt = in.find(override_key.key);
+        if (!opt || !opt->is<var_t>()) {
+            error_key = override_key.key;
+            return false;
+        }
+        var = std::move(opt)->as<var_t>();
+
+        return _from_json(in, error_key, std::forward<rest_t>(rest)...);
+    }
+
+    template <typename var_t, typename... rest_t>
+    bool _from_json(
+        const json::value& in,
+        std::string& error_key,
+        const char*,
+        next_is_optional_t,
+        const char*,
+        next_override_key_t override_key,
+        const char* key,
+        var_t& var,
+        rest_t&&... rest) const
+    {
+        std::ignore = key;
+        auto opt = in.find(override_key.key);
+        if (opt) {
+            if (!opt->is<var_t>()) {
+                error_key = override_key.key;
                 return false;
             }
             var = std::move(opt)->as<var_t>();
@@ -467,6 +575,7 @@ namespace json::_private_macro
     _MEOJSON_EXPAND(MEO_FROMJSON(__VA_ARGS__))
 
 #define MEO_OPT json::_jsonization_helper::next_is_optional_t {},
+#define MEO_KEY(key) json::_jsonization_helper::next_override_key_t { key },
 
 #if defined(__clang__)
 #pragma clang diagnostic pop // -Wgnu-zero-variadic-macro-arguments
