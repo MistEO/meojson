@@ -4,6 +4,7 @@
 
 #include <string>
 #include <type_traits>
+#include <utility>
 
 #include "../common/types.hpp"
 
@@ -18,139 +19,184 @@ struct next_override_key_t
     const char* key;
 };
 
+struct next_state_t
+{
+    bool is_optional = false;
+    const char* override_key = nullptr;
+};
+
 struct va_arg_end
+{
+};
+
+template <typename tag_t>
+struct is_tag_t : public std::false_type
+{
+};
+
+template <>
+struct is_tag_t<next_is_optional_t> : public std::true_type
+{
+};
+
+template <>
+struct is_tag_t<next_override_key_t> : public std::true_type
 {
 };
 
 struct dumper
 {
-    template <typename var_t, typename... rest_t>
-    void _to_json(json::object& result, const char* key, const var_t& var, rest_t&&... rest) const
+    void _to_json(json::object&, va_arg_end) const {}
+
+    template <typename... rest_t>
+    void _to_json(json::object& result, const char* key, rest_t&&... rest) const
     {
-        result.emplace(key, var);
-        _to_json(result, std::forward<rest_t>(rest)...);
+        _to_json(result, next_state_t {}, key, std::forward<rest_t>(rest)...);
     }
 
-    template <typename var_t, typename... rest_t>
+    template <
+        typename var_t,
+        typename... rest_t,
+        typename _ = std::enable_if_t<!is_tag_t<var_t>::value, void>>
     void _to_json(
         json::object& result,
-        const char*,
-        next_override_key_t override_key,
+        next_state_t state,
         const char* key,
         const var_t& var,
         rest_t&&... rest) const
     {
-        std::ignore = key;
-        result.emplace(override_key.key, var);
+        if (state.override_key) {
+            key = state.override_key;
+        }
+        result.emplace(key, var);
         _to_json(result, std::forward<rest_t>(rest)...);
     }
 
     template <typename... rest_t>
-    void _to_json(json::object& result, const char*, next_is_optional_t, rest_t&&... rest) const
+    void _to_json(
+        json::object& result,
+        next_state_t state,
+        const char*,
+        next_is_optional_t,
+        rest_t&&... rest) const
     {
-        _to_json(result, std::forward<rest_t>(rest)...);
+        state.is_optional = true;
+        _to_json(result, state, std::forward<rest_t>(rest)...);
     }
 
-    void _to_json(json::object&, va_arg_end) const {}
+    template <typename... rest_t>
+    void _to_json(
+        json::object& result,
+        next_state_t state,
+        const char*,
+        next_override_key_t override_key,
+        rest_t&&... rest) const
+    {
+        state.override_key = override_key.key;
+        _to_json(result, state, std::forward<rest_t>(rest)...);
+    }
 };
 
 struct checker
 {
-    template <typename var_t, typename... rest_t>
+    bool _check_json(const json::value&, std::string&, va_arg_end) const { return true; }
+
+    template <typename... rest_t>
     bool _check_json(
         const json::value& in,
         std::string& error_key,
         const char* key,
+        rest_t&&... rest) const
+    {
+        return _check_json(in, error_key, next_state_t {}, key, std::forward<rest_t>(rest)...);
+    }
+
+    template <
+        typename var_t,
+        typename... rest_t,
+        typename _ = std::enable_if_t<!is_tag_t<var_t>::value, void>>
+    bool _check_json(
+        const json::value& in,
+        std::string& error_key,
+        next_state_t state,
+        const char* key,
         const var_t&,
         rest_t&&... rest) const
     {
+        if (state.override_key) {
+            key = state.override_key;
+        }
         auto opt = in.find(key);
-        if (!opt || !opt->is<var_t>()) {
+        if (!opt && !state.is_optional) {
+            error_key = key;
+            return false;
+        }
+        if (!opt->is<var_t>()) {
             error_key = key;
             return false;
         }
         return _check_json(in, error_key, std::forward<rest_t>(rest)...);
     }
 
-    template <typename var_t, typename... rest_t>
+    template <typename... rest_t>
     bool _check_json(
         const json::value& in,
         std::string& error_key,
+        next_state_t state,
         const char*,
         next_is_optional_t,
-        const char* key,
-        const var_t&,
         rest_t&&... rest) const
     {
-        auto opt = in.find(key);
-        if (opt) {
-            if (!opt->is<var_t>()) {
-                error_key = key;
-                return false;
-            }
-        } // next_is_optional_t, ignore key not found
-
-        return _check_json(in, error_key, std::forward<rest_t>(rest)...);
+        state.is_optional = true;
+        return _check_json(in, error_key, state, std::forward<rest_t>(rest)...);
     }
 
-    template <typename var_t, typename... rest_t>
+    template <typename... rest_t>
     bool _check_json(
         const json::value& in,
         std::string& error_key,
+        next_state_t state,
         const char*,
         next_override_key_t override_key,
-        const char* key,
-        const var_t&,
         rest_t&&... rest) const
     {
-        std::ignore = key;
-        auto opt = in.find(override_key.key);
-        if (!opt || !opt->is<var_t>()) {
-            error_key = override_key.key;
-            return false;
-        }
-        return _check_json(in, error_key, std::forward<rest_t>(rest)...);
+        state.override_key = override_key.key;
+        return _check_json(in, error_key, state, std::forward<rest_t>(rest)...);
     }
-
-    template <typename var_t, typename... rest_t>
-    bool _check_json(
-        const json::value& in,
-        std::string& error_key,
-        const char*,
-        next_is_optional_t,
-        const char*,
-        next_override_key_t override_key,
-        const char* key,
-        const var_t&,
-        rest_t&&... rest) const
-    {
-        std::ignore = key;
-        auto opt = in.find(override_key.key);
-        if (opt) {
-            if (!opt->is<var_t>()) {
-                error_key = override_key.key;
-                return false;
-            }
-        } // next_is_optional_t, ignore key not found
-
-        return _check_json(in, error_key, std::forward<rest_t>(rest)...);
-    }
-
-    bool _check_json(const json::value&, std::string&, va_arg_end) const { return true; }
 };
 
 struct loader
 {
-    template <typename var_t, typename... rest_t>
+    bool _from_json(const json::value&, std::string&, va_arg_end) const { return true; }
+
+    template <typename... rest_t>
+    bool
+        _from_json(const json::value& in, std::string& error_key, const char* key, rest_t&&... rest)
+    {
+        return _from_json(in, error_key, next_state_t {}, key, std::forward<rest_t>(rest)...);
+    }
+
+    template <
+        typename var_t,
+        typename... rest_t,
+        typename _ = std::enable_if_t<!is_tag_t<var_t>::value, void>>
     bool _from_json(
         const json::value& in,
         std::string& error_key,
+        next_state_t state,
         const char* key,
         var_t& var,
-        rest_t&&... rest) const
+        rest_t&&... rest)
     {
+        if (state.override_key) {
+            key = state.override_key;
+        }
         auto opt = in.find(key);
-        if (!opt || !opt->is<var_t>()) {
+        if (!opt && !state.is_optional) {
+            error_key = key;
+            return false;
+        }
+        if (!opt->is<var_t>()) {
             error_key = key;
             return false;
         }
@@ -159,75 +205,31 @@ struct loader
         return _from_json(in, error_key, std::forward<rest_t>(rest)...);
     }
 
-    template <typename var_t, typename... rest_t>
+    template <typename... rest_t>
     bool _from_json(
         const json::value& in,
         std::string& error_key,
+        next_state_t state,
         const char*,
         next_is_optional_t,
-        const char* key,
-        var_t& var,
-        rest_t&&... rest) const
+        rest_t&&... rest)
     {
-        auto opt = in.find(key);
-        if (opt) {
-            if (!opt->is<var_t>()) {
-                error_key = key;
-                return false;
-            }
-            var = std::move(opt)->as<var_t>();
-        } // next_is_optional_t, ignore key not found
-
-        return _from_json(in, error_key, std::forward<rest_t>(rest)...);
+        state.is_optional = true;
+        return _from_json(in, error_key, state, std::forward<rest_t>(rest)...);
     }
 
-    template <typename var_t, typename... rest_t>
+    template <typename... rest_t>
     bool _from_json(
         const json::value& in,
         std::string& error_key,
+        next_state_t state,
         const char*,
         next_override_key_t override_key,
-        const char* key,
-        var_t& var,
-        rest_t&&... rest) const
+        rest_t&&... rest)
     {
-        std::ignore = key;
-        auto opt = in.find(override_key.key);
-        if (!opt || !opt->is<var_t>()) {
-            error_key = override_key.key;
-            return false;
-        }
-        var = std::move(opt)->as<var_t>();
-
-        return _from_json(in, error_key, std::forward<rest_t>(rest)...);
+        state.override_key = override_key.key;
+        return _from_json(in, error_key, state, std::forward<rest_t>(rest)...);
     }
-
-    template <typename var_t, typename... rest_t>
-    bool _from_json(
-        const json::value& in,
-        std::string& error_key,
-        const char*,
-        next_is_optional_t,
-        const char*,
-        next_override_key_t override_key,
-        const char* key,
-        var_t& var,
-        rest_t&&... rest) const
-    {
-        std::ignore = key;
-        auto opt = in.find(override_key.key);
-        if (opt) {
-            if (!opt->is<var_t>()) {
-                error_key = override_key.key;
-                return false;
-            }
-            var = std::move(opt)->as<var_t>();
-        } // next_is_optional_t, ignore key not found
-
-        return _from_json(in, error_key, std::forward<rest_t>(rest)...);
-    }
-
-    bool _from_json(const json::value&, std::string&, va_arg_end) const { return true; }
 };
 } // namespace json::_jsonization_helper
 
