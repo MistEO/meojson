@@ -25,15 +25,15 @@ struct va_arg_end
 struct dumper
 {
     template <typename var_t, typename... rest_t>
-    json::value _to_json(const char* key, const var_t& var, rest_t&&... rest) const
+    void _to_json(json::object& result, const char* key, const var_t& var, rest_t&&... rest) const
     {
-        json::value result = _to_json(std::forward<rest_t>(rest)...);
         result.emplace(key, var);
-        return result;
+        _to_json(result, std::forward<rest_t>(rest)...);
     }
 
     template <typename var_t, typename... rest_t>
-    json::value _to_json(
+    void _to_json(
+        json::object& result,
         const char*,
         next_override_key_t override_key,
         const char* key,
@@ -41,18 +41,17 @@ struct dumper
         rest_t&&... rest) const
     {
         std::ignore = key;
-        json::value result = _to_json(std::forward<rest_t>(rest)...);
         result.emplace(override_key.key, var);
-        return result;
+        _to_json(result, std::forward<rest_t>(rest)...);
     }
 
     template <typename... rest_t>
-    json::value _to_json(const char*, next_is_optional_t, rest_t&&... rest) const
+    void _to_json(json::object& result, const char*, next_is_optional_t, rest_t&&... rest) const
     {
-        return _to_json(std::forward<rest_t>(rest)...);
+        _to_json(result, std::forward<rest_t>(rest)...);
     }
 
-    json::value _to_json(va_arg_end) const { return {}; }
+    void _to_json(json::object&, va_arg_end) const {}
 };
 
 struct checker
@@ -530,9 +529,12 @@ namespace json::_private_macro
 #define MEO_TOJSON(...)                                                         \
     json::value to_json() const                                                 \
     {                                                                           \
-        return json::_jsonization_helper::dumper()._to_json(                    \
+        json::object result;                                                    \
+        json::_jsonization_helper::dumper()._to_json(                           \
+            result,                                                             \
             _MEOJSON_EXPAND(_MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__)) \
                 json::_jsonization_helper::va_arg_end {});                      \
+        return result;                                                          \
     }
 
 #define MEO_CHECKJSON(...)                                                      \
