@@ -204,7 +204,10 @@ struct loader
             error_key = key;
             return false;
         }
-        var = std::move(opt)->as<var_t>();
+
+        if (opt) {
+            var = std::move(opt)->as<var_t>();
+        }
 
         return _from_json(in, error_key, std::forward<rest_t>(rest)...);
     }
