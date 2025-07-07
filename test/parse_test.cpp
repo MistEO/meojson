@@ -3,13 +3,25 @@
 #include "json.hpp"
 #include "parse_test.h"
 
+bool normal_json();
 bool wrong_json();
 bool jsonc_trail_comma();
 bool jsonc_comment();
 
 bool parsing()
 {
-    return wrong_json() && jsonc_trail_comma() && jsonc_comment();
+    return normal_json() && wrong_json() && jsonc_trail_comma() && jsonc_comment();
+}
+
+bool normal_json()
+{
+    std::string j = R"({})";
+
+    if (!json::parse(j)) {
+        std::cerr << "Parsing failed:" << j << std::endl;
+        return false;
+    }
+    return true;
 }
 
 bool wrong_json()

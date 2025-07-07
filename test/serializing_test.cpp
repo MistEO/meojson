@@ -299,6 +299,19 @@ bool jsonizing()
         return false;
     }
 
+    struct OptTest
+    {
+        int a = 0;
+        int b = 0;
+
+        MEO_JSONIZATION(MEO_OPT a, MEO_OPT b);
+    };
+    json::value opt_j = json::object();
+    if (!opt_j.is<OptTest>()) {
+        std::cerr << "bad MEO_OPT" << std::endl;
+        return false;
+    }
+
     std::filesystem::path path = "/root/dir1/dir2/filename";
     json::value jpath = path;
     std::filesystem::path new_path = (std::filesystem::path)jpath;

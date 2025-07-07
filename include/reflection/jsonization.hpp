@@ -127,11 +127,13 @@ struct checker
             key = state.override_key;
         }
         auto opt = in.find(key);
-        if (!opt && !state.is_optional) {
-            error_key = key;
-            return false;
+        if (state.is_optional) {
+            if (opt && !opt->is<var_t>()) {
+                error_key = key;
+                return false;
+            } // is_optional, ignore key not found
         }
-        if (!opt->is<var_t>()) {
+        else if (!opt || !opt->is<var_t>()) {
             error_key = key;
             return false;
         }
@@ -192,11 +194,13 @@ struct loader
             key = state.override_key;
         }
         auto opt = in.find(key);
-        if (!opt && !state.is_optional) {
-            error_key = key;
-            return false;
+        if (state.is_optional) {
+            if (opt && !opt->is<var_t>()) {
+                error_key = key;
+                return false;
+            } // is_optional, ignore key not found
         }
-        if (!opt->is<var_t>()) {
+        else if (!opt || !opt->is<var_t>()) {
             error_key = key;
             return false;
         }
