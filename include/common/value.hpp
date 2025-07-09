@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <initializer_list>
+#include <map>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -130,19 +131,14 @@ public:
     {
     }
 
-    template <typename elem1_t, typename elem2_t>
-    basic_value(std::pair<elem1_t, elem2_t>&& pair)
-        : basic_value(basic_array<string_t>(std::pair<elem1_t, elem2_t>(pair)))
-    {
-    }
-
     template <
         typename variant_t,
         std::enable_if_t<_utils::is_variant<std::decay_t<variant_t>>, bool> = true>
     basic_value(variant_t&& var)
-        : basic_value(_utils::serialize_variant<string_t>(
-              std::forward<variant_t>(var),
-              std::make_index_sequence<std::variant_size_v<std::decay_t<variant_t>>>()))
+        : basic_value(
+              _utils::serialize_variant<string_t>(
+                  std::forward<variant_t>(var),
+                  std::make_index_sequence<std::variant_size_v<std::decay_t<variant_t>>>()))
     {
     }
 
@@ -377,12 +373,6 @@ public:
     explicit operator std::tuple<elem_ts...>() const
     {
         return as_array().template as_tuple<elem_ts...>();
-    }
-
-    template <typename elem1_t, typename elem2_t>
-    explicit operator std::pair<elem1_t, elem2_t>() const
-    {
-        return as_array().template as_pair<elem1_t, elem2_t>();
     }
 
     template <typename... args_t>
