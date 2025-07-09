@@ -306,6 +306,7 @@ bool jsonizing()
 
         MEO_JSONIZATION(MEO_OPT a, MEO_OPT b);
     };
+
     json::value opt_j = json::object();
     if (!opt_j.is<OptTest>()) {
         std::cerr << "bad MEO_OPT" << std::endl;
@@ -375,6 +376,9 @@ bool jsonizing()
     auto t2 = std::tuple<int, std::string>(tuple_arr);
     auto p2 = std::pair<int, std::string>(tuple_arr);
     json::value tuple_val = tuple_arr;
+    static_assert(
+        json::_utils::has_from_json_in_templ_spec<std::tuple<int, std::string>, std::string>::value,
+        "tuple cannot cast?");
     auto t3 = std::tuple<int, std::string>(tuple_val);
     auto p3 = std::tuple<int, std::string>(tuple_val);
     bool ist = tuple_val.is<std::tuple<int, std::string>>();

@@ -125,12 +125,6 @@ public:
     {
     }
 
-    template <typename... elem_ts>
-    basic_value(std::tuple<elem_ts...>&& tup)
-        : basic_value(basic_array<string_t>(std::forward<std::tuple<elem_ts...>>(tup)))
-    {
-    }
-
     template <
         typename variant_t,
         std::enable_if_t<_utils::is_variant<std::decay_t<variant_t>>, bool> = true>
@@ -367,12 +361,6 @@ public:
     explicit operator enum_t() const
     {
         return static_cast<enum_t>(static_cast<std::underlying_type_t<enum_t>>(*this));
-    }
-
-    template <typename... elem_ts>
-    explicit operator std::tuple<elem_ts...>() const
-    {
-        return as_array().template as_tuple<elem_ts...>();
     }
 
     template <typename... args_t>

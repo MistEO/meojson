@@ -54,9 +54,9 @@ public:
     public:
         InvalidChar(u8char ch = 0, const std::string& detail = "")
             : exception(
-                "Invalid Char",
-                "Unexpected token \'" + StringFromCharCode(ch) + "\'",
-                detail)
+                  "Invalid Char",
+                  "Unexpected token \'" + StringFromCharCode(ch) + "\'",
+                  detail)
         {
         }
     };
@@ -575,7 +575,7 @@ inline typename parser5<string_t>::u8char parser5<string_t>::peek(const std::str
     return peek(str.cbegin(), str.cend());
 }
 
-inline constexpr size_t operator"" _sz(unsigned long long size)
+inline constexpr size_t operator""_sz(unsigned long long size)
 {
     return size;
 }
