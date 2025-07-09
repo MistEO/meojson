@@ -130,17 +130,17 @@ void serializing()
         double b = 0;
         std::vector<int> c;
         bool delete_ = false;
+        json::meo_opt<int> focus;
 
-        MEO_JSONIZATION(a, MEO_OPT b, MEO_OPT c, MEO_KEY("delete") delete_);
+        MEO_JSONIZATION(a, MEO_OPT b, MEO_OPT c, MEO_KEY("delete") delete_, MEO_OPT focus);
     };
 
-    json::value ja = {
-        { "a", 100 },
-        { "delete", true }
-    };
+    json::value ja = { { "a", 100 }, { "delete", true }, { "focus", 5 } };
     if (ja.is<OptionalFields>()) {
         OptionalFields var = (OptionalFields)ja;
-        std::cout << var.a << ' ' << var.delete_ << std::endl;
+        bool has_focus = var.focus.has_value();
+        std::cout << var.a << ' ' << var.delete_ << ' '
+                  << (has_focus ? "has focus!" : "what happended?") << std::endl;
     }
 
     third_party_jsonization_1();
