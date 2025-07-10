@@ -129,6 +129,7 @@ public:
 template <typename... args_t>
 class jsonization<std::tuple<args_t...>>
 {
+public:
     using tuple_t = std::tuple<args_t...>;
     constexpr static size_t tuple_size = std::tuple_size_v<tuple_t>;
 
@@ -140,7 +141,7 @@ class jsonization<std::tuple<args_t...>>
     }
 
     template <std::size_t... Is>
-    void to_json_impl(json::array& arr, const tuple_t& t, std::index_sequence<Is...>)
+    void to_json_impl(json::array& arr, const tuple_t& t, std::index_sequence<Is...>) const
     {
         (arr.emplace_back(std::get<Is>(t)), ...);
     }
@@ -159,7 +160,7 @@ class jsonization<std::tuple<args_t...>>
     }
 
     template <std::size_t... Is>
-    bool check_json_impl(const json::array& arr, std::index_sequence<Is...>)
+    bool check_json_impl(const json::array& arr, std::index_sequence<Is...>) const
     {
         return (arr[Is].is<std::tuple_element_t<Is, tuple_t>>() && ...);
     }
@@ -183,9 +184,9 @@ class jsonization<std::tuple<args_t...>>
     }
 
     template <std::size_t... Is>
-    void from_json_impl(const json::array& arr, tuple_t& t, std::index_sequence<Is...>)
+    void from_json_impl(const json::array& arr, tuple_t& t, std::index_sequence<Is...>) const
     {
-        return ((std::get<Is>(t) = arr[Is]), ...);
+        ((std::get<Is>(t) = arr[Is].as<std::tuple_element_t<Is, tuple_t>>()), ...);
     }
 };
 
