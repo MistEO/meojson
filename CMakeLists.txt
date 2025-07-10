@@ -22,12 +22,40 @@ if(ENABLE_NEON)
 endif()
 
 file(GLOB_RECURSE json_headers
-    include/*.h
-    include/*.hpp
+    include/**/*.h
+    include/**/*.hpp
 )
 
 add_library(meojson INTERFACE ${json_headers})
-target_include_directories(meojson INTERFACE include)
+target_include_directories(
+    meojson
+    INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+        $<INSTALL_INTERFACE:${INSTALL_INCLUDEDIR}>
+)
+target_compile_features(meojson INTERFACE cxx_std_17)
+
+# https://stackoverflow.com/a/23766303/13847527
+install(DIRECTORY include/ DESTINATION include/meojson)
+
+install(
+    TARGETS meojson
+    EXPORT MeojsonTargets
+    INCLUDES DESTINATION include)
+
+install(
+    EXPORT MeojsonTargets
+    FILE meojson.cmake
+    NAMESPACE meojson::
+    DESTINATION "share/cmake/meojson")
+
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in "meojsonConfig.cmake"
+                              INSTALL_DESTINATION share/cmake/meojson)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/meojsonConfig.cmake"
+        DESTINATION share/cmake/meojson)
 
 if (BUILD_SAMPLE)
     file(GLOB sample_src
