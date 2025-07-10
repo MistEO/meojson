@@ -26,10 +26,16 @@ jobs:
           ./build/Debug/sample.exe
           ./build/Debug/testing.exe
 
+      - name: Install
+        run: |
+          cmake -B build -DONLY_INSTALL=ON
+          cmake --build build
+          cmake --install build --prefix install
+          
       - name: Test install
         run: |
           cd test-install
-          cmake -B build -DONLY_INSTALL=ON -DCMAKE_PREFIX_PATH=../install
+          cmake -B build
           cmake --build build
 
       - uses: actions/upload-artifact@v4
@@ -53,10 +59,16 @@ jobs:
           ./build/sample
           ./build/testing
 
+      - name: Install
+        run: |
+          cmake -B build -DONLY_INSTALL=ON
+          cmake --build build
+          cmake --install build --prefix install
+
       - name: Test install
         run: |
           cd test-install
-          cmake -B build -DONLY_INSTALL=ON -DCMAKE_PREFIX_PATH=../install
+          cmake -B build
           cmake --build build
 
       - uses: actions/upload-artifact@v4
@@ -83,10 +95,16 @@ jobs:
           ./build/sample
           ./build/testing
 
+      - name: Install
+        run: |
+          cmake -B build -DONLY_INSTALL=ON
+          cmake --build build
+          cmake --install build --prefix install
+          
       - name: Test install
         run: |
           cd test-install
-          cmake -B build -G Ninja -DONLY_INSTALL=ON -DCMAKE_PREFIX_PATH=../install
+          cmake -B build -G Ninja
           cmake --build build
 
       - uses: actions/upload-artifact@v4
