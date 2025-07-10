@@ -5,6 +5,7 @@
 #include <optional>
 #include <tuple>
 #include <utility>
+#include <variant>
 
 #include "../common/types.hpp"
 
@@ -187,6 +188,58 @@ public:
     void from_json_impl(const json::array& arr, tuple_t& t, std::index_sequence<Is...>) const
     {
         ((std::get<Is>(t) = arr[Is].as<std::tuple_element_t<Is, tuple_t>>()), ...);
+    }
+};
+
+template <typename... args_t>
+class jsonization<std::variant<args_t...>>
+{
+public:
+    using variant_t = std::variant<args_t...>;
+    constexpr static size_t variant_size = std::variant_size_v<variant_t>;
+
+    json::value to_json(const variant_t& value) const
+    {
+        json::value result;
+        to_json_impl(result, value, std::make_index_sequence<variant_size>());
+        return result;
+    }
+
+    template <std::size_t... Is>
+    void to_json_impl(json::value& val, const variant_t& t, std::index_sequence<Is...>) const
+    {
+        ((t.index() == Is ? (val = std::get<Is>(t), true) : false) || ...);
+    }
+
+    bool check_json(const json::value& j) const
+    {
+        return check_json_impl(j, std::make_index_sequence<variant_size>());
+    }
+
+    template <std::size_t... Is>
+    bool check_json_impl(const json::value& val, std::index_sequence<Is...>) const
+    {
+        return (val.is<std::variant_alternative_t<Is, variant_t>>() || ...);
+    }
+
+    bool from_json(const json::value& j, variant_t& value) const
+    {
+        if (!check_json_impl(j, std::make_index_sequence<variant_size>())) {
+            return false;
+        }
+
+        from_json_impl(j, value, std::make_index_sequence<variant_size>());
+        return true;
+    }
+
+    template <std::size_t... Is>
+    void from_json_impl(const json::value& j, variant_t& t, std::index_sequence<Is...>) const
+    {
+        std::ignore =
+            ((j.is<std::variant_alternative_t<Is, variant_t>>()
+                  ? (t = j.as<std::variant_alternative_t<Is, variant_t>>(), true)
+                  : false)
+             || ...);
     }
 };
 

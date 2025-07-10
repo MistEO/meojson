@@ -126,17 +126,6 @@ public:
     }
 
     template <
-        typename variant_t,
-        std::enable_if_t<_utils::is_variant<std::decay_t<variant_t>>, bool> = true>
-    basic_value(variant_t&& var)
-        : basic_value(
-              _utils::serialize_variant<string_t>(
-                  std::forward<variant_t>(var),
-                  std::make_index_sequence<std::variant_size_v<std::decay_t<variant_t>>>()))
-    {
-    }
-
-    template <
         typename value_t,
         std::enable_if_t<!std::is_convertible_v<value_t, basic_value<string_t>>, bool> = true>
     basic_value(value_t) = delete;
@@ -361,14 +350,6 @@ public:
     explicit operator enum_t() const
     {
         return static_cast<enum_t>(static_cast<std::underlying_type_t<enum_t>>(*this));
-    }
-
-    template <typename... args_t>
-    explicit operator std::variant<args_t...>() const
-    {
-        return _utils::deserialize_variant<string_t, std::variant<args_t...>>(
-            *this,
-            std::make_index_sequence<std::variant_size_v<std::variant<args_t...>>>());
     }
 
 private:
