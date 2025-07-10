@@ -3,6 +3,7 @@
 #pragma once
 
 #include <cstddef>
+#include <filesystem>
 #include <optional>
 #include <tuple>
 #include <utility>
@@ -24,15 +25,51 @@ public:
     }
 
     template <typename string_t>
-    bool check_json(const json::basic_value<string_t>& j) const
+    bool check_json(const json::basic_value<string_t>& json) const
     {
-        return j.is_null();
+        return json.is_null();
     }
 
     template <typename string_t>
-    bool from_json(const json::basic_value<string_t>& j, std::nullptr_t&)
+    bool from_json(const json::basic_value<string_t>& json, std::nullptr_t&)
     {
-        return check_json(j);
+        return check_json(json);
+    }
+};
+
+template <>
+class jsonization<std::filesystem::path>
+{
+public:
+    template <typename string_t>
+    json::basic_value<string_t> to_json(const std::filesystem::path& path) const
+    {
+        static_assert(
+            std::is_same_v<string_t, std::filesystem::path::string_type>,
+            "String type mismatch!");
+
+        return path.string();
+    }
+
+    template <typename string_t>
+    bool check_json(const json::basic_value<string_t>& json) const
+    {
+        static_assert(
+            std::is_same_v<string_t, std::filesystem::path::string_type>,
+            "String type mismatch!");
+
+        return json.is_string();
+    }
+
+    template <typename string_t>
+    bool from_json(const json::basic_value<string_t>& json, std::filesystem::path& path) const
+    {
+        static_assert(
+            std::is_same_v<string_t, std::filesystem::path::string_type>,
+            "String type mismatch!");
+
+        path = json.as_string();
+        return true;
     }
 };
 
@@ -50,12 +87,12 @@ public:
     }
 
     template <typename string_t>
-    bool check_json(const json::basic_value<string_t>& j) const
+    bool check_json(const json::basic_value<string_t>& json) const
     {
-        if (!j.is_array()) {
+        if (!json.is_array()) {
             return false;
         }
-        const auto& arr = j.as_array();
+        const auto& arr = json.as_array();
         if (arr.size() != 2) {
             return false;
         }
@@ -63,12 +100,13 @@ public:
     }
 
     template <typename string_t>
-    bool from_json(const json::basic_value<string_t>& j, std::pair<elem1_t, elem2_t>& value) const
+    bool
+        from_json(const json::basic_value<string_t>& json, std::pair<elem1_t, elem2_t>& value) const
     {
-        if (!j.is_array()) {
+        if (!json.is_array()) {
             return false;
         }
-        const auto& arr = j.as_array();
+        const auto& arr = json.as_array();
         if (arr.size() != 2) {
             return false;
         }
@@ -105,12 +143,12 @@ public:
     }
 
     template <typename string_t>
-    bool check_json(const json::basic_value<string_t>& j) const
+    bool check_json(const json::basic_value<string_t>& json) const
     {
-        if (!j.is_array()) {
+        if (!json.is_array()) {
             return false;
         }
-        const auto& arr = j.as_array();
+        const auto& arr = json.as_array();
         if (arr.size() != tuple_size) {
             return false;
         }
@@ -125,12 +163,12 @@ public:
     }
 
     template <typename string_t>
-    bool from_json(const json::basic_value<string_t>& j, tuple_t& value) const
+    bool from_json(const json::basic_value<string_t>& json, tuple_t& value) const
     {
-        if (!j.is_array()) {
+        if (!json.is_array()) {
             return false;
         }
-        const auto& arr = j.as_array();
+        const auto& arr = json.as_array();
         if (arr.size() != tuple_size) {
             return false;
         }
@@ -178,9 +216,9 @@ public:
     }
 
     template <typename string_t>
-    bool check_json(const json::basic_value<string_t>& j) const
+    bool check_json(const json::basic_value<string_t>& json) const
     {
-        return check_json_impl(j, std::make_index_sequence<variant_size>());
+        return check_json_impl(json, std::make_index_sequence<variant_size>());
     }
 
     template <typename string_t, std::size_t... Is>
@@ -190,25 +228,25 @@ public:
     }
 
     template <typename string_t>
-    bool from_json(const json::basic_value<string_t>& j, variant_t& value) const
+    bool from_json(const json::basic_value<string_t>& json, variant_t& value) const
     {
-        if (!check_json_impl(j, std::make_index_sequence<variant_size>())) {
+        if (!check_json_impl(json, std::make_index_sequence<variant_size>())) {
             return false;
         }
 
-        from_json_impl(j, value, std::make_index_sequence<variant_size>());
+        from_json_impl(json, value, std::make_index_sequence<variant_size>());
         return true;
     }
 
     template <typename string_t, std::size_t... Is>
     void from_json_impl(
-        const json::basic_value<string_t>& j,
+        const json::basic_value<string_t>& json,
         variant_t& t,
         std::index_sequence<Is...>) const
     {
         std::ignore =
-            ((j.template is<std::variant_alternative_t<Is, variant_t>>()
-                  ? (t = j.template as<std::variant_alternative_t<Is, variant_t>>(), true)
+            ((json.template is<std::variant_alternative_t<Is, variant_t>>()
+                  ? (t = json.template as<std::variant_alternative_t<Is, variant_t>>(), true)
                   : false)
              || ...);
     }

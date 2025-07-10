@@ -59,7 +59,8 @@ public:
 
     template <
         typename jsonization_t,
-        std::enable_if_t<_utils::has_to_json_in_templ_spec<jsonization_t>::value, bool> = true>
+        std::enable_if_t<_utils::has_to_json_in_templ_spec<jsonization_t, string_t>::value, bool> =
+            true>
     basic_object(const jsonization_t& value)
         : basic_object(ext::jsonization<jsonization_t>().to_json(value))
     {
@@ -195,8 +196,8 @@ private:
 template <typename string_t>
 inline basic_object<string_t>::basic_object(std::initializer_list<value_type> init_list)
     : _object_data(
-        std::make_move_iterator(init_list.begin()),
-        std::make_move_iterator(init_list.end()))
+          std::make_move_iterator(init_list.begin()),
+          std::make_move_iterator(init_list.end()))
 {
 }
 

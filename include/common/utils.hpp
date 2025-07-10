@@ -114,12 +114,12 @@ public:
     static constexpr bool value = decltype(test<T>(0))::value;
 };
 
-template <typename T>
+template <typename T, typename string_t>
 class has_to_json_in_templ_spec
 {
     template <typename U>
     static auto test(int)
-        -> decltype(std::declval<ext::jsonization<U>>().to_json(std::declval<U>()), std::true_type());
+        -> decltype(std::declval<ext::jsonization<U>>().template to_json<string_t>(std::declval<U>()), std::true_type());
 
     template <typename U>
     static std::false_type test(...);

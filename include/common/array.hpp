@@ -68,9 +68,10 @@ public:
 
     template <
         typename jsonization_t,
-        std::enable_if_t<_utils::has_to_json_in_templ_spec<jsonization_t>::value, bool> = true>
+        std::enable_if_t<_utils::has_to_json_in_templ_spec<jsonization_t, string_t>::value, bool> =
+            true>
     basic_array(const jsonization_t& value)
-        : basic_array(ext::jsonization<jsonization_t>().to_json(value))
+        : basic_array(ext::jsonization<jsonization_t>().template to_json<string_t>(value))
     {
     }
 
@@ -79,6 +80,7 @@ public:
     {
         foreach_tuple(tup, std::make_index_sequence<std::tuple_size_v<std::tuple<elem_ts...>>>());
     }
+
     template <typename first_t, typename second_t>
     basic_array(std::pair<first_t, second_t> pair)
         : _array_data({ std::move(pair.first), std::move(pair.second) })

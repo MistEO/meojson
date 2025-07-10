@@ -119,9 +119,10 @@ public:
 
     template <
         typename jsonization_t,
-        std::enable_if_t<_utils::has_to_json_in_templ_spec<jsonization_t>::value, bool> = true>
+        std::enable_if_t<_utils::has_to_json_in_templ_spec<jsonization_t, string_t>::value, bool> =
+            true>
     basic_value(const jsonization_t& value)
-        : basic_value(ext::jsonization<jsonization_t>().to_json(value))
+        : basic_value(ext::jsonization<jsonization_t>().template to_json<string_t>(value))
     {
     }
 

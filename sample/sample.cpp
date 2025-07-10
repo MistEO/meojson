@@ -182,11 +182,20 @@ template <>
 class jsonization<ThirdPartyStruct>
 {
 public:
-    json::value to_json(const ThirdPartyStruct& t) const { return t.a; }
+    template <typename string_t>
+    json::basic_value<string_t> to_json(const ThirdPartyStruct& t) const
+    {
+        return t.a;
+    }
 
-    bool check_json(const json::value& j) const { return j.is_number(); }
+    template <typename string_t>
+    bool check_json(const json::basic_value<string_t>& j) const
+    {
+        return j.is_number();
+    }
 
-    bool from_json(const json::value& j, ThirdPartyStruct& out) const
+    template <typename string_t>
+    bool from_json(const json::basic_value<string_t>& j, ThirdPartyStruct& out) const
     {
         out.a = j.as_integer();
         return true;
