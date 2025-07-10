@@ -36,7 +36,7 @@ target_include_directories(meojson INTERFACE
 if (ONLY_INSTALL)   
     include(GNUInstallDirs)
     include(CMakePackageConfigHelpers)
-    install(TARGETS meojson EXPORT meojsonTargets)
+    install(TARGETS meojson EXPORT meojsonTargets INCLUDES DIRECTORY ${CMAKE_INSTALL_INCLUDEDIR})
     install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/meojson)
 
     configure_package_config_file(
