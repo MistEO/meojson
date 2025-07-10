@@ -14,14 +14,14 @@ namespace json::ext
 {
 
 template <>
-class jsonization<nullptr_t>
+class jsonization<std::nullptr_t>
 {
 public:
-    json::value to_json(const nullptr_t&) const { return json::value {}; }
+    json::value to_json(const std::nullptr_t&) const { return json::value {}; }
 
     bool check_json(const json::value& j) const { return j.is_null(); }
 
-    bool from_json(const json::value& j, nullptr_t&) { return check_json(j); }
+    bool from_json(const json::value& j, std::nullptr_t&) { return check_json(j); }
 };
 
 template <typename elem1_t, typename elem2_t>
