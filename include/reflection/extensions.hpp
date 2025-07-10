@@ -116,6 +116,40 @@ public:
     }
 };
 
+template <template <typename, size_t> typename arr_t, typename value_t, size_t size>
+class jsonization<arr_t<value_t, size>>
+    : public __jsonization_array<jsonization<arr_t<value_t, size>>, arr_t<value_t, size>, size>
+{
+public:
+    template <typename string_t>
+    json::basic_array<string_t> to_json_array(const arr_t<value_t, size>& value) const
+    {
+        return json::basic_array<string_t> {
+            value.begin(),
+            value.end(),
+        };
+    }
+
+    template <typename string_t>
+    bool check_json_array(const json::basic_array<string_t>& arr) const
+    {
+        return arr.template all<value_t>();
+    }
+
+    template <typename string_t>
+    bool from_json_array(const json::basic_array<string_t>& arr, arr_t<value_t, size>& value) const
+    {
+        if (!check_json_array(arr)) {
+            return false;
+        }
+
+        for (size_t i = 0; i < size; i++) {
+            value.at(i) = arr[i].template as<value_t>();
+        }
+        return true;
+    }
+};
+
 template <typename elem1_t, typename elem2_t>
 class jsonization<std::pair<elem1_t, elem2_t>>
     : public __jsonization_array<

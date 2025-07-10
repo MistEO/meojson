@@ -83,14 +83,6 @@ public:
     }
 
     template <
-        typename fixed_array_t,
-        std::enable_if_t<_utils::is_fixed_array<fixed_array_t>, bool> = true>
-    basic_value(const fixed_array_t& arr)
-        : basic_value(basic_array<string_t>(arr))
-    {
-    }
-
-    template <
         typename map_t,
         std::enable_if_t<
             _utils::is_map<map_t>
@@ -299,16 +291,6 @@ public:
     explicit operator collection_t<value_t>() const
     {
         return as_collection<value_t, collection_t>();
-    }
-
-    template <
-        typename value_t,
-        size_t Size,
-        template <typename, size_t> typename fixed_array_t = std::array,
-        std::enable_if_t<_utils::is_fixed_array<fixed_array_t<value_t, Size>>, bool> = true>
-    explicit operator fixed_array_t<value_t, Size>() const
-    {
-        return as_fixed_array<value_t, Size, fixed_array_t>();
     }
 
     template <
@@ -535,31 +517,12 @@ inline bool basic_value<string_t>::is() const noexcept
     else if constexpr (_utils::is_collection<value_t>) {
         return is_array() && all<typename value_t::value_type>();
     }
-    else if constexpr (_utils::is_fixed_array<value_t>) {
-        return is_array() && all<typename value_t::value_type>()
-               && as_array().size() == _utils::fixed_array_size<value_t>;
-    }
     else if constexpr (std::is_same_v<basic_object<string_t>, value_t>) {
         return is_object();
     }
     else if constexpr (_utils::is_map<value_t>) {
         return is_object() && std::is_constructible_v<string_t, typename value_t::key_type>
                && all<typename value_t::mapped_type>();
-    }
-    else if constexpr (_utils::is_variant<value_t>) {
-        return _utils::detect_variant<string_t, value_t>(
-            *this,
-            std::make_index_sequence<std::variant_size_v<value_t>>());
-    }
-    else if constexpr (_utils::is_pair<value_t>) {
-        return is_array() && as_array().size() == 2
-               && at(0).template is<typename value_t::first_type>()
-               && at(1).template is<typename value_t::second_type>();
-    }
-    else if constexpr (_utils::is_tuple<value_t>) {
-        return _utils::detect_tuple<string_t, value_t>(
-            *this,
-            std::make_index_sequence<std::tuple_size_v<value_t>>());
     }
     else {
         static_assert(!sizeof(value_t), "Unsupported type");
