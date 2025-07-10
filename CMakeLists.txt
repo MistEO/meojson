@@ -32,6 +32,7 @@ target_include_directories(meojson INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
+target_compile_features(meojson INTERFACE cxx_std_17)
 
 if (ONLY_INSTALL)   
     include(GNUInstallDirs)
