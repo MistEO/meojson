@@ -4,7 +4,6 @@
 
 #include <cstddef>
 #include <filesystem>
-#include <optional>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -124,10 +123,11 @@ public:
     template <typename string_t>
     json::basic_array<string_t> to_json_array(const arr_t<value_t, size>& value) const
     {
-        return json::basic_array<string_t> {
-            value.begin(),
-            value.end(),
-        };
+        json::basic_array<string_t> result;
+        for (size_t i = 0; i < size; i++) {
+            result.emplace_back(value.at(i));
+        }
+        return result;
     }
 
     template <typename string_t>
