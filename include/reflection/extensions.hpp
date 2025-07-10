@@ -55,6 +55,37 @@ public:
     }
 };
 
+// template <typename impl_t, typename var_t>
+// class __jsonization_object
+// {
+// public:
+//     template <typename string_t>
+//     json::basic_value<string_t> to_json(const var_t& value) const
+//     {
+//         return static_cast<const impl_t*>(this)->template to_json_object<string_t>(value);
+//     }
+
+//     template <typename string_t>
+//     bool check_json(const json::basic_value<string_t>& json) const
+//     {
+//         if (!json.is_object()) {
+//             return false;
+//         }
+//         const auto& obj = json.as_object();
+//         return static_cast<const impl_t*>(this)->check_json_object(obj);
+//     }
+
+//     template <typename string_t>
+//     bool from_json(const json::basic_value<string_t>& json, var_t& value) const
+//     {
+//         if (!json.is_object()) {
+//             return false;
+//         }
+//         const auto& obj = json.as_object();
+//         return static_cast<const impl_t*>(this)->from_json_object(obj, value);
+//     }
+// };
+
 template <>
 class jsonization<std::nullptr_t>
 {
