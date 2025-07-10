@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <optional>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 #include <variant>
 
@@ -40,34 +41,35 @@ public:
 template <>
 class jsonization<std::filesystem::path>
 {
+    template <typename string_t>
+    constexpr static bool is_string_validate =
+        std::is_same_v<string_t, std::filesystem::path::string_type>
+        || std::is_same_v<string_t, std::string>;
+
 public:
     template <typename string_t>
     json::basic_value<string_t> to_json(const std::filesystem::path& path) const
     {
-        static_assert(
-            std::is_same_v<string_t, std::filesystem::path::string_type>,
-            "String type mismatch!");
-
-        return path.string();
+        if constexpr (std::is_same_v<string_t, std::filesystem::path::string_type>) {
+            return path.native();
+        }
+        else if constexpr (std::is_same_v<string_t, std::string>) {
+            return path.string();
+        }
+        else {
+            static_assert(is_string_validate<string_t>, "Unknown string type");
+        }
     }
 
     template <typename string_t>
     bool check_json(const json::basic_value<string_t>& json) const
     {
-        static_assert(
-            std::is_same_v<string_t, std::filesystem::path::string_type>,
-            "String type mismatch!");
-
         return json.is_string();
     }
 
     template <typename string_t>
     bool from_json(const json::basic_value<string_t>& json, std::filesystem::path& path) const
     {
-        static_assert(
-            std::is_same_v<string_t, std::filesystem::path::string_type>,
-            "String type mismatch!");
-
         path = json.as_string();
         return true;
     }
