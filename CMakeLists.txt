@@ -40,7 +40,7 @@ target_compile_features(meojson INTERFACE cxx_std_17)
 
 # https://stackoverflow.com/a/23766303/13847527
 install(DIRECTORY include/ DESTINATION include/meojson)
-install(TARGETS meojson EXPORT meojsonTargets)
+install(TARGETS meojson EXPORT meojsonTargets INCLUDES DIRECTORY ${CMAKE_INSTALL_INCLUDEDIR})
 install(
     EXPORT meojsonTargets
     FILE meojson.cmake
