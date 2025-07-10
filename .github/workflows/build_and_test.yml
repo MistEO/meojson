@@ -45,7 +45,7 @@ jobs:
       - name: Build
         run: |
           cmake -B build
-          cmake --build build -- -j$(nproc)
+          cmake --build build
           cmake --install build --prefix install
 
       - name: Run Testing
@@ -75,7 +75,7 @@ jobs:
       - name: Build
         run: |
           cmake -B build -G Ninja
-          cmake --build build -- -j$(nproc)
+          cmake --build build
           cmake --install build --prefix install
 
       - name: Run Testing

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.14)
 project(meojson CXX)
 
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
 option(BUILD_SAMPLE "Build sample in sample/sample.cpp" ON)
 option(BUILD_BENCHMARK "Build benchmark in benchmark/benchmark.cpp" OFF)
 option(ENABLE_NEON "Enable ARM NEON" OFF)
@@ -22,8 +25,8 @@ if(ENABLE_NEON)
 endif()
 
 file(GLOB_RECURSE json_headers
-    include/**/*.h
-    include/**/*.hpp
+    include/*.h
+    include/*.hpp
 )
 
 add_library(meojson INTERFACE ${json_headers})
@@ -37,25 +40,18 @@ target_compile_features(meojson INTERFACE cxx_std_17)
 
 # https://stackoverflow.com/a/23766303/13847527
 install(DIRECTORY include/ DESTINATION include/meojson)
-
+install(TARGETS meojson EXPORT meojsonTargets)
 install(
-    TARGETS meojson
-    EXPORT MeojsonTargets
-    INCLUDES DESTINATION include)
-
-install(
-    EXPORT MeojsonTargets
+    EXPORT meojsonTargets
     FILE meojson.cmake
     NAMESPACE meojson::
-    DESTINATION "share/cmake/meojson")
-
-include(CMakePackageConfigHelpers)
+    DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/cmake/meojson")
 
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in "meojsonConfig.cmake"
-                              INSTALL_DESTINATION share/cmake/meojson)
+                              INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/cmake/meojson)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/meojsonConfig.cmake"
-        DESTINATION share/cmake/meojson)
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/cmake/meojson)
 
 if (BUILD_SAMPLE)
     file(GLOB sample_src
