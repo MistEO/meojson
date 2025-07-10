@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <optional>
 #include <tuple>
 #include <utility>
@@ -9,80 +10,18 @@
 
 #include "../common/types.hpp"
 
-namespace json
-{
-
-template <typename value_t>
-struct meo_opt : public std::optional<value_t>
-{
-    using std::optional<value_t>::optional;
-};
-
-}
-
 namespace json::ext
 {
 
-template <typename value_t>
-class jsonization<std::optional<value_t>>
+template <>
+class jsonization<nullptr_t>
 {
 public:
-    json::value to_json(const std::optional<value_t>& value) const
-    {
-        return value.has_value() ? json::value {} : json::value { value.value() };
-    }
+    json::value to_json(const nullptr_t&) const { return json::value {}; }
 
-    bool check_json(const json::value& j) const
-    {
-        if (j.is_null()) {
-            return true;
-        }
-        return j.is<value_t>();
-    }
+    bool check_json(const json::value& j) const { return j.is_null(); }
 
-    bool from_json(const json::value& j, std::optional<value_t>& value) const
-    {
-        if (j.is_null()) {
-            value = std::nullopt;
-            return true;
-        }
-        if (!j.is<value_t>()) {
-            return false;
-        }
-        value.value() = value_t { j };
-        return true;
-    }
-};
-
-template <typename value_t>
-class jsonization<meo_opt<value_t>>
-{
-public:
-    json::value to_json(const meo_opt<value_t>& value) const
-    {
-        return value.has_value() ? json::value {} : json::value { value.value() };
-    }
-
-    bool check_json(const json::value& j) const
-    {
-        if (j.is_null()) {
-            return true;
-        }
-        return j.is<value_t>();
-    }
-
-    bool from_json(const json::value& j, meo_opt<value_t>& value) const
-    {
-        if (j.is_null()) {
-            value = std::nullopt;
-            return true;
-        }
-        if (!j.is<value_t>()) {
-            return false;
-        }
-        value.value() = value_t { j };
-        return true;
-    }
+    bool from_json(const json::value& j, nullptr_t&) { return check_json(j); }
 };
 
 template <typename elem1_t, typename elem2_t>

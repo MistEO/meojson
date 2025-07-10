@@ -130,7 +130,7 @@ void serializing()
         double b = 0;
         std::vector<int> c;
         bool delete_ = false;
-        json::meo_opt<int> focus;
+        std::optional<int> focus;
 
         MEO_JSONIZATION(a, MEO_OPT b, MEO_OPT c, MEO_KEY("delete") delete_, MEO_OPT focus);
     };

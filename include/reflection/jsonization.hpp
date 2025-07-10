@@ -13,21 +13,17 @@ namespace json::_jsonization_helper
 {
 
 template <typename value_t>
-struct is_meo_opt_t : public std::false_type
+struct is_optional_t : public std::false_type
 {
 };
 
 template <typename value_t>
-struct is_meo_opt_t<meo_opt<value_t>> : public std::true_type
+struct is_optional_t<std::optional<value_t>> : public std::true_type
 {
-    using value_type = value_t;
 };
 
 template <typename value_t>
-inline constexpr bool is_meo_opt_v = is_meo_opt_t<value_t>::value;
-
-template <typename value_t>
-using meo_opt_value_t = typename is_meo_opt_t<value_t>::value_type;
+inline constexpr bool is_optional_v = is_optional_t<value_t>::value;
 
 struct next_is_optional_t
 {
@@ -87,9 +83,9 @@ struct dumper
         if (state.override_key) {
             key = state.override_key;
         }
-        if constexpr (is_meo_opt_v<var_t>) {
+        if constexpr (is_optional_v<var_t>) {
             if (!state.is_optional) {
-                throw exception("meo_opt must be used with MEO_OPT");
+                throw exception("std::optional must be used with MEO_OPT");
             }
 
             if (var.has_value()) {
@@ -157,12 +153,12 @@ struct checker
             key = state.override_key;
         }
         auto opt = in.find(key);
-        if constexpr (is_meo_opt_v<var_t>) {
+        if constexpr (is_optional_v<var_t>) {
             if (!state.is_optional) {
-                throw exception("meo_opt must be used with MEO_OPT");
+                throw exception("std::optional must be used with MEO_OPT");
             }
 
-            if (opt && !opt->is<meo_opt_value_t<var_t>>()) {
+            if (opt && !opt->is<typename var_t::value_type>()) {
                 error_key = key;
                 return false;
             }
@@ -236,17 +232,17 @@ struct loader
             key = state.override_key;
         }
         auto opt = in.find(key);
-        if constexpr (is_meo_opt_v<var_t>) {
+        if constexpr (is_optional_v<var_t>) {
             if (!state.is_optional) {
-                throw exception("meo_opt must be used with MEO_OPT");
+                throw exception("std::optional must be used with MEO_OPT");
             }
 
-            if (opt && !opt->is<meo_opt_value_t<var_t>>()) {
+            if (opt && !opt->is<typename var_t::value_type>()) {
                 error_key = key;
                 return false;
             }
             if (opt) {
-                var = std::move(opt)->as<meo_opt_value_t<var_t>>();
+                var = std::move(opt)->as<typename var_t::value_type>();
             }
             else {
                 var = std::nullopt;
