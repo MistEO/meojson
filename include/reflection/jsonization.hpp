@@ -313,8 +313,7 @@ namespace json::_private_macro
 
 #define _MEOJSON_EXPAND(x) x
 
-#define _MEOJSON_FOR_EACH_0(pred, ...)
-#define _MEOJSON_FOR_EACH_1(pred, x, ...) pred(x)
+#define _MEOJSON_FOR_EACH_1(pred, x) pred(x)
 #define _MEOJSON_FOR_EACH_2(pred, x, ...) \
     pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_1(pred, __VA_ARGS__))
 #define _MEOJSON_FOR_EACH_3(pred, x, ...) \

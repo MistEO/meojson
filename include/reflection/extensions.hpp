@@ -15,6 +15,47 @@
 namespace json::ext
 {
 
+template <typename impl_t, typename var_t, size_t len> // (size_t)-1 for no restriction
+class __jsonization_array
+{
+public:
+    template <typename string_t>
+    json::basic_value<string_t> to_json(const var_t& value) const
+    {
+        return static_cast<const impl_t*>(this)->template to_json_array<string_t>(value);
+    }
+
+    template <typename string_t>
+    bool check_json(const json::basic_value<string_t>& json) const
+    {
+        if (!json.is_array()) {
+            return false;
+        }
+        const auto& arr = json.as_array();
+        if constexpr (len != static_cast<size_t>(-1)) {
+            if (len != arr.size()) {
+                return false;
+            }
+        }
+        return static_cast<const impl_t*>(this)->check_json_array(arr);
+    }
+
+    template <typename string_t>
+    bool from_json(const json::basic_value<string_t>& json, var_t& value) const
+    {
+        if (!json.is_array()) {
+            return false;
+        }
+        const auto& arr = json.as_array();
+        if constexpr (len != static_cast<size_t>(-1)) {
+            if (len != arr.size()) {
+                return false;
+            }
+        }
+        return static_cast<const impl_t*>(this)->from_json_array(arr, value);
+    }
+};
+
 template <>
 class jsonization<std::nullptr_t>
 {
@@ -77,10 +118,14 @@ public:
 
 template <typename elem1_t, typename elem2_t>
 class jsonization<std::pair<elem1_t, elem2_t>>
+    : public __jsonization_array<
+          jsonization<std::pair<elem1_t, elem2_t>>,
+          std::pair<elem1_t, elem2_t>,
+          2>
 {
 public:
     template <typename string_t>
-    json::basic_value<string_t> to_json(const std::pair<elem1_t, elem2_t>& value) const
+    json::basic_array<string_t> to_json_array(const std::pair<elem1_t, elem2_t>& value) const
     {
         return json::basic_array<string_t> {
             json::basic_value<string_t> { value.first },
@@ -89,30 +134,16 @@ public:
     }
 
     template <typename string_t>
-    bool check_json(const json::basic_value<string_t>& json) const
+    bool check_json_array(const json::basic_array<string_t>& arr) const
     {
-        if (!json.is_array()) {
-            return false;
-        }
-        const auto& arr = json.as_array();
-        if (arr.size() != 2) {
-            return false;
-        }
         return arr[0].template is<elem1_t>() && arr[1].template is<elem2_t>();
     }
 
     template <typename string_t>
-    bool
-        from_json(const json::basic_value<string_t>& json, std::pair<elem1_t, elem2_t>& value) const
+    bool from_json_array(const json::basic_array<string_t>& arr, std::pair<elem1_t, elem2_t>& value)
+        const
     {
-        if (!json.is_array()) {
-            return false;
-        }
-        const auto& arr = json.as_array();
-        if (arr.size() != 2) {
-            return false;
-        }
-        if (!(arr[0].template is<elem1_t>() && arr[1].template is<elem2_t>())) {
+        if (!check_json_array(arr)) {
             return false;
         }
         value.first = arr[0].template as<elem1_t>();
@@ -123,13 +154,17 @@ public:
 
 template <typename... args_t>
 class jsonization<std::tuple<args_t...>>
+    : public __jsonization_array<
+          jsonization<std::tuple<args_t...>>,
+          std::tuple<args_t...>,
+          std::tuple_size_v<std::tuple<args_t...>>>
 {
 public:
     using tuple_t = std::tuple<args_t...>;
     constexpr static size_t tuple_size = std::tuple_size_v<tuple_t>;
 
     template <typename string_t>
-    json::basic_value<string_t> to_json(const tuple_t& value) const
+    json::basic_array<string_t> to_json_array(const tuple_t& value) const
     {
         json::basic_array<string_t> result;
         to_json_impl(result, value, std::make_index_sequence<tuple_size>());
@@ -145,16 +180,8 @@ public:
     }
 
     template <typename string_t>
-    bool check_json(const json::basic_value<string_t>& json) const
+    bool check_json_array(const json::basic_array<string_t>& arr) const
     {
-        if (!json.is_array()) {
-            return false;
-        }
-        const auto& arr = json.as_array();
-        if (arr.size() != tuple_size) {
-            return false;
-        }
-
         return check_json_impl(arr, std::make_index_sequence<tuple_size>());
     }
 
@@ -165,17 +192,9 @@ public:
     }
 
     template <typename string_t>
-    bool from_json(const json::basic_value<string_t>& json, tuple_t& value) const
+    bool from_json_array(const json::basic_array<string_t>& arr, tuple_t& value) const
     {
-        if (!json.is_array()) {
-            return false;
-        }
-        const auto& arr = json.as_array();
-        if (arr.size() != tuple_size) {
-            return false;
-        }
-
-        if (!check_json_impl(arr, std::make_index_sequence<tuple_size>())) {
+        if (!check_json_array(arr)) {
             return false;
         }
 
@@ -214,7 +233,7 @@ public:
         const variant_t& t,
         std::index_sequence<Is...>) const
     {
-        ((t.index() == Is ? (val = std::get<Is>(t), true) : false) || ...);
+        std::ignore = ((t.index() == Is ? (val = std::get<Is>(t), true) : false) || ...);
     }
 
     template <typename string_t>

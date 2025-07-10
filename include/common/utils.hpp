@@ -115,39 +115,11 @@ public:
 };
 
 template <typename T, typename string_t>
-class has_to_json_in_templ_spec
-{
-    template <typename U>
-    static auto test(int)
-        -> decltype(std::declval<ext::jsonization<U>>().template to_json<string_t>(std::declval<U>()), std::true_type());
-
-    template <typename U>
-    static std::false_type test(...);
-
-public:
-    static constexpr bool value = decltype(test<T>(0))::value;
-};
-
-template <typename T, typename string_t>
 class has_check_json_in_member
 {
     template <typename U>
     static auto test(int)
         -> decltype(std::declval<U>().check_json(std::declval<json::basic_value<string_t>>()), std::true_type());
-
-    template <typename U>
-    static std::false_type test(...);
-
-public:
-    static constexpr bool value = decltype(test<T>(0))::value;
-};
-
-template <typename T, typename string_t>
-class has_check_json_in_templ_spec
-{
-    template <typename U>
-    static auto test(int)
-        -> decltype(std::declval<ext::jsonization<U>>().check_json(std::declval<json::basic_value<string_t>>()), std::true_type());
 
     template <typename U>
     static std::false_type test(...);
@@ -171,11 +143,81 @@ public:
 };
 
 template <typename T, typename string_t>
+class has_to_json_in_templ_spec
+{
+    template <typename U>
+    static auto test(int)
+        -> decltype(std::declval<ext::jsonization<U>>().template to_json<string_t>(std::declval<U>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T, typename string_t>
+class has_check_json_in_templ_spec
+{
+    template <typename U>
+    static auto test(int)
+        -> decltype(std::declval<ext::jsonization<U>>().check_json(std::declval<json::basic_value<string_t>>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T, typename string_t>
 class has_from_json_in_templ_spec
 {
     template <typename U>
     static auto test(int)
         -> decltype(std::declval<ext::jsonization<U>>().from_json(std::declval<json::basic_value<string_t>>(), std::declval<U&>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T, typename string_t>
+class has_to_json_array_in_templ_spec
+{
+    template <typename U>
+    static auto test(int)
+        -> decltype(std::declval<ext::jsonization<U>>().template to_json_array<string_t>(std::declval<U>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T, typename string_t>
+class has_check_json_array_in_templ_spec
+{
+    template <typename U>
+    static auto test(int)
+        -> decltype(std::declval<ext::jsonization<U>>().check_json_array(std::declval<json::basic_array<string_t>>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T, typename string_t>
+class has_from_json_array_in_templ_spec
+{
+    template <typename U>
+    static auto test(int)
+        -> decltype(std::declval<ext::jsonization<U>>().from_json_array(std::declval<json::basic_array<string_t>>(), std::declval<U&>()), std::true_type());
 
     template <typename U>
     static std::false_type test(...);
