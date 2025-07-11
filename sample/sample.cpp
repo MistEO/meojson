@@ -130,17 +130,17 @@ void serializing()
         double b = 0;
         std::vector<int> c;
         bool delete_ = false;
+        std::optional<int> focus;
 
-        MEO_JSONIZATION(a, MEO_OPT b, MEO_OPT c, MEO_KEY("delete") delete_);
+        MEO_JSONIZATION(a, MEO_OPT b, MEO_OPT c, MEO_KEY("delete") delete_, MEO_OPT focus);
     };
 
-    json::value ja = {
-        { "a", 100 },
-        { "delete", true }
-    };
+    json::value ja = { { "a", 100 }, { "delete", true }, { "focus", 5 } };
     if (ja.is<OptionalFields>()) {
         OptionalFields var = (OptionalFields)ja;
-        std::cout << var.a << ' ' << var.delete_ << std::endl;
+        bool has_focus = var.focus.has_value();
+        std::cout << var.a << ' ' << var.delete_ << ' '
+                  << (has_focus ? "has focus!" : "what happended?") << std::endl;
     }
 
     third_party_jsonization_1();
@@ -182,11 +182,20 @@ template <>
 class jsonization<ThirdPartyStruct>
 {
 public:
-    json::value to_json(const ThirdPartyStruct& t) const { return t.a; }
+    template <typename string_t>
+    json::basic_value<string_t> to_json(const ThirdPartyStruct& t) const
+    {
+        return t.a;
+    }
 
-    bool check_json(const json::value& j) const { return j.is_number(); }
+    template <typename string_t>
+    bool check_json(const json::basic_value<string_t>& j) const
+    {
+        return j.is_number();
+    }
 
-    bool from_json(const json::value& j, ThirdPartyStruct& out) const
+    template <typename string_t>
+    bool from_json(const json::basic_value<string_t>& j, ThirdPartyStruct& out) const
     {
         out.a = j.as_integer();
         return true;
