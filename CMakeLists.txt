@@ -5,7 +5,6 @@ option(BUILD_SAMPLE "Build sample in sample/sample.cpp" ON)
 option(BUILD_BENCHMARK "Build benchmark in benchmark/benchmark.cpp" OFF)
 option(ENABLE_NEON "Enable ARM NEON" OFF)
 option(BUILD_TESTING "Build testing" ON)
-option(ONLY_INSTALL "Only install the library without building" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -34,29 +33,24 @@ target_include_directories(meojson INTERFACE
 )
 target_compile_features(meojson INTERFACE cxx_std_17)
 
-if (ONLY_INSTALL)   
-    include(GNUInstallDirs)
-    include(CMakePackageConfigHelpers)
-    install(TARGETS meojson EXPORT meojsonTargets INCLUDES DIRECTORY ${CMAKE_INSTALL_INCLUDEDIR})
-    install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/meojson)
-
-    configure_package_config_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/meojson-config.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/meojson-config.cmake"
-        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/meojson
-    )
-    install(FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/meojson-config.cmake"
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/meojson
-    )
-
-    install(EXPORT meojsonTargets
-        FILE meojson-targets.cmake
-        NAMESPACE meojson::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/meojson
-    )
-    return()
-endif()
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+install(TARGETS meojson EXPORT meojsonTargets INCLUDES DIRECTORY ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/meojson)
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/meojson-config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/meojson-config.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/meojson
+)
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/meojson-config.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/meojson
+)
+install(EXPORT meojsonTargets
+    FILE meojson-targets.cmake
+    NAMESPACE meojson::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/meojson
+)
 
 if (BUILD_SAMPLE)
     file(GLOB sample_src

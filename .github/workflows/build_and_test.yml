@@ -28,16 +28,10 @@ jobs:
 
       - name: Install
         run: |
-          cmake -B build -DONLY_INSTALL=ON
+          cmake -B build 
           cmake --build build
           cmake --install build --prefix install
           
-      - name: Test install
-        run: |
-          cd test-install
-          cmake -B build
-          cmake --build build
-
       - uses: actions/upload-artifact@v4
         with:
           name: sample-windows
@@ -58,12 +52,6 @@ jobs:
         run: |
           ./build/sample
           ./build/testing
-
-      - name: Install
-        run: |
-          cmake -B build -DONLY_INSTALL=ON
-          cmake --build build
-          cmake --install build --prefix install
 
       - name: Test install
         run: |
@@ -95,12 +83,6 @@ jobs:
           ./build/sample
           ./build/testing
 
-      - name: Install
-        run: |
-          cmake -B build -DONLY_INSTALL=ON
-          cmake --build build
-          cmake --install build --prefix install
-          
       - name: Test install
         run: |
           cd test-install
