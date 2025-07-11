@@ -181,55 +181,18 @@ public:
     }
 };
 
-template <typename elem1_t, typename elem2_t>
-class jsonization<std::pair<elem1_t, elem2_t>>
+template <template <typename...> typename tuple_t, typename... args_t>
+class jsonization<tuple_t<args_t...>, std::enable_if_t<_utils::is_tuple_like<tuple_t<args_t...>>>>
     : public __jsonization_array<
-          jsonization<std::pair<elem1_t, elem2_t>>,
-          std::pair<elem1_t, elem2_t>,
-          2>
+          jsonization<tuple_t<args_t...>>,
+          tuple_t<args_t...>,
+          std::tuple_size_v<tuple_t<args_t...>>>
 {
 public:
-    template <typename string_t>
-    json::basic_array<string_t> to_json_array(const std::pair<elem1_t, elem2_t>& value) const
-    {
-        return json::basic_array<string_t> {
-            json::basic_value<string_t> { value.first },
-            json::basic_value<string_t> { value.second },
-        };
-    }
+    constexpr static size_t tuple_size = std::tuple_size_v<tuple_t<args_t...>>;
 
     template <typename string_t>
-    bool check_json_array(const json::basic_array<string_t>& arr) const
-    {
-        return arr[0].template is<elem1_t>() && arr[1].template is<elem2_t>();
-    }
-
-    template <typename string_t>
-    bool from_json_array(const json::basic_array<string_t>& arr, std::pair<elem1_t, elem2_t>& value)
-        const
-    {
-        if (!check_json_array(arr)) {
-            return false;
-        }
-        value.first = arr[0].template as<elem1_t>();
-        value.second = arr[1].template as<elem2_t>();
-        return true;
-    }
-};
-
-template <typename... args_t>
-class jsonization<std::tuple<args_t...>>
-    : public __jsonization_array<
-          jsonization<std::tuple<args_t...>>,
-          std::tuple<args_t...>,
-          std::tuple_size_v<std::tuple<args_t...>>>
-{
-public:
-    using tuple_t = std::tuple<args_t...>;
-    constexpr static size_t tuple_size = std::tuple_size_v<tuple_t>;
-
-    template <typename string_t>
-    json::basic_array<string_t> to_json_array(const tuple_t& value) const
+    json::basic_array<string_t> to_json_array(const tuple_t<args_t...>& value) const
     {
         json::basic_array<string_t> result;
         to_json_impl(result, value, std::make_index_sequence<tuple_size>());
@@ -237,11 +200,13 @@ public:
     }
 
     template <typename string_t, std::size_t... Is>
-    void
-        to_json_impl(json::basic_array<string_t>& arr, const tuple_t& t, std::index_sequence<Is...>)
-            const
+    void to_json_impl(
+        json::basic_array<string_t>& arr,
+        const tuple_t<args_t...>& t,
+        std::index_sequence<Is...>) const
     {
-        (arr.emplace_back(std::get<Is>(t)), ...);
+        using std::get;
+        (arr.emplace_back(get<Is>(t)), ...);
     }
 
     template <typename string_t>
@@ -253,11 +218,11 @@ public:
     template <typename string_t, std::size_t... Is>
     bool check_json_impl(const json::basic_array<string_t>& arr, std::index_sequence<Is...>) const
     {
-        return (arr[Is].template is<std::tuple_element_t<Is, tuple_t>>() && ...);
+        return (arr[Is].template is<std::tuple_element_t<Is, tuple_t<args_t...>>>() && ...);
     }
 
     template <typename string_t>
-    bool from_json_array(const json::basic_array<string_t>& arr, tuple_t& value) const
+    bool from_json_array(const json::basic_array<string_t>& arr, tuple_t<args_t...>& value) const
     {
         if (!check_json_array(arr)) {
             return false;
@@ -270,10 +235,11 @@ public:
     template <typename string_t, std::size_t... Is>
     void from_json_impl(
         const json::basic_array<string_t>& arr,
-        tuple_t& t,
+        tuple_t<args_t...>& t,
         std::index_sequence<Is...>) const
     {
-        ((std::get<Is>(t) = arr[Is].template as<std::tuple_element_t<Is, tuple_t>>()), ...);
+        using std::get;
+        ((get<Is>(t) = arr[Is].template as<std::tuple_element_t<Is, tuple_t<args_t...>>>()), ...);
     }
 };
 
@@ -298,7 +264,8 @@ public:
         const variant_t& t,
         std::index_sequence<Is...>) const
     {
-        std::ignore = ((t.index() == Is ? (val = std::get<Is>(t), true) : false) || ...);
+        using std::get;
+        std::ignore = ((t.index() == Is ? (val = get<Is>(t), true) : false) || ...);
     }
 
     template <typename string_t>

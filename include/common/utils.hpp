@@ -32,7 +32,7 @@ using wobject = basic_object<std::wstring>;
 
 namespace json::ext
 {
-template <typename T>
+template <typename T, typename = void>
 class jsonization
 {
 public:
@@ -100,6 +100,14 @@ template <typename T>
 constexpr bool is_pair = false;
 template <typename... args_t>
 constexpr bool is_pair<std::pair<args_t...>> = true;
+
+template <typename T, typename = void>
+constexpr bool is_tuple_like = false;
+template <template <typename...> typename tuple_t, typename... args_t>
+constexpr bool is_tuple_like<
+    tuple_t<args_t...>,
+    std::void_t<decltype(std::tuple_size<tuple_t<args_t...>>::value)>> =
+    std::tuple_size<tuple_t<args_t...>>::value == sizeof...(args_t);
 
 template <typename T>
 class has_to_json_in_member
