@@ -17,17 +17,21 @@ jobs:
 
       - name: Build
         run: |
-          mkdir build
-          cd build
-          cmake ..
-
-          MSBUILD meojson.sln /t:rebuild /p:Configuration="Debug" /p:Platform="x64" /m
+          cmake -B build
+          cmake --build build
+          cmake --install build --prefix install
 
       - name: Run Testing
         run: |
           ./build/Debug/sample.exe
           ./build/Debug/testing.exe
 
+      - name: Install
+        run: |
+          cmake -B build 
+          cmake --build build
+          cmake --install build --prefix install
+          
       - uses: actions/upload-artifact@v4
         with:
           name: sample-windows
@@ -40,16 +44,20 @@ jobs:
 
       - name: Build
         run: |
-          mkdir build
-          cd build
-          cmake ..
-
-          make -j$(nproc)
+          cmake -B build
+          cmake --build build
+          cmake --install build --prefix install
 
       - name: Run Testing
         run: |
           ./build/sample
           ./build/testing
+
+      - name: Test install
+        run: |
+          cd test-install
+          cmake -B build
+          cmake --build build
 
       - uses: actions/upload-artifact@v4
         with:
@@ -66,16 +74,20 @@ jobs:
 
       - name: Build
         run: |
-          mkdir build
-          cd build
-          cmake -G Ninja ..
-
-          ninja
+          cmake -B build -G Ninja
+          cmake --build build
+          cmake --install build --prefix install
 
       - name: Run Testing
         run: |
           ./build/sample
           ./build/testing
+
+      - name: Test install
+        run: |
+          cd test-install
+          cmake -B build -G Ninja
+          cmake --build build
 
       - uses: actions/upload-artifact@v4
         with:
