@@ -227,8 +227,6 @@ public:
 
 }
 
-bool third_party_jsonization_2();
-
 bool jsonizing()
 {
     // then you can use it as json
@@ -349,11 +347,6 @@ bool jsonizing()
         return false;
     }
 
-    if (!third_party_jsonization_2()) {
-        std::cerr << "error third_party_jsonization_2" << std::endl;
-        return false;
-    }
-
     json::array tuple_arr;
     tuple_arr.emplace_back(1);
     tuple_arr.emplace_back("aaabbbccc");
@@ -388,58 +381,3 @@ bool jsonizing()
     return true;
 }
 
-struct MyType
-{
-    int a = 0;
-};
-
-bool third_party_jsonization_2()
-{
-    /* If you don't like stupid invasive function, you can use `json::serialize` and
-     * `json::deserialize` for more elegant conversion: */
-    struct Serializer
-    {
-        json::value operator()(const MyType& t) const { return t.a; }
-    };
-
-    struct Deserializer
-    {
-        bool operator()(const json::value& j, MyType& t) const
-        {
-            if (!j.is_number()) {
-                return false;
-            }
-            t.a = j.as_integer();
-            return true;
-        }
-    };
-
-    std::map<std::string, MyType> third;
-    third["key"] = { 100 };
-    json::value jthird = json::serialize(third, Serializer {});
-
-    std::cout << jthird << std::endl;
-
-    std::map<std::string, MyType> new_third;
-    bool ret = json::deserialize(jthird, new_third, Deserializer {});
-    if (new_third["key"].a != 100) {
-        std::cerr << "error new_third[\"key\"].a != 100" << std::endl;
-        return false;
-    }
-
-    std::array<MyType, 5> third_arr {};
-    third_arr[4].a = 99;
-
-    json::value jthird_arr = json::serialize(third_arr, Serializer {});
-    std::array<MyType, 5> new_third_arr {};
-    bool ret_arr = json::deserialize(jthird_arr, new_third_arr, Deserializer {});
-    if (new_third_arr[4].a != 99) {
-        std::cerr << "error new_third_arr[4].a != 99" << std::endl;
-        return false;
-    }
-
-    json::value c = json::serialize(std::array<std::array<MyType, 5>, 10> {}, Serializer {});
-    std::cout << c << std::endl;
-
-    return true;
-}
