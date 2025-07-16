@@ -14,17 +14,16 @@
 namespace json::ext
 {
 
-template <typename impl_t, typename var_t, size_t len> // (size_t)-1 for no restriction
+template <typename string_t, typename impl_t, typename var_t, size_t len> // (size_t)-1 for no
+                                                                          // restriction
 class __jsonization_array
 {
 public:
-    template <typename string_t>
     json::basic_value<string_t> to_json(const var_t& value) const
     {
-        return static_cast<const impl_t*>(this)->template to_json_array<string_t>(value);
+        return static_cast<const impl_t*>(this)->to_json_array(value);
     }
 
-    template <typename string_t>
     bool check_json(const json::basic_value<string_t>& json) const
     {
         if (!json.is_array()) {
@@ -39,7 +38,6 @@ public:
         return static_cast<const impl_t*>(this)->check_json_array(arr);
     }
 
-    template <typename string_t>
     bool from_json(const json::basic_value<string_t>& json, var_t& value) const
     {
         if (!json.is_array()) {
@@ -59,13 +57,13 @@ public:
 // class __jsonization_object
 // {
 // public:
-//     template <typename string_t>
+//
 //     json::basic_value<string_t> to_json(const var_t& value) const
 //     {
 //         return static_cast<const impl_t*>(this)->template to_json_object<string_t>(value);
 //     }
 
-//     template <typename string_t>
+//
 //     bool check_json(const json::basic_value<string_t>& json) const
 //     {
 //         if (!json.is_object()) {
@@ -75,7 +73,7 @@ public:
 //         return static_cast<const impl_t*>(this)->check_json_object(obj);
 //     }
 
-//     template <typename string_t>
+//
 //     bool from_json(const json::basic_value<string_t>& json, var_t& value) const
 //     {
 //         if (!json.is_object()) {
@@ -86,39 +84,32 @@ public:
 //     }
 // };
 
-template <>
-class jsonization<std::nullptr_t>
+template <typename string_t>
+class jsonization<string_t, std::nullptr_t>
 {
 public:
-    template <typename string_t>
     json::basic_value<string_t> to_json(const std::nullptr_t&) const
     {
         return json::basic_value<string_t> {};
     }
 
-    template <typename string_t>
-    bool check_json(const json::basic_value<string_t>& json) const
-    {
-        return json.is_null();
-    }
+    bool check_json(const json::basic_value<string_t>& json) const { return json.is_null(); }
 
-    template <typename string_t>
     bool from_json(const json::basic_value<string_t>& json, std::nullptr_t&)
     {
         return check_json(json);
     }
 };
 
-template <>
-class jsonization<std::filesystem::path>
-{
-    template <typename string_t>
-    constexpr static bool is_string_validate =
+template <typename string_t>
+class jsonization<
+    string_t,
+    std::filesystem::path,
+    std::enable_if_t<
         std::is_same_v<string_t, std::filesystem::path::string_type>
-        || std::is_same_v<string_t, std::string>;
-
+        || std::is_same_v<string_t, std::string>>>
+{
 public:
-    template <typename string_t>
     json::basic_value<string_t> to_json(const std::filesystem::path& path) const
     {
         if constexpr (std::is_same_v<string_t, std::filesystem::path::string_type>) {
@@ -127,18 +118,10 @@ public:
         else if constexpr (std::is_same_v<string_t, std::string>) {
             return path.string();
         }
-        else {
-            static_assert(is_string_validate<string_t>, "Unknown string type");
-        }
     }
 
-    template <typename string_t>
-    bool check_json(const json::basic_value<string_t>& json) const
-    {
-        return json.is_string();
-    }
+    bool check_json(const json::basic_value<string_t>& json) const { return json.is_string(); }
 
-    template <typename string_t>
     bool from_json(const json::basic_value<string_t>& json, std::filesystem::path& path) const
     {
         path = json.as_string();
@@ -146,12 +129,19 @@ public:
     }
 };
 
-template <template <typename, size_t> typename arr_t, typename value_t, size_t size>
-class jsonization<arr_t<value_t, size>>
-    : public __jsonization_array<jsonization<arr_t<value_t, size>>, arr_t<value_t, size>, size>
+template <
+    typename string_t,
+    template <typename, size_t> typename arr_t,
+    typename value_t,
+    size_t size>
+class jsonization<string_t, arr_t<value_t, size>>
+    : public __jsonization_array<
+          string_t,
+          jsonization<string_t, arr_t<value_t, size>>,
+          arr_t<value_t, size>,
+          size>
 {
 public:
-    template <typename string_t>
     json::basic_array<string_t> to_json_array(const arr_t<value_t, size>& value) const
     {
         json::basic_array<string_t> result;
@@ -161,13 +151,11 @@ public:
         return result;
     }
 
-    template <typename string_t>
     bool check_json_array(const json::basic_array<string_t>& arr) const
     {
         return arr.template all<value_t>();
     }
 
-    template <typename string_t>
     bool from_json_array(const json::basic_array<string_t>& arr, arr_t<value_t, size>& value) const
     {
         if (!check_json_array(arr)) {
@@ -181,17 +169,20 @@ public:
     }
 };
 
-template <template <typename...> typename tuple_t, typename... args_t>
-class jsonization<tuple_t<args_t...>, std::enable_if_t<_utils::is_tuple_like<tuple_t<args_t...>>>>
+template <typename string_t, template <typename...> typename tuple_t, typename... args_t>
+class jsonization<
+    string_t,
+    tuple_t<args_t...>,
+    std::enable_if_t<_utils::is_tuple_like<tuple_t<args_t...>>>>
     : public __jsonization_array<
-          jsonization<tuple_t<args_t...>>,
+          string_t,
+          jsonization<string_t, tuple_t<args_t...>>,
           tuple_t<args_t...>,
           std::tuple_size_v<tuple_t<args_t...>>>
 {
 public:
     constexpr static size_t tuple_size = std::tuple_size_v<tuple_t<args_t...>>;
 
-    template <typename string_t>
     json::basic_array<string_t> to_json_array(const tuple_t<args_t...>& value) const
     {
         json::basic_array<string_t> result;
@@ -199,7 +190,7 @@ public:
         return result;
     }
 
-    template <typename string_t, std::size_t... Is>
+    template <std::size_t... Is>
     void to_json_impl(
         json::basic_array<string_t>& arr,
         const tuple_t<args_t...>& t,
@@ -209,19 +200,17 @@ public:
         (arr.emplace_back(get<Is>(t)), ...);
     }
 
-    template <typename string_t>
     bool check_json_array(const json::basic_array<string_t>& arr) const
     {
         return check_json_impl(arr, std::make_index_sequence<tuple_size>());
     }
 
-    template <typename string_t, std::size_t... Is>
+    template <std::size_t... Is>
     bool check_json_impl(const json::basic_array<string_t>& arr, std::index_sequence<Is...>) const
     {
         return (arr[Is].template is<std::tuple_element_t<Is, tuple_t<args_t...>>>() && ...);
     }
 
-    template <typename string_t>
     bool from_json_array(const json::basic_array<string_t>& arr, tuple_t<args_t...>& value) const
     {
         if (!check_json_array(arr)) {
@@ -232,7 +221,7 @@ public:
         return true;
     }
 
-    template <typename string_t, std::size_t... Is>
+    template <std::size_t... Is>
     void from_json_impl(
         const json::basic_array<string_t>& arr,
         tuple_t<args_t...>& t,
@@ -243,14 +232,13 @@ public:
     }
 };
 
-template <typename... args_t>
-class jsonization<std::variant<args_t...>>
+template <typename string_t, typename... args_t>
+class jsonization<string_t, std::variant<args_t...>>
 {
 public:
     using variant_t = std::variant<args_t...>;
     constexpr static size_t variant_size = std::variant_size_v<variant_t>;
 
-    template <typename string_t>
     json::basic_value<string_t> to_json(const variant_t& value) const
     {
         json::basic_value<string_t> result;
@@ -258,7 +246,7 @@ public:
         return result;
     }
 
-    template <typename string_t, std::size_t... Is>
+    template <std::size_t... Is>
     void to_json_impl(
         json::basic_value<string_t>& val,
         const variant_t& t,
@@ -268,19 +256,17 @@ public:
         std::ignore = ((t.index() == Is ? (val = get<Is>(t), true) : false) || ...);
     }
 
-    template <typename string_t>
     bool check_json(const json::basic_value<string_t>& json) const
     {
         return check_json_impl(json, std::make_index_sequence<variant_size>());
     }
 
-    template <typename string_t, std::size_t... Is>
+    template <std::size_t... Is>
     bool check_json_impl(const json::basic_value<string_t>& val, std::index_sequence<Is...>) const
     {
         return (val.template is<std::variant_alternative_t<Is, variant_t>>() || ...);
     }
 
-    template <typename string_t>
     bool from_json(const json::basic_value<string_t>& json, variant_t& value) const
     {
         if (!check_json_impl(json, std::make_index_sequence<variant_size>())) {
@@ -291,7 +277,7 @@ public:
         return true;
     }
 
-    template <typename string_t, std::size_t... Is>
+    template <std::size_t... Is>
     void from_json_impl(
         const json::basic_value<string_t>& json,
         variant_t& t,
@@ -302,6 +288,30 @@ public:
                   ? (t = json.template as<std::variant_alternative_t<Is, variant_t>>(), true)
                   : false)
              || ...);
+    }
+};
+
+template <typename string_t, typename var_t>
+class jsonization<
+    string_t,
+    var_t,
+    std::enable_if_t<
+        _utils::has_to_json_in_member<var_t>::value
+        && _utils::has_check_json_in_member<var_t, string_t>::value
+        && _utils::has_from_json_in_member<var_t, string_t>::value>>
+{
+public:
+    json::basic_value<string_t> to_json(const var_t& value) const { return value.to_json(); }
+
+    bool check_json(const json::basic_value<string_t>& json) const
+    {
+        var_t value;
+        return value.check_json(json);
+    }
+
+    bool from_json(const json::basic_value<string_t>& json, var_t& value) const
+    {
+        return value.from_json(json);
     }
 };
 

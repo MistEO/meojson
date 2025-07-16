@@ -103,18 +103,10 @@ public:
 
     template <
         typename jsonization_t,
-        std::enable_if_t<_utils::has_to_json_in_member<jsonization_t>::value, bool> = true>
-    basic_value(const jsonization_t& value)
-        : basic_value(value.to_json())
-    {
-    }
-
-    template <
-        typename jsonization_t,
         std::enable_if_t<_utils::has_to_json_in_templ_spec<jsonization_t, string_t>::value, bool> =
             true>
     basic_value(const jsonization_t& value)
-        : basic_value(ext::jsonization<jsonization_t>().template to_json<string_t>(value))
+        : basic_value(ext::jsonization<string_t, jsonization_t>().to_json(value))
     {
     }
 
@@ -304,26 +296,13 @@ public:
 
     template <
         typename jsonization_t,
-        std::enable_if_t<_utils::has_from_json_in_member<jsonization_t, string_t>::value, bool> =
-            true>
-    explicit operator jsonization_t() const
-    {
-        jsonization_t dst {};
-        if (!dst.from_json(*this)) {
-            throw exception("Wrong JSON");
-        }
-        return dst;
-    }
-
-    template <
-        typename jsonization_t,
         std::enable_if_t<
             _utils::has_from_json_in_templ_spec<jsonization_t, string_t>::value,
             bool> = true>
     explicit operator jsonization_t() const
     {
         jsonization_t dst {};
-        if (!ext::jsonization<jsonization_t>().from_json(*this, dst)) {
+        if (!ext::jsonization<string_t, jsonization_t>().from_json(*this, dst)) {
             throw exception("Wrong JSON");
         }
         return dst;
@@ -496,11 +475,8 @@ inline bool basic_value<string_t>::is() const noexcept
     if constexpr (std::is_same_v<basic_value<string_t>, value_t>) {
         return true;
     }
-    else if constexpr (_utils::has_check_json_in_member<value_t, string_t>::value) {
-        return value_t().check_json(*this);
-    }
     else if constexpr (_utils::has_check_json_in_templ_spec<value_t, string_t>::value) {
-        return ext::jsonization<value_t>().check_json(*this);
+        return ext::jsonization<string_t, value_t>().check_json(*this);
     }
     else if constexpr (std::is_same_v<bool, value_t>) {
         return is_boolean();
@@ -827,16 +803,9 @@ inline value_t basic_value<string_t>::as() const
     if constexpr (std::is_same_v<basic_value<string_t>, value_t>) {
         return *this;
     }
-    else if constexpr (_utils::has_from_json_in_member<value_t, string_t>::value) {
-        value_t dst {};
-        if (!dst.from_json(*this)) {
-            throw exception("Wrong JSON");
-        }
-        return dst;
-    }
     else if constexpr (_utils::has_from_json_in_templ_spec<value_t, string_t>::value) {
         value_t dst {};
-        if (!ext::jsonization<value_t>().from_json(*this, dst)) {
+        if (!ext::jsonization<string_t, value_t>().from_json(*this, dst)) {
             throw exception("Wrong JSON");
         }
         return dst;

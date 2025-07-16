@@ -51,18 +51,10 @@ public:
 
     template <
         typename jsonization_t,
-        std::enable_if_t<_utils::has_to_json_in_member<jsonization_t>::value, bool> = true>
-    basic_object(const jsonization_t& value)
-        : basic_object(value.to_json())
-    {
-    }
-
-    template <
-        typename jsonization_t,
         std::enable_if_t<_utils::has_to_json_in_templ_spec<jsonization_t, string_t>::value, bool> =
             true>
     basic_object(const jsonization_t& value)
-        : basic_object(ext::jsonization<jsonization_t>().to_json(value))
+        : basic_object(ext::jsonization<string_t, jsonization_t>().to_json(value))
     {
     }
 
@@ -152,26 +144,13 @@ public:
 
     template <
         typename jsonization_t,
-        std::enable_if_t<_utils::has_from_json_in_member<jsonization_t, string_t>::value, bool> =
-            true>
-    explicit operator jsonization_t() const
-    {
-        jsonization_t dst {};
-        if (!dst.from_json(*this)) {
-            throw exception("Wrong JSON");
-        }
-        return dst;
-    }
-
-    template <
-        typename jsonization_t,
         std::enable_if_t<
             _utils::has_from_json_in_templ_spec<jsonization_t, string_t>::value,
             bool> = true>
     explicit operator jsonization_t() const
     {
         jsonization_t dst {};
-        if (!ext::jsonization<jsonization_t>().from_json(*this, dst)) {
+        if (!ext::jsonization<string_t, jsonization_t>().from_json(*this, dst)) {
             throw exception("Wrong JSON");
         }
         return dst;

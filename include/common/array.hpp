@@ -53,20 +53,12 @@ public:
 
     template <
         typename jsonization_t,
-        std::enable_if_t<_utils::has_to_json_in_member<jsonization_t>::value, bool> = true>
-    basic_array(const jsonization_t& value)
-        : basic_array(value.to_json())
-    {
-    }
-
-    template <
-        typename jsonization_t,
         std::enable_if_t<
             _utils::has_to_json_in_templ_spec<jsonization_t, string_t>::value
                 && !_utils::has_to_json_array_in_templ_spec<jsonization_t, string_t>::value,
             bool> = true>
     basic_array(const jsonization_t& value)
-        : basic_array(ext::jsonization<jsonization_t>().template to_json<string_t>(value))
+        : basic_array(ext::jsonization<string_t, jsonization_t>().to_json(value))
     {
     }
 
@@ -76,7 +68,7 @@ public:
             _utils::has_to_json_array_in_templ_spec<jsonization_t, string_t>::value,
             bool> = true>
     basic_array(const jsonization_t& value)
-        : basic_array(ext::jsonization<jsonization_t>().template to_json_array<string_t>(value))
+        : basic_array(ext::jsonization<string_t, jsonization_t>().to_json_array(value))
     {
     }
 
@@ -123,7 +115,7 @@ public:
     value_t as() const
     {
         value_t res;
-        ext::jsonization<value_t>().from_json_array(*this, res);
+        ext::jsonization<string_t, value_t>().from_json_array(*this, res);
         return res;
     }
 
@@ -204,19 +196,6 @@ public:
 
     template <
         typename jsonization_t,
-        std::enable_if_t<_utils::has_from_json_in_member<jsonization_t, string_t>::value, bool> =
-            true>
-    explicit operator jsonization_t() const
-    {
-        jsonization_t dst {};
-        if (!dst.from_json(*this)) {
-            throw exception("Wrong JSON");
-        }
-        return dst;
-    }
-
-    template <
-        typename jsonization_t,
         std::enable_if_t<
             _utils::has_from_json_in_templ_spec<jsonization_t, string_t>::value
                 && !_utils::has_from_json_array_in_templ_spec<jsonization_t, string_t>::value,
@@ -224,7 +203,7 @@ public:
     explicit operator jsonization_t() const
     {
         jsonization_t dst {};
-        if (!ext::jsonization<jsonization_t>().from_json(*this, dst)) {
+        if (!ext::jsonization<string_t, jsonization_t>().from_json(*this, dst)) {
             throw exception("Wrong JSON");
         }
         return dst;
@@ -238,7 +217,7 @@ public:
     explicit operator jsonization_t() const
     {
         jsonization_t dst {};
-        if (!ext::jsonization<jsonization_t>().from_json_array(*this, dst)) {
+        if (!ext::jsonization<string_t, jsonization_t>().from_json_array(*this, dst)) {
             throw exception("Wrong JSON");
         }
         return dst;
