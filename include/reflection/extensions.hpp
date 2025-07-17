@@ -232,12 +232,7 @@ public:
 };
 
 template <typename string_t, typename collection_t>
-class jsonization<
-    string_t,
-    collection_t,
-    std::enable_if_t<
-        _utils::is_collection<collection_t>
-        && !std::is_same_v<collection_t, basic_array<string_t>>>>
+class jsonization<string_t, collection_t, std::enable_if_t<_utils::is_collection<collection_t>>>
     : public __jsonization_array<
           string_t,
           jsonization<string_t, collection_t>,
@@ -410,9 +405,7 @@ template <typename string_t, typename map_t>
 class jsonization<
     string_t,
     map_t,
-    std::enable_if_t<
-        _utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, string_t>
-        && !std::is_same_v<map_t, basic_object<string_t>>>>
+    std::enable_if_t<_utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, string_t>>>
     : public __jsonization_object<string_t, jsonization<string_t, map_t>, map_t>
 {
 public:
@@ -601,77 +594,6 @@ public:
     bool move_from_json(json::basic_value<string_t> json, var_t& value) const
     {
         return from_json(json, value);
-    }
-};
-
-template <typename string_t>
-class jsonization<string_t, basic_array<string_t>>
-    : public __jsonization_array<
-          string_t,
-          jsonization<string_t, basic_array<string_t>>,
-          basic_array<string_t>,
-          (size_t)-1>
-{
-public:
-    json::basic_array<string_t> to_json_array(const basic_array<string_t>& value) const
-    {
-        return value;
-    }
-
-    bool check_json_array(const json::basic_array<string_t>&) const { return true; }
-
-    bool from_json_array(const json::basic_array<string_t>& arr, basic_array<string_t>& value) const
-    {
-        value = arr;
-        return true;
-    }
-
-    json::basic_array<string_t> move_to_json_array(json::basic_array<string_t> value) const
-    {
-        return value;
-    }
-
-    bool move_from_json_array(json::basic_array<string_t> arr, json::basic_array<string_t>& value)
-        const
-    {
-        value = std::move(arr);
-        return true;
-    }
-};
-
-template <typename string_t>
-class jsonization<string_t, basic_object<string_t>>
-    : public __jsonization_object<
-          string_t,
-          jsonization<string_t, basic_object<string_t>>,
-          basic_object<string_t>>
-{
-public:
-    json::basic_object<string_t> to_json_object(const basic_object<string_t>& value) const
-    {
-        return value;
-    }
-
-    bool check_json_object(const json::basic_object<string_t>&) const { return true; }
-
-    bool from_json_object(const json::basic_object<string_t>& arr, basic_object<string_t>& value)
-        const
-    {
-        value = arr;
-        return true;
-    }
-
-    json::basic_object<string_t> move_to_json_object(json::basic_object<string_t> value) const
-    {
-        return value;
-    }
-
-    bool move_from_json_object(
-        json::basic_object<string_t> arr,
-        json::basic_object<string_t>& value) const
-    {
-        value = std::move(arr);
-        return true;
     }
 };
 
