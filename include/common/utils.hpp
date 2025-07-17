@@ -110,6 +110,19 @@ constexpr bool is_tuple_like<
     std::tuple_size<tuple_t<args_t...>>::value == sizeof...(args_t);
 
 template <typename T>
+class has_emplace_back
+{
+    template <typename U>
+    static auto test(int) -> decltype(std::declval<U>().emplace_back(), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T>
 class has_to_json_in_member
 {
     template <typename U>

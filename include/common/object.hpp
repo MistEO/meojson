@@ -39,17 +39,6 @@ public:
     // explicit basic_object(basic_value<string_t>&& val);
 
     template <
-        typename map_t,
-        std::enable_if_t<
-            _utils::is_map<map_t>
-                && std::is_constructible_v<value_type, _utils::range_value_t<map_t>>,
-            bool> = true>
-    basic_object(map_t map)
-        : _object_data(std::make_move_iterator(map.begin()), std::make_move_iterator(map.end()))
-    {
-    }
-
-    template <
         typename jsonization_t,
         std::enable_if_t<
             _utils::has_to_json_in_templ_spec<jsonization_t, string_t>::value
@@ -395,11 +384,7 @@ template <typename string_t>
 template <typename value_t, template <typename...> typename map_t>
 inline map_t<string_t, value_t> basic_object<string_t>::as_map() const
 {
-    map_t<string_t, value_t> result;
-    for (const auto& [key, val] : _object_data) {
-        result.emplace(key, val.template as<value_t>());
-    }
-    return result;
+    return as<map_t<string_t, value_t>>();
 }
 
 template <typename string_t>

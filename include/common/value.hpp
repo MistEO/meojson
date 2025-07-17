@@ -13,6 +13,7 @@
 #include <type_traits>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include "exception.hpp"
 #include "utils.hpp"
@@ -69,32 +70,6 @@ public:
     template <typename... args_t>
     basic_value(value_type type, args_t&&... args);
 
-    template <
-        typename collection_t,
-        std::enable_if_t<
-            _utils::is_collection<collection_t>
-                && std::is_constructible_v<
-                    typename basic_array<string_t>::value_type,
-                    _utils::range_value_t<collection_t>>,
-            bool> = true>
-    basic_value(collection_t&& collection)
-        : basic_value(basic_array<string_t>(std::forward<collection_t>(collection)))
-    {
-    }
-
-    template <
-        typename map_t,
-        std::enable_if_t<
-            _utils::is_map<map_t>
-                && std::is_constructible_v<
-                    typename basic_object<string_t>::value_type,
-                    _utils::range_value_t<map_t>>,
-            bool> = true>
-    basic_value(map_t&& map)
-        : basic_value(basic_object<string_t>(std::forward<map_t>(map)))
-    {
-    }
-
     template <typename enum_t, std::enable_if_t<std::is_enum_v<enum_t>, bool> = true>
     basic_value(enum_t e)
         : basic_value(static_cast<std::underlying_type_t<enum_t>>(e))
@@ -120,11 +95,6 @@ public:
         : basic_value(ext::jsonization<string_t, jsonization_t>().move_to_json(std::move(value)))
     {
     }
-
-    template <
-        typename value_t,
-        std::enable_if_t<!std::is_convertible_v<value_t, basic_value<string_t>>, bool> = true>
-    basic_value(value_t) = delete;
 
     // I don't know if you want to convert char to string or number, so I delete these constructors.
     basic_value(char) = delete;
@@ -231,13 +201,13 @@ public:
     basic_value<string_t>& operator=(const basic_value<string_t>& rhs);
     basic_value<string_t>& operator=(basic_value<string_t>&&) noexcept;
 
-    template <
-        typename value_t,
-        std::enable_if_t<std::is_convertible_v<value_t, basic_value<string_t>>, bool> = true>
-    basic_value<string_t>& operator=(value_t rhs)
-    {
-        return *this = basic_value<string_t>(std::move(rhs));
-    }
+    // template <
+    //     typename value_t,
+    //     std::enable_if_t<std::is_convertible_v<value_t, basic_value<string_t>>, bool> = true>
+    // basic_value<string_t>& operator=(value_t rhs)
+    // {
+    //     return *this = basic_value<string_t>(std::move(rhs));
+    // }
 
     bool operator==(const basic_value<string_t>& rhs) const;
 

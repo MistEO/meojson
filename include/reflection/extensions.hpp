@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <queue>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -212,7 +213,7 @@ public:
     {
         json::basic_array<string_t> result;
         for (size_t i = 0; i < size; i++) {
-            result.push_back(std::move(value.at(i)));
+            result.emplace_back(std::move(value.at(i)));
         }
         return result;
     }
@@ -225,6 +226,74 @@ public:
 
         for (size_t i = 0; i < size; i++) {
             value.at(i) = std::move(arr[i]).template as<value_t>();
+        }
+        return true;
+    }
+};
+
+template <typename string_t, typename collection_t>
+class jsonization<string_t, collection_t, std::enable_if_t<_utils::is_collection<collection_t>>>
+    : public __jsonization_array<
+          string_t,
+          jsonization<string_t, collection_t>,
+          collection_t,
+          (size_t)-1>
+{
+public:
+    json::basic_array<string_t> to_json_array(const collection_t& value) const
+    {
+        json::basic_array<string_t> result;
+        for (const auto& val : value) {
+            result.emplace_back(val);
+        }
+        return result;
+    }
+
+    bool check_json_array(const json::basic_array<string_t>& arr) const
+    {
+        return arr.template all<collection_t::value_type>();
+    }
+
+    bool from_json_array(const json::basic_array<string_t>& arr, collection_t& value) const
+    {
+        if (!check_json_array(arr)) {
+            return false;
+        }
+
+        value = {};
+        for (const auto& val : arr) {
+            if constexpr (_utils::has_emplace_back<collection_t>::value) {
+                value.emplace_back(val.template as<collection_t::value_type>());
+            }
+            else {
+                value.emplace(val.template as<collection_t::value_type>());
+            }
+        }
+        return true;
+    }
+
+    json::basic_array<string_t> move_to_json_array(collection_t value) const
+    {
+        json::basic_array<string_t> result;
+        for (auto& val : value) {
+            result.emplace_back(std::move(val));
+        }
+        return result;
+    }
+
+    bool move_from_json_array(json::basic_array<string_t> arr, collection_t& value) const
+    {
+        if (!check_json_array(arr)) {
+            return false;
+        }
+
+        for (auto& val : arr) {
+            if constexpr (_utils::has_emplace_back<collection_t>::value) {
+                value.emplace_back(std::move(val).template as<collection_t::value_type>());
+            }
+            else {
+                value.emplace(std::move(val).template as<collection_t::value_type>());
+            }
         }
         return true;
     }
@@ -306,7 +375,7 @@ public:
         std::index_sequence<Is...>) const
     {
         using std::get;
-        (arr.push_back(std::move(get<Is>(t))), ...);
+        (arr.emplace_back(std::move(get<Is>(t))), ...);
     }
 
     bool move_from_json_array(json::basic_array<string_t> arr, tuple_t<args_t...>& value) const
@@ -329,6 +398,71 @@ public:
         ((get<Is>(t) =
               std::move(arr[Is]).template as<std::tuple_element_t<Is, tuple_t<args_t...>>>()),
          ...);
+    }
+};
+
+template <typename string_t, typename map_t>
+class jsonization<
+    string_t,
+    map_t,
+    std::enable_if_t<_utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, string_t>>>
+    : public __jsonization_object<string_t, jsonization<string_t, map_t>, map_t>
+{
+public:
+    json::basic_object<string_t> to_json_object(const map_t& value) const
+    {
+        json::basic_object<string_t> result;
+        for (const auto& [key, val] : value) {
+            result.emplace(key, val);
+        }
+        return result;
+    }
+
+    bool check_json_object(const json::basic_object<string_t>& arr) const
+    {
+        for (const auto& [key, val] : arr) {
+            if (!val.template is<map_t::mapped_type>()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool from_json_object(const json::basic_object<string_t>& arr, map_t& value) const
+    {
+        // TODO: 是不是直接from不check了算了
+        if (!check_json_object(arr)) {
+            return false;
+        }
+
+        value = {};
+        for (const auto& [key, val] : arr) {
+            value.emplace(key, val.template as<map_t::mapped_type>());
+        }
+        return true;
+    }
+
+    json::basic_object<string_t> move_to_json_object(map_t value) const
+    {
+        json::basic_object<string_t> result;
+        for (auto& [key, val] : value) {
+            result.emplace(key, std::move(val));
+        }
+        return result;
+    }
+
+    bool move_from_json_object(json::basic_object<string_t> arr, map_t& value) const
+    {
+        // TODO: 是不是直接from不check了算了
+        if (!check_json_object(arr)) {
+            return false;
+        }
+
+        value = {};
+        for (auto& [key, val] : arr) {
+            value.emplace(key, std::move(val).template as<map_t::mapped_type>());
+        }
+        return true;
     }
 };
 
@@ -460,6 +594,62 @@ public:
     bool move_from_json(json::basic_value<string_t> json, var_t& value) const
     {
         return from_json(json, value);
+    }
+};
+
+// really need this fucking queue?
+template <typename string_t, typename value_t>
+class jsonization<string_t, std::queue<value_t>>
+    : public __jsonization_array<
+          string_t,
+          jsonization<string_t, std::queue<value_t>>,
+          std::queue<value_t>,
+          (size_t)-1>
+{
+public:
+    json::basic_array<string_t> to_json_array(const std::queue<value_t>& value) const
+    {
+        return move_to_json_array(value);
+    }
+
+    bool check_json_array(const json::basic_array<string_t>& arr) const
+    {
+        return arr.template all<value_t>();
+    }
+
+    bool from_json_array(const json::basic_array<string_t>& arr, std::queue<value_t>& value) const
+    {
+        if (!check_json_array(arr)) {
+            return false;
+        }
+
+        value = {};
+        for (const auto& val : arr) {
+            value.emplace(val.template as<value_t>());
+        }
+        return true;
+    }
+
+    json::basic_array<string_t> move_to_json_array(std::queue<value_t> value) const
+    {
+        json::basic_array<string_t> result;
+        while (!value.empty()) {
+            result.emplace_back(std::move(value.front()));
+            value.pop();
+        }
+        return result;
+    }
+
+    bool move_from_json_array(json::basic_array<string_t> arr, std::queue<value_t>& value) const
+    {
+        if (!check_json_array(arr)) {
+            return false;
+        }
+
+        for (auto& val : arr) {
+            value.emplace(std::move(val).template as<value_t>());
+        }
+        return true;
     }
 };
 

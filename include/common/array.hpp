@@ -41,17 +41,6 @@ public:
     // explicit basic_array(basic_value<string_t>&& val);
 
     template <
-        typename collection_t,
-        std::enable_if_t<
-            _utils::is_collection<collection_t>
-                && std::is_constructible_v<value_type, _utils::range_value_t<collection_t>>,
-            bool> = true>
-    basic_array(collection_t arr)
-        : _array_data(std::make_move_iterator(arr.begin()), std::make_move_iterator(arr.end()))
-    {
-    }
-
-    template <
         typename jsonization_t,
         std::enable_if_t<
             _utils::has_to_json_in_templ_spec<jsonization_t, string_t>::value
@@ -413,38 +402,11 @@ inline bool basic_array<string_t>::all() const
     return true;
 }
 
-namespace _as_collection_helper
-{
-template <typename T>
-class has_emplace_back
-{
-    template <typename U>
-    static auto test(int) -> decltype(std::declval<U>().emplace_back(), std::true_type());
-
-    template <typename U>
-    static std::false_type test(...);
-
-public:
-    static constexpr bool value = decltype(test<T>(0))::value;
-};
-}
-
 template <typename string_t>
 template <typename value_t, template <typename...> typename collection_t>
 inline collection_t<value_t> basic_array<string_t>::as_collection() const
 {
-    collection_t<value_t> result;
-    if constexpr (_as_collection_helper::has_emplace_back<collection_t<value_t>>::value) {
-        for (const auto& elem : _array_data) {
-            result.emplace_back(elem.template as<value_t>());
-        }
-    }
-    else {
-        for (const auto& elem : _array_data) {
-            result.emplace(elem.template as<value_t>());
-        }
-    }
-    return result;
+    return as<collection_t<value_t>>();
 }
 
 template <typename string_t>
