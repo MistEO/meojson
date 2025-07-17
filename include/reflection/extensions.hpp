@@ -116,8 +116,18 @@ public:
             return path.native();
         }
         else if constexpr (std::is_same_v<string_t, std::string>) {
-            return path.string();
+#if __cplusplus >= 202002L
+            std::u8string u8str = path.u8string();
+            return std::string { u8str.begin(), u8str.end() };
+#else
+            return path.u8string();
+#endif
         }
+#if __cplusplus >= 202002L
+        else if constexpr (std::is_same_v<string_t, std::u8string>) {
+            return path.u8string();
+        }
+#endif
     }
 
     bool check_json(const json::basic_value<string_t>& json) const { return json.is_string(); }
