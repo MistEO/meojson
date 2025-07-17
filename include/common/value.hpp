@@ -205,7 +205,10 @@ public:
     map_t<string_t, value_t> as_map() const;
 
     template <typename value_t>
-    value_t as() const;
+    value_t as() const&;
+
+    template <typename value_t>
+    value_t as() &&;
 
     basic_array<string_t>& as_array();
     basic_object<string_t>& as_object();
@@ -305,12 +308,18 @@ public:
         return as_map<value_t, map_t>();
     }
 
+    template <typename enum_t, std::enable_if_t<std::is_enum_v<enum_t>, bool> = true>
+    explicit operator enum_t() const
+    {
+        return static_cast<enum_t>(static_cast<std::underlying_type_t<enum_t>>(*this));
+    }
+
     template <
         typename jsonization_t,
         std::enable_if_t<
             _utils::has_from_json_in_templ_spec<jsonization_t, string_t>::value,
             bool> = true>
-    explicit operator jsonization_t() const
+    explicit operator jsonization_t() const&
     {
         jsonization_t dst {};
         if (!ext::jsonization<string_t, jsonization_t>().from_json(*this, dst)) {
@@ -319,10 +328,18 @@ public:
         return dst;
     }
 
-    template <typename enum_t, std::enable_if_t<std::is_enum_v<enum_t>, bool> = true>
-    explicit operator enum_t() const
+    template <
+        typename jsonization_t,
+        std::enable_if_t<
+            _utils::has_move_from_json_in_templ_spec<jsonization_t, string_t>::value,
+            bool> = true>
+    explicit operator jsonization_t() &&
     {
-        return static_cast<enum_t>(static_cast<std::underlying_type_t<enum_t>>(*this));
+        jsonization_t dst {};
+        if (!ext::jsonization<string_t, jsonization_t>().move_from_json(std::move(*this), dst)) {
+            throw exception("Wrong JSON");
+        }
+        return dst;
     }
 
 private:
@@ -809,7 +826,7 @@ inline basic_object<string_t>& basic_value<string_t>::as_object()
 
 template <typename string_t>
 template <typename value_t>
-inline value_t basic_value<string_t>::as() const
+inline value_t basic_value<string_t>::as() const&
 {
     if constexpr (std::is_same_v<basic_value<string_t>, value_t>) {
         return *this;
@@ -817,6 +834,25 @@ inline value_t basic_value<string_t>::as() const
     else if constexpr (_utils::has_from_json_in_templ_spec<value_t, string_t>::value) {
         value_t dst {};
         if (!ext::jsonization<string_t, value_t>().from_json(*this, dst)) {
+            throw exception("Wrong JSON");
+        }
+        return dst;
+    }
+    else {
+        return static_cast<value_t>(*this);
+    }
+}
+
+template <typename string_t>
+template <typename value_t>
+inline value_t basic_value<string_t>::as() &&
+{
+    if constexpr (std::is_same_v<basic_value<string_t>, value_t>) {
+        return std::move(*this);
+    }
+    else if constexpr (_utils::has_move_from_json_in_templ_spec<value_t, string_t>::value) {
+        value_t dst {};
+        if (!ext::jsonization<string_t, value_t>().move_from_json(std::move(*this), dst)) {
             throw exception("Wrong JSON");
         }
         return dst;
