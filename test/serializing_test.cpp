@@ -210,38 +210,22 @@ struct ThirdPartyStruct
 
 namespace json::ext
 {
-template <>
-class jsonization<ThirdPartyStruct>
+template <typename string_t>
+class jsonization<string_t, ThirdPartyStruct>
 {
 public:
-    json::wvalue to_json(const ThirdPartyStruct& t) const { return t.a; }
+    json::basic_value<string_t> to_json(const ThirdPartyStruct& t) const { return t.a; }
 
-    bool check_json(const json::wvalue& j) const { return j.is_number(); }
+    bool check_json(const json::basic_value<string_t>& j) const { return j.is_number(); }
 
-    bool from_json(const json::wvalue& j, ThirdPartyStruct& out) const
+    bool from_json(const json::basic_value<string_t>& j, ThirdPartyStruct& out) const
     {
         out.a = j.as_integer();
         return true;
     }
 };
 
-template <>
-class jsonization<std::filesystem::path>
-{
-public:
-    json::value to_json(const std::filesystem::path& path) const { return path.string(); }
-
-    bool check_json(const json::value& json) const { return json.is_string(); }
-
-    bool from_json(const json::value& json, std::filesystem::path& path) const
-    {
-        path = json.as_string();
-        return true;
-    }
-};
 }
-
-bool third_party_jsonization_2();
 
 bool jsonizing()
 {
@@ -306,6 +290,7 @@ bool jsonizing()
 
         MEO_JSONIZATION(MEO_OPT a, MEO_OPT b);
     };
+
     json::value opt_j = json::object();
     if (!opt_j.is<OptTest>()) {
         std::cerr << "bad MEO_OPT" << std::endl;
@@ -362,11 +347,6 @@ bool jsonizing()
         return false;
     }
 
-    if (!third_party_jsonization_2()) {
-        std::cerr << "error third_party_jsonization_2" << std::endl;
-        return false;
-    }
-
     json::array tuple_arr;
     tuple_arr.emplace_back(1);
     tuple_arr.emplace_back("aaabbbccc");
@@ -398,61 +378,13 @@ bool jsonizing()
     auto new_pair_arr = (json::array)p;
     auto new_pair_val = (json::value)p;
 
-    return true;
-}
-
-struct MyType
-{
-    int a = 0;
-};
-
-bool third_party_jsonization_2()
-{
-    /* If you don't like stupid invasive function, you can use `json::serialize` and
-     * `json::deserialize` for more elegant conversion: */
-    struct Serializer
-    {
-        json::value operator()(const MyType& t) const { return t.a; }
-    };
-
-    struct Deserializer
-    {
-        bool operator()(const json::value& j, MyType& t) const
-        {
-            if (!j.is_number()) {
-                return false;
-            }
-            t.a = j.as_integer();
-            return true;
-        }
-    };
-
-    std::map<std::string, MyType> third;
-    third["key"] = { 100 };
-    json::value jthird = json::serialize(third, Serializer {});
-
-    std::cout << jthird << std::endl;
-
-    std::map<std::string, MyType> new_third;
-    bool ret = json::deserialize(jthird, new_third, Deserializer {});
-    if (new_third["key"].a != 100) {
-        std::cerr << "error new_third[\"key\"].a != 100" << std::endl;
+    json::array movable_arr = { 1, json::array { 2, 3 } };
+    auto movable_arr_output = std::move(movable_arr).as<std::tuple<int, json::array>>();
+    if (!movable_arr.empty()) {
+        std::cerr << "not moved" << std::endl;
         return false;
     }
 
-    std::array<MyType, 5> third_arr {};
-    third_arr[4].a = 99;
-
-    json::value jthird_arr = json::serialize(third_arr, Serializer {});
-    std::array<MyType, 5> new_third_arr {};
-    bool ret_arr = json::deserialize(jthird_arr, new_third_arr, Deserializer {});
-    if (new_third_arr[4].a != 99) {
-        std::cerr << "error new_third_arr[4].a != 99" << std::endl;
-        return false;
-    }
-
-    json::value c = json::serialize(std::array<std::array<MyType, 5>, 10> {}, Serializer {});
-    std::cout << c << std::endl;
-
     return true;
 }
+
