@@ -469,3 +469,5 @@ inline string_t to_basic_string(any_t&& arg)
 }
 
 } // namespace json::_utils
+
+#include "../reflection/extensions.hpp"
