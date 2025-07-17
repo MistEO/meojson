@@ -251,7 +251,7 @@ public:
 
     bool check_json_array(const json::basic_array<string_t>& arr) const
     {
-        return arr.template all<collection_t::value_type>();
+        return arr.template all<typename collection_t::value_type>();
     }
 
     bool from_json_array(const json::basic_array<string_t>& arr, collection_t& value) const
@@ -263,10 +263,10 @@ public:
         value = {};
         for (const auto& val : arr) {
             if constexpr (_utils::has_emplace_back<collection_t>::value) {
-                value.emplace_back(val.template as<collection_t::value_type>());
+                value.emplace_back(val.template as<typename collection_t::value_type>());
             }
             else {
-                value.emplace(val.template as<collection_t::value_type>());
+                value.emplace(val.template as<typename collection_t::value_type>());
             }
         }
         return true;
@@ -289,10 +289,10 @@ public:
 
         for (auto& val : arr) {
             if constexpr (_utils::has_emplace_back<collection_t>::value) {
-                value.emplace_back(std::move(val).template as<collection_t::value_type>());
+                value.emplace_back(std::move(val).template as<typename collection_t::value_type>());
             }
             else {
-                value.emplace(std::move(val).template as<collection_t::value_type>());
+                value.emplace(std::move(val).template as<typename collection_t::value_type>());
             }
         }
         return true;
