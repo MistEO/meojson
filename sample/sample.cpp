@@ -139,7 +139,7 @@ void serializing()
         OptionalFields var = (OptionalFields)ja;
         bool has_focus = var.focus.has_value();
         std::cout << var.a << ' ' << var.delete_ << ' '
-                  << (has_focus ? "has focus!" : "what happended?") << std::endl;
+                  << (has_focus ? "has focus!" : "what happened?") << std::endl;
     }
 
     third_party_jsonization_1();

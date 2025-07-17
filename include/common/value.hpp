@@ -111,6 +111,17 @@ public:
     }
 
     template <
+        typename jsonization_t,
+        std::enable_if_t<
+            std::is_rvalue_reference_v<jsonization_t&&>
+                && _utils::has_move_to_json_in_templ_spec<jsonization_t, string_t>::value,
+            bool> = true>
+    basic_value(jsonization_t&& value)
+        : basic_value(ext::jsonization<string_t, jsonization_t>().move_to_json(std::move(value)))
+    {
+    }
+
+    template <
         typename value_t,
         std::enable_if_t<!std::is_convertible_v<value_t, basic_value<string_t>>, bool> = true>
     basic_value(value_t) = delete;

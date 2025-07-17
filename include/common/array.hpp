@@ -72,6 +72,30 @@ public:
     {
     }
 
+    template <
+        typename jsonization_t,
+        std::enable_if_t<
+            std::is_rvalue_reference_v<jsonization_t&&>
+                && _utils::has_move_to_json_in_templ_spec<jsonization_t, string_t>::value
+                && !_utils::has_move_to_json_array_in_templ_spec<jsonization_t, string_t>::value,
+            bool> = true>
+    basic_array(jsonization_t&& value)
+        : basic_array(ext::jsonization<string_t, jsonization_t>().move_to_json(std::move(value)))
+    {
+    }
+
+    template <
+        typename jsonization_t,
+        std::enable_if_t<
+            std::is_rvalue_reference_v<jsonization_t&&>
+                && _utils::has_move_to_json_array_in_templ_spec<jsonization_t, string_t>::value,
+            bool> = true>
+    basic_array(jsonization_t&& value)
+        : basic_array(
+              ext::jsonization<string_t, jsonization_t>().move_to_json_array(std::move(value)))
+    {
+    }
+
     ~basic_array() noexcept = default;
 
     bool empty() const noexcept { return _array_data.empty(); }
@@ -112,10 +136,22 @@ public:
         std::enable_if_t<
             _utils::has_from_json_array_in_templ_spec<value_t, string_t>::value,
             bool> = true>
-    value_t as() const
+    value_t as() const&
     {
         value_t res;
         ext::jsonization<string_t, value_t>().from_json_array(*this, res);
+        return res;
+    }
+
+    template <
+        typename value_t,
+        std::enable_if_t<
+            _utils::has_move_from_json_array_in_templ_spec<value_t, string_t>::value,
+            bool> = true>
+    value_t as() &&
+    {
+        value_t res;
+        ext::jsonization<string_t, value_t>().move_from_json_array(std::move(*this), res);
         return res;
     }
 
@@ -200,7 +236,7 @@ public:
             _utils::has_from_json_in_templ_spec<jsonization_t, string_t>::value
                 && !_utils::has_from_json_array_in_templ_spec<jsonization_t, string_t>::value,
             bool> = true>
-    explicit operator jsonization_t() const
+    explicit operator jsonization_t() const&
     {
         jsonization_t dst {};
         if (!ext::jsonization<string_t, jsonization_t>().from_json(*this, dst)) {
@@ -214,10 +250,41 @@ public:
         std::enable_if_t<
             _utils::has_from_json_array_in_templ_spec<jsonization_t, string_t>::value,
             bool> = true>
-    explicit operator jsonization_t() const
+    explicit operator jsonization_t() const&
     {
         jsonization_t dst {};
         if (!ext::jsonization<string_t, jsonization_t>().from_json_array(*this, dst)) {
+            throw exception("Wrong JSON");
+        }
+        return dst;
+    }
+
+    template <
+        typename jsonization_t,
+        std::enable_if_t<
+            _utils::has_move_from_json_in_templ_spec<jsonization_t, string_t>::value
+                && !_utils::has_move_from_json_array_in_templ_spec<jsonization_t, string_t>::value,
+            bool> = true>
+    explicit operator jsonization_t() &&
+    {
+        jsonization_t dst {};
+        if (!ext::jsonization<string_t, jsonization_t>().from_json(std::move(*this), dst)) {
+            throw exception("Wrong JSON");
+        }
+        return dst;
+    }
+
+    template <
+        typename jsonization_t,
+        std::enable_if_t<
+            _utils::has_move_from_json_array_in_templ_spec<jsonization_t, string_t>::value,
+            bool> = true>
+    explicit operator jsonization_t() &&
+    {
+        jsonization_t dst {};
+        if (!ext::jsonization<string_t, jsonization_t>().move_from_json_array(
+                std::move(*this),
+                dst)) {
             throw exception("Wrong JSON");
         }
         return dst;

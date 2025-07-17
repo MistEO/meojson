@@ -193,6 +193,34 @@ public:
 };
 
 template <typename T, typename string_t>
+class has_move_to_json_in_templ_spec
+{
+    template <typename U>
+    static auto test(int)
+        -> decltype(std::declval<ext::jsonization<string_t, U>>().move_to_json(std::declval<U>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T, typename string_t>
+class has_move_from_json_in_templ_spec
+{
+    template <typename U>
+    static auto test(int)
+        -> decltype(std::declval<ext::jsonization<string_t, U>>().move_from_json(std::declval<json::basic_value<string_t>>(), std::declval<U&>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T, typename string_t>
 class has_to_json_array_in_templ_spec
 {
     template <typename U>
@@ -226,6 +254,104 @@ class has_from_json_array_in_templ_spec
     template <typename U>
     static auto test(int)
         -> decltype(std::declval<ext::jsonization<string_t, U>>().from_json_array(std::declval<json::basic_array<string_t>>(), std::declval<U&>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T, typename string_t>
+class has_move_to_json_array_in_templ_spec
+{
+    template <typename U>
+    static auto test(int)
+        -> decltype(std::declval<ext::jsonization<string_t, U>>().move_to_json_array(std::declval<U>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T, typename string_t>
+class has_move_from_json_array_in_templ_spec
+{
+    template <typename U>
+    static auto test(int)
+        -> decltype(std::declval<ext::jsonization<string_t, U>>().move_from_json_array(std::declval<json::basic_array<string_t>>(), std::declval<U&>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T, typename string_t>
+class has_to_json_object_in_templ_spec
+{
+    template <typename U>
+    static auto test(int)
+        -> decltype(std::declval<ext::jsonization<string_t, U>>().to_json_object(std::declval<U>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T, typename string_t>
+class has_check_json_object_in_templ_spec
+{
+    template <typename U>
+    static auto test(int)
+        -> decltype(std::declval<ext::jsonization<string_t, U>>().check_json_object(std::declval<json::basic_object<string_t>>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T, typename string_t>
+class has_from_json_object_in_templ_spec
+{
+    template <typename U>
+    static auto test(int)
+        -> decltype(std::declval<ext::jsonization<string_t, U>>().from_json_object(std::declval<json::basic_object<string_t>>(), std::declval<U&>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T, typename string_t>
+class has_move_to_json_object_in_templ_spec
+{
+    template <typename U>
+    static auto test(int)
+        -> decltype(std::declval<ext::jsonization<string_t, U>>().move_to_json_object(std::declval<U>()), std::true_type());
+
+    template <typename U>
+    static std::false_type test(...);
+
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+template <typename T, typename string_t>
+class has_move_from_json_object_in_templ_spec
+{
+    template <typename U>
+    static auto test(int)
+        -> decltype(std::declval<ext::jsonization<string_t, U>>().move_from_json_object(std::declval<json::basic_object<string_t>>(), std::declval<U&>()), std::true_type());
 
     template <typename U>
     static std::false_type test(...);

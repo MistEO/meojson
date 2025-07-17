@@ -378,6 +378,13 @@ bool jsonizing()
     auto new_pair_arr = (json::array)p;
     auto new_pair_val = (json::value)p;
 
+    json::array movable_arr = { 1, json::array { 2, 3 } };
+    auto movable_arr_output = std::move(movable_arr).as<std::tuple<int, json::array>>();
+    if (!movable_arr.empty()) {
+        std::cerr << "not moved" << std::endl;
+        return false;
+    }
+
     return true;
 }
 
