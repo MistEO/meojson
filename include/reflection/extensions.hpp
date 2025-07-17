@@ -421,7 +421,7 @@ public:
     bool check_json_object(const json::basic_object<string_t>& arr) const
     {
         for (const auto& [key, val] : arr) {
-            if (!val.template is<map_t::mapped_type>()) {
+            if (!val.template is<typename map_t::mapped_type>()) {
                 return false;
             }
         }
@@ -437,7 +437,7 @@ public:
 
         value = {};
         for (const auto& [key, val] : arr) {
-            value.emplace(key, val.template as<map_t::mapped_type>());
+            value.emplace(key, val.template as<typename map_t::mapped_type>());
         }
         return true;
     }
@@ -460,7 +460,7 @@ public:
 
         value = {};
         for (auto& [key, val] : arr) {
-            value.emplace(key, std::move(val).template as<map_t::mapped_type>());
+            value.emplace(key, std::move(val).template as<typename map_t::mapped_type>());
         }
         return true;
     }
