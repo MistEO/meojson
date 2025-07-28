@@ -7,9 +7,24 @@
 #include <utility>
 
 #include "../common/types.hpp"
+#include "extensions.hpp"
 
 namespace json::_jsonization_helper
 {
+
+template <typename value_t>
+struct is_optional_t : public std::false_type
+{
+};
+
+template <typename value_t>
+struct is_optional_t<std::optional<value_t>> : public std::true_type
+{
+};
+
+template <typename value_t>
+inline constexpr bool is_optional_v = is_optional_t<value_t>::value;
+
 struct next_is_optional_t
 {
 };
@@ -68,7 +83,18 @@ struct dumper
         if (state.override_key) {
             key = state.override_key;
         }
-        result.emplace(key, var);
+        if constexpr (is_optional_v<var_t>) {
+            if (!state.is_optional) {
+                throw exception("std::optional must be used with MEO_OPT");
+            }
+
+            if (var.has_value()) {
+                result.emplace(key, var.value());
+            }
+        }
+        else {
+            result.emplace(key, var);
+        }
         _to_json(result, std::forward<rest_t>(rest)...);
     }
 
@@ -127,15 +153,27 @@ struct checker
             key = state.override_key;
         }
         auto opt = in.find(key);
-        if (state.is_optional) {
-            if (opt && !opt->is<var_t>()) {
+        if constexpr (is_optional_v<var_t>) {
+            if (!state.is_optional) {
+                throw exception("std::optional must be used with MEO_OPT");
+            }
+
+            if (opt && !opt->is<typename var_t::value_type>()) {
                 error_key = key;
                 return false;
-            } // is_optional, ignore key not found
+            }
         }
-        else if (!opt || !opt->is<var_t>()) {
-            error_key = key;
-            return false;
+        else {
+            if (state.is_optional) {
+                if (opt && !opt->is<var_t>()) {
+                    error_key = key;
+                    return false;
+                } // is_optional, ignore key not found
+            }
+            else if (!opt || !opt->is<var_t>()) {
+                error_key = key;
+                return false;
+            }
         }
         return _check_json(in, error_key, std::forward<rest_t>(rest)...);
     }
@@ -194,19 +232,37 @@ struct loader
             key = state.override_key;
         }
         auto opt = in.find(key);
-        if (state.is_optional) {
-            if (opt && !opt->is<var_t>()) {
+        if constexpr (is_optional_v<var_t>) {
+            if (!state.is_optional) {
+                throw exception("std::optional must be used with MEO_OPT");
+            }
+
+            if (opt && !opt->is<typename var_t::value_type>()) {
                 error_key = key;
                 return false;
-            } // is_optional, ignore key not found
+            }
+            if (opt) {
+                var = std::move(opt)->as<typename var_t::value_type>();
+            }
+            else {
+                var = std::nullopt;
+            }
         }
-        else if (!opt || !opt->is<var_t>()) {
-            error_key = key;
-            return false;
-        }
+        else {
+            if (state.is_optional) {
+                if (opt && !opt->is<var_t>()) {
+                    error_key = key;
+                    return false;
+                } // is_optional, ignore key not found
+            }
+            else if (!opt || !opt->is<var_t>()) {
+                error_key = key;
+                return false;
+            }
 
-        if (opt) {
-            var = std::move(opt)->as<var_t>();
+            if (opt) {
+                var = std::move(opt)->as<var_t>();
+            }
         }
 
         return _from_json(in, error_key, std::forward<rest_t>(rest)...);
@@ -257,8 +313,7 @@ namespace json::_private_macro
 
 #define _MEOJSON_EXPAND(x) x
 
-#define _MEOJSON_FOR_EACH_0(pred, ...)
-#define _MEOJSON_FOR_EACH_1(pred, x, ...) pred(x)
+#define _MEOJSON_FOR_EACH_1(pred, x) pred(x)
 #define _MEOJSON_FOR_EACH_2(pred, x, ...) \
     pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_1(pred, __VA_ARGS__))
 #define _MEOJSON_FOR_EACH_3(pred, x, ...) \

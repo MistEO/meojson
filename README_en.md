@@ -191,33 +191,6 @@ struct Outter2
 };
 ```
 
-If you don't like stupid invasive function, you can use `json::serialize` and `json::deserialize` for more elegant conversion:
-
-```c++
-struct Serializer
-{
-    json::value operator()(const ThirdPartyStruct& t) const { return t.a; }
-};
-struct Deserializer
-{
-    bool operator()(const json::value& j, ThirdPartyStruct& t) const
-    {
-        if (!j.is_number()) return false;
-        t.a = j.as_integer();
-        return true;
-    }
-};
-
-std::map<std::string, ThirdPartyStruct> third;
-third["key"] = { 100 };
-json::value jthird = json::serialize(third, Serializer {});
-
-std::cout << jthird << std::endl;
-
-std::map<std::string, ThirdPartyStruct> new_third;
-bool ret = json::deserialize(jthird, new_third, Deserializer {});
-```
-
 And some trivial features:
 
 ```c++

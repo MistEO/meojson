@@ -11,7 +11,6 @@
 
 void serializing();
 void third_party_jsonization_1();
-void third_party_jsonization_2();
 void parsing();
 
 int main()
@@ -130,21 +129,20 @@ void serializing()
         double b = 0;
         std::vector<int> c;
         bool delete_ = false;
+        std::optional<int> focus;
 
-        MEO_JSONIZATION(a, MEO_OPT b, MEO_OPT c, MEO_KEY("delete") delete_);
+        MEO_JSONIZATION(a, MEO_OPT b, MEO_OPT c, MEO_KEY("delete") delete_, MEO_OPT focus);
     };
 
-    json::value ja = {
-        { "a", 100 },
-        { "delete", true }
-    };
+    json::value ja = { { "a", 100 }, { "delete", true }, { "focus", 5 } };
     if (ja.is<OptionalFields>()) {
         OptionalFields var = (OptionalFields)ja;
-        std::cout << var.a << ' ' << var.delete_ << std::endl;
+        bool has_focus = var.focus.has_value();
+        std::cout << var.a << ' ' << var.delete_ << ' '
+                  << (has_focus ? "has focus!" : "what happened?") << std::endl;
     }
 
     third_party_jsonization_1();
-    third_party_jsonization_2();
 
     /* And some trivial features: */
 
@@ -178,15 +176,15 @@ struct ThirdPartyStruct
 
 namespace json::ext
 {
-template <>
-class jsonization<ThirdPartyStruct>
+template <typename string_t>
+class jsonization<string_t, ThirdPartyStruct>
 {
 public:
-    json::value to_json(const ThirdPartyStruct& t) const { return t.a; }
+    json::basic_value<string_t> to_json(const ThirdPartyStruct& t) const { return t.a; }
 
-    bool check_json(const json::value& j) const { return j.is_number(); }
+    bool check_json(const json::basic_value<string_t>& j) const { return j.is_number(); }
 
-    bool from_json(const json::value& j, ThirdPartyStruct& out) const
+    bool from_json(const json::basic_value<string_t>& j, ThirdPartyStruct& out) const
     {
         out.a = j.as_integer();
         return true;
@@ -214,37 +212,6 @@ void third_party_jsonization_1()
     };
 
     Outter2 o_2;
-}
-
-void third_party_jsonization_2()
-{
-    /* If you don't like stupid invasive function, you can use `json::serialize` and
-     * `json::deserialize` for more elegant conversion: */
-    struct Serializer
-    {
-        json::value operator()(const ThirdPartyStruct& t) const { return t.a; }
-    };
-
-    struct Deserializer
-    {
-        bool operator()(const json::value& j, ThirdPartyStruct& t) const
-        {
-            if (!j.is_number()) {
-                return false;
-            }
-            t.a = j.as_integer();
-            return true;
-        }
-    };
-
-    std::map<std::string, ThirdPartyStruct> third;
-    third["key"] = { 100 };
-    json::value jthird = json::serialize(third, Serializer {});
-
-    std::cout << jthird << std::endl;
-
-    std::map<std::string, ThirdPartyStruct> new_third;
-    bool ret = json::deserialize(jthird, new_third, Deserializer {});
 }
 
 void parsing()
