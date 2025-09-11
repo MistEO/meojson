@@ -4,6 +4,7 @@
 #include "json5_test.h"
 #include "parse_test.h"
 #include "precision_test.h"
+#include "ranges_test.h"
 #include "serializing_test.h"
 #include "unicode_test.h"
 
@@ -34,6 +35,9 @@ int main()
 
     std::cout << "\n*** unicode_test ***\n" << std::endl;
     success &= unicode_test();
+
+    std::cout << "\n*** ranges_test ***\n" << std::endl;
+    success &= ranges_test();
 
     if (!success) {
         std::cout << "\n****** Test failed ******\n" << std::endl;

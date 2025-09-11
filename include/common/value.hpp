@@ -287,7 +287,8 @@ public:
     template <
         typename jsonization_t,
         std::enable_if_t<
-            _utils::has_from_json_in_templ_spec<jsonization_t, string_t>::value,
+            _utils::has_from_json_in_templ_spec<jsonization_t, string_t>::value
+                && !_utils::should_disable_convertion<jsonization_t>,
             bool> = true>
     explicit operator jsonization_t() const&
     {
@@ -301,7 +302,8 @@ public:
     template <
         typename jsonization_t,
         std::enable_if_t<
-            _utils::has_move_from_json_in_templ_spec<jsonization_t, string_t>::value,
+            _utils::has_move_from_json_in_templ_spec<jsonization_t, string_t>::value
+                && !_utils::should_disable_convertion<jsonization_t>,
             bool> = true>
     explicit operator jsonization_t() &&
     {
