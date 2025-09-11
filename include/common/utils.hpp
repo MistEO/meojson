@@ -10,6 +10,10 @@
 #include <utility>
 #include <variant>
 
+#if __cplusplus >= 202002L
+#include <ranges>
+#endif
+
 namespace json
 {
 template <typename string_t>
@@ -108,6 +112,13 @@ constexpr bool is_tuple_like<
     tuple_t<args_t...>,
     std::void_t<decltype(std::tuple_size<tuple_t<args_t...>>::value)>> =
     std::tuple_size<tuple_t<args_t...>>::value == sizeof...(args_t);
+
+template <typename T>
+constexpr bool should_disable_convertion = false;
+#if __cplusplus >= 202002L
+template <typename View, size_t N>
+constexpr bool should_disable_convertion<std::ranges::elements_view<View, N>> = true;
+#endif
 
 template <typename T>
 class has_emplace_back

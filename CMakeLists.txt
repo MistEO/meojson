@@ -69,18 +69,29 @@ if (BUILD_SAMPLE)
 endif()
 
 if (BUILD_TESTING)
+    file(GLOB testing_cxx20_src
+        test/cxx20/*.cpp
+        test/cxx20/*.h
+        test/cxx20/*.hpp
+    )
+    add_library(testing_cxx20 STATIC ${testing_cxx20_src})
+    set_property(TARGET testing_cxx20 PROPERTY CXX_STANDARD 20)
+    target_link_libraries(testing_cxx20 PRIVATE meojson)
+
     file(GLOB testing_src
         test/*.cpp
         test/*.h
         test/*.hpp
     )
     add_executable(testing ${testing_src})
-    target_link_libraries(testing meojson)
+    target_link_libraries(testing PRIVATE meojson testing_cxx20)
     if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC"))
+        target_compile_options(testing_cxx20 PRIVATE -Wno-unused-variable -Wno-unused-but-set-variable)
         target_compile_options(testing PRIVATE -Wno-unused-variable -Wno-unused-but-set-variable)
     endif()
 
     source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${json_headers})
+    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${testing_cxx20_src})
     source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${testing_src})
 endif()
 
