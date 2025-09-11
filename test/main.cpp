@@ -1,10 +1,10 @@
 #include <iostream>
 
+#include "cxx20/ranges_test.h"
 #include "include_test.h"
 #include "json5_test.h"
 #include "parse_test.h"
 #include "precision_test.h"
-#include "ranges_test.h"
 #include "serializing_test.h"
 #include "unicode_test.h"
 
