@@ -116,6 +116,23 @@ public:
 };
 
 template <typename string_t>
+class jsonization<string_t, std::monostate>
+{
+public:
+    json::basic_value<string_t> to_json(const std::monostate&) const
+    {
+        return json::basic_value<string_t> {};
+    }
+
+    bool check_json(const json::basic_value<string_t>& json) const { return json.is_null(); }
+
+    bool from_json(const json::basic_value<string_t>& json, std::monostate&)
+    {
+        return check_json(json);
+    }
+};
+
+template <typename string_t>
 class jsonization<string_t, std::nullptr_t>
 {
 public:
