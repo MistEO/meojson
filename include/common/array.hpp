@@ -43,14 +43,14 @@ public:
         std::enable_if_t<
             _utils::has_to_json_in_templ_spec<jsonization_t>::value && !_utils::has_to_json_array_in_templ_spec<jsonization_t>::value,
             bool> = true>
-    array(const jsonization_t& value)
-        : array(ext::jsonization<jsonization_t>().to_json(value))
+    array(const jsonization_t& val)
+        : array(ext::jsonization<jsonization_t>().to_json(val))
     {
     }
 
     template <typename jsonization_t, std::enable_if_t<_utils::has_to_json_array_in_templ_spec<jsonization_t>::value, bool> = true>
-    array(const jsonization_t& value)
-        : array(ext::jsonization<jsonization_t>().to_json_array(value))
+    array(const jsonization_t& val)
+        : array(ext::jsonization<jsonization_t>().to_json_array(val))
     {
     }
 
@@ -60,8 +60,8 @@ public:
             std::is_rvalue_reference_v<jsonization_t&&> && _utils::has_move_to_json_in_templ_spec<jsonization_t>::value
                 && !_utils::has_move_to_json_array_in_templ_spec<jsonization_t>::value,
             bool> = true>
-    array(jsonization_t&& value)
-        : array(ext::jsonization<jsonization_t>().move_to_json(std::move(value)))
+    array(jsonization_t&& val)
+        : array(ext::jsonization<jsonization_t>().move_to_json(std::move(val)))
     {
     }
 
@@ -70,8 +70,8 @@ public:
         std::enable_if_t<
             std::is_rvalue_reference_v<jsonization_t&&> && _utils::has_move_to_json_array_in_templ_spec<jsonization_t>::value,
             bool> = true>
-    array(jsonization_t&& value)
-        : array(ext::jsonization<jsonization_t>().move_to_json_array(std::move(value)))
+    array(jsonization_t&& val)
+        : array(ext::jsonization<jsonization_t>().move_to_json_array(std::move(val)))
     {
     }
 

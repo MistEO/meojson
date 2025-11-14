@@ -75,8 +75,8 @@ public:
     }
 
     template <typename jsonization_t, std::enable_if_t<_utils::has_to_json_in_templ_spec<jsonization_t>::value, bool> = true>
-    value(const jsonization_t& value)
-        : value(ext::jsonization<jsonization_t>().to_json(value))
+    value(const jsonization_t& val)
+        : value(ext::jsonization<jsonization_t>().to_json(val))
     {
     }
 
@@ -85,8 +85,8 @@ public:
         std::enable_if_t<
             std::is_rvalue_reference_v<jsonization_t&&> && _utils::has_move_to_json_in_templ_spec<jsonization_t>::value,
             bool> = true>
-    value(jsonization_t&& value)
-        : value(ext::jsonization<jsonization_t>().move_to_json(std::move(value)))
+    value(jsonization_t&& val)
+        : value(ext::jsonization<jsonization_t>().move_to_json(std::move(val)))
     {
     }
 

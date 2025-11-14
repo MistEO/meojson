@@ -41,14 +41,14 @@ public:
         std::enable_if_t<
             _utils::has_to_json_in_templ_spec<jsonization_t>::value && !_utils::has_to_json_object_in_templ_spec<jsonization_t>::value,
             bool> = true>
-    object(const jsonization_t& value)
-        : object(ext::jsonization<jsonization_t>().to_json(value))
+    object(const jsonization_t& val)
+        : object(ext::jsonization<jsonization_t>().to_json(val))
     {
     }
 
     template <typename jsonization_t, std::enable_if_t<_utils::has_to_json_object_in_templ_spec<jsonization_t>::value, bool> = true>
-    object(const jsonization_t& value)
-        : object(ext::jsonization<jsonization_t>().to_json_object(value))
+    object(const jsonization_t& val)
+        : object(ext::jsonization<jsonization_t>().to_json_object(val))
     {
     }
 
@@ -58,8 +58,8 @@ public:
             std::is_rvalue_reference_v<jsonization_t&&> && _utils::has_move_to_json_in_templ_spec<jsonization_t>::value
                 && !_utils::has_move_to_json_object_in_templ_spec<jsonization_t>::value,
             bool> = true>
-    object(jsonization_t&& value)
-        : object(ext::jsonization<jsonization_t>().move_to_json(std::move(value)))
+    object(jsonization_t&& val)
+        : object(ext::jsonization<jsonization_t>().move_to_json(std::move(val)))
     {
     }
 
@@ -68,8 +68,8 @@ public:
         std::enable_if_t<
             std::is_rvalue_reference_v<jsonization_t&&> && _utils::has_move_to_json_object_in_templ_spec<jsonization_t>::value,
             bool> = true>
-    object(jsonization_t&& value)
-        : object(ext::jsonization<jsonization_t>().move_to_json_object(std::move(value)))
+    object(jsonization_t&& val)
+        : object(ext::jsonization<jsonization_t>().move_to_json_object(std::move(val)))
     {
     }
 
