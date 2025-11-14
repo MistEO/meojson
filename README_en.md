@@ -2,9 +2,9 @@
 
 # meojson
 
-✨下一代 C++ Json/Json5 序列化引擎 | 零依赖 | Header Only | 释放你的 JSON 潜能
+✨下一代 C++ Json 序列化引擎 | 零依赖 | Header Only | 释放你的 JSON 潜能
 
-✨ Next-gen C++ JSON/JSON5 Serialization Engine | Zero Dependency | Header-Only | Unleash JSON Potential
+✨ Next-gen C++ JSON Serialization Engine | Zero Dependency | Header-Only | Unleash JSON Potential
 
 </div>
 
@@ -16,12 +16,6 @@
 
 ```c++
 #include "json.hpp"
-```
-
-- If you want to parse JSON5, please include `json5.hpp`
-
-```c++
-#include "json5.hpp"
 ```
 
 - **meojson** only depends on STL, but requires c++17 standard
@@ -320,33 +314,27 @@ auto val = "{\"hi\":\"literals\"}"_json;
 std::cout << val["hi"] << std::endl;
 ```
 
-But the good news is that we can also parse json5!
+But the good news is that we can also parse JSON with Comments!
 
 ```c++
-std::string_view content5 = R"(
-// It's a Json5 content
+std::string_view content_c = R"(
+// This is a Json with comments
 {
-  名字: "MistEO",                  /* Key's quotes can be omitted */
-  😊: '😄',                       // Emoji can be used as a key
-  thanks: 'ありがとう',             /* Single quotes can also be used as strings */
-  \u006Bey: ['value',],            // Normal characters and escapes can be mixed
-  inf: +Infinity, nan: NaN,        // Numbers can start with '+'
-  fractional: .3, integer: 42.,    // Allowed to start or end with decimal point
-  byte_max: 0xff,                  // Supports hexadecimal number,
-  light_speed: +3e8,               // and scientific notation
-}
-)";
-auto ret = json::parse5(content5);
+  "name": "MistEO", /* We can add comments */
+  "pi": 3.14,       // and trailing commas!
+})";
+
+auto ret = json::parsec(content_c);
 if (!ret) {
-    std::cerr << "Parsing failed" << std::endl;
+    std::cerr << "Failed" << std::endl;
     return;
 }
 json::value& value = *ret;
 
 // Output: MistEO
-std::cout << value["名字"] << std::endl;
-// str = "value"
-std::string str = (std::string)value["key"][0];
+std::cout << value["name"] << std::endl;
+// str = "MistEO"
+std::string str = (std::string)value["name"][0];
 ```
 
 ## Debug

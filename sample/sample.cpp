@@ -176,15 +176,15 @@ struct ThirdPartyStruct
 
 namespace json::ext
 {
-template <typename string_t>
-class jsonization<string_t, ThirdPartyStruct>
+template <>
+class jsonization< ThirdPartyStruct>
 {
 public:
-    json::basic_value<string_t> to_json(const ThirdPartyStruct& t) const { return t.a; }
+    json::value to_json(const ThirdPartyStruct& t) const { return t.a; }
 
-    bool check_json(const json::basic_value<string_t>& j) const { return j.is_number(); }
+    bool check_json(const json::value& j) const { return j.is_number(); }
 
-    bool from_json(const json::basic_value<string_t>& j, ThirdPartyStruct& out) const
+    bool from_json(const json::value& j, ThirdPartyStruct& out) const
     {
         out.a = j.as_integer();
         return true;
@@ -292,16 +292,16 @@ void parsing()
     /* There are also a few tricks you've already seen with Serializing */
 
     bool is_vec = value["list"].is<std::vector<int>>();
-    std::vector<int> to_vec = value["list"].as_collection<int>();
+    std::vector<int> to_vec = value["list"].as<std::vector<int>>();
     // Output: 1, 2, 3
     for (auto&& i : to_vec) {
         std::cout << i << std::endl;
     }
 
-    std::list<int> to_list = value["list"].as_collection<int, std::list>();
+    std::list<int> to_list = value["list"].as<std::list<int>>();
     to_list = (std::list<int>)value["list"]; // same as above
     auto to_map = value["author"].as<std::map<std::string, std::string>>();
-    auto to_hashmap = value["author"].as_map<std::string, std::unordered_map>();
+    auto to_hashmap = value["author"].as<std::unordered_map<std::string, std::string>>();
 
     /* And... some useless literal syntax */
 

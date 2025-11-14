@@ -2,9 +2,9 @@
 
 # meojson
 
-✨下一代 C++ Json/Json5 序列化引擎 | 零依赖 | Header Only | 释放你的 JSON 潜能
+✨下一代 C++ Json 序列化引擎 | 零依赖 | Header Only | 释放你的 JSON 潜能
 
-✨ Next-gen C++ JSON/JSON5 Serialization Engine | Zero Dependency | Header-Only | Unleash JSON Potential
+✨ Next-gen C++ JSON Serialization Engine | Zero Dependency | Header-Only | Unleash JSON Potential
 
 </div>
 
@@ -16,12 +16,6 @@
 
 ```c++
 #include "json.hpp"
-```
-
-- 若您需要解析 Json5, 则请包含 `json5.hpp` 头文件
-
-```c++
-#include "json5.hpp"
 ```
 
 - **meojson** 仅依赖 STL, 但需要 c++17 标准
@@ -320,23 +314,17 @@ auto val = "{\"hi\":\"literals\"}"_json;
 std::cout << val["hi"] << std::endl;
 ```
 
-但好消息是，我们也可以解析 JSON5！
+但好消息是，我们也可以解析 JSON with Comments!
 
 ```c++
-std::string_view content5 = R"(
-// 这是一个 Json5 内容
+std::string_view content_c = R"(
+// 这是一个 JsonC 内容
 {
-  名字: "MistEO",                  /* 键的引号可以省略 */
-  😊: '😄',                       // 表情符可以用作键
-  thanks: 'ありがとう',             /* 单引号也可以用作字符串 */
-  \u006Bey: ['value',],            // 正常字符和转义可以混合使用
-  inf: +Infinity, nan: NaN,        // 数字可以以 '+' 开头
-  fractional: .3, integer: 42.,    // 允许以小数点开头或结尾
-  byte_max: 0xff,                  // 支持十六进制数
-  light_speed: +3e8,               // 以及科学计数法
+  "name": "MistEO", /* 可以添加注释 */
+  "pi": 3.14,       // 以及尾逗号！
 })";
 
-auto ret = json::parse5(content5);
+auto ret = json::parsec(content_c);
 if (!ret) {
     std::cerr << "解析失败" << std::endl;
     return;
@@ -344,9 +332,9 @@ if (!ret) {
 json::value& value = *ret;
 
 // Output: MistEO
-std::cout << value["名字"] << std::endl;
+std::cout << value["name"] << std::endl;
 // str = "value"
-std::string str = (std::string)value["key"][0];
+std::string str = (std::string)value["name"][0];
 ```
 
 ## 调试

@@ -24,10 +24,7 @@ public:
 
     virtual ~exception() noexcept override = default;
 
-    virtual const char* what() const noexcept override
-    {
-        return _what.empty() ? "Unknown exception" : _what.c_str();
-    }
+    virtual const char* what() const noexcept override { return _what.empty() ? "Unknown exception" : _what.c_str(); }
 
 protected:
     std::string _what;

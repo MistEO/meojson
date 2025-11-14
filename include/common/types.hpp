@@ -5,3 +5,7 @@
 #include "array.hpp"
 #include "object.hpp"
 #include "value.hpp"
+
+#include "array_impl.hpp"
+#include "object_impl.hpp"
+#include "value_impl.hpp"

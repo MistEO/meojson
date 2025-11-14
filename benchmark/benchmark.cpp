@@ -9,7 +9,6 @@
 #include <string>
 
 #include "json.hpp"
-#include "json5.hpp"
 
 template <typename parser>
 void do_benchmark(const std::string& content, const std::string& tag)
@@ -82,28 +81,26 @@ int main(int argc, char** argv)
 
         using namespace json::_packed_bytes;
 
-        do_benchmark<json::parser<std::string, std::string, packed_bytes_trait_none>>(
+        do_benchmark<json::parser<false, std::string, packed_bytes_trait_none>>(
             content,
             path.filename().string() + ", none");
-        do_benchmark<json::parser<std::string, std::string, packed_bytes_trait_uint32>>(
+        do_benchmark<json::parser<false, std::string, packed_bytes_trait_uint32>>(
             content,
             path.filename().string() + ", bits32");
-        do_benchmark<json::parser<std::string, std::string, packed_bytes_trait_uint64>>(
+        do_benchmark<json::parser<false, std::string, packed_bytes_trait_uint64>>(
             content,
             path.filename().string() + ", bits64");
 
         if constexpr (packed_bytes_trait<16>::available) {
-            do_benchmark<json::parser<std::string, std::string, packed_bytes_trait<16>>>(
+            do_benchmark<json::parser<false, std::string, packed_bytes_trait<16>>>(
                 content,
                 path.filename().string() + ", simd128");
         }
         if constexpr (packed_bytes_trait<32>::available) {
-            do_benchmark<json::parser<std::string, std::string, packed_bytes_trait<32>>>(
+            do_benchmark<json::parser<false, std::string, packed_bytes_trait<32>>>(
                 content,
                 path.filename().string() + ", simd256");
         }
-
-        do_benchmark<json::parser5<std::string>>(content, path.filename().string() + ", json5");
     }
 
     return 0;

@@ -11,7 +11,6 @@
 
 namespace json::_jsonization_helper
 {
-
 template <typename value_t>
 struct is_optional_t : public std::false_type
 {
@@ -61,24 +60,16 @@ struct is_tag_t<next_override_key_t> : public std::true_type
 
 struct dumper
 {
-    void _to_json(json::object&, va_arg_end) const {}
+    void _to_json(object&, va_arg_end) const {}
 
     template <typename... rest_t>
-    void _to_json(json::object& result, const char* key, rest_t&&... rest) const
+    void _to_json(object& result, const char* key, rest_t&&... rest) const
     {
         _to_json(result, next_state_t {}, key, std::forward<rest_t>(rest)...);
     }
 
-    template <
-        typename var_t,
-        typename... rest_t,
-        typename _ = std::enable_if_t<!is_tag_t<var_t>::value, void>>
-    void _to_json(
-        json::object& result,
-        next_state_t state,
-        const char* key,
-        const var_t& var,
-        rest_t&&... rest) const
+    template <typename var_t, typename... rest_t, typename _ = std::enable_if_t<!is_tag_t<var_t>::value, void>>
+    void _to_json(object& result, next_state_t state, const char* key, const var_t& var, rest_t&&... rest) const
     {
         if (state.override_key) {
             key = state.override_key;
@@ -99,24 +90,14 @@ struct dumper
     }
 
     template <typename... rest_t>
-    void _to_json(
-        json::object& result,
-        next_state_t state,
-        const char*,
-        next_is_optional_t,
-        rest_t&&... rest) const
+    void _to_json(object& result, next_state_t state, const char*, next_is_optional_t, rest_t&&... rest) const
     {
         state.is_optional = true;
         _to_json(result, state, std::forward<rest_t>(rest)...);
     }
 
     template <typename... rest_t>
-    void _to_json(
-        json::object& result,
-        next_state_t state,
-        const char*,
-        next_override_key_t override_key,
-        rest_t&&... rest) const
+    void _to_json(object& result, next_state_t state, const char*, next_override_key_t override_key, rest_t&&... rest) const
     {
         state.override_key = override_key.key;
         _to_json(result, state, std::forward<rest_t>(rest)...);
@@ -125,29 +106,17 @@ struct dumper
 
 struct checker
 {
-    bool _check_json(const json::value&, std::string&, va_arg_end) const { return true; }
+    bool _check_json(const value&, std::string&, va_arg_end) const { return true; }
 
     template <typename... rest_t>
-    bool _check_json(
-        const json::value& in,
-        std::string& error_key,
-        const char* key,
-        rest_t&&... rest) const
+    bool _check_json(const value& in, std::string& error_key, const char* key, rest_t&&... rest) const
     {
         return _check_json(in, error_key, next_state_t {}, key, std::forward<rest_t>(rest)...);
     }
 
-    template <
-        typename var_t,
-        typename... rest_t,
-        typename _ = std::enable_if_t<!is_tag_t<var_t>::value, void>>
-    bool _check_json(
-        const json::value& in,
-        std::string& error_key,
-        next_state_t state,
-        const char* key,
-        const var_t&,
-        rest_t&&... rest) const
+    template <typename var_t, typename... rest_t, typename _ = std::enable_if_t<!is_tag_t<var_t>::value, void>>
+    bool _check_json(const value& in, std::string& error_key, next_state_t state, const char* key, const var_t&, rest_t&&... rest)
+        const
     {
         if (state.override_key) {
             key = state.override_key;
@@ -179,13 +148,8 @@ struct checker
     }
 
     template <typename... rest_t>
-    bool _check_json(
-        const json::value& in,
-        std::string& error_key,
-        next_state_t state,
-        const char*,
-        next_is_optional_t,
-        rest_t&&... rest) const
+    bool _check_json(const value& in, std::string& error_key, next_state_t state, const char*, next_is_optional_t, rest_t&&... rest)
+        const
     {
         state.is_optional = true;
         return _check_json(in, error_key, state, std::forward<rest_t>(rest)...);
@@ -193,7 +157,7 @@ struct checker
 
     template <typename... rest_t>
     bool _check_json(
-        const json::value& in,
+        const value& in,
         std::string& error_key,
         next_state_t state,
         const char*,
@@ -207,26 +171,16 @@ struct checker
 
 struct loader
 {
-    bool _from_json(const json::value&, std::string&, va_arg_end) const { return true; }
+    bool _from_json(const value&, std::string&, va_arg_end) const { return true; }
 
     template <typename... rest_t>
-    bool
-        _from_json(const json::value& in, std::string& error_key, const char* key, rest_t&&... rest)
+    bool _from_json(const value& in, std::string& error_key, const char* key, rest_t&&... rest)
     {
         return _from_json(in, error_key, next_state_t {}, key, std::forward<rest_t>(rest)...);
     }
 
-    template <
-        typename var_t,
-        typename... rest_t,
-        typename _ = std::enable_if_t<!is_tag_t<var_t>::value, void>>
-    bool _from_json(
-        const json::value& in,
-        std::string& error_key,
-        next_state_t state,
-        const char* key,
-        var_t& var,
-        rest_t&&... rest)
+    template <typename var_t, typename... rest_t, typename _ = std::enable_if_t<!is_tag_t<var_t>::value, void>>
+    bool _from_json(const value& in, std::string& error_key, next_state_t state, const char* key, var_t& var, rest_t&&... rest)
     {
         if (state.override_key) {
             key = state.override_key;
@@ -269,13 +223,7 @@ struct loader
     }
 
     template <typename... rest_t>
-    bool _from_json(
-        const json::value& in,
-        std::string& error_key,
-        next_state_t state,
-        const char*,
-        next_is_optional_t,
-        rest_t&&... rest)
+    bool _from_json(const value& in, std::string& error_key, next_state_t state, const char*, next_is_optional_t, rest_t&&... rest)
     {
         state.is_optional = true;
         return _from_json(in, error_key, state, std::forward<rest_t>(rest)...);
@@ -283,7 +231,7 @@ struct loader
 
     template <typename... rest_t>
     bool _from_json(
-        const json::value& in,
+        const value& in,
         std::string& error_key,
         next_state_t state,
         const char*,
@@ -314,132 +262,69 @@ namespace json::_private_macro
 #define _MEOJSON_EXPAND(x) x
 
 #define _MEOJSON_FOR_EACH_1(pred, x) pred(x)
-#define _MEOJSON_FOR_EACH_2(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_1(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_3(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_2(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_4(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_3(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_5(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_4(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_6(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_5(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_7(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_6(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_8(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_7(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_9(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_8(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_10(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_9(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_11(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_10(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_12(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_11(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_13(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_12(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_14(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_13(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_15(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_14(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_16(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_15(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_17(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_16(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_18(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_17(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_19(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_18(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_20(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_19(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_21(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_20(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_22(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_21(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_23(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_22(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_24(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_23(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_25(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_24(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_26(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_25(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_27(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_26(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_28(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_27(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_29(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_28(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_30(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_29(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_31(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_30(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_32(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_31(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_33(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_32(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_34(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_33(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_35(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_34(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_36(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_35(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_37(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_36(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_38(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_37(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_39(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_38(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_40(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_39(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_41(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_40(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_42(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_41(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_43(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_42(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_44(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_43(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_45(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_44(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_46(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_45(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_47(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_46(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_48(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_47(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_49(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_48(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_50(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_49(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_51(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_50(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_52(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_51(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_53(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_52(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_54(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_53(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_55(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_54(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_56(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_55(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_57(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_56(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_58(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_57(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_59(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_58(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_60(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_59(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_61(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_60(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_62(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_61(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_63(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_62(pred, __VA_ARGS__))
-#define _MEOJSON_FOR_EACH_64(pred, x, ...) \
-    pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_63(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_2(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_1(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_3(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_2(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_4(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_3(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_5(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_4(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_6(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_5(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_7(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_6(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_8(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_7(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_9(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_8(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_10(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_9(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_11(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_10(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_12(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_11(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_13(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_12(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_14(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_13(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_15(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_14(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_16(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_15(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_17(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_16(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_18(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_17(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_19(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_18(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_20(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_19(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_21(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_20(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_22(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_21(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_23(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_22(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_24(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_23(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_25(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_24(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_26(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_25(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_27(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_26(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_28(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_27(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_29(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_28(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_30(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_29(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_31(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_30(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_32(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_31(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_33(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_32(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_34(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_33(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_35(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_34(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_36(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_35(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_37(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_36(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_38(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_37(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_39(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_38(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_40(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_39(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_41(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_40(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_42(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_41(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_43(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_42(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_44(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_43(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_45(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_44(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_46(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_45(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_47(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_46(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_48(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_47(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_49(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_48(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_50(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_49(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_51(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_50(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_52(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_51(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_53(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_52(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_54(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_53(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_55(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_54(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_56(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_55(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_57(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_56(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_58(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_57(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_59(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_58(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_60(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_59(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_61(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_60(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_62(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_61(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_63(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_62(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_64(pred, x, ...) pred(x) _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_63(pred, __VA_ARGS__))
 
 #define _MEOJSON_ARG_COUNT(...)          \
     _MEOJSON_EXPAND(_MEOJSON_ARG_COUNT1( \
@@ -580,59 +465,50 @@ namespace json::_private_macro
     ...)                     \
     N
 
-#define _MEOJSON_FOR_EACH_(N, pred, ...) \
-    _MEOJSON_EXPAND(_MEOJSON_CONCATENATE(_MEOJSON_FOR_EACH_, N)(pred, __VA_ARGS__))
+#define _MEOJSON_FOR_EACH_(N, pred, ...) _MEOJSON_EXPAND(_MEOJSON_CONCATENATE(_MEOJSON_FOR_EACH_, N)(pred, __VA_ARGS__))
 #define _MEOJSON_FOR_EACH(pred, ...) \
-    _MEOJSON_EXPAND(                 \
-        _MEOJSON_FOR_EACH_(_MEOJSON_EXPAND(_MEOJSON_ARG_COUNT(__VA_ARGS__)), pred, __VA_ARGS__))
+    _MEOJSON_EXPAND(_MEOJSON_FOR_EACH_(_MEOJSON_EXPAND(_MEOJSON_ARG_COUNT(__VA_ARGS__)), pred, __VA_ARGS__))
 
 #define _MEOJSON_VARNAME(x) _MEOJSON_CONCATENATE(_meojson_jsonization_, x)
 #define _MEOJSON_KEY_VALUE(x) _MEOJSON_STRINGIZE(x), x,
 } // namespace json::_private_macro
 
-#define MEO_TOJSON(...)                                                         \
-    json::value to_json() const                                                 \
-    {                                                                           \
-        json::object result;                                                    \
-        json::_jsonization_helper::dumper()._to_json(                           \
-            result,                                                             \
-            _MEOJSON_EXPAND(_MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__)) \
-                json::_jsonization_helper::va_arg_end {});                      \
-        return result;                                                          \
+#define MEO_TOJSON(...)                                                                                                    \
+    json::value to_json() const                                                                                            \
+    {                                                                                                                      \
+        json::object result;                                                                                               \
+        json::_jsonization_helper::dumper()._to_json(                                                                      \
+            result,                                                                                                        \
+            _MEOJSON_EXPAND(_MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__)) json::_jsonization_helper::va_arg_end {}); \
+        return result;                                                                                                     \
     }
 
-#define MEO_CHECKJSON(...)                                                      \
-    bool check_json(const json::value& _MEOJSON_VARNAME(in)) const              \
-    {                                                                           \
-        std::string _MEOJSON_VARNAME(error_key);                                \
-        return check_json(_MEOJSON_VARNAME(in), _MEOJSON_VARNAME(error_key));   \
-    }                                                                           \
-    bool check_json(                                                            \
-        const json::value& _MEOJSON_VARNAME(in),                                \
-        std::string& _MEOJSON_VARNAME(error_key)) const                         \
-    {                                                                           \
-        return json::_jsonization_helper::checker()._check_json(                \
-            _MEOJSON_VARNAME(in),                                               \
-            _MEOJSON_VARNAME(error_key),                                        \
-            _MEOJSON_EXPAND(_MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__)) \
-                json::_jsonization_helper::va_arg_end {});                      \
+#define MEO_CHECKJSON(...)                                                                                                 \
+    bool check_json(const json::value& _MEOJSON_VARNAME(in)) const                                                         \
+    {                                                                                                                      \
+        std::string _MEOJSON_VARNAME(error_key);                                                                           \
+        return check_json(_MEOJSON_VARNAME(in), _MEOJSON_VARNAME(error_key));                                              \
+    }                                                                                                                      \
+    bool check_json(const json::value& _MEOJSON_VARNAME(in), std::string& _MEOJSON_VARNAME(error_key)) const               \
+    {                                                                                                                      \
+        return json::_jsonization_helper::checker()._check_json(                                                           \
+            _MEOJSON_VARNAME(in),                                                                                          \
+            _MEOJSON_VARNAME(error_key),                                                                                   \
+            _MEOJSON_EXPAND(_MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__)) json::_jsonization_helper::va_arg_end {}); \
     }
 
-#define MEO_FROMJSON(...)                                                       \
-    bool from_json(const json::value& _MEOJSON_VARNAME(in))                     \
-    {                                                                           \
-        std::string _MEOJSON_VARNAME(error_key);                                \
-        return from_json(_MEOJSON_VARNAME(in), _MEOJSON_VARNAME(error_key));    \
-    }                                                                           \
-    bool from_json(                                                             \
-        const json::value& _MEOJSON_VARNAME(in),                                \
-        std::string& _MEOJSON_VARNAME(error_key))                               \
-    {                                                                           \
-        return json::_jsonization_helper::loader()._from_json(                  \
-            _MEOJSON_VARNAME(in),                                               \
-            _MEOJSON_VARNAME(error_key),                                        \
-            _MEOJSON_EXPAND(_MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__)) \
-                json::_jsonization_helper::va_arg_end {});                      \
+#define MEO_FROMJSON(...)                                                                                                  \
+    bool from_json(const json::value& _MEOJSON_VARNAME(in))                                                                \
+    {                                                                                                                      \
+        std::string _MEOJSON_VARNAME(error_key);                                                                           \
+        return from_json(_MEOJSON_VARNAME(in), _MEOJSON_VARNAME(error_key));                                               \
+    }                                                                                                                      \
+    bool from_json(const json::value& _MEOJSON_VARNAME(in), std::string& _MEOJSON_VARNAME(error_key))                      \
+    {                                                                                                                      \
+        return json::_jsonization_helper::loader()._from_json(                                                             \
+            _MEOJSON_VARNAME(in),                                                                                          \
+            _MEOJSON_VARNAME(error_key),                                                                                   \
+            _MEOJSON_EXPAND(_MEOJSON_FOR_EACH(_MEOJSON_KEY_VALUE, __VA_ARGS__)) json::_jsonization_helper::va_arg_end {}); \
     }
 
 #define MEO_JSONIZATION(...)                    \

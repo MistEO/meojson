@@ -13,13 +13,11 @@ bool unicode_test()
         return false;
     }
     for (auto ch : obj.value().at("test").as_string()) {
-        std::cout << std::hex << std::setw(2)
-                  << static_cast<unsigned>(static_cast<unsigned char>(ch)) << ' ';
+        std::cout << std::hex << std::setw(2) << static_cast<unsigned>(static_cast<unsigned char>(ch)) << ' ';
     }
     std::cout << std::endl;
     for (auto ch : target) {
-        std::cout << std::hex << std::setw(2)
-                  << static_cast<unsigned>(static_cast<unsigned char>(ch)) << ' ';
+        std::cout << std::hex << std::setw(2) << static_cast<unsigned>(static_cast<unsigned char>(ch)) << ' ';
     }
     std::cout << std::endl;
     return obj.value().at("test").as_string() == target;
