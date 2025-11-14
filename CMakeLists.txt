@@ -75,6 +75,7 @@ if (BUILD_TESTING)
         test/*.hpp
     )
     add_executable(testing ${testing_src})
+    target_compile_definitions(testing PRIVATE MEOJSON_FS_PATH_EXTENSION)
     target_link_libraries(testing meojson)
     if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC"))
         target_compile_options(testing PRIVATE -Wno-unused-variable -Wno-unused-but-set-variable)
