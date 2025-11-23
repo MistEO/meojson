@@ -1,9 +1,52 @@
 #pragma once
 
 #include "parser.hpp"
+#include <array>
+#include <utility>
 
 namespace json
 {
+namespace _detail
+{
+constexpr std::array<int8_t, 256> create_hex_table()
+{
+    std::array<int8_t, 256> table = {};
+    for (size_t i = 0; i < 256; ++i)
+        table[i] = -1;
+    for (int i = '0'; i <= '9'; ++i)
+        table[i] = static_cast<int8_t>(i - '0');
+    for (int i = 'a'; i <= 'f'; ++i)
+        table[i] = static_cast<int8_t>(i - 'a' + 10);
+    for (int i = 'A'; i <= 'F'; ++i)
+        table[i] = static_cast<int8_t>(i - 'A' + 10);
+    return table;
+}
+constexpr auto hex_table = create_hex_table();
+
+constexpr std::array<uint8_t, 256> create_space_table()
+{
+    std::array<uint8_t, 256> table = {}; // 0 by default
+    // 0: stop, 1: space, 2: /, 3: \0
+    table[' '] = 1;
+    table['\t'] = 1;
+    table['\r'] = 1;
+    table['\n'] = 1;
+    table['/'] = 2;
+    table['\0'] = 3;
+    return table;
+}
+constexpr auto space_table = create_space_table();
+
+constexpr std::array<bool, 256> create_digit_table()
+{
+    std::array<bool, 256> table = {};
+    for (int i = '0'; i <= '9'; ++i)
+        table[i] = true;
+    return table;
+}
+constexpr auto digit_table = create_digit_table();
+} // namespace _detail
+
 // *************************
 // *      parser impl      *
 // *************************
@@ -130,7 +173,7 @@ inline value parser<accept_jsonc, parsing_t, accel_traits>::parse_number()
     }
 
     // numbers cannot have leading zeroes
-    if (_cur != _end && *_cur == '0' && _cur + 1 != _end && std::isdigit(*(_cur + 1))) {
+    if (_cur != _end && *_cur == '0' && _cur + 1 != _end && _detail::digit_table[static_cast<unsigned char>(*(_cur + 1))]) {
         return invalid_value();
     }
 
@@ -157,7 +200,7 @@ inline value parser<accept_jsonc, parsing_t, accel_traits>::parse_number()
         }
     }
 
-    return value(value::value_type::number, std::string(first, _cur));
+    return value(value::value_type::number, std::in_place_type<std::string>, first, _cur);
 }
 
 template <bool accept_jsonc, typename parsing_t, typename accel_traits>
@@ -374,6 +417,9 @@ inline std::optional<std::string> parser<accept_jsonc, parsing_t, accel_traits>:
             if (pair_high) {
                 return std::nullopt;
             }
+            if (result.empty()) {
+                return std::string(no_escape_beg, _cur++);
+            }
             result.append(no_escape_beg, _cur++);
             return result;
         }
@@ -397,24 +443,13 @@ inline bool parser<accept_jsonc, parsing_t, accel_traits>::skip_unicode_escape(u
             return false;
         }
 
-        if (!std::isxdigit(static_cast<unsigned char>(*_cur))) {
+        int8_t val = _detail::hex_table[static_cast<unsigned char>(*_cur)];
+        if (val == -1) {
             return false;
         }
 
         cp <<= 4;
-
-        if ('0' <= *_cur && *_cur <= '9') {
-            cp |= *_cur - '0';
-        }
-        else if ('a' <= *_cur && *_cur <= 'f') {
-            cp |= *_cur - 'a' + 10;
-        }
-        else if ('A' <= *_cur && *_cur <= 'F') {
-            cp |= *_cur - 'A' + 10;
-        }
-        else {
-            return false;
-        }
+        cp |= val;
     }
 
     uint32_t ext_cp = cp;
@@ -491,14 +526,11 @@ template <bool accept_jsonc, typename parsing_t, typename accel_traits>
 inline bool parser<accept_jsonc, parsing_t, accel_traits>::skip_whitespace() noexcept
 {
     while (_cur != _end) {
-        switch (*_cur) {
-        case ' ':
-        case '\t':
-        case '\r':
-        case '\n':
+        uint8_t type = _detail::space_table[static_cast<unsigned char>(*_cur)];
+        if (type == 1) {
             ++_cur;
-            break;
-        case '/':
+        }
+        else if (type == 2) { // '/'
             if constexpr (accept_jsonc) {
                 if (!skip_comment()) {
                     return false;
@@ -508,10 +540,11 @@ inline bool parser<accept_jsonc, parsing_t, accel_traits>::skip_whitespace() noe
             else {
                 return false;
             }
-            break;
-        case '\0':
+        }
+        else if (type == 3) { // '\0'
             return false;
-        default:
+        }
+        else { // 0
             return true;
         }
     }
@@ -573,23 +606,18 @@ template <bool accept_jsonc, typename parsing_t, typename accel_traits>
 inline bool parser<accept_jsonc, parsing_t, accel_traits>::skip_digit()
 {
     // At least one digit
-    if (_cur != _end && std::isdigit(*_cur)) {
+    if (_cur != _end && _detail::digit_table[static_cast<unsigned char>(*_cur)]) {
         ++_cur;
     }
     else {
         return false;
     }
 
-    while (_cur != _end && std::isdigit(*_cur)) {
+    while (_cur != _end && _detail::digit_table[static_cast<unsigned char>(*_cur)]) {
         ++_cur;
     }
 
-    if (_cur != _end) {
-        return true;
-    }
-    else {
-        return false;
-    }
+    return true; // Always true because we found at least one digit before loop
 }
 
 // *************************
@@ -684,4 +712,3 @@ inline const value invalid_value()
     return value(value::value_type::invalid, typename value::var_t());
 }
 } // namespace json
-
