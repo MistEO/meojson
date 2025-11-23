@@ -526,96 +526,49 @@ public:
     }
 #endif
 
-    // Native support for converting value to collections (through array)
+    // Unified native support for converting value to collections, maps, fixed-size arrays, and tuple-like types
     template <
-        typename collection_t,
+        typename T,
         std::enable_if_t<
-            _utils::is_collection<collection_t> && !_utils::has_from_json_in_member<collection_t>::value
-                && !_utils::has_from_json_in_templ_spec<collection_t>::value,
+            (_utils::is_collection<T> || _utils::is_fixed_array<T> || _utils::is_tuple_like<T>)
+                && !_utils::has_from_json_in_member<T>::value && !_utils::has_from_json_in_templ_spec<T>::value,
             bool> = true>
-    explicit operator collection_t() const&
+    explicit operator T() const&
     {
-        return as_array().template as<collection_t>();
+        return as_array().template as<T>();
     }
 
     template <
-        typename collection_t,
+        typename T,
         std::enable_if_t<
-            _utils::is_collection<collection_t> && !_utils::has_from_json_in_member<collection_t>::value
-                && !_utils::has_from_json_in_templ_spec<collection_t>::value,
+            (_utils::is_collection<T> || _utils::is_fixed_array<T> || _utils::is_tuple_like<T>)
+                && !_utils::has_from_json_in_member<T>::value && !_utils::has_from_json_in_templ_spec<T>::value,
             bool> = true>
-    explicit operator collection_t() &&
+    explicit operator T() &&
     {
-        return std::move(as_array()).template as<collection_t>();
-    }
-
-    // Native support for converting value to maps (through object)
-    template <
-        typename map_t,
-        std::enable_if_t<
-            _utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>
-                && !_utils::has_from_json_in_member<map_t>::value && !_utils::has_from_json_in_templ_spec<map_t>::value,
-            bool> = true>
-    explicit operator map_t() const&
-    {
-        return as_object().template as<map_t>();
+        return std::move(as_array()).template as<T>();
     }
 
     template <
-        typename map_t,
+        typename T,
         std::enable_if_t<
-            _utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>
-                && !_utils::has_from_json_in_member<map_t>::value && !_utils::has_from_json_in_templ_spec<map_t>::value,
+            _utils::is_map<T> && std::is_same_v<typename T::key_type, std::string>
+                && !_utils::has_from_json_in_member<T>::value && !_utils::has_from_json_in_templ_spec<T>::value,
             bool> = true>
-    explicit operator map_t() &&
+    explicit operator T() const&
     {
-        return std::move(as_object()).template as<map_t>();
-    }
-
-    // Native support for converting value to fixed-size arrays (through array)
-    template <
-        typename arr_t,
-        std::enable_if_t<
-            _utils::is_fixed_array<arr_t> && !_utils::has_from_json_in_member<arr_t>::value
-                && !_utils::has_from_json_in_templ_spec<arr_t>::value,
-            bool> = true>
-    explicit operator arr_t() const&
-    {
-        return as_array().template as<arr_t>();
+        return as_object().template as<T>();
     }
 
     template <
-        typename arr_t,
+        typename T,
         std::enable_if_t<
-            _utils::is_fixed_array<arr_t> && !_utils::has_from_json_in_member<arr_t>::value
-                && !_utils::has_from_json_in_templ_spec<arr_t>::value,
+            _utils::is_map<T> && std::is_same_v<typename T::key_type, std::string>
+                && !_utils::has_from_json_in_member<T>::value && !_utils::has_from_json_in_templ_spec<T>::value,
             bool> = true>
-    explicit operator arr_t() &&
+    explicit operator T() &&
     {
-        return std::move(as_array()).template as<arr_t>();
-    }
-
-    // Native support for converting value to tuple-like types (through array)
-    template <
-        typename tuple_t,
-        std::enable_if_t<
-            _utils::is_tuple_like<tuple_t> && !_utils::has_from_json_in_member<tuple_t>::value
-                && !_utils::has_from_json_in_templ_spec<tuple_t>::value,
-            bool> = true>
-    explicit operator tuple_t() const&
-    {
-        return as_array().template as<tuple_t>();
-    }
-
-    template <
-        typename tuple_t,
-        std::enable_if_t<
-            _utils::is_tuple_like<tuple_t> && !_utils::has_from_json_in_member<tuple_t>::value
-                && !_utils::has_from_json_in_templ_spec<tuple_t>::value,
-            bool> = true>
-    explicit operator tuple_t() &&
-    {
-        return std::move(as_array()).template as<tuple_t>();
+        return std::move(as_object()).template as<T>();
     }
 
 private:

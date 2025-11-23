@@ -205,27 +205,27 @@ public:
         return dst;
     }
 
-    // Native support for converting to maps
+    // Unified native support for converting to maps
     template <
-        typename map_t,
+        typename T,
         std::enable_if_t<
-            _utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>
-                && !_utils::has_from_json_in_member<map_t>::value && !_utils::has_from_json_in_templ_spec<map_t>::value,
+            _utils::is_map<T> && std::is_same_v<typename T::key_type, std::string>
+                && !_utils::has_from_json_in_member<T>::value && !_utils::has_from_json_in_templ_spec<T>::value,
             bool> = true>
-    explicit operator map_t() const&
+    explicit operator T() const&
     {
-        return as<map_t>();
+        return as<T>();
     }
 
     template <
-        typename map_t,
+        typename T,
         std::enable_if_t<
-            _utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>
-                && !_utils::has_from_json_in_member<map_t>::value && !_utils::has_from_json_in_templ_spec<map_t>::value,
+            _utils::is_map<T> && std::is_same_v<typename T::key_type, std::string>
+                && !_utils::has_from_json_in_member<T>::value && !_utils::has_from_json_in_templ_spec<T>::value,
             bool> = true>
-    explicit operator map_t() &&
+    explicit operator T() &&
     {
-        return std::move(*this).as<map_t>();
+        return std::move(*this).as<T>();
     }
 
 private:
