@@ -74,10 +74,6 @@ struct dumper
             key = state.override_key;
         }
         if constexpr (is_optional_v<var_t>) {
-            if (!state.is_optional) {
-                throw exception("std::optional must be used with MEO_OPT");
-            }
-
             if (var.has_value()) {
                 result.emplace(key, var.value());
             }
