@@ -97,6 +97,11 @@ inline value::value(std::nullptr_t)
 {
 }
 
+inline value::value(std::monostate)
+    : _type(value_type::null)
+{
+}
+
 inline value::value(const array& arr)
     : _type(value_type::array)
     , _raw_data(std::make_unique<array>(arr))
@@ -222,6 +227,12 @@ inline bool value::is() const noexcept
     }
     else if constexpr (_utils::is_optional_v<value_t>) {
         return is_null() || is<typename value_t::value_type>();
+    }
+    else if constexpr (std::is_same_v<std::monostate, value_t>) {
+        return is_null();
+    }
+    else if constexpr (std::is_same_v<std::nullptr_t, value_t>) {
+        return is_null();
     }
     else if constexpr (_utils::is_variant<value_t>) {
         return is_variant_helper(static_cast<value_t*>(nullptr));
@@ -456,6 +467,16 @@ inline std::string value::as_string() const
     }
 }
 
+inline std::string_view value::as_string_view() const
+{
+    if (is_string()) {
+        return as_basic_type_str();
+    }
+    else {
+        throw exception("Wrong Type");
+    }
+}
+
 inline const array& value::as_array() const
 {
     if (is_array()) {
@@ -521,6 +542,12 @@ inline value_t value::as() const&
     if constexpr (std::is_same_v<value, value_t>) {
         return *this;
     }
+    else if constexpr (std::is_same_v<std::monostate, value_t>) {
+        if (!is_null()) {
+            throw exception("Wrong JSON");
+        }
+        return std::monostate {};
+    }
     else if constexpr (_utils::has_from_json_in_member<value_t>::value) {
         value_t dst {};
         if (!dst.from_json(*this)) {
@@ -545,6 +572,12 @@ inline value_t value::as() &&
 {
     if constexpr (std::is_same_v<value, value_t>) {
         return std::move(*this);
+    }
+    else if constexpr (std::is_same_v<std::monostate, value_t>) {
+        if (!is_null()) {
+            throw exception("Wrong JSON");
+        }
+        return std::monostate {};
     }
     else if constexpr (_utils::has_from_json_in_member<value_t>::value) {
         value_t dst {};
@@ -748,6 +781,11 @@ inline value::operator std::string() const
     return as_string();
 }
 
+inline value::operator std::string_view() const&
+{
+    return as_string_view();
+}
+
 inline value::operator array() const
 {
     return as_array();
@@ -756,6 +794,26 @@ inline value::operator array() const
 inline value::operator object() const
 {
     return as_object();
+}
+
+inline value::operator std::nullptr_t() const
+{
+    if (is_null()) {
+        return nullptr;
+    }
+    else {
+        throw exception("Wrong Type");
+    }
+}
+
+inline value::operator std::monostate() const
+{
+    if (is_null()) {
+        return std::monostate {};
+    }
+    else {
+        throw exception("Wrong Type");
+    }
 }
 
 inline const value& value::operator[](size_t pos) const
@@ -914,13 +972,23 @@ inline std::ostream& operator<<(std::ostream& out, const value& val)
 }
 
 // Implementation of variant constructors
-template <typename... Ts, std::enable_if_t<(sizeof...(Ts) > 0) && !_utils::has_to_json_in_member<std::variant<Ts...>>::value && !_utils::has_to_json_in_templ_spec<std::variant<Ts...>>::value, bool>>
+template <
+    typename... Ts,
+    std::enable_if_t<
+        (sizeof...(Ts) > 0) && !_utils::has_to_json_in_member<std::variant<Ts...>>::value
+            && !_utils::has_to_json_in_templ_spec<std::variant<Ts...>>::value,
+        bool>>
 inline value::value(const std::variant<Ts...>& var)
 {
     std::visit([this](const auto& val) { *this = value(val); }, var);
 }
 
-template <typename... Ts, std::enable_if_t<(sizeof...(Ts) > 0) && !_utils::has_to_json_in_member<std::variant<Ts...>>::value && !_utils::has_to_json_in_templ_spec<std::variant<Ts...>>::value, bool>>
+template <
+    typename... Ts,
+    std::enable_if_t<
+        (sizeof...(Ts) > 0) && !_utils::has_to_json_in_member<std::variant<Ts...>>::value
+            && !_utils::has_to_json_in_templ_spec<std::variant<Ts...>>::value,
+        bool>>
 inline value::value(std::variant<Ts...>&& var)
 {
     std::visit([this](auto&& val) { *this = value(std::move(val)); }, std::move(var));

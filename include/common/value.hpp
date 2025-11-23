@@ -61,6 +61,7 @@ public:
     value(std::string str);
     value(std::string_view str);
     value(std::nullptr_t);
+    value(std::monostate);
 
     value(const array& arr);
     value(array&& arr);
@@ -240,9 +241,9 @@ public:
     template <
         typename map_t,
         std::enable_if_t<
-            _utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>
-                && !std::is_same_v<std::decay_t<map_t>, value> && !std::is_same_v<std::decay_t<map_t>, object>
-                && !_utils::has_to_json_in_member<map_t>::value && !_utils::has_to_json_in_templ_spec<map_t>::value,
+            _utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string> && !std::is_same_v<std::decay_t<map_t>, value>
+                && !std::is_same_v<std::decay_t<map_t>, object> && !_utils::has_to_json_in_member<map_t>::value
+                && !_utils::has_to_json_in_templ_spec<map_t>::value,
             bool> = true>
     value(const map_t& m)
         : _type(value_type::object)
@@ -253,9 +254,9 @@ public:
     template <
         typename map_t,
         std::enable_if_t<
-            _utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>
-                && !std::is_same_v<std::decay_t<map_t>, value> && !std::is_same_v<std::decay_t<map_t>, object>
-                && !_utils::has_to_json_in_member<map_t>::value && !_utils::has_to_json_in_templ_spec<map_t>::value,
+            _utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string> && !std::is_same_v<std::decay_t<map_t>, value>
+                && !std::is_same_v<std::decay_t<map_t>, object> && !_utils::has_to_json_in_member<map_t>::value
+                && !_utils::has_to_json_in_templ_spec<map_t>::value,
             bool> = true>
     value(map_t&& m)
         : _type(value_type::object)
@@ -352,6 +353,7 @@ public:
     double as_double() const;
     long double as_long_double() const;
     std::string as_string() const;
+    std::string_view as_string_view() const;
     const array& as_array() const;
     const object& as_object() const;
 
@@ -448,9 +450,15 @@ public:
 
     explicit operator std::string() const;
 
+    explicit operator std::string_view() const&;
+    explicit operator std::string_view() && = delete;
+
     explicit operator array() const;
 
     explicit operator object() const;
+
+    explicit operator std::nullptr_t() const;
+    explicit operator std::monostate() const;
 
     template <typename enum_t, std::enable_if_t<std::is_enum_v<enum_t>, bool> = true>
     explicit operator enum_t() const
@@ -520,10 +528,9 @@ public:
 
 #ifdef MEOJSON_FS_PATH_EXTENSION
     // Native support for converting to std::filesystem::path
-    explicit operator std::filesystem::path() const&
-    {
-        return std::filesystem::path(as_string());
-    }
+    explicit operator std::filesystem::path() const& { return std::filesystem::path(as_string()); }
+
+    explicit operator std::filesystem::path() && { return std::filesystem::path(as_string()); }
 #endif
 
     // Unified native support for converting value to collections, maps, fixed-size arrays, and tuple-like types
@@ -552,8 +559,8 @@ public:
     template <
         typename T,
         std::enable_if_t<
-            _utils::is_map<T> && std::is_same_v<typename T::key_type, std::string>
-                && !_utils::has_from_json_in_member<T>::value && !_utils::has_from_json_in_templ_spec<T>::value,
+            _utils::is_map<T> && std::is_same_v<typename T::key_type, std::string> && !_utils::has_from_json_in_member<T>::value
+                && !_utils::has_from_json_in_templ_spec<T>::value,
             bool> = true>
     explicit operator T() const&
     {
@@ -563,8 +570,8 @@ public:
     template <
         typename T,
         std::enable_if_t<
-            _utils::is_map<T> && std::is_same_v<typename T::key_type, std::string>
-                && !_utils::has_from_json_in_member<T>::value && !_utils::has_from_json_in_templ_spec<T>::value,
+            _utils::is_map<T> && std::is_same_v<typename T::key_type, std::string> && !_utils::has_from_json_in_member<T>::value
+                && !_utils::has_from_json_in_templ_spec<T>::value,
             bool> = true>
     explicit operator T() &&
     {
