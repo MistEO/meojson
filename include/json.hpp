@@ -7,5 +7,6 @@
 #include "reflection/jsonization.hpp"
 
 #include "common/impl.hpp"
+#include "parser/parser_impl.hpp"
 
 // IWYU pragma: end_exports
