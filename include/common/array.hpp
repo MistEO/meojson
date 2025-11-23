@@ -179,26 +179,12 @@ public:
     template <typename value_t>
     bool all() const;
 
-    // Native support for converting to fixed-size arrays (complete type version)
-    template <typename arr_t, std::enable_if_t<_utils::is_fixed_array<arr_t>, bool> = true>
-    arr_t as() const&;
+    // Unified as function for converting to fixed-size arrays, collections, and tuple-like types
+    template <typename T>
+    T as() const&;
 
-    template <typename arr_t, std::enable_if_t<_utils::is_fixed_array<arr_t>, bool> = true>
-    arr_t as() &&;
-
-    // Native support for converting to collections
-    template <typename collection_t, std::enable_if_t<_utils::is_collection<collection_t>, bool> = true>
-    collection_t as() const&;
-
-    template <typename collection_t, std::enable_if_t<_utils::is_collection<collection_t>, bool> = true>
-    collection_t as() &&;
-
-    // Native support for converting to tuple-like types (complete type version)
-    template <typename tuple_t, std::enable_if_t<_utils::is_tuple_like<tuple_t>, bool> = true>
-    tuple_t as() const&;
-
-    template <typename tuple_t, std::enable_if_t<_utils::is_tuple_like<tuple_t>, bool> = true>
-    tuple_t as() &&;
+    template <typename T>
+    T as() &&;
 
 private:
     template <typename tuple_t, size_t... Is>

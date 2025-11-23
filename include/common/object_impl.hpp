@@ -296,23 +296,34 @@ inline std::ostream& operator<<(std::ostream& out, const object& obj)
     out << obj.format();
     return out;
 }
-    template <typename map_t, std::enable_if_t<_utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>, bool>>
-    inline map_t object::as() const&
-    {
-        map_t result;
-        for (const auto& [key, val] : _object_data) {
-            result.emplace(key, val.as<typename map_t::mapped_type>());
-        }
-        return result;
-    }
 
-    template <typename map_t, std::enable_if_t<_utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>, bool>>
-    inline map_t object::as() &&
-    {
-        map_t result;
-        for (auto& [key, val] : _object_data) {
-            result.emplace(key, std::move(val).as<typename map_t::mapped_type>());
+template <typename T>
+inline T object::as() const&
+{
+    if constexpr (_utils::is_map<T> && std::is_same_v<typename T::key_type, std::string>) {
+        T result;
+        for (const auto& [key, val] : _object_data) {
+            result.emplace(key, val.as<typename T::mapped_type>());
         }
         return result;
     }
+    else {
+        static_assert(!sizeof(T), "Unsupported type for object::as()");
+    }
+}
+
+template <typename T>
+inline T object::as() &&
+{
+    if constexpr (_utils::is_map<T> && std::is_same_v<typename T::key_type, std::string>) {
+        T result;
+        for (auto& [key, val] : _object_data) {
+            result.emplace(key, std::move(val).as<typename T::mapped_type>());
+        }
+        return result;
+    }
+    else {
+        static_assert(!sizeof(T), "Unsupported type for object::as()");
+    }
+}
 } // namespace json
