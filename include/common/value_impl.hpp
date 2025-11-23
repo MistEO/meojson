@@ -16,7 +16,7 @@ inline value::value(value&& rhs) noexcept = default;
 
 inline value::value(bool b)
     : _type(value_type::boolean)
-    , _raw_data(b ? _utils::true_string() : _utils::false_string())
+    , _raw_data(b ? std::string(_utils::true_string()) : std::string(_utils::false_string()))
 {
 }
 
@@ -600,7 +600,7 @@ inline std::string value::to_string() const
 {
     switch (_type) {
     case value_type::null:
-        return _utils::null_string();
+        return std::string(_utils::null_string());
     case value_type::boolean:
     case value_type::number:
         return as_basic_type_str();

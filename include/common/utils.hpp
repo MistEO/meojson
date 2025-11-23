@@ -6,6 +6,7 @@
 #include <limits>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -400,19 +401,19 @@ inline std::string unescape_string(const std::string& str)
     return result;
 }
 
-inline std::string true_string()
+inline std::string_view true_string()
 {
-    return { 't', 'r', 'u', 'e' };
+    return "true";
 }
 
-inline std::string false_string()
+inline std::string_view false_string()
 {
-    return { 'f', 'a', 'l', 's', 'e' };
+    return "false";
 }
 
-inline std::string null_string()
+inline std::string_view null_string()
 {
-    return { 'n', 'u', 'l', 'l' };
+    return "null";
 }
 
 template <typename any_t>
@@ -428,7 +429,7 @@ inline std::string to_basic_string(any_t&& arg)
     else
 #endif
     {
-    return std::to_string(std::forward<any_t>(arg));
+        return std::to_string(std::forward<any_t>(arg));
     }
 }
 } // namespace json::_utils
