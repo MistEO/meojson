@@ -296,4 +296,23 @@ inline std::ostream& operator<<(std::ostream& out, const object& obj)
     out << obj.format();
     return out;
 }
+    template <typename map_t, std::enable_if_t<_utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>, bool>>
+    inline map_t object::as() const&
+    {
+        map_t result;
+        for (const auto& [key, val] : _object_data) {
+            result.emplace(key, val.as<typename map_t::mapped_type>());
+        }
+        return result;
+    }
+
+    template <typename map_t, std::enable_if_t<_utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>, bool>>
+    inline map_t object::as() &&
+    {
+        map_t result;
+        for (auto& [key, val] : _object_data) {
+            result.emplace(key, std::move(val).as<typename map_t::mapped_type>());
+        }
+        return result;
+    }
 } // namespace json

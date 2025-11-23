@@ -181,95 +181,24 @@ public:
 
     // Native support for converting to fixed-size arrays (complete type version)
     template <typename arr_t, std::enable_if_t<_utils::is_fixed_array<arr_t>, bool> = true>
-    arr_t as() const&
-    {
-        constexpr size_t size = _utils::fixed_array_size<arr_t>;
-        if (_array_data.size() != size) {
-            throw exception("Array size mismatch");
-        }
-        
-        arr_t result;
-        for (size_t i = 0; i < size; i++) {
-            result.at(i) = _array_data[i].as<typename arr_t::value_type>();
-        }
-        return result;
-    }
+    arr_t as() const&;
 
     template <typename arr_t, std::enable_if_t<_utils::is_fixed_array<arr_t>, bool> = true>
-    arr_t as() &&
-    {
-        constexpr size_t size = _utils::fixed_array_size<arr_t>;
-        if (_array_data.size() != size) {
-            throw exception("Array size mismatch");
-        }
-        
-        arr_t result;
-        for (size_t i = 0; i < size; i++) {
-            result.at(i) = std::move(_array_data[i]).as<typename arr_t::value_type>();
-        }
-        _array_data.clear();
-        return result;
-    }
+    arr_t as() &&;
 
     // Native support for converting to collections
     template <typename collection_t, std::enable_if_t<_utils::is_collection<collection_t>, bool> = true>
-    collection_t as() const&
-    {
-        collection_t result;
-        for (const auto& val : _array_data) {
-            if constexpr (_utils::has_emplace_back<collection_t>::value) {
-                result.emplace_back(val.as<typename collection_t::value_type>());
-            }
-            else {
-                result.emplace(val.as<typename collection_t::value_type>());
-            }
-        }
-        return result;
-    }
+    collection_t as() const&;
 
     template <typename collection_t, std::enable_if_t<_utils::is_collection<collection_t>, bool> = true>
-    collection_t as() &&
-    {
-        collection_t result;
-        for (auto& val : _array_data) {
-            if constexpr (_utils::has_emplace_back<collection_t>::value) {
-                result.emplace_back(std::move(val).as<typename collection_t::value_type>());
-            }
-            else {
-                result.emplace(std::move(val).as<typename collection_t::value_type>());
-            }
-        }
-        _array_data.clear();
-        return result;
-    }
+    collection_t as() &&;
 
     // Native support for converting to tuple-like types (complete type version)
     template <typename tuple_t, std::enable_if_t<_utils::is_tuple_like<tuple_t>, bool> = true>
-    tuple_t as() const&
-    {
-        constexpr size_t tuple_size = std::tuple_size_v<tuple_t>;
-        if (_array_data.size() != tuple_size) {
-            throw exception("Array size mismatch for tuple conversion");
-        }
-        
-        tuple_t result;
-        as_tuple_helper(result, std::make_index_sequence<tuple_size>());
-        return result;
-    }
+    tuple_t as() const&;
 
     template <typename tuple_t, std::enable_if_t<_utils::is_tuple_like<tuple_t>, bool> = true>
-    tuple_t as() &&
-    {
-        constexpr size_t tuple_size = std::tuple_size_v<tuple_t>;
-        if (_array_data.size() != tuple_size) {
-            throw exception("Array size mismatch for tuple conversion");
-        }
-        
-        tuple_t result;
-        move_as_tuple_helper(result, std::make_index_sequence<tuple_size>());
-        _array_data.clear();
-        return result;
-    }
+    tuple_t as() &&;
 
 private:
     template <typename tuple_t, size_t... Is>
@@ -287,18 +216,10 @@ private:
     }
 
     template <typename tuple_t, size_t... Is>
-    void as_tuple_helper(tuple_t& result, std::index_sequence<Is...>) const
-    {
-        using std::get;
-        ((get<Is>(result) = _array_data[Is].template as<std::tuple_element_t<Is, tuple_t>>()), ...);
-    }
+    void as_tuple_helper(tuple_t& result, std::index_sequence<Is...>) const;
 
     template <typename tuple_t, size_t... Is>
-    void move_as_tuple_helper(tuple_t& result, std::index_sequence<Is...>)
-    {
-        using std::get;
-        ((get<Is>(result) = std::move(_array_data[Is]).template as<std::tuple_element_t<Is, tuple_t>>()), ...);
-    }
+    void move_as_tuple_helper(tuple_t& result, std::index_sequence<Is...>);
 
 public:
 

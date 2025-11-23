@@ -121,26 +121,12 @@ public:
     template <
         typename map_t,
         std::enable_if_t<_utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>, bool> = true>
-    map_t as() const&
-    {
-        map_t result;
-        for (const auto& [key, val] : _object_data) {
-            result.emplace(key, val.as<typename map_t::mapped_type>());
-        }
-        return result;
-    }
+    map_t as() const&;
 
     template <
         typename map_t,
         std::enable_if_t<_utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>, bool> = true>
-    map_t as() &&
-    {
-        map_t result;
-        for (auto& [key, val] : _object_data) {
-            result.emplace(key, std::move(val).as<typename map_t::mapped_type>());
-        }
-        return result;
-    }
+    map_t as() &&;
 
     // Usage: get(key_1, key_2, ..., default_value);
     template <typename... key_then_default_value_t>
