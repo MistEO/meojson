@@ -29,9 +29,9 @@ public:
     using const_reverse_iterator = typename raw_array::const_reverse_iterator;
 
 public:
-    array() = default;
-    array(const array& rhs) = default;
-    array(array&& rhs) noexcept = default;
+    array();
+    array(const array& rhs);
+    array(array&& rhs) noexcept;
     array(std::initializer_list<value_type> init_list);
     array(typename raw_array::size_type size);
 
@@ -158,7 +158,7 @@ public:
         construct_from_tuple_move_helper(std::move(tpl), std::make_index_sequence<tuple_size>());
     }
 
-    ~array() noexcept = default;
+    ~array() noexcept;
 
     bool empty() const noexcept;
 
@@ -250,8 +250,8 @@ public:
     array& operator+=(const array& rhs);
     array& operator+=(array&& rhs);
 
-    array& operator=(const array&) = default;
-    array& operator=(array&&) noexcept = default;
+    array& operator=(const array&);
+    array& operator=(array&&) noexcept;
 
     template <typename value_t, std::enable_if_t<std::is_convertible_v<value_t, array>, bool> = true>
     array& operator=(value_t rhs)

@@ -4,6 +4,13 @@
 
 namespace json
 {
+inline object::object() = default;
+inline object::object(const object& rhs) = default;
+inline object::object(object&& rhs) noexcept = default;
+inline object::~object() = default;
+inline object& object::operator=(const object&) = default;
+inline object& object::operator=(object&&) noexcept = default;
+
 inline object::object(std::initializer_list<value_type> init_list)
     : _object_data(std::make_move_iterator(init_list.begin()), std::make_move_iterator(init_list.end()))
 {

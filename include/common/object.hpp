@@ -28,9 +28,9 @@ public:
     using const_iterator = typename raw_object::const_iterator;
 
 public:
-    object() = default;
-    object(const object& rhs) = default;
-    object(object&& rhs) noexcept = default;
+    object();
+    object(const object& rhs);
+    object(object&& rhs) noexcept;
     object(std::initializer_list<value_type> init_list);
 
     // explicit object(const value& val);
@@ -96,7 +96,7 @@ public:
         }
     }
 
-    ~object() = default;
+    ~object();
 
     bool empty() const noexcept;
 
@@ -158,8 +158,8 @@ public:
     object& operator|=(const object& rhs);
     object& operator|=(object&& rhs);
 
-    object& operator=(const object&) = default;
-    object& operator=(object&&) = default;
+    object& operator=(const object&);
+    object& operator=(object&&) noexcept;
 
     template <typename value_t, std::enable_if_t<std::is_convertible_v<value_t, object>, bool> = true>
     object& operator=(value_t rhs)

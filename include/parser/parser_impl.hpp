@@ -418,7 +418,6 @@ inline bool parser<accept_jsonc, parsing_t, accel_traits>::skip_unicode_escape(u
     }
 
     uint32_t ext_cp = cp;
-    uint16_t hi_cp = 0, lo_cp = 0;
 
     if (0xD800 <= cp && cp <= 0xDBFF) {
         if (pair_high) {
@@ -433,8 +432,6 @@ inline bool parser<accept_jsonc, parsing_t, accel_traits>::skip_unicode_escape(u
             return false;
         }
         ext_cp = (((pair_high - 0xD800) << 10) | (cp - 0xDC00)) + 0x10000;
-        hi_cp = pair_high;
-        lo_cp = cp;
         pair_high = 0;
     }
 

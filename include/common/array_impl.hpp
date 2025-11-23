@@ -4,6 +4,13 @@
 
 namespace json
 {
+inline array::array() = default;
+inline array::array(const array& rhs) = default;
+inline array::array(array&& rhs) noexcept = default;
+inline array::~array() noexcept = default;
+inline array& array::operator=(const array&) = default;
+inline array& array::operator=(array&&) noexcept = default;
+
 inline array::array(std::initializer_list<value_type> init_list)
     : _array_data(init_list)
 {
@@ -167,7 +174,7 @@ inline auto array::get_helper(const value_t& default_value, size_t pos) const
         }
     }
 
-    auto val = _array_data.at(pos);
+    auto val = _array_data[pos];
     if (val.template is<value_t>()) {
         if constexpr (is_string) {
             return val.template as<std::string>();
