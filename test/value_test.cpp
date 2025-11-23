@@ -10,11 +10,13 @@ bool test_value_access_methods();
 bool test_value_conversion_methods();
 bool test_value_operators();
 bool test_value_modification();
+bool test_value_extended_conversions();
 
 bool value_test()
 {
     return test_value_constructors() && test_value_type_checks() && test_value_access_methods()
-           && test_value_conversion_methods() && test_value_operators() && test_value_modification();
+           && test_value_conversion_methods() && test_value_operators() && test_value_modification()
+           && test_value_extended_conversions();
 }
 
 bool test_value_constructors()
@@ -695,6 +697,214 @@ bool test_value_modification()
     }
 
     std::cout << "Value modification test passed" << std::endl;
+    return true;
+}
+
+bool test_value_extended_conversions()
+{
+    std::cout << "Testing value extended conversions..." << std::endl;
+
+    // 测试 std::monostate 构造函数
+    json::value v_monostate = std::monostate {};
+    if (!v_monostate.is_null()) {
+        std::cerr << "std::monostate constructor should create null value" << std::endl;
+        return false;
+    }
+
+    // 测试 is<std::monostate>()
+    json::value v_null;
+    if (!v_null.is<std::monostate>()) {
+        std::cerr << "is<std::monostate>() test failed for null value" << std::endl;
+        return false;
+    }
+
+    json::value v_int = 42;
+    if (v_int.is<std::monostate>()) {
+        std::cerr << "is<std::monostate>() should return false for non-null value" << std::endl;
+        return false;
+    }
+
+    // 测试 is<std::nullptr_t>()
+    if (!v_null.is<std::nullptr_t>()) {
+        std::cerr << "is<std::nullptr_t>() test failed for null value" << std::endl;
+        return false;
+    }
+
+    if (v_int.is<std::nullptr_t>()) {
+        std::cerr << "is<std::nullptr_t>() should return false for non-null value" << std::endl;
+        return false;
+    }
+
+    // 测试 as<std::monostate>()
+    try {
+        std::monostate mono = v_null.as<std::monostate>();
+        // 成功转换，符合预期
+    }
+    catch (const std::exception&) {
+        std::cerr << "as<std::monostate>() test failed for null value" << std::endl;
+        return false;
+    }
+
+    // 测试 as<std::monostate>() 对非null值应抛出异常
+    try {
+        std::monostate mono = v_int.as<std::monostate>();
+        std::cerr << "as<std::monostate>() should throw for non-null value" << std::endl;
+        return false;
+    }
+    catch (const json::exception&) {
+        // 预期抛出异常
+    }
+
+    // 测试 operator std::monostate()
+    try {
+        std::monostate mono = (std::monostate)v_null;
+        // 成功转换，符合预期
+    }
+    catch (const std::exception&) {
+        std::cerr << "operator std::monostate() test failed for null value" << std::endl;
+        return false;
+    }
+
+    // 测试 operator std::monostate() 对非null值应抛出异常
+    try {
+        std::monostate mono = (std::monostate)v_int;
+        std::cerr << "operator std::monostate() should throw for non-null value" << std::endl;
+        return false;
+    }
+    catch (const json::exception&) {
+        // 预期抛出异常
+    }
+
+    // 测试 operator std::nullptr_t()
+    try {
+        std::nullptr_t null_ptr = (std::nullptr_t)v_null;
+        if (null_ptr != nullptr) {
+            std::cerr << "operator std::nullptr_t() should return nullptr" << std::endl;
+            return false;
+        }
+    }
+    catch (const std::exception&) {
+        std::cerr << "operator std::nullptr_t() test failed for null value" << std::endl;
+        return false;
+    }
+
+    // 测试 operator std::nullptr_t() 对非null值应抛出异常
+    try {
+        std::nullptr_t null_ptr = (std::nullptr_t)v_int;
+        std::cerr << "operator std::nullptr_t() should throw for non-null value" << std::endl;
+        return false;
+    }
+    catch (const json::exception&) {
+        // 预期抛出异常
+    }
+
+    // 测试 as_string_view()
+    json::value v_str = "hello world";
+    try {
+        std::string_view sv = v_str.as_string_view();
+        if (sv != "hello world") {
+            std::cerr << "as_string_view() returned incorrect value" << std::endl;
+            return false;
+        }
+    }
+    catch (const std::exception&) {
+        std::cerr << "as_string_view() test failed for string value" << std::endl;
+        return false;
+    }
+
+    // 测试 as_string_view() 对非字符串值应抛出异常
+    try {
+        std::string_view sv = v_int.as_string_view();
+        std::cerr << "as_string_view() should throw for non-string value" << std::endl;
+        return false;
+    }
+    catch (const json::exception&) {
+        // 预期抛出异常
+    }
+
+    // 测试 operator std::string_view()
+    try {
+        std::string_view sv = (std::string_view)v_str;
+        if (sv != "hello world") {
+            std::cerr << "operator std::string_view() returned incorrect value" << std::endl;
+            return false;
+        }
+    }
+    catch (const std::exception&) {
+        std::cerr << "operator std::string_view() test failed for string value" << std::endl;
+        return false;
+    }
+
+    // 测试 operator std::string_view() 对非字符串值应抛出异常
+    try {
+        std::string_view sv = (std::string_view)v_int;
+        std::cerr << "operator std::string_view() should throw for non-string value" << std::endl;
+        return false;
+    }
+    catch (const json::exception&) {
+        // 预期抛出异常
+    }
+
+    // 测试 std::string_view 的生命周期安全性（左值引用）
+    json::value v_temp_str = "temporary string";
+    std::string_view sv_ref = (std::string_view)v_temp_str;
+    if (sv_ref != "temporary string") {
+        std::cerr << "string_view reference test failed" << std::endl;
+        return false;
+    }
+
+#ifdef MEOJSON_FS_PATH_EXTENSION
+    // 测试 std::filesystem::path 转换（左值）
+    json::value v_path_str = "/usr/local/bin";
+    try {
+        std::filesystem::path p = (std::filesystem::path)v_path_str;
+        if (p.string() != "/usr/local/bin") {
+            std::cerr << "operator std::filesystem::path() (lvalue) returned incorrect value" << std::endl;
+            return false;
+        }
+    }
+    catch (const std::exception&) {
+        std::cerr << "operator std::filesystem::path() (lvalue) test failed" << std::endl;
+        return false;
+    }
+
+    // 测试 std::filesystem::path 转换（右值）
+    try {
+        std::filesystem::path p = (std::filesystem::path)json::value("/tmp/test");
+        if (p.string() != "/tmp/test") {
+            std::cerr << "operator std::filesystem::path() (rvalue) returned incorrect value" << std::endl;
+            return false;
+        }
+    }
+    catch (const std::exception&) {
+        std::cerr << "operator std::filesystem::path() (rvalue) test failed" << std::endl;
+        return false;
+    }
+#endif
+
+    // 测试 std::variant 支持 std::monostate
+    using variant_with_monostate = std::variant<std::monostate, int, std::string>;
+    
+    // 从 variant 构造 value
+    json::value v_from_variant1 = variant_with_monostate { std::monostate {} };
+    if (!v_from_variant1.is_null()) {
+        std::cerr << "value constructor from variant<monostate> should create null value" << std::endl;
+        return false;
+    }
+
+    json::value v_from_variant2 = variant_with_monostate { 42 };
+    if (!v_from_variant2.is_number() || v_from_variant2.as_integer() != 42) {
+        std::cerr << "value constructor from variant<int> failed" << std::endl;
+        return false;
+    }
+
+    json::value v_from_variant3 = variant_with_monostate { std::string("test") };
+    if (!v_from_variant3.is_string() || v_from_variant3.as_string() != "test") {
+        std::cerr << "value constructor from variant<string> failed" << std::endl;
+        return false;
+    }
+
+    std::cout << "Value extended conversions test passed" << std::endl;
     return true;
 }
 

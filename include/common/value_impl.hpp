@@ -201,6 +201,12 @@ inline bool value::is() const noexcept
     else if constexpr (std::is_same_v<bool, value_t>) {
         return is_boolean();
     }
+    else if constexpr (std::is_same_v<std::monostate, value_t>) {
+        return is_null();
+    }
+    else if constexpr (std::is_same_v<std::nullptr_t, value_t>) {
+        return is_null();
+    }
     else if constexpr (std::is_arithmetic_v<value_t> || std::is_enum_v<value_t>) {
         return is_number();
     }
@@ -227,12 +233,6 @@ inline bool value::is() const noexcept
     }
     else if constexpr (_utils::is_optional_v<value_t>) {
         return is_null() || is<typename value_t::value_type>();
-    }
-    else if constexpr (std::is_same_v<std::monostate, value_t>) {
-        return is_null();
-    }
-    else if constexpr (std::is_same_v<std::nullptr_t, value_t>) {
-        return is_null();
     }
     else if constexpr (_utils::is_variant<value_t>) {
         return is_variant_helper(static_cast<value_t*>(nullptr));
@@ -542,12 +542,6 @@ inline value_t value::as() const&
     if constexpr (std::is_same_v<value, value_t>) {
         return *this;
     }
-    else if constexpr (std::is_same_v<std::monostate, value_t>) {
-        if (!is_null()) {
-            throw exception("Wrong JSON");
-        }
-        return std::monostate {};
-    }
     else if constexpr (_utils::has_from_json_in_member<value_t>::value) {
         value_t dst {};
         if (!dst.from_json(*this)) {
@@ -572,12 +566,6 @@ inline value_t value::as() &&
 {
     if constexpr (std::is_same_v<value, value_t>) {
         return std::move(*this);
-    }
-    else if constexpr (std::is_same_v<std::monostate, value_t>) {
-        if (!is_null()) {
-            throw exception("Wrong JSON");
-        }
-        return std::monostate {};
     }
     else if constexpr (_utils::has_from_json_in_member<value_t>::value) {
         value_t dst {};
@@ -1026,5 +1014,4 @@ inline value::operator std::variant<Ts...>() &&
 {
     return std::move(*this).move_to_variant_helper<Ts...>();
 }
-
 } // namespace json
