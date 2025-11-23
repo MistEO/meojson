@@ -14,6 +14,26 @@ inline array::array(typename raw_array::size_type size)
 {
 }
 
+inline bool array::empty() const noexcept
+{
+    return _array_data.empty();
+}
+
+inline size_t array::size() const noexcept
+{
+    return _array_data.size();
+}
+
+inline bool array::contains(size_t pos) const
+{
+    return pos < _array_data.size();
+}
+
+inline bool array::exists(size_t pos) const
+{
+    return contains(pos);
+}
+
 inline void array::clear() noexcept
 {
     _array_data.clear();
@@ -75,6 +95,16 @@ inline std::string array::format(size_t indent, size_t indent_times) const
     }
     str += tail_indent + ']';
     return str;
+}
+
+inline std::string array::dumps(std::optional<size_t> indent) const
+{
+    return indent ? format(*indent) : to_string();
+}
+
+inline std::string array::format(size_t indent) const
+{
+    return format(indent, 0);
 }
 
 template <typename value_t>
@@ -274,6 +304,11 @@ inline array& array::operator+=(array&& rhs)
 inline bool array::operator==(const array& rhs) const
 {
     return _array_data == rhs._array_data;
+}
+
+inline bool array::operator!=(const array& rhs) const
+{
+    return !(*this == rhs);
 }
 
 inline std::ostream& operator<<(std::ostream& out, const array& arr)

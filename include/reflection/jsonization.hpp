@@ -7,7 +7,7 @@
 #include <utility>
 
 #include "../common/types.hpp"
-#include "extensions.hpp"
+#include "../common/extensions.hpp"
 
 namespace json::_jsonization_helper
 {
@@ -115,8 +115,7 @@ struct checker
     }
 
     template <typename var_t, typename... rest_t, typename _ = std::enable_if_t<!is_tag_t<var_t>::value, void>>
-    bool _check_json(const value& in, std::string& error_key, next_state_t state, const char* key, const var_t&, rest_t&&... rest)
-        const
+    bool _check_json(const value& in, std::string& error_key, next_state_t state, const char* key, const var_t&, rest_t&&... rest) const
     {
         if (state.override_key) {
             key = state.override_key;
@@ -148,8 +147,7 @@ struct checker
     }
 
     template <typename... rest_t>
-    bool _check_json(const value& in, std::string& error_key, next_state_t state, const char*, next_is_optional_t, rest_t&&... rest)
-        const
+    bool _check_json(const value& in, std::string& error_key, next_state_t state, const char*, next_is_optional_t, rest_t&&... rest) const
     {
         state.is_optional = true;
         return _check_json(in, error_key, state, std::forward<rest_t>(rest)...);

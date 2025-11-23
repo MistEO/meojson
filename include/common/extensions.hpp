@@ -447,6 +447,47 @@ public:
     }
 };
 
+template <typename T>
+class jsonization<std::optional<T>>
+{
+public:
+    value to_json(const std::optional<T>& val) const { return val ? value(*val) : value(); }
+
+    bool check_json(const value& json) const { return json.is_null() || json.is<T>(); }
+
+    bool from_json(const value& json, std::optional<T>& val) const
+    {
+        if (json.is_null()) {
+            val = std::nullopt;
+            return true;
+        }
+        else if (json.is<T>()) {
+            val = json.as<T>();
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    value move_to_json(std::optional<T> val) const { return val ? value(*std::move(val)) : value(); }
+
+    bool move_from_json(value json, std::optional<T>& val) const
+    {
+        if (json.is_null()) {
+            val = std::nullopt;
+            return true;
+        }
+        else if (json.is<T>()) {
+            val = std::move(json).as<T>();
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+};
+
 #ifdef MEOJSON_FS_PATH_EXTENSION
 template <>
 class jsonization<std::filesystem::path>

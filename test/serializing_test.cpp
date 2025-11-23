@@ -11,8 +11,26 @@
 #include "json.hpp"
 #include "serializing_test.h"
 
+void test()
+{
+    struct Test
+    {
+        std::vector<int> v;
+
+        MEO_TOJSON(v);
+    };
+
+    Test t;
+
+    t.v = { 1, 2, 3 };
+
+    json::value j(t);
+}
+
 bool serializing()
 {
+    test();
+
     json::value root;
 
     root["hello"] = "meojson";
@@ -140,7 +158,7 @@ public:
 
     bool check_json(const json::value& j) const { return j.is_number(); }
 
-    bool from_json(const json::value &j, ThirdPartyStruct& out) const
+    bool from_json(const json::value& j, ThirdPartyStruct& out) const
     {
         out.a = j.as_integer();
         return true;

@@ -39,74 +39,95 @@ public:
     template <
         typename jsonization_t,
         std::enable_if_t<
-            _utils::has_to_json_in_templ_spec<jsonization_t>::value && !_utils::has_to_json_object_in_templ_spec<jsonization_t>::value,
+            !std::is_same_v<std::decay_t<jsonization_t>, object> && _utils::has_to_json_in_member<jsonization_t>::value
+                && !_utils::has_to_json_object_in_templ_spec<jsonization_t>::value,
             bool> = true>
     object(const jsonization_t& val)
-        : object(ext::jsonization<jsonization_t>().to_json(val))
-    {
-    }
-
-    template <typename jsonization_t, std::enable_if_t<_utils::has_to_json_object_in_templ_spec<jsonization_t>::value, bool> = true>
-    object(const jsonization_t& val)
-        : object(ext::jsonization<jsonization_t>().to_json_object(val))
+        : object(val.to_json())
     {
     }
 
     template <
         typename jsonization_t,
         std::enable_if_t<
-            std::is_rvalue_reference_v<jsonization_t&&> && _utils::has_move_to_json_in_templ_spec<jsonization_t>::value
-                && !_utils::has_move_to_json_object_in_templ_spec<jsonization_t>::value,
+            !std::is_same_v<std::decay_t<jsonization_t>, object> && _utils::has_to_json_in_templ_spec<std::decay_t<jsonization_t>>::value
+                && !_utils::has_to_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value,
             bool> = true>
-    object(jsonization_t&& val)
-        : object(ext::jsonization<jsonization_t>().move_to_json(std::move(val)))
+    object(const jsonization_t& val)
+        : object(ext::jsonization<std::decay_t<jsonization_t>>().to_json(val))
     {
     }
 
     template <
         typename jsonization_t,
         std::enable_if_t<
-            std::is_rvalue_reference_v<jsonization_t&&> && _utils::has_move_to_json_object_in_templ_spec<jsonization_t>::value,
+            !std::is_same_v<std::decay_t<jsonization_t>, object>
+                && _utils::has_to_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value,
+            bool> = true>
+    object(const jsonization_t& val)
+        : object(ext::jsonization<std::decay_t<jsonization_t>>().to_json_object(val))
+    {
+    }
+
+    template <
+        typename jsonization_t,
+        std::enable_if_t<
+            !std::is_same_v<std::decay_t<jsonization_t>, object> && std::is_rvalue_reference_v<jsonization_t&&>
+                && _utils::has_move_to_json_in_templ_spec<std::decay_t<jsonization_t>>::value
+                && !_utils::has_move_to_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value,
             bool> = true>
     object(jsonization_t&& val)
-        : object(ext::jsonization<jsonization_t>().move_to_json_object(std::move(val)))
+        : object(ext::jsonization<std::decay_t<jsonization_t>>().move_to_json(std::move(val)))
+    {
+    }
+
+    template <
+        typename jsonization_t,
+        std::enable_if_t<
+            !std::is_same_v<std::decay_t<jsonization_t>, object> && std::is_rvalue_reference_v<jsonization_t&&>
+                && _utils::has_move_to_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value,
+            bool> = true>
+    object(jsonization_t&& val)
+        : object(ext::jsonization<std::decay_t<jsonization_t>>().move_to_json_object(std::move(val)))
     {
     }
 
     ~object() = default;
 
-    bool empty() const noexcept { return _object_data.empty(); }
+    bool empty() const noexcept;
 
-    size_t size() const noexcept { return _object_data.size(); }
+    size_t size() const noexcept;
 
     bool contains(const std::string& key) const;
 
-    bool exists(const std::string& key) const { return contains(key); }
+    bool exists(const std::string& key) const;
 
     const value& at(const std::string& key) const;
 
-    std::string dumps(std::optional<size_t> indent = std::nullopt) const { return indent ? format(*indent) : to_string(); }
+    std::string dumps(std::optional<size_t> indent = std::nullopt) const;
 
     std::string to_string() const;
 
-    std::string format(size_t indent = 4) const { return format(indent, 0); }
+    std::string format(size_t indent = 4) const;
 
     template <typename value_t>
     bool all() const;
 
-    template <typename value_t, std::enable_if_t<_utils::has_from_json_object_in_templ_spec<value_t>::value, bool> = true>
+    template <typename value_t, std::enable_if_t<_utils::has_from_json_object_in_templ_spec<std::decay_t<value_t>>::value, bool> = true>
     value_t as() const&
     {
         value_t res;
-        ext::jsonization<value_t>().from_json_object(*this, res);
+        ext::jsonization<std::decay_t<value_t>>().from_json_object(*this, res);
         return res;
     }
 
-    template <typename value_t, std::enable_if_t<_utils::has_move_from_json_object_in_templ_spec<value_t>::value, bool> = true>
+    template <
+        typename value_t,
+        std::enable_if_t<_utils::has_move_from_json_object_in_templ_spec<std::decay_t<value_t>>::value, bool> = true>
     value_t as() &&
     {
         value_t res;
-        ext::jsonization<value_t>().move_from_json_object(std::move(*this), res);
+        ext::jsonization<std::decay_t<value_t>>().move_from_json_object(std::move(*this), res);
         return res;
     }
 
@@ -155,27 +176,13 @@ public:
 
     bool operator==(const object& rhs) const;
 
-    bool operator!=(const object& rhs) const { return !(*this == rhs); }
+    bool operator!=(const object& rhs) const;
 
-    template <
-        typename jsonization_t,
-        std::enable_if_t<
-            _utils::has_from_json_in_templ_spec<jsonization_t>::value && !_utils::has_from_json_object_in_templ_spec<jsonization_t>::value,
-            bool> = true>
+    template <typename jsonization_t, std::enable_if_t<_utils::has_from_json_in_member<jsonization_t>::value, bool> = true>
     explicit operator jsonization_t() const&
     {
         jsonization_t dst {};
-        if (!ext::jsonization<jsonization_t>().from_json(*this, dst)) {
-            throw exception("Wrong JSON");
-        }
-        return dst;
-    }
-
-    template <typename jsonization_t, std::enable_if_t<_utils::has_from_json_object_in_templ_spec<jsonization_t>::value, bool> = true>
-    explicit operator jsonization_t() const&
-    {
-        jsonization_t dst {};
-        if (!ext::jsonization<jsonization_t>().from_json_object(*this, dst)) {
+        if (!dst.from_json(*this)) {
             throw exception("Wrong JSON");
         }
         return dst;
@@ -184,23 +191,52 @@ public:
     template <
         typename jsonization_t,
         std::enable_if_t<
-            _utils::has_move_from_json_in_templ_spec<jsonization_t>::value
-                && !_utils::has_move_from_json_object_in_templ_spec<jsonization_t>::value,
+            _utils::has_from_json_in_templ_spec<std::decay_t<jsonization_t>>::value
+                && !_utils::has_from_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value,
             bool> = true>
-    explicit operator jsonization_t() &&
+    explicit operator jsonization_t() const&
     {
         jsonization_t dst {};
-        if (!ext::jsonization<jsonization_t>().from_json(std::move(*this), dst)) {
+        if (!ext::jsonization<std::decay_t<jsonization_t>>().from_json(*this, dst)) {
             throw exception("Wrong JSON");
         }
         return dst;
     }
 
-    template <typename jsonization_t, std::enable_if_t<_utils::has_move_from_json_object_in_templ_spec<jsonization_t>::value, bool> = true>
+    template <
+        typename jsonization_t,
+        std::enable_if_t<_utils::has_from_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value, bool> = true>
+    explicit operator jsonization_t() const&
+    {
+        jsonization_t dst {};
+        if (!ext::jsonization<std::decay_t<jsonization_t>>().from_json_object(*this, dst)) {
+            throw exception("Wrong JSON");
+        }
+        return dst;
+    }
+
+    template <
+        typename jsonization_t,
+        std::enable_if_t<
+            _utils::has_move_from_json_in_templ_spec<std::decay_t<jsonization_t>>::value
+                && !_utils::has_move_from_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value,
+            bool> = true>
     explicit operator jsonization_t() &&
     {
         jsonization_t dst {};
-        if (!ext::jsonization<jsonization_t>().move_from_json_object(std::move(*this), dst)) {
+        if (!ext::jsonization<std::decay_t<jsonization_t>>().from_json(std::move(*this), dst)) {
+            throw exception("Wrong JSON");
+        }
+        return dst;
+    }
+
+    template <
+        typename jsonization_t,
+        std::enable_if_t<_utils::has_move_from_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value, bool> = true>
+    explicit operator jsonization_t() &&
+    {
+        jsonization_t dst {};
+        if (!ext::jsonization<std::decay_t<jsonization_t>>().move_from_json_object(std::move(*this), dst)) {
             throw exception("Wrong JSON");
         }
         return dst;

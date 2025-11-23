@@ -14,6 +14,21 @@ inline bool object::contains(const std::string& key) const
     return _object_data.find(key) != _object_data.cend();
 }
 
+inline bool object::empty() const noexcept
+{
+    return _object_data.empty();
+}
+
+inline size_t object::size() const noexcept
+{
+    return _object_data.size();
+}
+
+inline bool object::exists(const std::string& key) const
+{
+    return contains(key);
+}
+
 inline const value& object::at(const std::string& key) const
 {
     return _object_data.at(key);
@@ -77,6 +92,16 @@ inline std::string object::format(size_t indent, size_t indent_times) const
     }
     str += tail_indent + '}';
     return str;
+}
+
+inline std::string object::dumps(std::optional<size_t> indent) const
+{
+    return indent ? format(*indent) : to_string();
+}
+
+inline std::string object::format(size_t indent) const
+{
+    return format(indent, 0);
 }
 
 template <typename value_t>
@@ -249,6 +274,11 @@ inline object& object::operator|=(object&& rhs)
 inline bool object::operator==(const object& rhs) const
 {
     return _object_data == rhs._object_data;
+}
+
+inline bool object::operator!=(const object& rhs) const
+{
+    return !(*this == rhs);
 }
 
 inline std::ostream& operator<<(std::ostream& out, const object& obj)

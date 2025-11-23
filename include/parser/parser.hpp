@@ -10,7 +10,7 @@
 #include <tuple>
 
 #include "../common/types.hpp"
-#include "../reflection/extensions.hpp"
+#include "../common/extensions.hpp"
 #include "packed_bytes.hpp"
 
 namespace json

@@ -86,20 +86,14 @@ inline value::value(std::string str)
 {
 }
 
+inline value::value(std::string_view str)
+    : _type(value_type::string)
+    , _raw_data(std::string(str))
+{
+}
+
 inline value::value(std::nullptr_t)
     : _type(value_type::null)
-{
-}
-
-inline value::value(array arr)
-    : _type(value_type::array)
-    , _raw_data(std::make_unique<array>(std::move(arr)))
-{
-}
-
-inline value::value(object obj)
-    : _type(value_type::object)
-    , _raw_data(std::make_unique<object>(std::move(obj)))
 {
 }
 
@@ -109,15 +103,57 @@ inline value::value(std::initializer_list<typename object::value_type> init_list
 {
 }
 
-// for Pimpl
-
 inline value::~value() = default;
+
+inline bool value::valid() const noexcept
+{
+    return _type != value_type::invalid;
+}
+
+inline bool value::empty() const noexcept
+{
+    return is_null();
+}
+
+inline bool value::is_null() const noexcept
+{
+    return _type == value_type::null;
+}
+
+inline bool value::is_number() const noexcept
+{
+    return _type == value_type::number;
+}
+
+inline bool value::is_boolean() const noexcept
+{
+    return _type == value_type::boolean;
+}
+
+inline bool value::is_string() const noexcept
+{
+    return _type == value_type::string;
+}
+
+inline bool value::is_array() const noexcept
+{
+    return _type == value_type::array;
+}
+
+inline bool value::is_object() const noexcept
+{
+    return _type == value_type::object;
+}
 
 template <typename value_t>
 inline bool value::is() const noexcept
 {
     if constexpr (std::is_same_v<value, value_t>) {
         return true;
+    }
+    else if constexpr (_utils::has_check_json_in_member<value_t>::value) {
+        value_t temp {};
+        return temp.check_json(*this);
     }
     else if constexpr (_utils::has_check_json_in_templ_spec<value_t>::value) {
         return ext::jsonization<value_t>().check_json(*this);
@@ -156,6 +192,21 @@ inline bool value::contains(const std::string& key) const
 inline bool value::contains(size_t pos) const
 {
     return is_array() && as_array().contains(pos);
+}
+
+inline bool value::exists(const std::string& key) const
+{
+    return contains(key);
+}
+
+inline bool value::exists(size_t pos) const
+{
+    return contains(pos);
+}
+
+inline value::value_type value::type() const noexcept
+{
+    return _type;
 }
 
 inline const value& value::at(size_t pos) const
@@ -397,6 +448,13 @@ inline value_t value::as() const&
     if constexpr (std::is_same_v<value, value_t>) {
         return *this;
     }
+    else if constexpr (_utils::has_from_json_in_member<value_t>::value) {
+        value_t dst {};
+        if (!dst.from_json(*this)) {
+            throw exception("Wrong JSON");
+        }
+        return dst;
+    }
     else if constexpr (_utils::has_from_json_in_templ_spec<value_t>::value) {
         value_t dst {};
         if (!ext::jsonization<value_t>().from_json(*this, dst)) {
@@ -414,6 +472,13 @@ inline value_t value::as() &&
 {
     if constexpr (std::is_same_v<value, value_t>) {
         return std::move(*this);
+    }
+    else if constexpr (_utils::has_from_json_in_member<value_t>::value) {
+        value_t dst {};
+        if (!dst.from_json(*this)) {
+            throw exception("Wrong JSON");
+        }
+        return dst;
     }
     else if constexpr (_utils::has_move_from_json_in_templ_spec<value_t>::value) {
         value_t dst {};
@@ -494,6 +559,16 @@ inline std::string value::format(size_t indent, size_t indent_times) const
     }
 }
 
+inline std::string value::dumps(std::optional<size_t> indent) const
+{
+    return indent ? format(*indent) : to_string();
+}
+
+inline std::string value::format(size_t indent) const
+{
+    return format(indent, 0);
+}
+
 template <typename value_t>
 inline bool value::all() const
 {
@@ -538,6 +613,76 @@ inline bool value::operator==(const value& rhs) const
     default:
         throw exception("Unknown value Type");
     }
+}
+
+inline bool value::operator!=(const value& rhs) const
+{
+    return !(*this == rhs);
+}
+
+inline value::operator bool() const
+{
+    return as_boolean();
+}
+
+inline value::operator int() const
+{
+    return as_integer();
+}
+
+inline value::operator unsigned() const
+{
+    return as_unsigned();
+}
+
+inline value::operator long() const
+{
+    return as_long();
+}
+
+inline value::operator unsigned long() const
+{
+    return as_unsigned_long();
+}
+
+inline value::operator long long() const
+{
+    return as_long_long();
+}
+
+inline value::operator unsigned long long() const
+{
+    return as_unsigned_long_long();
+}
+
+inline value::operator float() const
+{
+    return as_float();
+}
+
+inline value::operator double() const
+{
+    return as_double();
+}
+
+inline value::operator long double() const
+{
+    return as_long_double();
+}
+
+inline value::operator std::string() const
+{
+    return as_string();
+}
+
+inline value::operator array() const
+{
+    return as_array();
+}
+
+inline value::operator object() const
+{
+    return as_object();
 }
 
 inline const value& value::operator[](size_t pos) const
