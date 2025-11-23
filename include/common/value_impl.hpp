@@ -97,6 +97,30 @@ inline value::value(std::nullptr_t)
 {
 }
 
+inline value::value(const array& arr)
+    : _type(value_type::array)
+    , _raw_data(std::make_unique<array>(arr))
+{
+}
+
+inline value::value(array&& arr)
+    : _type(value_type::array)
+    , _raw_data(std::make_unique<array>(std::move(arr)))
+{
+}
+
+inline value::value(const object& obj)
+    : _type(value_type::object)
+    , _raw_data(std::make_unique<object>(obj))
+{
+}
+
+inline value::value(object&& obj)
+    : _type(value_type::object)
+    , _raw_data(std::make_unique<object>(std::move(obj)))
+{
+}
+
 inline value::value(std::initializer_list<typename object::value_type> init_list)
     : _type(value_type::object)
     , _raw_data(std::make_unique<object>(init_list))
@@ -112,7 +136,18 @@ inline bool value::valid() const noexcept
 
 inline bool value::empty() const noexcept
 {
-    return is_null();
+    switch (_type) {
+    case value_type::null:
+        return true;
+    case value_type::string:
+        return std::get<std::string>(_raw_data).empty();
+    case value_type::array:
+        return std::get<array_ptr>(_raw_data)->empty();
+    case value_type::object:
+        return std::get<object_ptr>(_raw_data)->empty();
+    default:
+        return false;
+    }
 }
 
 inline bool value::is_null() const noexcept
@@ -173,6 +208,29 @@ inline bool value::is() const noexcept
     else if constexpr (_utils::is_collection<value_t>) {
         return is_array() && all<typename value_t::value_type>();
     }
+    else if constexpr (_utils::is_fixed_array<value_t>) {
+        return is_array() && as_array().size() == _utils::fixed_array_size<value_t> && all<typename value_t::value_type>();
+    }
+    else if constexpr (_utils::is_tuple_like<value_t>) {
+        if (!is_array()) {
+            return false;
+        }
+        if (as_array().size() != std::tuple_size_v<value_t>) {
+            return false;
+        }
+        return is_tuple_helper<value_t>(std::make_index_sequence<std::tuple_size_v<value_t>>());
+    }
+    else if constexpr (_utils::is_optional_v<value_t>) {
+        return is_null() || is<typename value_t::value_type>();
+    }
+    else if constexpr (_utils::is_variant<value_t>) {
+        return is_variant_helper(static_cast<value_t*>(nullptr));
+    }
+#ifdef MEOJSON_FS_PATH_EXTENSION
+    else if constexpr (std::is_same_v<std::decay_t<value_t>, std::filesystem::path>) {
+        return is_string();
+    }
+#endif
     else if constexpr (std::is_same_v<object, value_t>) {
         return is_object();
     }
@@ -419,7 +477,8 @@ inline const object& value::as_object() const
 inline array& value::as_array()
 {
     if (empty()) {
-        *this = array();
+        _type = value_type::array;
+        _raw_data = std::make_unique<array>();
     }
 
     if (is_array()) {
@@ -432,7 +491,8 @@ inline array& value::as_array()
 inline object& value::as_object()
 {
     if (empty()) {
-        *this = object();
+        _type = value_type::object;
+        _raw_data = std::make_unique<object>();
     }
 
     if (is_object()) {
@@ -440,6 +500,19 @@ inline object& value::as_object()
     }
 
     throw exception("Wrong Type or data empty");
+}
+
+template <typename tuple_t, size_t... Is>
+inline bool value::is_tuple_helper(std::index_sequence<Is...>) const noexcept
+{
+    const auto& arr = as_array();
+    return (arr[Is].is<std::tuple_element_t<Is, tuple_t>>() && ...);
+}
+
+template <typename... Ts>
+inline bool value::is_variant_helper(std::variant<Ts...>*) const noexcept
+{
+    return (is<Ts>() || ...);
 }
 
 template <typename value_t>
@@ -702,7 +775,8 @@ inline value& value::operator[](size_t pos)
 inline value& value::operator[](const std::string& key)
 {
     if (empty()) {
-        *this = object();
+        _type = value_type::object;
+        _raw_data = std::make_unique<object>();
     }
 
     return as_object()[key];
@@ -711,7 +785,8 @@ inline value& value::operator[](const std::string& key)
 inline value& value::operator[](std::string&& key)
 {
     if (empty()) {
-        *this = object();
+        _type = value_type::object;
+        _raw_data = std::make_unique<object>();
     }
 
     return as_object()[std::move(key)];
@@ -719,22 +794,34 @@ inline value& value::operator[](std::string&& key)
 
 inline value value::operator|(const object& rhs) const&
 {
-    return as_object() | rhs;
+    value result;
+    result._type = value_type::object;
+    result._raw_data = std::make_unique<object>(as_object() | rhs);
+    return result;
 }
 
 inline value value::operator|(object&& rhs) const&
 {
-    return as_object() | std::move(rhs);
+    value result;
+    result._type = value_type::object;
+    result._raw_data = std::make_unique<object>(as_object() | std::move(rhs));
+    return result;
 }
 
 inline value value::operator|(const object& rhs) &&
 {
-    return std::move(as_object()) | rhs;
+    value result;
+    result._type = value_type::object;
+    result._raw_data = std::make_unique<object>(std::move(as_object()) | rhs);
+    return result;
 }
 
 inline value value::operator|(object&& rhs) &&
 {
-    return std::move(as_object()) | std::move(rhs);
+    value result;
+    result._type = value_type::object;
+    result._raw_data = std::make_unique<object>(std::move(as_object()) | std::move(rhs));
+    return result;
 }
 
 inline value& value::operator|=(const object& rhs)
@@ -751,22 +838,34 @@ inline value& value::operator|=(object&& rhs)
 
 inline value value::operator+(const array& rhs) const&
 {
-    return as_array() + rhs;
+    value result;
+    result._type = value_type::array;
+    result._raw_data = std::make_unique<array>(as_array() + rhs);
+    return result;
 }
 
 inline value value::operator+(array&& rhs) const&
 {
-    return as_array() + std::move(rhs);
+    value result;
+    result._type = value_type::array;
+    result._raw_data = std::make_unique<array>(as_array() + std::move(rhs));
+    return result;
 }
 
 inline value value::operator+(const array& rhs) &&
 {
-    return std::move(as_array()) + rhs;
+    value result;
+    result._type = value_type::array;
+    result._raw_data = std::make_unique<array>(std::move(as_array()) + rhs);
+    return result;
 }
 
 inline value value::operator+(array&& rhs) &&
 {
-    return std::move(as_array()) + std::move(rhs);
+    value result;
+    result._type = value_type::array;
+    result._raw_data = std::make_unique<array>(std::move(as_array()) + std::move(rhs));
+    return result;
 }
 
 inline value& value::operator+=(const array& rhs)
@@ -813,4 +912,51 @@ inline std::ostream& operator<<(std::ostream& out, const value& val)
     out << val.format();
     return out;
 }
+
+// Implementation of variant constructors
+template <typename... Ts, std::enable_if_t<(sizeof...(Ts) > 0) && !_utils::has_to_json_in_member<std::variant<Ts...>>::value && !_utils::has_to_json_in_templ_spec<std::variant<Ts...>>::value, bool>>
+inline value::value(const std::variant<Ts...>& var)
+{
+    std::visit([this](const auto& val) { *this = value(val); }, var);
+}
+
+template <typename... Ts, std::enable_if_t<(sizeof...(Ts) > 0) && !_utils::has_to_json_in_member<std::variant<Ts...>>::value && !_utils::has_to_json_in_templ_spec<std::variant<Ts...>>::value, bool>>
+inline value::value(std::variant<Ts...>&& var)
+{
+    std::visit([this](auto&& val) { *this = value(std::move(val)); }, std::move(var));
+}
+
+template <typename... Ts>
+inline std::variant<Ts...> value::to_variant_helper() const&
+{
+    std::variant<Ts...> result;
+    if (!((is<Ts>() ? (result = as<Ts>(), true) : false) || ...)) {
+        throw exception("Cannot convert JSON value to any variant alternative");
+    }
+    return result;
+}
+
+template <typename... Ts>
+inline std::variant<Ts...> value::move_to_variant_helper() &&
+{
+    std::variant<Ts...> result;
+    if (!((is<Ts>() ? (result = std::move(*this).as<Ts>(), true) : false) || ...)) {
+        throw exception("Cannot convert JSON value to any variant alternative");
+    }
+    return result;
+}
+
+// Implementation of variant conversion operators
+template <typename... Ts>
+inline value::operator std::variant<Ts...>() const&
+{
+    return to_variant_helper<Ts...>();
+}
+
+template <typename... Ts>
+inline value::operator std::variant<Ts...>() &&
+{
+    return std::move(*this).move_to_variant_helper<Ts...>();
+}
+
 } // namespace json

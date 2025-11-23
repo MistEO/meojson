@@ -286,6 +286,14 @@ bool jsonizing()
     auto p3 = std::tuple<int, std::string>(tuple_val);
     bool ist = tuple_val.is<std::tuple<int, std::string>>();
     bool isp = tuple_val.is<std::pair<int, std::string>>();
+    if (!ist) {
+        std::cerr << "tuple_val.is<std::tuple<int, std::string>>() failed" << std::endl;
+        return false;
+    }
+    if (!isp) {
+        std::cerr << "tuple_val.is<std::pair<int, std::string>>() failed" << std::endl;
+        return false;
+    }
 
     auto new_tuple_arr = (json::array)t2;
     auto new_tuple_val = (json::value)t2;
@@ -297,6 +305,10 @@ bool jsonizing()
     json::value k = var;
     auto var2 = k.as<VarT>();
     bool is_var = k.is<VarT>();
+    if (!is_var) {
+        std::cerr << "k.is<VarT>() failed" << std::endl;
+        return false;
+    }
     if (!is_var) {
         std::cerr << "error is std::variant" << std::endl;
         return false;

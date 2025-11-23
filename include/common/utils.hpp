@@ -71,6 +71,11 @@ template <typename T>
 constexpr bool is_collection<T> = is_container<T> && !is_map<T> && !is_fixed_array<T>;
 
 template <typename T>
+constexpr bool is_optional_v = false;
+template <typename T>
+constexpr bool is_optional_v<std::optional<T>> = true;
+
+template <typename T>
 constexpr bool is_variant = false;
 template <typename... args_t>
 constexpr bool is_variant<std::variant<args_t...>> = true;
@@ -420,7 +425,10 @@ inline std::string to_basic_string(any_t&& arg)
         oss << std::setprecision(std::numeric_limits<real_type>::max_digits10) << arg;
         return oss.str();
     }
+    else
 #endif
+    {
     return std::to_string(std::forward<any_t>(arg));
+    }
 }
 } // namespace json::_utils

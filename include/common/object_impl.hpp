@@ -234,40 +234,50 @@ inline value& object::operator[](std::string&& key)
 inline object object::operator|(const object& rhs) const&
 {
     object temp = *this;
-    temp._object_data.insert(rhs.begin(), rhs.end());
+    for (const auto& [key, val] : rhs) {
+        temp._object_data[key] = val;
+    }
     return temp;
 }
 
 inline object object::operator|(object&& rhs) const&
 {
     object temp = *this;
-    // temp._object_data.merge(std::move(rhs._object_data));
-    temp._object_data.insert(std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
+    for (auto& [key, val] : rhs) {
+        temp._object_data[key] = std::move(val);
+    }
     return temp;
 }
 
 inline object object::operator|(const object& rhs) &&
 {
-    _object_data.insert(rhs.begin(), rhs.end());
+    for (const auto& [key, val] : rhs) {
+        _object_data[key] = val;
+    }
     return std::move(*this);
 }
 
 inline object object::operator|(object&& rhs) &&
 {
-    //_object_data.merge(std::move(rhs._object_data));
-    _object_data.insert(std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
+    for (auto& [key, val] : rhs) {
+        _object_data[key] = std::move(val);
+    }
     return std::move(*this);
 }
 
 inline object& object::operator|=(const object& rhs)
 {
-    _object_data.insert(rhs.begin(), rhs.end());
+    for (const auto& [key, val] : rhs) {
+        _object_data[key] = val;
+    }
     return *this;
 }
 
 inline object& object::operator|=(object&& rhs)
 {
-    _object_data.insert(std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
+    for (auto& [key, val] : rhs) {
+        _object_data[key] = std::move(val);
+    }
     return *this;
 }
 

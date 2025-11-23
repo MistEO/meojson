@@ -41,6 +41,9 @@ inline void array::clear() noexcept
 
 inline bool array::erase(size_t pos)
 {
+    if (pos >= size()) {
+        return false;
+    }
     return erase(_array_data.begin() + pos);
 }
 
@@ -266,14 +269,14 @@ inline const value& array::operator[](size_t pos) const
 inline array array::operator+(const array& rhs) const&
 {
     array temp = *this;
-    temp._array_data.insert(_array_data.end(), rhs.begin(), rhs.end());
+    temp._array_data.insert(temp._array_data.end(), rhs.begin(), rhs.end());
     return temp;
 }
 
 inline array array::operator+(array&& rhs) const&
 {
     array temp = *this;
-    temp._array_data.insert(_array_data.end(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
+    temp._array_data.insert(temp._array_data.end(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
     return temp;
 }
 

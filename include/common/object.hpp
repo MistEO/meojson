@@ -39,8 +39,7 @@ public:
     template <
         typename jsonization_t,
         std::enable_if_t<
-            !std::is_same_v<std::decay_t<jsonization_t>, object> && _utils::has_to_json_in_member<jsonization_t>::value
-                && !_utils::has_to_json_object_in_templ_spec<jsonization_t>::value,
+            !std::is_same_v<std::decay_t<jsonization_t>, object> && _utils::has_to_json_in_member<jsonization_t>::value,
             bool> = true>
     object(const jsonization_t& val)
         : object(val.to_json())
@@ -50,8 +49,7 @@ public:
     template <
         typename jsonization_t,
         std::enable_if_t<
-            !std::is_same_v<std::decay_t<jsonization_t>, object> && _utils::has_to_json_in_templ_spec<std::decay_t<jsonization_t>>::value
-                && !_utils::has_to_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value,
+            !std::is_same_v<std::decay_t<jsonization_t>, object> && _utils::has_to_json_in_templ_spec<std::decay_t<jsonization_t>>::value,
             bool> = true>
     object(const jsonization_t& val)
         : object(ext::jsonization<std::decay_t<jsonization_t>>().to_json(val))
@@ -61,35 +59,41 @@ public:
     template <
         typename jsonization_t,
         std::enable_if_t<
-            !std::is_same_v<std::decay_t<jsonization_t>, object>
-                && _utils::has_to_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value,
-            bool> = true>
-    object(const jsonization_t& val)
-        : object(ext::jsonization<std::decay_t<jsonization_t>>().to_json_object(val))
-    {
-    }
-
-    template <
-        typename jsonization_t,
-        std::enable_if_t<
             !std::is_same_v<std::decay_t<jsonization_t>, object> && std::is_rvalue_reference_v<jsonization_t&&>
-                && _utils::has_move_to_json_in_templ_spec<std::decay_t<jsonization_t>>::value
-                && !_utils::has_move_to_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value,
+                && _utils::has_move_to_json_in_templ_spec<std::decay_t<jsonization_t>>::value,
             bool> = true>
     object(jsonization_t&& val)
         : object(ext::jsonization<std::decay_t<jsonization_t>>().move_to_json(std::move(val)))
     {
     }
 
+    // Native support for maps (std::map<std::string, T>, std::unordered_map<std::string, T>)
     template <
-        typename jsonization_t,
+        typename map_t,
         std::enable_if_t<
-            !std::is_same_v<std::decay_t<jsonization_t>, object> && std::is_rvalue_reference_v<jsonization_t&&>
-                && _utils::has_move_to_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value,
+            _utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>
+                && !std::is_same_v<std::decay_t<map_t>, object> && !_utils::has_to_json_in_member<map_t>::value
+                && !_utils::has_to_json_in_templ_spec<map_t>::value,
             bool> = true>
-    object(jsonization_t&& val)
-        : object(ext::jsonization<std::decay_t<jsonization_t>>().move_to_json_object(std::move(val)))
+    object(const map_t& m)
     {
+        for (const auto& [key, val] : m) {
+            _object_data.emplace(key, val);
+        }
+    }
+
+    template <
+        typename map_t,
+        std::enable_if_t<
+            _utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>
+                && !std::is_same_v<std::decay_t<map_t>, object> && !_utils::has_to_json_in_member<map_t>::value
+                && !_utils::has_to_json_in_templ_spec<map_t>::value,
+            bool> = true>
+    object(map_t&& m)
+    {
+        for (auto& [key, val] : m) {
+            _object_data.emplace(key, std::move(val));
+        }
     }
 
     ~object() = default;
@@ -113,22 +117,29 @@ public:
     template <typename value_t>
     bool all() const;
 
-    template <typename value_t, std::enable_if_t<_utils::has_from_json_object_in_templ_spec<std::decay_t<value_t>>::value, bool> = true>
-    value_t as() const&
+    // Native support for converting to maps
+    template <
+        typename map_t,
+        std::enable_if_t<_utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>, bool> = true>
+    map_t as() const&
     {
-        value_t res;
-        ext::jsonization<std::decay_t<value_t>>().from_json_object(*this, res);
-        return res;
+        map_t result;
+        for (const auto& [key, val] : _object_data) {
+            result.emplace(key, val.as<typename map_t::mapped_type>());
+        }
+        return result;
     }
 
     template <
-        typename value_t,
-        std::enable_if_t<_utils::has_move_from_json_object_in_templ_spec<std::decay_t<value_t>>::value, bool> = true>
-    value_t as() &&
+        typename map_t,
+        std::enable_if_t<_utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>, bool> = true>
+    map_t as() &&
     {
-        value_t res;
-        ext::jsonization<std::decay_t<value_t>>().move_from_json_object(std::move(*this), res);
-        return res;
+        map_t result;
+        for (auto& [key, val] : _object_data) {
+            result.emplace(key, std::move(val).as<typename map_t::mapped_type>());
+        }
+        return result;
     }
 
     // Usage: get(key_1, key_2, ..., default_value);
@@ -190,10 +201,7 @@ public:
 
     template <
         typename jsonization_t,
-        std::enable_if_t<
-            _utils::has_from_json_in_templ_spec<std::decay_t<jsonization_t>>::value
-                && !_utils::has_from_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value,
-            bool> = true>
+        std::enable_if_t<_utils::has_from_json_in_templ_spec<std::decay_t<jsonization_t>>::value, bool> = true>
     explicit operator jsonization_t() const&
     {
         jsonization_t dst {};
@@ -205,41 +213,37 @@ public:
 
     template <
         typename jsonization_t,
-        std::enable_if_t<_utils::has_from_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value, bool> = true>
-    explicit operator jsonization_t() const&
+        std::enable_if_t<_utils::has_move_from_json_in_templ_spec<std::decay_t<jsonization_t>>::value, bool> = true>
+    explicit operator jsonization_t() &&
     {
         jsonization_t dst {};
-        if (!ext::jsonization<std::decay_t<jsonization_t>>().from_json_object(*this, dst)) {
+        if (!ext::jsonization<std::decay_t<jsonization_t>>().move_from_json(std::move(*this), dst)) {
             throw exception("Wrong JSON");
         }
         return dst;
     }
 
+    // Native support for converting to maps
     template <
-        typename jsonization_t,
+        typename map_t,
         std::enable_if_t<
-            _utils::has_move_from_json_in_templ_spec<std::decay_t<jsonization_t>>::value
-                && !_utils::has_move_from_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value,
+            _utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>
+                && !_utils::has_from_json_in_member<map_t>::value && !_utils::has_from_json_in_templ_spec<map_t>::value,
             bool> = true>
-    explicit operator jsonization_t() &&
+    explicit operator map_t() const&
     {
-        jsonization_t dst {};
-        if (!ext::jsonization<std::decay_t<jsonization_t>>().from_json(std::move(*this), dst)) {
-            throw exception("Wrong JSON");
-        }
-        return dst;
+        return as<map_t>();
     }
 
     template <
-        typename jsonization_t,
-        std::enable_if_t<_utils::has_move_from_json_object_in_templ_spec<std::decay_t<jsonization_t>>::value, bool> = true>
-    explicit operator jsonization_t() &&
+        typename map_t,
+        std::enable_if_t<
+            _utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>
+                && !_utils::has_from_json_in_member<map_t>::value && !_utils::has_from_json_in_templ_spec<map_t>::value,
+            bool> = true>
+    explicit operator map_t() &&
     {
-        jsonization_t dst {};
-        if (!ext::jsonization<std::decay_t<jsonization_t>>().move_from_json_object(std::move(*this), dst)) {
-            throw exception("Wrong JSON");
-        }
-        return dst;
+        return std::move(*this).as<map_t>();
     }
 
 private:
