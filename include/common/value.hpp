@@ -3,9 +3,7 @@
 #pragma once
 
 #include <cstddef>
-#include <filesystem>
 #include <initializer_list>
-#include <map>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -15,6 +13,10 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
+#ifdef MEOJSON_FS_PATH_EXTENSION
+#include <filesystem>
+#endif
 
 #include "enum_reflection.hpp"
 #include "exception.hpp"
