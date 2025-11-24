@@ -13,6 +13,8 @@
 #define MEOJSON_ENUM_REFLECTION_MAX_ENUMS 128
 #endif
 
+#define MEOJSON_ENUM_RANGE(min_enum, max_enum) _MEOJSON_ENUM_MIN = min_enum, _MEOJSON_ENUM_MAX = max_enum
+
 namespace json
 {
 namespace _reflection
@@ -21,6 +23,7 @@ template <typename E, E V>
 constexpr std::string_view name() noexcept
 {
 #if defined(__clang__) || defined(__GNUG__)
+
     std::string_view name = __PRETTY_FUNCTION__;
     auto start = name.find("V = ");
     if (start == std::string_view::npos) {
@@ -41,7 +44,9 @@ constexpr std::string_view name() noexcept
         name = name.substr(sep + 1);
     }
     return name;
+
 #elif defined(_MSC_VER)
+
     std::string_view name = __FUNCSIG__;
     auto start = name.find(',');
     if (start == std::string_view::npos) {
@@ -64,8 +69,11 @@ constexpr std::string_view name() noexcept
         name = name.substr(sep + 1);
     }
     return name;
+
 #else
+
     return {};
+
 #endif
 }
 
@@ -102,11 +110,55 @@ constexpr bool is_valid() noexcept
     return true;
 }
 
+// 检测枚举类型是否存在 _MEOJSON_ENUM_MIN
+template <typename E, typename = void>
+struct has_enum_min : std::false_type
+{};
+
+template <typename E>
+struct has_enum_min<E, std::void_t<decltype(E::_MEOJSON_ENUM_MIN)>> : std::true_type
+{};
+
+// 检测枚举类型是否存在 _MEOJSON_ENUM_MAX
+template <typename E, typename = void>
+struct has_enum_max : std::false_type
+{};
+
+template <typename E>
+struct has_enum_max<E, std::void_t<decltype(E::_MEOJSON_ENUM_MAX)>> : std::true_type
+{};
+
+// 获取枚举最小值
+template <typename E, bool = has_enum_min<E>::value>
+struct get_enum_min
+{
+    static constexpr int value = MEOJSON_ENUM_REFLECTION_MIN_ENUMS;
+};
+
+template <typename E>
+struct get_enum_min<E, true>
+{
+    static constexpr int value = static_cast<int>(E::_MEOJSON_ENUM_MIN);
+};
+
+// 获取枚举最大值
+template <typename E, bool = has_enum_max<E>::value>
+struct get_enum_max
+{
+    static constexpr int value = MEOJSON_ENUM_REFLECTION_MAX_ENUMS;
+};
+
+template <typename E>
+struct get_enum_max<E, true>
+{
+    static constexpr int value = static_cast<int>(E::_MEOJSON_ENUM_MAX);
+};
+
 template <typename E>
 struct enum_range
 {
-    static constexpr int min = MEOJSON_ENUM_REFLECTION_MIN_ENUMS;
-    static constexpr int max = MEOJSON_ENUM_REFLECTION_MAX_ENUMS;
+    static constexpr int min = get_enum_min<E>::value;
+    static constexpr int max = get_enum_max<E>::value;
 };
 
 template <typename E, int... Is>

@@ -25,6 +25,16 @@ enum class SmallEnum : char
     B = 1
 };
 
+// Enum using MEOJSON_ENUM_RANGE macro to specify custom range
+enum class Status
+{
+    Idle = 100,
+    Running = 101,
+    Paused = 102,
+    Stopped = 103,
+    MEOJSON_ENUM_RANGE(Idle, Stopped)
+};
+
 bool enum_test()
 {
     bool success = true;
@@ -103,11 +113,6 @@ bool enum_test()
     }
 
     // 5. Constructor Throw on Unknown Enum
-    // We need an enum value that is within range but not named, OR assume we rely on reflection failure.
-    // Since our reflection covers -128 to 128, picking a value in that range that isn't defined:
-    // Color has 1, 2, 4. 3 is not defined.
-    // Note: is_valid<E, V> checks if __PRETTY_FUNCTION__ contains the name.
-    // For (Color)3, it might output "(Color)3" or similar, which our parser should reject (needs to start with letter/underscore).
     {
         try {
             json::value v = (Color)3;
@@ -125,17 +130,92 @@ bool enum_test()
     }
 
     // 6. Operator Enum with Number (Legacy support check)
-    // If we construct value from int, can we cast to enum?
     {
         json::value v = 2; // matches Color::Green
         if (!v.is<Color>()) {
-            // is<Color> checks string OR number.
             std::cout << "Error: 2 should be identified as Color (via number)" << std::endl;
             success = false;
         }
         Color c = v.as<Color>();
         if (c != Color::Green) {
             std::cout << "Error: 2 failed to cast to Color::Green" << std::endl;
+            success = false;
+        }
+    }
+
+    // 7. Test MEOJSON_ENUM_RANGE macro with custom range
+    std::cout << "Testing MEOJSON_ENUM_RANGE macro..." << std::endl;
+    
+    // 7.1 Serialization
+    {
+        json::value v = Status::Running;
+        if (!v.is_string()) {
+            std::cout << "Error: Status::Running should be serialized as string" << std::endl;
+            success = false;
+        }
+        else if (v.as_string() != "Running") {
+            std::cout << "Error: Status::Running serialized as " << v.as_string() << ", expected 'Running'" << std::endl;
+            success = false;
+        }
+    }
+
+    // 7.2 Deserialization
+    {
+        json::value v = "Paused";
+        if (!v.is<Status>()) {
+            std::cout << "Error: 'Paused' should be identified as Status" << std::endl;
+            success = false;
+        }
+        else {
+            Status s = v.as<Status>();
+            if (s != Status::Paused) {
+                std::cout << "Error: 'Paused' parsed as wrong enum value" << std::endl;
+                success = false;
+            }
+        }
+    }
+
+    // 7.3 Case insensitive
+    {
+        json::value v = "stopped";
+        if (!v.is<Status>()) {
+            std::cout << "Error: 'stopped' (lowercase) should be identified as Status" << std::endl;
+            success = false;
+        }
+        else {
+            Status s = v.as<Status>();
+            if (s != Status::Stopped) {
+                std::cout << "Error: 'stopped' parsed as wrong enum value" << std::endl;
+                success = false;
+            }
+        }
+    }
+
+    // 7.4 Number conversion
+    {
+        json::value v = 103; // matches Status::Stopped
+        if (!v.is<Status>()) {
+            std::cout << "Error: 103 should be identified as Status (via number)" << std::endl;
+            success = false;
+        }
+        Status s = v.as<Status>();
+        if (s != Status::Stopped) {
+            std::cout << "Error: 103 failed to cast to Status::Stopped" << std::endl;
+            success = false;
+        }
+    }
+
+    // 7.5 All enum values
+    {
+        json::value idle = Status::Idle;
+        if (idle.as_string() != "Idle") {
+            std::cout << "Error: Status::Idle not serialized correctly" << std::endl;
+            success = false;
+        }
+
+        json::value stopped = Status::Stopped;
+        if (stopped.as_string() != "Stopped") {
+            std::cout << "Error: Status::Stopped not serialized correctly" << std::endl;
             success = false;
         }
     }

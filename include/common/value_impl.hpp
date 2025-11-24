@@ -4,17 +4,6 @@
 
 namespace json
 {
-namespace _reflection
-{
-// 为 value_type 枚举设置反射范围
-template <>
-struct enum_range<value::value_type>
-{
-    static constexpr int min = static_cast<int>(value::value_type::invalid);
-    static constexpr int max = static_cast<int>(value::value_type::object);
-};
-} // namespace _reflection
-
 inline value::value() = default;
 
 inline value::value(const value& rhs)

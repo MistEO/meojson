@@ -38,7 +38,9 @@ public:
         string,
         number,
         array,
-        object
+        object,
+
+        MEOJSON_ENUM_RANGE(invalid, object)
     };
 
     using var_t = std::variant<std::string, array_ptr, object_ptr>;
