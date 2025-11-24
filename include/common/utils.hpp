@@ -79,7 +79,7 @@ constexpr bool is_nullable<
     std::void_t<
         decltype(static_cast<bool>(std::declval<T>())), // 检查 operator bool
         decltype(*std::declval<T>())                    // 检查 operator*
-        >> = true;
+        >> = !std::is_pointer_v<std::decay_t<T>>;       // 排除原生指针
 
 template <typename T, typename = std::enable_if_t<is_nullable<T>>>
 using nullable_value_t = std::decay_t<decltype(*std::declval<T>())>;
