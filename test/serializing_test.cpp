@@ -220,13 +220,20 @@ bool jsonizing()
     {
         int a = 0;
         int b = 0;
+        std::optional<int> o = 5;
 
-        MEO_JSONIZATION(MEO_OPT a, MEO_OPT b);
+        MEO_JSONIZATION(MEO_OPT a, MEO_OPT b, MEO_OPT o);
     };
 
     json::value opt_j = json::object();
     if (!opt_j.is<OptTest>()) {
         std::cerr << "bad MEO_OPT" << std::endl;
+        return false;
+    }
+    opt_j["a"] = 10;
+    OptTest optt = (OptTest)opt_j;
+    if (optt.a != 10 || optt.b != 0 || !optt.o.has_value() || optt.o.value() != 5) {
+        std::cerr << "bad MEO_OPT values" << std::endl;
         return false;
     }
 

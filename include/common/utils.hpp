@@ -77,6 +77,45 @@ template <typename T>
 constexpr bool is_optional_v<std::optional<T>> = true;
 
 template <typename T>
+constexpr bool is_shared_ptr_v = false;
+template <typename T>
+constexpr bool is_shared_ptr_v<std::shared_ptr<T>> = true;
+
+template <typename T>
+constexpr bool is_unique_ptr_v = false;
+template <typename T>
+constexpr bool is_unique_ptr_v<std::unique_ptr<T>> = true;
+
+// 统一的 nullable wrapper 检测（包括 optional, shared_ptr, unique_ptr）
+template <typename T>
+constexpr bool is_nullable_wrapper_v = is_optional_v<T> || is_shared_ptr_v<T> || is_unique_ptr_v<T>;
+
+// 获取 nullable wrapper 的内部类型
+template <typename T>
+struct nullable_wrapper_value_type;
+
+template <typename T>
+struct nullable_wrapper_value_type<std::optional<T>>
+{
+    using type = T;
+};
+
+template <typename T>
+struct nullable_wrapper_value_type<std::shared_ptr<T>>
+{
+    using type = T;
+};
+
+template <typename T>
+struct nullable_wrapper_value_type<std::unique_ptr<T>>
+{
+    using type = T;
+};
+
+template <typename T>
+using nullable_wrapper_value_type_t = typename nullable_wrapper_value_type<T>::type;
+
+template <typename T>
 constexpr bool is_variant = false;
 template <typename... args_t>
 constexpr bool is_variant<std::variant<args_t...>> = true;

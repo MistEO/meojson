@@ -10,6 +10,7 @@
 #include "unicode_test.h"
 #include "value_test.h"
 #include "enum_test.h"
+#include "smart_ptr_test.h"
 
 int main()
 {
@@ -47,6 +48,9 @@ int main()
 
     std::cout << "\n*** jsonc_test ***\n" << std::endl;
     success &= jsonc_test();
+
+    std::cout << "\n*** smart_ptr_test ***\n" << std::endl;
+    success &= smart_ptr_test();
 
     if (!success) {
         std::cout << "\n****** Test failed ******\n" << std::endl;

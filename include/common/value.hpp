@@ -120,26 +120,28 @@ public:
     {
     }
 
-    // Native support for std::optional<T>
+    // Native support for nullable wrappers (std::optional, std::shared_ptr, std::unique_ptr)
     template <
-        typename T,
+        typename wrapper_t,
         std::enable_if_t<
-            !std::is_same_v<std::decay_t<T>, value> && !_utils::has_to_json_in_member<std::optional<T>>::value
-                && !_utils::has_to_json_in_templ_spec<std::optional<T>>::value,
+            _utils::is_nullable_wrapper_v<std::decay_t<wrapper_t>>
+                && !std::is_same_v<std::decay_t<_utils::nullable_wrapper_value_type_t<std::decay_t<wrapper_t>>>, value>
+                && !_utils::has_to_json_in_member<wrapper_t>::value && !_utils::has_to_json_in_templ_spec<wrapper_t>::value,
             bool> = true>
-    value(const std::optional<T>& opt)
-        : value(opt ? value(*opt) : value())
+    value(const wrapper_t& wrapper)
+        : value(wrapper ? value(*wrapper) : value())
     {
     }
 
     template <
-        typename T,
+        typename wrapper_t,
         std::enable_if_t<
-            !std::is_same_v<std::decay_t<T>, value> && !_utils::has_to_json_in_member<std::optional<T>>::value
-                && !_utils::has_to_json_in_templ_spec<std::optional<T>>::value,
+            _utils::is_nullable_wrapper_v<std::decay_t<wrapper_t>>
+                && !std::is_same_v<std::decay_t<_utils::nullable_wrapper_value_type_t<std::decay_t<wrapper_t>>>, value>
+                && !_utils::has_to_json_in_member<wrapper_t>::value && !_utils::has_to_json_in_templ_spec<wrapper_t>::value,
             bool> = true>
-    value(std::optional<T>&& opt)
-        : value(opt ? value(std::move(*opt)) : value())
+    value(wrapper_t&& wrapper)
+        : value(wrapper ? value(std::move(*wrapper)) : value())
     {
     }
 
@@ -523,7 +525,7 @@ public:
         return dst;
     }
 
-    // Native support for converting to std::optional<T>
+    // Native support for converting to nullable wrappers (std::optional, std::shared_ptr, std::unique_ptr)
     template <typename T>
     explicit operator std::optional<T>() const&
     {
@@ -540,6 +542,42 @@ public:
             return std::nullopt;
         }
         return std::optional<T>(static_cast<T>(std::move(*this)));
+    }
+
+    template <typename T>
+    explicit operator std::shared_ptr<T>() const&
+    {
+        if (is_null()) {
+            return nullptr;
+        }
+        return std::make_shared<T>(static_cast<T>(*this));
+    }
+
+    template <typename T>
+    explicit operator std::shared_ptr<T>() &&
+    {
+        if (is_null()) {
+            return nullptr;
+        }
+        return std::make_shared<T>(static_cast<T>(std::move(*this)));
+    }
+
+    template <typename T>
+    explicit operator std::unique_ptr<T>() const&
+    {
+        if (is_null()) {
+            return nullptr;
+        }
+        return std::make_unique<T>(static_cast<T>(*this));
+    }
+
+    template <typename T>
+    explicit operator std::unique_ptr<T>() &&
+    {
+        if (is_null()) {
+            return nullptr;
+        }
+        return std::make_unique<T>(static_cast<T>(std::move(*this)));
     }
 
     // Native support for converting to std::variant<Ts...>

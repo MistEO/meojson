@@ -10,19 +10,6 @@
 
 namespace json::_jsonization_helper
 {
-template <typename value_t>
-struct is_optional_t : public std::false_type
-{
-};
-
-template <typename value_t>
-struct is_optional_t<std::optional<value_t>> : public std::true_type
-{
-};
-
-template <typename value_t>
-inline constexpr bool is_optional_v = is_optional_t<value_t>::value;
-
 struct next_is_optional_t
 {
 };
@@ -73,14 +60,9 @@ struct dumper
         if (state.override_key) {
             key = state.override_key;
         }
-        if constexpr (is_optional_v<var_t>) {
-            if (var.has_value()) {
-                result.emplace(key, var.value());
-            }
-        }
-        else {
-            result.emplace(key, var);
-        }
+
+        result.emplace(key, var);
+
         _to_json(result, std::forward<rest_t>(rest)...);
     }
 
@@ -116,28 +98,21 @@ struct checker
             key = state.override_key;
         }
         auto opt = in.find(key);
-        if constexpr (is_optional_v<var_t>) {
-            if (!state.is_optional) {
-                throw exception("std::optional must be used with MEO_OPT");
-            }
 
-            if (opt && !opt->is<typename var_t::value_type>()) {
+        if (opt) {
+            if (!opt->is<var_t>()) {
                 error_key = key;
                 return false;
             }
+        }
+        else if (state.is_optional) {
+            // is_optional, ignore key not found
         }
         else {
-            if (state.is_optional) {
-                if (opt && !opt->is<var_t>()) {
-                    error_key = key;
-                    return false;
-                } // is_optional, ignore key not found
-            }
-            else if (!opt || !opt->is<var_t>()) {
-                error_key = key;
-                return false;
-            }
+            error_key = key;
+            return false;
         }
+
         return _check_json(in, error_key, std::forward<rest_t>(rest)...);
     }
 
@@ -179,37 +154,21 @@ struct loader
             key = state.override_key;
         }
         auto opt = in.find(key);
-        if constexpr (is_optional_v<var_t>) {
-            if (!state.is_optional) {
-                throw exception("std::optional must be used with MEO_OPT");
-            }
-
-            if (opt && !opt->is<typename var_t::value_type>()) {
-                error_key = key;
-                return false;
-            }
-            if (opt) {
-                var = std::move(opt)->as<typename var_t::value_type>();
-            }
-            else {
-                var = std::nullopt;
-            }
-        }
-        else {
-            if (state.is_optional) {
-                if (opt && !opt->is<var_t>()) {
-                    error_key = key;
-                    return false;
-                } // is_optional, ignore key not found
-            }
-            else if (!opt || !opt->is<var_t>()) {
-                error_key = key;
-                return false;
-            }
-
-            if (opt) {
+        if (opt) {
+            if (opt->is<var_t>()) {
                 var = std::move(opt)->as<var_t>();
             }
+            else {
+                error_key = key;
+                return false;
+            }
+        }
+        else if (state.is_optional) {
+            // is_optional, ignore key not found
+        }
+        else {
+            error_key = key;
+            return false;
         }
 
         return _from_json(in, error_key, std::forward<rest_t>(rest)...);

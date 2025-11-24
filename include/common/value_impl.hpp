@@ -237,8 +237,8 @@ inline bool value::is() const noexcept
         }
         return is_tuple_helper<value_t>(std::make_index_sequence<std::tuple_size_v<value_t>>());
     }
-    else if constexpr (_utils::is_optional_v<value_t>) {
-        return is_null() || is<typename value_t::value_type>();
+    else if constexpr (_utils::is_nullable_wrapper_v<value_t>) {
+        return is_null() || is<_utils::nullable_wrapper_value_type_t<value_t>>();
     }
     else if constexpr (_utils::is_variant<value_t>) {
         return is_variant_helper(static_cast<value_t*>(nullptr));
