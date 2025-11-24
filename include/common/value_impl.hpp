@@ -207,6 +207,9 @@ inline bool value::is() const noexcept
     else if constexpr (std::is_same_v<std::nullptr_t, value_t>) {
         return is_null();
     }
+    else if constexpr (_utils::is_nullable<value_t>) {
+        return is_null() || is<_utils::nullable_value_t<value_t>>();
+    }
     else if constexpr (std::is_enum_v<value_t>) {
         if (is_string()) {
             return _reflection::string_to_enum<value_t>(as_string_view()).has_value();
@@ -219,6 +222,11 @@ inline bool value::is() const noexcept
     else if constexpr (std::is_constructible_v<std::string, value_t>) {
         return is_string();
     }
+#ifdef MEOJSON_FS_PATH_EXTENSION
+    else if constexpr (std::is_same_v<std::decay_t<value_t>, std::filesystem::path>) {
+        return is_string();
+    }
+#endif
     else if constexpr (std::is_same_v<array, value_t>) {
         return is_array();
     }
@@ -237,17 +245,9 @@ inline bool value::is() const noexcept
         }
         return is_tuple_helper<value_t>(std::make_index_sequence<std::tuple_size_v<value_t>>());
     }
-    else if constexpr (_utils::is_nullable_wrapper_v<value_t>) {
-        return is_null() || is<_utils::nullable_wrapper_value_type_t<value_t>>();
-    }
     else if constexpr (_utils::is_variant<value_t>) {
         return is_variant_helper(static_cast<value_t*>(nullptr));
     }
-#ifdef MEOJSON_FS_PATH_EXTENSION
-    else if constexpr (std::is_same_v<std::decay_t<value_t>, std::filesystem::path>) {
-        return is_string();
-    }
-#endif
     else if constexpr (std::is_same_v<object, value_t>) {
         return is_object();
     }

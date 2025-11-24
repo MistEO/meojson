@@ -124,9 +124,8 @@ public:
     template <
         typename wrapper_t,
         std::enable_if_t<
-            _utils::is_nullable_wrapper_v<std::decay_t<wrapper_t>>
-                && !std::is_same_v<std::decay_t<_utils::nullable_wrapper_value_type_t<std::decay_t<wrapper_t>>>, value>
-                && !_utils::has_to_json_in_member<wrapper_t>::value && !_utils::has_to_json_in_templ_spec<wrapper_t>::value,
+            _utils::is_nullable<std::decay_t<wrapper_t>> && !_utils::has_to_json_in_member<wrapper_t>::value
+                && !_utils::has_to_json_in_templ_spec<wrapper_t>::value,
             bool> = true>
     value(const wrapper_t& wrapper)
         : value(wrapper ? value(*wrapper) : value())
@@ -136,9 +135,8 @@ public:
     template <
         typename wrapper_t,
         std::enable_if_t<
-            _utils::is_nullable_wrapper_v<std::decay_t<wrapper_t>>
-                && !std::is_same_v<std::decay_t<_utils::nullable_wrapper_value_type_t<std::decay_t<wrapper_t>>>, value>
-                && !_utils::has_to_json_in_member<wrapper_t>::value && !_utils::has_to_json_in_templ_spec<wrapper_t>::value,
+            _utils::is_nullable<std::decay_t<wrapper_t>> && !_utils::has_to_json_in_member<wrapper_t>::value
+                && !_utils::has_to_json_in_templ_spec<wrapper_t>::value,
             bool> = true>
     value(wrapper_t&& wrapper)
         : value(wrapper ? value(std::move(*wrapper)) : value())
