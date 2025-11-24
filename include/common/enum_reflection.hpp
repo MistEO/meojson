@@ -20,24 +20,7 @@ namespace _reflection
 template <typename E, E V>
 constexpr std::string_view name() noexcept
 {
-#if defined(__clang__)
-    std::string_view name = __PRETTY_FUNCTION__;
-    auto start = name.find("V = ");
-    if (start == std::string_view::npos) {
-        return {};
-    }
-    start += 4;
-    auto end = name.find_last_of(']');
-    if (end == std::string_view::npos) {
-        return {};
-    }
-    name = name.substr(start, end - start);
-    auto sep = name.find_last_of(':');
-    if (sep != std::string_view::npos) {
-        name = name.substr(sep + 1);
-    }
-    return name;
-#elif defined(__GNUC__)
+#if defined(__clang__) || defined(__GNUG__)
     std::string_view name = __PRETTY_FUNCTION__;
     auto start = name.find("V = ");
     if (start == std::string_view::npos) {
@@ -89,8 +72,30 @@ constexpr bool is_valid() noexcept
     if (n.empty()) {
         return false;
     }
-    char c = n[0];
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+
+    // 更严格的验证：检查是否为有效的C++标识符
+    // 第一个字符必须是字母或下划线
+    char first_char = n[0];
+    if (!((first_char >= 'a' && first_char <= 'z') || (first_char >= 'A' && first_char <= 'Z') || first_char == '_')) {
+        return false;
+    }
+
+    // 后续字符可以是字母、数字或下划线
+    for (size_t i = 1; i < n.size(); ++i) {
+        char c = n[i];
+        if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_')) {
+            return false;
+        }
+    }
+
+    // 额外的检查：排除编译器生成的名称
+    // 这些通常是数字或以特殊字符开头
+    if (n.find('(') != std::string_view::npos || n.find(')') != std::string_view::npos || n.find('{') != std::string_view::npos
+        || n.find('}') != std::string_view::npos) {
+        return false;
+    }
+
+    return true;
 }
 
 template <typename E>
