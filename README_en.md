@@ -72,34 +72,6 @@ else {
 }
 ```
 
-I guess you have understood, yes, **meojson** is not only a json library, but also a serialization library!
-
-```c++
-struct MyStruct
-{
-    int x = 0;
-    std::vector<double> vec;
-    // how come it's always you!
-    std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map;
-
-    // then we add a little magic
-    MEO_JSONIZATION(x, vec, map);
-};
-
-MyStruct mine;
-mine.vec.emplace_back(0.5);
-mine.map = { { "key_1", { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2", { 10 } } } } } };
-
-// yes, it’s that intuitive and smooth!
-json::value j_mine = mine;
-
-// output: {"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}
-std::cout << j_mine << std::endl;
-
-// exactly, we can also convert it back!
-MyStruct new_mine = (MyStruct)j_mine;
-```
-
 For enum types, **meojson** can automatically convert between strings and enums!
 
 ```c++
@@ -128,6 +100,34 @@ if (j_blue.is<Color>()) {
 // Number conversion is also compatible
 json::value j_num = 2;
 Color from_num = (Color)j_num; // Color::Green
+```
+
+I guess you have understood, yes, **meojson** is not only a json library, but also a serialization library!
+
+```c++
+struct MyStruct
+{
+    int x = 0;
+    std::vector<double> vec;
+    // how come it's always you!
+    std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map;
+
+    // then we add a little magic
+    MEO_JSONIZATION(x, vec, map);
+};
+
+MyStruct mine;
+mine.vec.emplace_back(0.5);
+mine.map = { { "key_1", { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2", { 10 } } } } } };
+
+// yes, it’s that intuitive and smooth!
+json::value j_mine = mine;
+
+// output: {"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}
+std::cout << j_mine << std::endl;
+
+// exactly, we can also convert it back!
+MyStruct new_mine = (MyStruct)j_mine;
 ```
 
 Nested calls are also a no-brainer!

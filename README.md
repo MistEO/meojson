@@ -72,34 +72,6 @@ else {
 }
 ```
 
-我猜你已经明白了，是的，**meojson** 不仅仅是一个 JSON 库，还是一个序列化库！
-
-```c++
-struct MyStruct
-{
-    int x = 0;
-    std::vector<double> vec;
-    // 怎么总是你！
-    std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map;
-
-    // 让我们加点魔法
-    MEO_JSONIZATION(x, vec, map);
-};
-
-MyStruct mine;
-mine.vec.emplace_back(0.5);
-mine.map = { { "key_1", { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2", { 10 } } } } } };
-
-// 是的，它是那么直观和流畅！
-json::value j_mine = mine;
-
-// output: {"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}
-std::cout << j_mine << std::endl;
-
-// 恰恰，我们也可以把它转回来！
-MyStruct new_mine = (MyStruct)j_mine;
-```
-
 对于枚举类型，**meojson** 可以自动进行字符串和枚举之间的转换！
 
 ```c++
@@ -128,6 +100,34 @@ if (j_blue.is<Color>()) {
 // 同时也兼容数字转换
 json::value j_num = 2;
 Color from_num = (Color)j_num; // Color::Green
+```
+
+我猜你已经明白了，是的，**meojson** 不仅仅是一个 JSON 库，还是一个序列化库！
+
+```c++
+struct MyStruct
+{
+    int x = 0;
+    std::vector<double> vec;
+    // 怎么总是你！
+    std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map;
+
+    // 让我们加点魔法
+    MEO_JSONIZATION(x, vec, map);
+};
+
+MyStruct mine;
+mine.vec.emplace_back(0.5);
+mine.map = { { "key_1", { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2", { 10 } } } } } };
+
+// 是的，它是那么直观和流畅！
+json::value j_mine = mine;
+
+// output: {"map":{"key_1":[{"inner_key_1":[7,8,9]},{"inner_key_2":[10]}]},"vec":[0.500000],"x":0}
+std::cout << j_mine << std::endl;
+
+// 恰恰，我们也可以把它转回来！
+MyStruct new_mine = (MyStruct)j_mine;
 ```
 
 嵌套调用也是易如反掌！
