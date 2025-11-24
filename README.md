@@ -39,9 +39,8 @@ std::set<int> set { 1, 2, 3 };
 j["set"] = set;
 
 // 什么鬼类型！
-std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map {
-    { "key_1", { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2", { 10 } } } } },
-};
+std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>>
+    map { { "key_1", { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2", { 10 } } } } } };
 j["map"] = map;
 
 // output:
@@ -57,7 +56,9 @@ int answer = (int)j["answer"]["everything"];
 
 std::set<int> new_set = (std::set<int>)j["set"];
 // 又是这个鬼类型
-auto new_map = (std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>>)j["map"];
+auto new_map =
+    (std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>>)
+        j["map"];
 ```
 
 然而对于运行时的 JSON，最好先检查它是否可以转换。
@@ -110,7 +111,8 @@ struct MyStruct
     int x = 0;
     std::vector<double> vec;
     // 怎么总是你！
-    std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map;
+    std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>>
+        map;
 
     // 让我们加点魔法
     MEO_JSONIZATION(x, vec, map);
@@ -323,16 +325,13 @@ auto find_custom_opt = value.find<MyType>("my_type");
 
 ```c++
 bool is_vec = value["list"].is<std::vector<int>>();
-std::vector<int> to_vec = value["list"].as_collection<int>();
+std::vector<int> to_vec = value["list"].as<std::vector<int>>();
 // Output: 1, 2, 3
 for (auto&& i : to_vec) {
     std::cout << i << std::endl;
 }
 
-std::list<int> to_list = value["list"].as_collection<int, std::list>();
-to_list = (std::list<int>)value["list"]; // 和上面相同
 auto to_map = value["author"].as<std::map<std::string, std::string>>();
-auto to_hashmap = value["author"].as_map<std::string, std::unordered_map>();
 ```
 
 以及不知道有啥用的字面语法

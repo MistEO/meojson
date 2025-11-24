@@ -39,9 +39,8 @@ std::set<int> set { 1, 2, 3 };
 j["set"] = set;
 
 // what a crazy type!
-std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map {
-    { "key_1", { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2", { 10 } } } } },
-};
+std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> 
+    map { { "key_1", { { { "inner_key_1", { 7, 8, 9 } } }, { { "inner_key_2", { 10 } } } } } };
 j["map"] = map;
 
 // output:
@@ -57,7 +56,9 @@ int answer = (int)j["answer"]["everything"];
 
 std::set<int> new_set = (std::set<int>)j["set"];
 // this crazy type again
-auto new_map = (std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>>)j["map"];
+auto new_map =
+    (std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>>)
+        j["map"];
 ```
 
 However, for runtime json, we'd better check whether it can be converted first.
@@ -110,7 +111,8 @@ struct MyStruct
     int x = 0;
     std::vector<double> vec;
     // how come it's always you!
-    std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>> map;
+    std::unordered_map<std::string, std::list<std::map<std::string, std::deque<int>>>>
+        map;
 
     // then we add a little magic
     MEO_JSONIZATION(x, vec, map);
@@ -323,16 +325,13 @@ There are also a few tricks you've already seen with Serializing
 
 ```c++
 bool is_vec = value["list"].is<std::vector<int>>();
-std::vector<int> to_vec = value["list"].as_collection<int>();
+std::vector<int> to_vec = value["list"].as<std::vector<int>>();
 // Output: 1, 2, 3
 for (auto&& i : to_vec) {
     std::cout << i << std::endl;
 }
 
-std::list<int> to_list = value["list"].as_collection<int, std::list>();
-to_list = (std::list<int>)value["list"]; // same as above
 auto to_map = value["author"].as<std::map<std::string, std::string>>();
-auto to_hashmap = value["author"].as_map<std::string, std::unordered_map>();
 ```
 
 And... some useless literal syntax
