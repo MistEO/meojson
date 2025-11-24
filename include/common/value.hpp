@@ -87,7 +87,7 @@ public:
     {
 #ifndef MEOJSON_ENUM_AS_NUMBER
         if (as_string().empty()) {
-            throw exception("Unknown Enum Value");
+            throw exception("Cannot convert to enum: unknown enum value, " + value_info());
         }
 #endif
     }
@@ -339,6 +339,10 @@ public:
 
     value_type type() const noexcept;
 
+    std::string type_name() const noexcept;
+
+    std::string value_info() const noexcept;
+
     const value& at(size_t pos) const;
     const value& at(const std::string& key) const;
 
@@ -480,14 +484,14 @@ public:
                 return *enum_opt;
             }
             else {
-                throw exception("Wrong Enum String Value:" + as_string());
+                throw exception("Cannot convert to enum: invalid enum string value, " + value_info());
             }
         }
         else if (is_number()) {
             return static_cast<enum_t>(static_cast<std::underlying_type_t<enum_t>>(*this));
         }
         else {
-            throw exception("Wrong Type");
+            throw exception("Cannot convert to enum: expected string or number type, " + value_info());
         }
     }
 
@@ -496,7 +500,7 @@ public:
     {
         jsonization_t dst {};
         if (!dst.from_json(*this)) {
-            throw exception("Wrong JSON");
+            throw exception("Deserialization failed: from_json() returned false, " + value_info());
         }
         return dst;
     }
@@ -508,7 +512,7 @@ public:
     {
         jsonization_t dst {};
         if (!ext::jsonization<std::decay_t<jsonization_t>>().from_json(*this, dst)) {
-            throw exception("Wrong JSON");
+            throw exception("Deserialization failed: from_json() returned false, " + value_info());
         }
         return dst;
     }
@@ -520,7 +524,7 @@ public:
     {
         jsonization_t dst {};
         if (!ext::jsonization<std::decay_t<jsonization_t>>().move_from_json(std::move(*this), dst)) {
-            throw exception("Wrong JSON");
+            throw exception("Deserialization failed: move_from_json() returned false, " + value_info());
         }
         return dst;
     }

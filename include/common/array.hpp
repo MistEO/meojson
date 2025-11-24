@@ -268,7 +268,7 @@ public:
     {
         jsonization_t dst {};
         if (!dst.from_json(*this)) {
-            throw exception("Wrong JSON");
+            throw exception("Deserialization failed: from_json() returned false for array, size=" + std::to_string(size()));
         }
         return dst;
     }
@@ -280,7 +280,7 @@ public:
     {
         jsonization_t dst {};
         if (!ext::jsonization<std::decay_t<jsonization_t>>().from_json(*this, dst)) {
-            throw exception("Wrong JSON");
+            throw exception("Deserialization failed: from_json() returned false for array, size=" + std::to_string(size()));
         }
         return dst;
     }
@@ -292,7 +292,7 @@ public:
     {
         jsonization_t dst {};
         if (!ext::jsonization<std::decay_t<jsonization_t>>().move_from_json(std::move(*this), dst)) {
-            throw exception("Wrong JSON");
+            throw exception("Deserialization failed: move_from_json() returned false for array, size=" + std::to_string(size()));
         }
         return dst;
     }

@@ -333,7 +333,7 @@ inline T array::as() const&
     if constexpr (_utils::is_fixed_array<T>) {
         constexpr size_t size = _utils::fixed_array_size<T>;
         if (_array_data.size() != size) {
-            throw exception("Array size mismatch");
+            throw exception("Array size mismatch: expected=" + std::to_string(size) + ", actual=" + std::to_string(_array_data.size()));
         }
         
         T result;
@@ -357,7 +357,7 @@ inline T array::as() const&
     else if constexpr (_utils::is_tuple_like<T>) {
         constexpr size_t tuple_size = std::tuple_size_v<T>;
         if (_array_data.size() != tuple_size) {
-            throw exception("Array size mismatch for tuple conversion");
+            throw exception("Array size mismatch for tuple conversion: expected=" + std::to_string(tuple_size) + ", actual=" + std::to_string(_array_data.size()));
         }
         
         T result;
@@ -375,7 +375,7 @@ inline T array::as() &&
     if constexpr (_utils::is_fixed_array<T>) {
         constexpr size_t size = _utils::fixed_array_size<T>;
         if (_array_data.size() != size) {
-            throw exception("Array size mismatch");
+            throw exception("Array size mismatch: expected=" + std::to_string(size) + ", actual=" + std::to_string(_array_data.size()));
         }
         
         T result;
@@ -401,7 +401,7 @@ inline T array::as() &&
     else if constexpr (_utils::is_tuple_like<T>) {
         constexpr size_t tuple_size = std::tuple_size_v<T>;
         if (_array_data.size() != tuple_size) {
-            throw exception("Array size mismatch for tuple conversion");
+            throw exception("Array size mismatch for tuple conversion: expected=" + std::to_string(tuple_size) + ", actual=" + std::to_string(_array_data.size()));
         }
         
         T result;

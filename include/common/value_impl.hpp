@@ -4,6 +4,17 @@
 
 namespace json
 {
+namespace _reflection
+{
+// 为 value_type 枚举设置反射范围
+template <>
+struct enum_range<value::value_type>
+{
+    static constexpr int min = static_cast<int>(value::value_type::invalid);
+    static constexpr int max = static_cast<int>(value::value_type::object);
+};
+} // namespace _reflection
+
 inline value::value() = default;
 
 inline value::value(const value& rhs)
@@ -284,6 +295,46 @@ inline value::value_type value::type() const noexcept
     return _type;
 }
 
+inline std::string value::type_name() const noexcept
+{
+    std::string_view name = _reflection::enum_to_string(_type);
+    return name.empty() ? "unknown" : std::string(name);
+}
+
+inline std::string value::value_info() const noexcept
+{
+    try {
+        std::string info = "type=" + type_name();
+        switch (_type) {
+        case value_type::null:
+        case value_type::invalid:
+            break;
+        case value_type::boolean:
+        case value_type::number:
+        case value_type::string: {
+            std::string str_repr = to_string();
+            if (str_repr.length() > 100) {
+                info += ", value=" + str_repr.substr(0, 100) + "...";
+            }
+            else {
+                info += ", value=" + str_repr;
+            }
+            break;
+        }
+        case value_type::array:
+            info += ", size=" + std::to_string(as_array().size());
+            break;
+        case value_type::object:
+            info += ", size=" + std::to_string(as_object().size());
+            break;
+        }
+        return info;
+    }
+    catch (...) {
+        return "type=" + type_name();
+    }
+}
+
 inline const value& value::at(size_t pos) const
 {
     return as_array().at(pos);
@@ -369,11 +420,11 @@ inline bool value::as_boolean() const
             return false;
         }
         else {
-            throw exception("Unknown Parse Error");
+            throw exception("Parse error: invalid boolean value '" + b_str + "'");
         }
     }
     else {
-        throw exception("Wrong Type");
+        throw exception("Type error: cannot convert to boolean, expected=boolean, " + value_info());
     }
 }
 
@@ -383,7 +434,7 @@ inline int value::as_integer() const
         return std::stoi(as_basic_type_str());
     }
     else {
-        throw exception("Wrong Type");
+        throw exception("Type error: cannot convert to integer, expected=number, " + value_info());
     }
 }
 
@@ -399,7 +450,7 @@ inline long value::as_long() const
         return std::stol(as_basic_type_str());
     }
     else {
-        throw exception("Wrong Type");
+        throw exception("Type error: cannot convert to long, expected=number, " + value_info());
     }
 }
 
@@ -409,7 +460,7 @@ inline unsigned long value::as_unsigned_long() const
         return std::stoul(as_basic_type_str());
     }
     else {
-        throw exception("Wrong Type");
+        throw exception("Type error: cannot convert to unsigned long, expected=number, " + value_info());
     }
 }
 
@@ -419,7 +470,7 @@ inline long long value::as_long_long() const
         return std::stoll(as_basic_type_str());
     }
     else {
-        throw exception("Wrong Type");
+        throw exception("Type error: cannot convert to long long, expected=number, " + value_info());
     }
 }
 
@@ -429,7 +480,7 @@ inline unsigned long long value::as_unsigned_long_long() const
         return std::stoull(as_basic_type_str());
     }
     else {
-        throw exception("Wrong Type");
+        throw exception("Type error: cannot convert to unsigned long long, expected=number, " + value_info());
     }
 }
 
@@ -439,7 +490,7 @@ inline float value::as_float() const
         return std::stof(as_basic_type_str());
     }
     else {
-        throw exception("Wrong Type");
+        throw exception("Type error: cannot convert to float, expected=number, " + value_info());
     }
 }
 
@@ -449,7 +500,7 @@ inline double value::as_double() const
         return std::stod(as_basic_type_str());
     }
     else {
-        throw exception("Wrong Type");
+        throw exception("Type error: cannot convert to double, expected=number, " + value_info());
     }
 }
 
@@ -459,7 +510,7 @@ inline long double value::as_long_double() const
         return std::stold(as_basic_type_str());
     }
     else {
-        throw exception("Wrong Type");
+        throw exception("Type error: cannot convert to long double, expected=number, " + value_info());
     }
 }
 
@@ -469,7 +520,7 @@ inline std::string value::as_string() const
         return as_basic_type_str();
     }
     else {
-        throw exception("Wrong Type");
+        throw exception("Type error: cannot convert to string, expected=string, " + value_info());
     }
 }
 
@@ -479,7 +530,7 @@ inline std::string_view value::as_string_view() const
         return as_basic_type_str();
     }
     else {
-        throw exception("Wrong Type");
+        throw exception("Type error: cannot convert to string_view, expected=string, " + value_info());
     }
 }
 
@@ -489,7 +540,7 @@ inline const array& value::as_array() const
         return *std::get<array_ptr>(_raw_data);
     }
 
-    throw exception("Wrong Type");
+    throw exception("Type error: cannot convert to array, expected=array, " + value_info());
 }
 
 inline const object& value::as_object() const
@@ -498,7 +549,7 @@ inline const object& value::as_object() const
         return *std::get<object_ptr>(_raw_data);
     }
 
-    throw exception("Wrong Type or data empty");
+    throw exception("Type error: cannot convert to object, expected=object, " + value_info());
 }
 
 inline array& value::as_array()
@@ -512,7 +563,7 @@ inline array& value::as_array()
         return *std::get<array_ptr>(_raw_data);
     }
 
-    throw exception("Wrong Type");
+    throw exception("Type error: cannot convert to array, expected=array, " + value_info());
 }
 
 inline object& value::as_object()
@@ -526,7 +577,7 @@ inline object& value::as_object()
         return *std::get<object_ptr>(_raw_data);
     }
 
-    throw exception("Wrong Type or data empty");
+    throw exception("Type error: cannot convert to object, expected=object, " + value_info());
 }
 
 template <typename tuple_t, size_t... Is>
@@ -551,14 +602,14 @@ inline value_t value::as() const&
     else if constexpr (_utils::has_from_json_in_member<value_t>::value) {
         value_t dst {};
         if (!dst.from_json(*this)) {
-            throw exception("Wrong JSON");
+            throw exception("Deserialization failed: from_json() returned false, " + value_info());
         }
         return dst;
     }
     else if constexpr (_utils::has_from_json_in_templ_spec<value_t>::value) {
         value_t dst {};
         if (!ext::jsonization<value_t>().from_json(*this, dst)) {
-            throw exception("Wrong JSON");
+            throw exception("Deserialization failed: from_json() returned false, " + value_info());
         }
         return dst;
     }
@@ -576,14 +627,14 @@ inline value_t value::as() &&
     else if constexpr (_utils::has_from_json_in_member<value_t>::value) {
         value_t dst {};
         if (!dst.from_json(*this)) {
-            throw exception("Wrong JSON");
+            throw exception("Deserialization failed: from_json() returned false, " + value_info());
         }
         return dst;
     }
     else if constexpr (_utils::has_move_from_json_in_templ_spec<value_t>::value) {
         value_t dst {};
         if (!ext::jsonization<value_t>().move_from_json(std::move(*this), dst)) {
-            throw exception("Wrong JSON");
+            throw exception("Deserialization failed: move_from_json() returned false, " + value_info());
         }
         return dst;
     }
@@ -638,7 +689,7 @@ inline std::string value::to_string() const
     case value_type::object:
         return as_object().to_string();
     default:
-        throw exception("Unknown value Type");
+        throw exception("Internal error: unknown value type, " + value_info());
     }
 }
 
@@ -655,7 +706,7 @@ inline std::string value::format(size_t indent, size_t indent_times) const
     case value_type::object:
         return as_object().format(indent, indent_times);
     default:
-        throw exception("Unknown value Type");
+        throw exception("Internal error: unknown value type, " + value_info());
     }
 }
 
@@ -711,7 +762,7 @@ inline bool value::operator==(const value& rhs) const
     case value_type::object:
         return as_object() == rhs.as_object();
     default:
-        throw exception("Unknown value Type");
+        throw exception("Internal error: unknown value type, " + value_info());
     }
 }
 
@@ -796,7 +847,7 @@ inline value::operator std::nullptr_t() const
         return nullptr;
     }
     else {
-        throw exception("Wrong Type");
+        throw exception("Type error: cannot convert to nullptr_t, expected=null, " + value_info());
     }
 }
 
@@ -806,7 +857,7 @@ inline value::operator std::monostate() const
         return std::monostate {};
     }
     else {
-        throw exception("Wrong Type");
+        throw exception("Type error: cannot convert to monostate, expected=null, " + value_info());
     }
 }
 
@@ -993,7 +1044,7 @@ inline std::variant<Ts...> value::to_variant_helper() const&
 {
     std::variant<Ts...> result;
     if (!((is<Ts>() ? (result = as<Ts>(), true) : false) || ...)) {
-        throw exception("Cannot convert JSON value to any variant alternative");
+        throw exception("Type error: cannot convert to any variant alternative, " + value_info());
     }
     return result;
 }
@@ -1003,7 +1054,7 @@ inline std::variant<Ts...> value::move_to_variant_helper() &&
 {
     std::variant<Ts...> result;
     if (!((is<Ts>() ? (result = std::move(*this).as<Ts>(), true) : false) || ...)) {
-        throw exception("Cannot convert JSON value to any variant alternative");
+        throw exception("Type error: cannot convert to any variant alternative, " + value_info());
     }
     return result;
 }
