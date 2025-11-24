@@ -127,10 +127,17 @@ bool test_value_constructors()
         Blue = 3
     };
     json::value v_enum = Color::Red;
+#ifdef MEOJSON_ENUM_AS_NUMBER
     if (!v_enum.is_number() || v_enum.as_integer() != 1) {
         std::cerr << "Enum constructor failed" << std::endl;
         return false;
     }
+#else
+    if (!v_enum.is_string() || v_enum.as_string() != "Red") {
+        std::cerr << "Enum constructor failed (expected string 'Red', got " << v_enum.to_string() << ")" << std::endl;
+        return false;
+    }
+#endif
 
     std::cout << "Value constructors test passed" << std::endl;
     return true;

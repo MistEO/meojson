@@ -83,6 +83,11 @@ public:
         : value(_reflection::enum_to_string(e))
 #endif
     {
+#ifndef MEOJSON_ENUM_AS_NUMBER
+        if (as_string().empty()) {
+            throw exception("Unknown Enum Value");
+        }
+#endif
     }
 
     template <

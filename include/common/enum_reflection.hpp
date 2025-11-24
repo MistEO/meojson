@@ -76,10 +76,19 @@ struct enum_range {
 template <typename E, int... Is>
 constexpr auto get_enum_names(std::integer_sequence<int, Is...>) {
     constexpr int min = enum_range<E>::min;
-    std::array<std::string_view, sizeof...(Is)> names = {};
-    ((names[Is] = is_valid<E, static_cast<E>(Is + min)>() ? name<E, static_cast<E>(Is + min)>() : std::string_view{}), ...);
-    return names;
+    return std::array<std::string_view, sizeof...(Is)>{{
+        (is_valid<E, static_cast<E>(Is + min)>() ? name<E, static_cast<E>(Is + min)>() : std::string_view{})...
+    }};
 }
+
+// Static storage for enum names to avoid C++23 extension warning
+template <typename E>
+struct enum_name_storage {
+    static constexpr int min = enum_range<E>::min;
+    static constexpr int max = enum_range<E>::max;
+    static constexpr int range = max - min + 1;
+    static constexpr auto names = get_enum_names<E>(std::make_integer_sequence<int, range>{});
+};
 
 template <typename E>
 constexpr std::string_view enum_to_string(E val) {
@@ -87,7 +96,7 @@ constexpr std::string_view enum_to_string(E val) {
     constexpr int max = enum_range<E>::max;
     constexpr int range = max - min + 1;
     
-    static constexpr auto names = get_enum_names<E>(std::make_integer_sequence<int, range>{});
+    const auto& names = enum_name_storage<E>::names;
     
     int idx = static_cast<int>(val) - min;
     if (idx >= 0 && idx < range) {
@@ -111,10 +120,9 @@ constexpr bool iequals(std::string_view a, std::string_view b) {
 template <typename E>
 std::optional<E> string_to_enum(std::string_view str) {
     constexpr int min = enum_range<E>::min;
-    constexpr int max = enum_range<E>::max;
-    constexpr int range = max - min + 1;
+    constexpr int range = enum_name_storage<E>::range;
     
-    static constexpr auto names = get_enum_names<E>(std::make_integer_sequence<int, range>{});
+    const auto& names = enum_name_storage<E>::names;
     
     for (int i = 0; i < range; ++i) {
         if (!names[i].empty()) {
