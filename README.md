@@ -146,6 +146,36 @@ if (ja.is<OptionalFields>()) {
 }
 ```
 
+对于枚举类型，**meojson** 可以自动进行字符串和枚举之间的转换！
+
+```c++
+enum class Color
+{
+    Red = 1,
+    Green = 2,
+    Blue = 4
+};
+
+// 枚举自动转换为字符串
+json::value j = Color::Red;
+// output: "Red"
+std::cout << j << std::endl;
+
+// 字符串转换为枚举
+json::value j_green = "Green";
+Color green = j_green.as<Color>();
+
+// 支持大小写不敏感的转换
+json::value j_blue = "blue";
+if (j_blue.is<Color>()) {
+    Color blue = (Color)j_blue;
+}
+
+// 同时也兼容数字转换
+json::value j_num = 2;
+Color from_num = (Color)j_num; // Color::Green
+```
+
 对于第三方不可侵入的类型，则需要实现 `to_json`, `check_json`, `from_json`
 
 ```c++

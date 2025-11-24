@@ -142,6 +142,34 @@ void serializing()
                   << (has_focus ? "has focus!" : "what happened?") << std::endl;
     }
 
+    /* For enum types, **meojson** can automatically convert between strings and enums! */
+
+    enum class Color
+    {
+        Red = 1,
+        Green = 2,
+        Blue = 4
+    };
+
+    // Enum automatically converts to string
+    json::value j_color = Color::Red;
+    // output: "Red"
+    std::cout << j_color << std::endl;
+
+    // String converts to enum
+    json::value j_green = "Green";
+    Color green = j_green.as<Color>();
+
+    // Case-insensitive conversion is supported
+    json::value j_blue = "blue";
+    if (j_blue.is<Color>()) {
+        Color blue = (Color)j_blue;
+    }
+
+    // Number conversion is also compatible
+    json::value j_num = 2;
+    Color from_num = (Color)j_num; // Color::Green
+
     third_party_jsonization_1();
 
     /* And some trivial features: */

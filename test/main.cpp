@@ -9,6 +9,7 @@
 #include "serializing_test.h"
 #include "unicode_test.h"
 #include "value_test.h"
+#include "enum_test.h"
 
 int main()
 {
@@ -34,6 +35,9 @@ int main()
 
     std::cout << "\n*** value_test ***\n" << std::endl;
     success &= value_test();
+
+    std::cout << "\n*** enum_test ***\n" << std::endl;
+    success &= enum_test();
 
     std::cout << "\n*** object_test ***\n" << std::endl;
     success &= object_test();

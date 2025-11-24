@@ -16,6 +16,7 @@
 #include <variant>
 #include <vector>
 
+#include "enum_reflection.hpp"
 #include "exception.hpp"
 #include "utils.hpp"
 
@@ -76,7 +77,11 @@ public:
 
     template <typename enum_t, std::enable_if_t<std::is_enum_v<enum_t>, bool> = true>
     value(enum_t e)
+#ifdef MEOJSON_ENUM_AS_NUMBER
         : value(static_cast<std::underlying_type_t<enum_t>>(e))
+#else
+        : value(_reflection::enum_to_string(e))
+#endif
     {
     }
 
@@ -463,7 +468,20 @@ public:
     template <typename enum_t, std::enable_if_t<std::is_enum_v<enum_t>, bool> = true>
     explicit operator enum_t() const
     {
-        return static_cast<enum_t>(static_cast<std::underlying_type_t<enum_t>>(*this));
+        if (is_string()) {
+            if (auto enum_opt = _reflection::string_to_enum<enum_t>(as_string_view()); enum_opt) {
+                return *enum_opt;
+            }
+            else {
+                throw exception("Wrong Enum String Value:" + as_string());
+            }
+        }
+        else if (is_number()) {
+            return static_cast<enum_t>(static_cast<std::underlying_type_t<enum_t>>(*this));
+        }
+        else {
+            throw exception("Wrong Type");
+        }
     }
 
     template <typename jsonization_t, std::enable_if_t<_utils::has_from_json_in_member<jsonization_t>::value, bool> = true>

@@ -207,7 +207,13 @@ inline bool value::is() const noexcept
     else if constexpr (std::is_same_v<std::nullptr_t, value_t>) {
         return is_null();
     }
-    else if constexpr (std::is_arithmetic_v<value_t> || std::is_enum_v<value_t>) {
+    else if constexpr (std::is_enum_v<value_t>) {
+        if (is_string()) {
+            return _reflection::string_to_enum<value_t>(as_string_view()).has_value();
+        }
+        return is_number();
+    }
+    else if constexpr (std::is_arithmetic_v<value_t>) {
         return is_number();
     }
     else if constexpr (std::is_constructible_v<std::string, value_t>) {
