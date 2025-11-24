@@ -32,6 +32,10 @@ constexpr std::string_view name() noexcept
         return {};
     }
     name = name.substr(start, end - start);
+    auto sem = name.find(';');
+    if (sem != std::string_view::npos) {
+        name = name.substr(0, sem);
+    }
     auto sep = name.find_last_of(':');
     if (sep != std::string_view::npos) {
         name = name.substr(sep + 1);
