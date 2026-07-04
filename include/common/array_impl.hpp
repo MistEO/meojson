@@ -197,11 +197,16 @@ inline auto array::get_helper(const value_t& default_value, size_t pos) const
 template <typename value_t>
 inline std::optional<value_t> array::find(size_t pos) const
 {
-    if (!contains(pos)) {
+    const auto* val = find_value(pos);
+    if (!val) {
         return std::nullopt;
     }
-    const auto& val = _array_data.at(pos);
-    return val.template is<value_t>() ? std::optional<value_t>(val.template as<value_t>()) : std::nullopt;
+    return val->template is<value_t>() ? std::optional<value_t>(val->template as<value_t>()) : std::nullopt;
+}
+
+inline const value* array::find_value(size_t pos) const
+{
+    return contains(pos) ? &_array_data[pos] : nullptr;
 }
 
 inline typename array::iterator array::begin() noexcept

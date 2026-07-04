@@ -130,6 +130,7 @@ public:
 
     template <typename value_t = value>
     std::optional<value_t> find(const std::string& key) const;
+    const value* find_value(const std::string& key) const;
 
     template <typename... args_t>
     decltype(auto) emplace(args_t&&... args);

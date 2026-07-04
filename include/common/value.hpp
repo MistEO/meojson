@@ -359,6 +359,8 @@ public:
     std::optional<value_t> find(size_t pos) const;
     template <typename value_t = value>
     std::optional<value_t> find(const std::string& key) const;
+    const value* find_value(size_t pos) const;
+    const value* find_value(const std::string& key) const;
 
     bool as_boolean() const;
     int as_integer() const;

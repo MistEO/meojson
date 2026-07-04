@@ -193,12 +193,17 @@ inline auto object::get_helper(const value_t& default_value, const std::string& 
 template <typename value_t>
 inline std::optional<value_t> object::find(const std::string& key) const
 {
-    auto iter = _object_data.find(key);
-    if (iter == _object_data.end()) {
+    const auto* val = find_value(key);
+    if (!val) {
         return std::nullopt;
     }
-    const auto& val = iter->second;
-    return val.template is<value_t>() ? std::optional<value_t>(val.template as<value_t>()) : std::nullopt;
+    return val->template is<value_t>() ? std::optional<value_t>(val->template as<value_t>()) : std::nullopt;
+}
+
+inline const value* object::find_value(const std::string& key) const
+{
+    auto iter = _object_data.find(key);
+    return iter == _object_data.end() ? nullptr : &iter->second;
 }
 
 inline typename object::iterator object::begin() noexcept

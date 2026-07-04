@@ -470,13 +470,25 @@ inline auto value::get_helper(const value_t& default_value, unique_key_t&& first
 template <typename value_t>
 inline std::optional<value_t> value::find(size_t pos) const
 {
-    return is_array() ? as_array().template find<value_t>(pos) : std::nullopt;
+    const auto* val = find_value(pos);
+    return val && val->template is<value_t>() ? std::optional<value_t>(val->template as<value_t>()) : std::nullopt;
 }
 
 template <typename value_t>
 inline std::optional<value_t> value::find(const std::string& key) const
 {
-    return is_object() ? as_object().template find<value_t>(key) : std::nullopt;
+    const auto* val = find_value(key);
+    return val && val->template is<value_t>() ? std::optional<value_t>(val->template as<value_t>()) : std::nullopt;
+}
+
+inline const value* value::find_value(size_t pos) const
+{
+    return is_array() ? as_array().find_value(pos) : nullptr;
+}
+
+inline const value* value::find_value(const std::string& key) const
+{
+    return is_object() ? as_object().find_value(key) : nullptr;
 }
 
 inline bool value::as_boolean() const

@@ -225,6 +225,7 @@ public:
 
     template <typename value_t = value>
     std::optional<value_t> find(size_t pos) const;
+    const value* find_value(size_t pos) const;
 
     template <typename... args_t>
     decltype(auto) emplace_back(args_t&&... args);

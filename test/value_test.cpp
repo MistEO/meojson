@@ -337,6 +337,11 @@ bool test_value_access_methods()
         std::cerr << "find(size_t) test failed for existing element" << std::endl;
         return false;
     }
+    const json::value* found_value = arr.find_value(0);
+    if (found_value == nullptr || found_value != &arr.at(0)) {
+        std::cerr << "find_value(size_t) should return pointer to stored array element" << std::endl;
+        return false;
+    }
     auto not_found = arr.find(10);
     if (not_found.has_value()) {
         std::cerr << "find(size_t) test failed for non-existing element" << std::endl;
@@ -376,6 +381,11 @@ bool test_value_access_methods()
     auto found_name = obj.find<std::string>("name");
     if (!found_name.has_value() || found_name.value() != "Alice") {
         std::cerr << "find(string) test failed for existing key" << std::endl;
+        return false;
+    }
+    const json::value* found_name_value = obj.find_value("name");
+    if (found_name_value == nullptr || found_name_value != &obj.at("name")) {
+        std::cerr << "find_value(string) should return pointer to stored object value" << std::endl;
         return false;
     }
     auto not_found_key = obj.find("country");
