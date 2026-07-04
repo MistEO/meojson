@@ -53,6 +53,9 @@ inline bool object::erase(const std::string& key)
 
 inline bool object::erase(iterator iter)
 {
+    if (iter == _object_data.end()) {
+        return false;
+    }
     _object_data.erase(iter);
     return true;
 }

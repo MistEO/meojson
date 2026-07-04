@@ -56,6 +56,9 @@ inline bool array::erase(size_t pos)
 
 inline bool array::erase(iterator iter)
 {
+    if (iter == _array_data.end()) {
+        return false;
+    }
     _array_data.erase(iter);
     return true;
 }

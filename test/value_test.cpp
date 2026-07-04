@@ -1,5 +1,6 @@
 #include <iostream>
 #include <limits>
+#include <string>
 
 #include "json.hpp"
 #include "value_test.h"
@@ -11,6 +12,24 @@ bool test_value_conversion_methods();
 bool test_value_operators();
 bool test_value_modification();
 bool test_value_extended_conversions();
+
+static std::string increment_decimal_string(std::string value)
+{
+    for (auto iter = value.rbegin(); iter != value.rend(); ++iter) {
+        if (*iter != '9') {
+            ++(*iter);
+            return value;
+        }
+        *iter = '0';
+    }
+    value.insert(value.begin(), '1');
+    return value;
+}
+
+static std::string unsigned_overflow_string()
+{
+    return increment_decimal_string(std::to_string(std::numeric_limits<unsigned>::max()));
+}
 
 bool value_test()
 {
@@ -261,7 +280,8 @@ bool test_value_type_checks()
         std::cerr << "is<unsigned>() should reject negative number" << std::endl;
         return false;
     }
-    json::value v_unsigned_overflow(json::value::value_type::number, std::string("4294967296"));
+    const auto unsigned_overflow_str = unsigned_overflow_string();
+    json::value v_unsigned_overflow(json::value::value_type::number, unsigned_overflow_str);
     if (v_unsigned_overflow.is<unsigned>()) {
         std::cerr << "is<unsigned>() should reject overflow" << std::endl;
         return false;
@@ -342,6 +362,10 @@ bool test_value_access_methods()
         std::cerr << "find_value(size_t) should return pointer to stored array element" << std::endl;
         return false;
     }
+    if (arr.find_value(10) != nullptr) {
+        std::cerr << "find_value(size_t) should return nullptr for out-of-range index" << std::endl;
+        return false;
+    }
     auto not_found = arr.find(10);
     if (not_found.has_value()) {
         std::cerr << "find(size_t) test failed for non-existing element" << std::endl;
@@ -388,6 +412,10 @@ bool test_value_access_methods()
         std::cerr << "find_value(string) should return pointer to stored object value" << std::endl;
         return false;
     }
+    if (obj.find_value("country") != nullptr) {
+        std::cerr << "find_value(string) should return nullptr for missing key" << std::endl;
+        return false;
+    }
     auto not_found_key = obj.find("country");
     if (not_found_key.has_value()) {
         std::cerr << "find(string) test failed for non-existing key" << std::endl;
@@ -424,9 +452,17 @@ bool test_value_access_methods()
         std::cerr << "array::erase(iterator) should report success for last element" << std::endl;
         return false;
     }
+    if (erase_arr.erase(erase_arr.end())) {
+        std::cerr << "array::erase(iterator) should reject end iterator" << std::endl;
+        return false;
+    }
     json::object erase_obj { { "key", 1 } };
     if (!erase_obj.erase(erase_obj.begin()) || !erase_obj.empty()) {
         std::cerr << "object::erase(iterator) should report success for last element" << std::endl;
+        return false;
+    }
+    if (erase_obj.erase(erase_obj.end())) {
+        std::cerr << "object::erase(iterator) should reject end iterator" << std::endl;
         return false;
     }
 
@@ -488,6 +524,25 @@ bool test_value_conversion_methods()
     try {
         (void)v_negative_number.as_unsigned();
         std::cerr << "as_unsigned() should reject negative number" << std::endl;
+        return false;
+    }
+    catch (const json::exception&) {
+    }
+
+    const auto int_overflow_str = increment_decimal_string(std::to_string(std::numeric_limits<int>::max()));
+    json::value v_int_overflow_number(json::value::value_type::number, int_overflow_str);
+    try {
+        (void)v_int_overflow_number.as_integer();
+        std::cerr << "as_integer() should reject integer overflow" << std::endl;
+        return false;
+    }
+    catch (const json::exception&) {
+    }
+
+    json::value v_unsigned_overflow_number(json::value::value_type::number, unsigned_overflow_string());
+    try {
+        (void)v_unsigned_overflow_number.as_unsigned();
+        std::cerr << "as_unsigned() should reject unsigned overflow" << std::endl;
         return false;
     }
     catch (const json::exception&) {

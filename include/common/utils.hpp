@@ -421,6 +421,7 @@ inline std::string escape_string(std::string_view str)
 
 inline std::string unescape_string(const std::string& str)
 {
+    // Legacy alias: despite the old name, this escapes strings for JSON output.
     return escape_string(str);
 }
 

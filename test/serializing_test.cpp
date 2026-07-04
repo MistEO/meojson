@@ -143,6 +143,11 @@ bool serializing()
         std::cerr << "error: " << root["control"].to_string() << std::endl;
         return false;
     }
+    auto parsed_control = json::parse(std::string("{\"control\":") + root["control"].to_string() + "}");
+    if (!parsed_control || parsed_control->at("control").as_string() != control_str) {
+        std::cerr << "error: control string did not round-trip correctly" << std::endl;
+        return false;
+    }
 
     std::cout << root << std::endl;
     std::ofstream ofs("serializing.json");
