@@ -72,34 +72,55 @@ inline decltype(auto) object::insert(args_t&&... args)
 
 inline std::string object::to_string() const
 {
-    std::string str { '{' };
+    std::string str;
+    dump_to(str);
+    return str;
+}
+
+inline void object::dump_to(std::string& out) const
+{
+    out.push_back('{');
     for (auto iter = _object_data.cbegin(); iter != _object_data.cend();) {
         const auto& [key, val] = *iter;
-        str += '"' + _utils::escape_string(key) + std::string { '\"', ':' } + val.to_string();
+        out.push_back('"');
+        _utils::append_escaped_string(out, key);
+        out.push_back('"');
+        out.push_back(':');
+        val.dump_to(out);
         if (++iter != _object_data.cend()) {
-            str += ',';
+            out.push_back(',');
         }
     }
-    str += '}';
-    return str;
+    out.push_back('}');
 }
 
 inline std::string object::format(size_t indent, size_t indent_times) const
 {
-    const std::string tail_indent(indent * indent_times, ' ');
-    const std::string body_indent(indent * (indent_times + 1), ' ');
+    std::string str;
+    format_to(str, indent, indent_times);
+    return str;
+}
 
-    std::string str { '{', '\n' };
+inline void object::format_to(std::string& out, size_t indent, size_t indent_times) const
+{
+    out.push_back('{');
+    out.push_back('\n');
     for (auto iter = _object_data.cbegin(); iter != _object_data.cend();) {
         const auto& [key, val] = *iter;
-        str += body_indent + '"' + _utils::escape_string(key) + std::string { '\"', ':', ' ' } + val.format(indent, indent_times + 1);
+        out.append(indent * (indent_times + 1), ' ');
+        out.push_back('"');
+        _utils::append_escaped_string(out, key);
+        out.push_back('"');
+        out.push_back(':');
+        out.push_back(' ');
+        val.format_to(out, indent, indent_times + 1);
         if (++iter != _object_data.cend()) {
-            str += ',';
+            out.push_back(',');
         }
-        str += '\n';
+        out.push_back('\n');
     }
-    str += tail_indent + '}';
-    return str;
+    out.append(indent * indent_times, ' ');
+    out.push_back('}');
 }
 
 inline std::string object::dumps(std::optional<size_t> indent) const

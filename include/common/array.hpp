@@ -217,6 +217,9 @@ private:
     template <typename tuple_t, size_t... Is>
     void move_as_tuple_helper(tuple_t& result, std::index_sequence<Is...>);
 
+    void dump_to(std::string& out) const;
+    void format_to(std::string& out, size_t indent, size_t indent_times) const;
+
 public:
 
     // Usage: get(key_1, key_2, ..., default_value);

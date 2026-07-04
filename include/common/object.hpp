@@ -237,6 +237,9 @@ private:
     template <typename value_t>
     auto get_helper(const value_t& default_value, const std::string& key) const;
 
+    void dump_to(std::string& out) const;
+    void format_to(std::string& out, size_t indent, size_t indent_times) const;
+
     std::string format(size_t indent, size_t indent_times) const;
 
 private:

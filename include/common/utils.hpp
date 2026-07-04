@@ -358,11 +358,8 @@ inline char hex_digit(unsigned char value) noexcept
     return static_cast<char>(value < 10 ? ('0' + value) : ('a' + value - 10));
 }
 
-inline std::string escape_string(std::string_view str)
+inline void append_escaped_string(std::string& result, std::string_view str)
 {
-    std::string result;
-    result.reserve(str.size());
-
     auto cur = str.cbegin();
     auto end = str.cend();
     auto no_escape_beg = cur;
@@ -411,6 +408,13 @@ inline std::string escape_string(std::string_view str)
         }
     }
     result.append(no_escape_beg, cur);
+}
+
+inline std::string escape_string(std::string_view str)
+{
+    std::string result;
+    result.reserve(str.size());
+    append_escaped_string(result, str);
 
     return result;
 }

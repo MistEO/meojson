@@ -651,6 +651,8 @@ private:
     friend class array;
     friend class object;
 
+    void dump_to(std::string& out) const;
+    void format_to(std::string& out, size_t indent, size_t indent_times) const;
     std::string format(size_t indent, size_t indent_times) const;
 
     static var_t deep_copy(const var_t& src);

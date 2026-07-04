@@ -80,32 +80,44 @@ inline const value& array::at(size_t pos) const
 
 inline std::string array::to_string() const
 {
-    std::string str { '[' };
+    std::string str;
+    dump_to(str);
+    return str;
+}
+
+inline void array::dump_to(std::string& out) const
+{
+    out.push_back('[');
     for (auto iter = _array_data.cbegin(); iter != _array_data.cend();) {
-        str += iter->to_string();
+        iter->dump_to(out);
         if (++iter != _array_data.cend()) {
-            str += ',';
+            out.push_back(',');
         }
     }
-    str += ']';
-    return str;
+    out.push_back(']');
 }
 
 inline std::string array::format(size_t indent, size_t indent_times) const
 {
-    const std::string tail_indent(indent * indent_times, ' ');
-    const std::string body_indent(indent * (indent_times + 1), ' ');
-
-    std::string str { '[', '\n' };
-    for (auto iter = _array_data.cbegin(); iter != _array_data.cend();) {
-        str += body_indent + iter->format(indent, indent_times + 1);
-        if (++iter != _array_data.cend()) {
-            str += ',';
-        }
-        str += '\n';
-    }
-    str += tail_indent + ']';
+    std::string str;
+    format_to(str, indent, indent_times);
     return str;
+}
+
+inline void array::format_to(std::string& out, size_t indent, size_t indent_times) const
+{
+    out.push_back('[');
+    out.push_back('\n');
+    for (auto iter = _array_data.cbegin(); iter != _array_data.cend();) {
+        out.append(indent * (indent_times + 1), ' ');
+        iter->format_to(out, indent, indent_times + 1);
+        if (++iter != _array_data.cend()) {
+            out.push_back(',');
+        }
+        out.push_back('\n');
+    }
+    out.append(indent * indent_times, ' ');
+    out.push_back(']');
 }
 
 inline std::string array::dumps(std::optional<size_t> indent) const

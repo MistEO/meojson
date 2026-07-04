@@ -761,18 +761,32 @@ inline void value::clear() noexcept
 
 inline std::string value::to_string() const
 {
+    std::string str;
+    dump_to(str);
+    return str;
+}
+
+inline void value::dump_to(std::string& out) const
+{
     switch (_type) {
     case value_type::null:
-        return std::string(_utils::null_string());
+        out += _utils::null_string();
+        break;
     case value_type::boolean:
     case value_type::number:
-        return as_basic_type_str();
+        out += as_basic_type_str();
+        break;
     case value_type::string:
-        return '"' + _utils::escape_string(as_basic_type_str()) + '"';
+        out.push_back('"');
+        _utils::append_escaped_string(out, as_basic_type_str());
+        out.push_back('"');
+        break;
     case value_type::array:
-        return as_array().to_string();
+        as_array().dump_to(out);
+        break;
     case value_type::object:
-        return as_object().to_string();
+        as_object().dump_to(out);
+        break;
     default:
         throw exception("Internal error: unknown value type, " + value_info());
     }
@@ -780,16 +794,26 @@ inline std::string value::to_string() const
 
 inline std::string value::format(size_t indent, size_t indent_times) const
 {
+    std::string str;
+    format_to(str, indent, indent_times);
+    return str;
+}
+
+inline void value::format_to(std::string& out, size_t indent, size_t indent_times) const
+{
     switch (_type) {
     case value_type::null:
     case value_type::boolean:
     case value_type::number:
     case value_type::string:
-        return to_string();
+        dump_to(out);
+        break;
     case value_type::array:
-        return as_array().format(indent, indent_times);
+        as_array().format_to(out, indent, indent_times);
+        break;
     case value_type::object:
-        return as_object().format(indent, indent_times);
+        as_object().format_to(out, indent, indent_times);
+        break;
     default:
         throw exception("Internal error: unknown value type, " + value_info());
     }
