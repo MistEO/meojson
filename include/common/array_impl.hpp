@@ -4,6 +4,21 @@
 
 namespace json
 {
+namespace _array_impl_detail
+{
+inline void append_array(array::raw_array& dst, const array& src)
+{
+    dst.reserve(dst.size() + src.size());
+    dst.insert(dst.end(), src.begin(), src.end());
+}
+
+inline void append_array_move(array::raw_array& dst, array& src)
+{
+    dst.reserve(dst.size() + src.size());
+    dst.insert(dst.end(), std::make_move_iterator(src.begin()), std::make_move_iterator(src.end()));
+}
+} // namespace _array_impl_detail
+
 inline array::array() = default;
 inline array::array(const array& rhs) = default;
 inline array::array(array&& rhs) noexcept = default;
@@ -160,16 +175,8 @@ inline auto array::get(std::tuple<key_then_default_value_t...> keys_then_default
 template <typename value_t, typename... rest_keys_t>
 inline auto array::get_helper(const value_t& default_value, size_t pos, rest_keys_t&&... rest) const
 {
-    constexpr bool is_json = std::is_same_v<value, value_t> || std::is_same_v<array, value_t> || std::is_same_v<object, value_t>;
-    constexpr bool is_string = std::is_constructible_v<std::string, value_t> && !is_json;
-
     if (!contains(pos)) {
-        if constexpr (is_string) {
-            return std::string(default_value);
-        }
-        else {
-            return value_t(default_value);
-        }
+        return _utils::default_or_string(default_value);
     }
 
     return _array_data[pos].get_helper(default_value, std::forward<rest_keys_t>(rest)...);
@@ -178,35 +185,11 @@ inline auto array::get_helper(const value_t& default_value, size_t pos, rest_key
 template <typename value_t>
 inline auto array::get_helper(const value_t& default_value, size_t pos) const
 {
-    constexpr bool is_json = std::is_same_v<value, value_t> || std::is_same_v<array, value_t> || std::is_same_v<object, value_t>;
-    constexpr bool is_string = std::is_constructible_v<std::string, value_t> && !is_json;
-
     if (!contains(pos)) {
-        if constexpr (is_string) {
-            return std::string(default_value);
-        }
-        else {
-            return value_t(default_value);
-        }
+        return _utils::default_or_string(default_value);
     }
 
-    const auto& val = _array_data[pos];
-    if (val.template is<value_t>()) {
-        if constexpr (is_string) {
-            return val.template as<std::string>();
-        }
-        else {
-            return val.template as<value_t>();
-        }
-    }
-    else {
-        if constexpr (is_string) {
-            return std::string(default_value);
-        }
-        else {
-            return value_t(default_value);
-        }
-    }
+    return _utils::json_value_or_default(_array_data[pos], default_value);
 }
 
 template <typename value_t>
@@ -297,44 +280,38 @@ inline const value& array::operator[](size_t pos) const
 inline array array::operator+(const array& rhs) const&
 {
     array temp = *this;
-    temp._array_data.reserve(temp._array_data.size() + rhs.size());
-    temp._array_data.insert(temp._array_data.end(), rhs.begin(), rhs.end());
+    _array_impl_detail::append_array(temp._array_data, rhs);
     return temp;
 }
 
 inline array array::operator+(array&& rhs) const&
 {
     array temp = *this;
-    temp._array_data.reserve(temp._array_data.size() + rhs.size());
-    temp._array_data.insert(temp._array_data.end(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
+    _array_impl_detail::append_array_move(temp._array_data, rhs);
     return temp;
 }
 
 inline array array::operator+(const array& rhs) &&
 {
-    _array_data.reserve(_array_data.size() + rhs.size());
-    _array_data.insert(_array_data.end(), rhs.begin(), rhs.end());
+    _array_impl_detail::append_array(_array_data, rhs);
     return std::move(*this);
 }
 
 inline array array::operator+(array&& rhs) &&
 {
-    _array_data.reserve(_array_data.size() + rhs.size());
-    _array_data.insert(_array_data.end(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
+    _array_impl_detail::append_array_move(_array_data, rhs);
     return std::move(*this);
 }
 
 inline array& array::operator+=(const array& rhs)
 {
-    _array_data.reserve(_array_data.size() + rhs.size());
-    _array_data.insert(_array_data.end(), rhs.begin(), rhs.end());
+    _array_impl_detail::append_array(_array_data, rhs);
     return *this;
 }
 
 inline array& array::operator+=(array&& rhs)
 {
-    _array_data.reserve(_array_data.size() + rhs.size());
-    _array_data.insert(_array_data.end(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
+    _array_impl_detail::append_array_move(_array_data, rhs);
     return *this;
 }
 

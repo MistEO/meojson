@@ -137,6 +137,39 @@ struct has_reserve<T, std::void_t<decltype(std::declval<T&>().reserve(std::declv
 {
 };
 
+template <typename T>
+constexpr bool is_json_value = std::is_same_v<std::decay_t<T>, value> || std::is_same_v<std::decay_t<T>, array>
+    || std::is_same_v<std::decay_t<T>, object>;
+
+template <typename T>
+constexpr bool should_return_string = std::is_constructible_v<std::string, T> && !is_json_value<T>;
+
+template <typename value_t>
+inline auto default_or_string(const value_t& default_value)
+{
+    if constexpr (should_return_string<value_t>) {
+        return std::string(default_value);
+    }
+    else {
+        return value_t(default_value);
+    }
+}
+
+template <typename value_t, typename json_value_t>
+inline auto json_value_or_default(const json_value_t& val, const value_t& default_value)
+{
+    if (!val.template is<value_t>()) {
+        return default_or_string(default_value);
+    }
+
+    if constexpr (should_return_string<value_t>) {
+        return val.template as<std::string>();
+    }
+    else {
+        return val.template as<value_t>();
+    }
+}
+
 template <typename T, typename = void>
 struct has_to_json_in_member : std::false_type
 {

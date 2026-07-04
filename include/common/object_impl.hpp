@@ -4,6 +4,23 @@
 
 namespace json
 {
+namespace _object_impl_detail
+{
+inline void merge_object(object::raw_object& dst, const object& src)
+{
+    for (const auto& [key, val] : src) {
+        dst.insert_or_assign(key, val);
+    }
+}
+
+inline void merge_object_move(object::raw_object& dst, object& src)
+{
+    for (auto& [key, val] : src) {
+        dst.insert_or_assign(key, std::move(val));
+    }
+}
+} // namespace _object_impl_detail
+
 inline object::object() = default;
 inline object::object(const object& rhs) = default;
 inline object::object(object&& rhs) noexcept = default;
@@ -163,17 +180,9 @@ inline auto object::get(std::tuple<key_then_default_value_t...> keys_then_defaul
 template <typename value_t, typename... rest_keys_t>
 inline auto object::get_helper(const value_t& default_value, const std::string& key, rest_keys_t&&... rest) const
 {
-    constexpr bool is_json = std::is_same_v<value, value_t> || std::is_same_v<array, value_t> || std::is_same_v<object, value_t>;
-    constexpr bool is_string = std::is_constructible_v<std::string, value_t> && !is_json;
-
     auto iter = _object_data.find(key);
     if (iter == _object_data.end()) {
-        if constexpr (is_string) {
-            return std::string(default_value);
-        }
-        else {
-            return value_t(default_value);
-        }
+        return _utils::default_or_string(default_value);
     }
 
     return iter->second.get_helper(default_value, std::forward<rest_keys_t>(rest)...);
@@ -182,36 +191,12 @@ inline auto object::get_helper(const value_t& default_value, const std::string& 
 template <typename value_t>
 inline auto object::get_helper(const value_t& default_value, const std::string& key) const
 {
-    constexpr bool is_json = std::is_same_v<value, value_t> || std::is_same_v<array, value_t> || std::is_same_v<object, value_t>;
-    constexpr bool is_string = std::is_constructible_v<std::string, value_t> && !is_json;
-
     auto iter = _object_data.find(key);
     if (iter == _object_data.end()) {
-        if constexpr (is_string) {
-            return std::string(default_value);
-        }
-        else {
-            return value_t(default_value);
-        }
+        return _utils::default_or_string(default_value);
     }
 
-    const auto& val = iter->second;
-    if (val.template is<value_t>()) {
-        if constexpr (is_string) {
-            return val.template as<std::string>();
-        }
-        else {
-            return val.template as<value_t>();
-        }
-    }
-    else {
-        if constexpr (is_string) {
-            return std::string(default_value);
-        }
-        else {
-            return value_t(default_value);
-        }
-    }
+    return _utils::json_value_or_default(iter->second, default_value);
 }
 
 template <typename value_t>
@@ -273,50 +258,38 @@ inline value& object::operator[](std::string&& key)
 inline object object::operator|(const object& rhs) const&
 {
     object temp = *this;
-    for (const auto& [key, val] : rhs) {
-        temp._object_data.insert_or_assign(key, val);
-    }
+    _object_impl_detail::merge_object(temp._object_data, rhs);
     return temp;
 }
 
 inline object object::operator|(object&& rhs) const&
 {
     object temp = *this;
-    for (auto& [key, val] : rhs) {
-        temp._object_data.insert_or_assign(key, std::move(val));
-    }
+    _object_impl_detail::merge_object_move(temp._object_data, rhs);
     return temp;
 }
 
 inline object object::operator|(const object& rhs) &&
 {
-    for (const auto& [key, val] : rhs) {
-        _object_data.insert_or_assign(key, val);
-    }
+    _object_impl_detail::merge_object(_object_data, rhs);
     return std::move(*this);
 }
 
 inline object object::operator|(object&& rhs) &&
 {
-    for (auto& [key, val] : rhs) {
-        _object_data.insert_or_assign(key, std::move(val));
-    }
+    _object_impl_detail::merge_object_move(_object_data, rhs);
     return std::move(*this);
 }
 
 inline object& object::operator|=(const object& rhs)
 {
-    for (const auto& [key, val] : rhs) {
-        _object_data.insert_or_assign(key, val);
-    }
+    _object_impl_detail::merge_object(_object_data, rhs);
     return *this;
 }
 
 inline object& object::operator|=(object&& rhs)
 {
-    for (auto& [key, val] : rhs) {
-        _object_data.insert_or_assign(key, std::move(val));
-    }
+    _object_impl_detail::merge_object_move(_object_data, rhs);
     return *this;
 }
 
