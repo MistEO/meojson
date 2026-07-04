@@ -4,6 +4,77 @@
 
 namespace json
 {
+namespace _value_impl_detail
+{
+template <typename value_t>
+inline bool try_parse_integer(const std::string& str, value_t& result) noexcept
+{
+    static_assert(std::is_integral_v<value_t>, "value_t must be integral");
+    const char* first = str.data();
+    const char* last = str.data() + str.size();
+    const auto [ptr, ec] = std::from_chars(first, last, result);
+    return ec == std::errc {} && ptr == last;
+}
+
+template <typename value_t>
+inline value_t parse_integer(const std::string& str, const char* target_type)
+{
+    value_t result {};
+    if (try_parse_integer(str, result)) {
+        return result;
+    }
+
+    throw exception("Parse error: cannot convert number '" + str + "' to " + target_type);
+}
+
+template <typename value_t>
+inline value_t parse_floating(const std::string& str, const char* target_type)
+{
+    try {
+        size_t pos = 0;
+        value_t result {};
+        if constexpr (std::is_same_v<value_t, float>) {
+            result = std::stof(str, &pos);
+        }
+        else if constexpr (std::is_same_v<value_t, double>) {
+            result = std::stod(str, &pos);
+        }
+        else {
+            result = std::stold(str, &pos);
+        }
+
+        if (pos == str.size()) {
+            return result;
+        }
+    }
+    catch (const std::exception&) {
+    }
+
+    throw exception("Parse error: cannot convert number '" + str + "' to " + target_type);
+}
+
+template <typename value_t>
+inline bool can_parse_floating(const std::string& str) noexcept
+{
+    try {
+        size_t pos = 0;
+        if constexpr (std::is_same_v<value_t, float>) {
+            (void)std::stof(str, &pos);
+        }
+        else if constexpr (std::is_same_v<value_t, double>) {
+            (void)std::stod(str, &pos);
+        }
+        else {
+            (void)std::stold(str, &pos);
+        }
+        return pos == str.size();
+    }
+    catch (const std::exception&) {
+        return false;
+    }
+}
+} // namespace _value_impl_detail
+
 inline value::value() = default;
 
 inline value::value(const value& rhs)
@@ -214,10 +285,19 @@ inline bool value::is() const noexcept
         if (is_string()) {
             return _reflection::string_to_enum<value_t>(as_string_view()).has_value();
         }
-        return is_number();
+        return is<std::underlying_type_t<value_t>>();
     }
     else if constexpr (std::is_arithmetic_v<value_t>) {
-        return is_number();
+        if (!is_number()) {
+            return false;
+        }
+        if constexpr (std::is_integral_v<value_t>) {
+            value_t parsed {};
+            return _value_impl_detail::try_parse_integer(as_basic_type_str(), parsed);
+        }
+        else {
+            return _value_impl_detail::can_parse_floating<value_t>(as_basic_type_str());
+        }
     }
     else if constexpr (std::is_constructible_v<std::string, value_t>) {
         return is_string();
@@ -390,13 +470,25 @@ inline auto value::get_helper(const value_t& default_value, unique_key_t&& first
 template <typename value_t>
 inline std::optional<value_t> value::find(size_t pos) const
 {
-    return is_array() ? as_array().template find<value_t>(pos) : std::nullopt;
+    const auto* val = find_value(pos);
+    return val && val->template is<value_t>() ? std::optional<value_t>(val->template as<value_t>()) : std::nullopt;
 }
 
 template <typename value_t>
 inline std::optional<value_t> value::find(const std::string& key) const
 {
-    return is_object() ? as_object().template find<value_t>(key) : std::nullopt;
+    const auto* val = find_value(key);
+    return val && val->template is<value_t>() ? std::optional<value_t>(val->template as<value_t>()) : std::nullopt;
+}
+
+inline const value* value::find_value(size_t pos) const
+{
+    return is_array() ? as_array().find_value(pos) : nullptr;
+}
+
+inline const value* value::find_value(const std::string& key) const
+{
+    return is_object() ? as_object().find_value(key) : nullptr;
 }
 
 inline bool value::as_boolean() const
@@ -420,7 +512,7 @@ inline bool value::as_boolean() const
 inline int value::as_integer() const
 {
     if (is_number()) {
-        return std::stoi(as_basic_type_str());
+        return _value_impl_detail::parse_integer<int>(as_basic_type_str(), "integer");
     }
     else {
         throw exception("Type error: cannot convert to integer, expected=number, " + value_info());
@@ -429,14 +521,18 @@ inline int value::as_integer() const
 
 inline unsigned value::as_unsigned() const
 {
-    // I don't know why there is no std::stou.
-    return static_cast<unsigned>(as_unsigned_long());
+    if (is_number()) {
+        return _value_impl_detail::parse_integer<unsigned>(as_basic_type_str(), "unsigned");
+    }
+    else {
+        throw exception("Type error: cannot convert to unsigned, expected=number, " + value_info());
+    }
 }
 
 inline long value::as_long() const
 {
     if (is_number()) {
-        return std::stol(as_basic_type_str());
+        return _value_impl_detail::parse_integer<long>(as_basic_type_str(), "long");
     }
     else {
         throw exception("Type error: cannot convert to long, expected=number, " + value_info());
@@ -446,7 +542,7 @@ inline long value::as_long() const
 inline unsigned long value::as_unsigned_long() const
 {
     if (is_number()) {
-        return std::stoul(as_basic_type_str());
+        return _value_impl_detail::parse_integer<unsigned long>(as_basic_type_str(), "unsigned long");
     }
     else {
         throw exception("Type error: cannot convert to unsigned long, expected=number, " + value_info());
@@ -456,7 +552,7 @@ inline unsigned long value::as_unsigned_long() const
 inline long long value::as_long_long() const
 {
     if (is_number()) {
-        return std::stoll(as_basic_type_str());
+        return _value_impl_detail::parse_integer<long long>(as_basic_type_str(), "long long");
     }
     else {
         throw exception("Type error: cannot convert to long long, expected=number, " + value_info());
@@ -466,7 +562,7 @@ inline long long value::as_long_long() const
 inline unsigned long long value::as_unsigned_long_long() const
 {
     if (is_number()) {
-        return std::stoull(as_basic_type_str());
+        return _value_impl_detail::parse_integer<unsigned long long>(as_basic_type_str(), "unsigned long long");
     }
     else {
         throw exception("Type error: cannot convert to unsigned long long, expected=number, " + value_info());
@@ -476,7 +572,7 @@ inline unsigned long long value::as_unsigned_long_long() const
 inline float value::as_float() const
 {
     if (is_number()) {
-        return std::stof(as_basic_type_str());
+        return _value_impl_detail::parse_floating<float>(as_basic_type_str(), "float");
     }
     else {
         throw exception("Type error: cannot convert to float, expected=number, " + value_info());
@@ -486,7 +582,7 @@ inline float value::as_float() const
 inline double value::as_double() const
 {
     if (is_number()) {
-        return std::stod(as_basic_type_str());
+        return _value_impl_detail::parse_floating<double>(as_basic_type_str(), "double");
     }
     else {
         throw exception("Type error: cannot convert to double, expected=number, " + value_info());
@@ -496,7 +592,7 @@ inline double value::as_double() const
 inline long double value::as_long_double() const
 {
     if (is_number()) {
-        return std::stold(as_basic_type_str());
+        return _value_impl_detail::parse_floating<long double>(as_basic_type_str(), "long double");
     }
     else {
         throw exception("Type error: cannot convert to long double, expected=number, " + value_info());
@@ -665,18 +761,32 @@ inline void value::clear() noexcept
 
 inline std::string value::to_string() const
 {
+    std::string str;
+    dump_to(str);
+    return str;
+}
+
+inline void value::dump_to(std::string& out) const
+{
     switch (_type) {
     case value_type::null:
-        return std::string(_utils::null_string());
+        out += _utils::null_string();
+        break;
     case value_type::boolean:
     case value_type::number:
-        return as_basic_type_str();
+        out += as_basic_type_str();
+        break;
     case value_type::string:
-        return '"' + _utils::unescape_string(as_basic_type_str()) + '"';
+        out.push_back('"');
+        _utils::append_escaped_string(out, as_basic_type_str());
+        out.push_back('"');
+        break;
     case value_type::array:
-        return as_array().to_string();
+        as_array().dump_to(out);
+        break;
     case value_type::object:
-        return as_object().to_string();
+        as_object().dump_to(out);
+        break;
     default:
         throw exception("Internal error: unknown value type, " + value_info());
     }
@@ -684,16 +794,26 @@ inline std::string value::to_string() const
 
 inline std::string value::format(size_t indent, size_t indent_times) const
 {
+    std::string str;
+    format_to(str, indent, indent_times);
+    return str;
+}
+
+inline void value::format_to(std::string& out, size_t indent, size_t indent_times) const
+{
     switch (_type) {
     case value_type::null:
     case value_type::boolean:
     case value_type::number:
     case value_type::string:
-        return to_string();
+        dump_to(out);
+        break;
     case value_type::array:
-        return as_array().format(indent, indent_times);
+        as_array().format_to(out, indent, indent_times);
+        break;
     case value_type::object:
-        return as_object().format(indent, indent_times);
+        as_object().format_to(out, indent, indent_times);
+        break;
     default:
         throw exception("Internal error: unknown value type, " + value_info());
     }

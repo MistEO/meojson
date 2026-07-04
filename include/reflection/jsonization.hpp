@@ -97,10 +97,10 @@ struct checker
         if (state.override_key) {
             key = state.override_key;
         }
-        auto opt = in.find(key);
+        const value* val = in.find_value(key);
 
-        if (opt) {
-            if (!opt->is<var_t>()) {
+        if (val) {
+            if (!val->is<var_t>()) {
                 error_key = key;
                 return false;
             }
@@ -153,10 +153,10 @@ struct loader
         if (state.override_key) {
             key = state.override_key;
         }
-        auto opt = in.find(key);
-        if (opt) {
-            if (opt->is<var_t>()) {
-                var = std::move(opt)->as<var_t>();
+        const value* val = in.find_value(key);
+        if (val) {
+            if (val->is<var_t>()) {
+                var = val->as<var_t>();
             }
             else {
                 error_key = key;

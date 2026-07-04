@@ -134,6 +134,20 @@ bool serializing()
         std::cerr << "error: " << root["a\n"].to_string() << std::endl;
         return false;
     }
+    std::string control_str = "a";
+    control_str.push_back(char(1));
+    control_str.push_back(char(0));
+    control_str.push_back('b');
+    root["control"] = control_str;
+    if (root["control"].to_string() != "\"a\\u0001\\u0000b\"") {
+        std::cerr << "error: " << root["control"].to_string() << std::endl;
+        return false;
+    }
+    auto parsed_control = json::parse(std::string("{\"control\":") + root["control"].to_string() + "}");
+    if (!parsed_control || parsed_control->at("control").as_string() != control_str) {
+        std::cerr << "error: control string did not round-trip correctly" << std::endl;
+        return false;
+    }
 
     std::cout << root << std::endl;
     std::ofstream ofs("serializing.json");

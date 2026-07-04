@@ -130,6 +130,7 @@ public:
 
     template <typename value_t = value>
     std::optional<value_t> find(const std::string& key) const;
+    const value* find_value(const std::string& key) const;
 
     template <typename... args_t>
     decltype(auto) emplace(args_t&&... args);
@@ -235,6 +236,9 @@ private:
     auto get_helper(const value_t& default_value, const std::string& key, rest_keys_t&&... rest) const;
     template <typename value_t>
     auto get_helper(const value_t& default_value, const std::string& key) const;
+
+    void dump_to(std::string& out) const;
+    void format_to(std::string& out, size_t indent, size_t indent_times) const;
 
     std::string format(size_t indent, size_t indent_times) const;
 

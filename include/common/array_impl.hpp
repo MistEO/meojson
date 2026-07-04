@@ -56,7 +56,11 @@ inline bool array::erase(size_t pos)
 
 inline bool array::erase(iterator iter)
 {
-    return _array_data.erase(iter) != _array_data.end();
+    if (iter == _array_data.end()) {
+        return false;
+    }
+    _array_data.erase(iter);
+    return true;
 }
 
 template <typename... args_t>
@@ -79,32 +83,44 @@ inline const value& array::at(size_t pos) const
 
 inline std::string array::to_string() const
 {
-    std::string str { '[' };
+    std::string str;
+    dump_to(str);
+    return str;
+}
+
+inline void array::dump_to(std::string& out) const
+{
+    out.push_back('[');
     for (auto iter = _array_data.cbegin(); iter != _array_data.cend();) {
-        str += iter->to_string();
+        iter->dump_to(out);
         if (++iter != _array_data.cend()) {
-            str += ',';
+            out.push_back(',');
         }
     }
-    str += ']';
-    return str;
+    out.push_back(']');
 }
 
 inline std::string array::format(size_t indent, size_t indent_times) const
 {
-    const std::string tail_indent(indent * indent_times, ' ');
-    const std::string body_indent(indent * (indent_times + 1), ' ');
-
-    std::string str { '[', '\n' };
-    for (auto iter = _array_data.cbegin(); iter != _array_data.cend();) {
-        str += body_indent + iter->format(indent, indent_times + 1);
-        if (++iter != _array_data.cend()) {
-            str += ',';
-        }
-        str += '\n';
-    }
-    str += tail_indent + ']';
+    std::string str;
+    format_to(str, indent, indent_times);
     return str;
+}
+
+inline void array::format_to(std::string& out, size_t indent, size_t indent_times) const
+{
+    out.push_back('[');
+    out.push_back('\n');
+    for (auto iter = _array_data.cbegin(); iter != _array_data.cend();) {
+        out.append(indent * (indent_times + 1), ' ');
+        iter->format_to(out, indent, indent_times + 1);
+        if (++iter != _array_data.cend()) {
+            out.push_back(',');
+        }
+        out.push_back('\n');
+    }
+    out.append(indent * indent_times, ' ');
+    out.push_back(']');
 }
 
 inline std::string array::dumps(std::optional<size_t> indent) const
@@ -156,7 +172,7 @@ inline auto array::get_helper(const value_t& default_value, size_t pos, rest_key
         }
     }
 
-    return at(pos).get_helper(default_value, std::forward<rest_keys_t>(rest)...);
+    return _array_data[pos].get_helper(default_value, std::forward<rest_keys_t>(rest)...);
 }
 
 template <typename value_t>
@@ -174,7 +190,7 @@ inline auto array::get_helper(const value_t& default_value, size_t pos) const
         }
     }
 
-    auto val = _array_data[pos];
+    const auto& val = _array_data[pos];
     if (val.template is<value_t>()) {
         if constexpr (is_string) {
             return val.template as<std::string>();
@@ -196,11 +212,16 @@ inline auto array::get_helper(const value_t& default_value, size_t pos) const
 template <typename value_t>
 inline std::optional<value_t> array::find(size_t pos) const
 {
-    if (!contains(pos)) {
+    const auto* val = find_value(pos);
+    if (!val) {
         return std::nullopt;
     }
-    const auto& val = _array_data.at(pos);
-    return val.template is<value_t>() ? std::optional<value_t>(val.template as<value_t>()) : std::nullopt;
+    return val->template is<value_t>() ? std::optional<value_t>(val->template as<value_t>()) : std::nullopt;
+}
+
+inline const value* array::find_value(size_t pos) const
+{
+    return contains(pos) ? &_array_data[pos] : nullptr;
 }
 
 inline typename array::iterator array::begin() noexcept
@@ -276,6 +297,7 @@ inline const value& array::operator[](size_t pos) const
 inline array array::operator+(const array& rhs) const&
 {
     array temp = *this;
+    temp._array_data.reserve(temp._array_data.size() + rhs.size());
     temp._array_data.insert(temp._array_data.end(), rhs.begin(), rhs.end());
     return temp;
 }
@@ -283,30 +305,35 @@ inline array array::operator+(const array& rhs) const&
 inline array array::operator+(array&& rhs) const&
 {
     array temp = *this;
+    temp._array_data.reserve(temp._array_data.size() + rhs.size());
     temp._array_data.insert(temp._array_data.end(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
     return temp;
 }
 
 inline array array::operator+(const array& rhs) &&
 {
+    _array_data.reserve(_array_data.size() + rhs.size());
     _array_data.insert(_array_data.end(), rhs.begin(), rhs.end());
     return std::move(*this);
 }
 
 inline array array::operator+(array&& rhs) &&
 {
+    _array_data.reserve(_array_data.size() + rhs.size());
     _array_data.insert(_array_data.end(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
     return std::move(*this);
 }
 
 inline array& array::operator+=(const array& rhs)
 {
+    _array_data.reserve(_array_data.size() + rhs.size());
     _array_data.insert(_array_data.end(), rhs.begin(), rhs.end());
     return *this;
 }
 
 inline array& array::operator+=(array&& rhs)
 {
+    _array_data.reserve(_array_data.size() + rhs.size());
     _array_data.insert(_array_data.end(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
     return *this;
 }
@@ -344,6 +371,9 @@ inline T array::as() const&
     }
     else if constexpr (_utils::is_collection<T>) {
         T result;
+        if constexpr (_utils::has_reserve<T>::value) {
+            result.reserve(_array_data.size());
+        }
         for (const auto& val : _array_data) {
             if constexpr (_utils::has_emplace_back<T>::value) {
                 result.emplace_back(val.as<typename T::value_type>());
@@ -387,6 +417,9 @@ inline T array::as() &&
     }
     else if constexpr (_utils::is_collection<T>) {
         T result;
+        if constexpr (_utils::has_reserve<T>::value) {
+            result.reserve(_array_data.size());
+        }
         for (auto& val : _array_data) {
             if constexpr (_utils::has_emplace_back<T>::value) {
                 result.emplace_back(std::move(val).as<typename T::value_type>());

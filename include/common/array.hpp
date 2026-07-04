@@ -81,6 +81,7 @@ public:
             bool> = true>
     array(const arr_t<value_t, size>& arr)
     {
+        _array_data.reserve(size);
         for (size_t i = 0; i < size; i++) {
             _array_data.emplace_back(arr.at(i));
         }
@@ -97,6 +98,7 @@ public:
             bool> = true>
     array(arr_t<value_t, size>&& arr)
     {
+        _array_data.reserve(size);
         for (size_t i = 0; i < size; i++) {
             _array_data.emplace_back(std::move(arr.at(i)));
         }
@@ -111,6 +113,9 @@ public:
             bool> = true>
     array(const collection_t& coll)
     {
+        if constexpr (_utils::has_size<collection_t>::value) {
+            _array_data.reserve(coll.size());
+        }
         for (const auto& val : coll) {
             _array_data.emplace_back(val);
         }
@@ -124,6 +129,9 @@ public:
             bool> = true>
     array(collection_t&& coll)
     {
+        if constexpr (_utils::has_size<collection_t>::value) {
+            _array_data.reserve(coll.size());
+        }
         for (auto& val : coll) {
             _array_data.emplace_back(std::move(val));
         }
@@ -141,6 +149,7 @@ public:
     array(const tuple_t<args_t...>& tpl)
     {
         constexpr size_t tuple_size = std::tuple_size_v<tuple_t<args_t...>>;
+        _array_data.reserve(tuple_size);
         construct_from_tuple_helper(tpl, std::make_index_sequence<tuple_size>());
     }
 
@@ -155,6 +164,7 @@ public:
     array(tuple_t<args_t...>&& tpl)
     {
         constexpr size_t tuple_size = std::tuple_size_v<tuple_t<args_t...>>;
+        _array_data.reserve(tuple_size);
         construct_from_tuple_move_helper(std::move(tpl), std::make_index_sequence<tuple_size>());
     }
 
@@ -207,6 +217,9 @@ private:
     template <typename tuple_t, size_t... Is>
     void move_as_tuple_helper(tuple_t& result, std::index_sequence<Is...>);
 
+    void dump_to(std::string& out) const;
+    void format_to(std::string& out, size_t indent, size_t indent_times) const;
+
 public:
 
     // Usage: get(key_1, key_2, ..., default_value);
@@ -215,6 +228,7 @@ public:
 
     template <typename value_t = value>
     std::optional<value_t> find(size_t pos) const;
+    const value* find_value(size_t pos) const;
 
     template <typename... args_t>
     decltype(auto) emplace_back(args_t&&... args);
