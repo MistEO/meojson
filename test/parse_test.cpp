@@ -7,10 +7,11 @@ bool normal_json();
 bool wrong_json();
 bool jsonc_trail_comma();
 bool jsonc_comment();
+bool string_control_characters();
 
 bool parsing()
 {
-    return normal_json() && wrong_json() && jsonc_trail_comma() && jsonc_comment();
+    return normal_json() && wrong_json() && jsonc_trail_comma() && jsonc_comment() && string_control_characters();
 }
 
 bool normal_json()
@@ -40,6 +41,27 @@ bool wrong_json()
     std::string wrong_json_with_comments2 = R"({\**)";
     if (json::parse(wrong_json_with_comments2)) {
         std::cerr << "Parsing failed:" << wrong_json_with_comments2 << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool string_control_characters()
+{
+    std::string raw_control = std::string("{\"key\":\"") + char(1) + "\"}";
+    if (json::parse(raw_control)) {
+        std::cerr << "Parsing should reject raw control character in string" << std::endl;
+        return false;
+    }
+
+    auto escaped_control = json::parse(R"({"key":"\u0001"})");
+    if (!escaped_control) {
+        std::cerr << "Parsing should accept escaped control character" << std::endl;
+        return false;
+    }
+    if (escaped_control->at("key").as_string() != std::string(1, char(1))) {
+        std::cerr << "Escaped control character decoded incorrectly" << std::endl;
         return false;
     }
 

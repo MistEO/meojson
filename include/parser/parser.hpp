@@ -89,5 +89,5 @@ array operator""_jarray(const char* str, size_t len);
 object operator""_jobject(const char* str, size_t len);
 }
 
-inline const value invalid_value();
+inline value invalid_value();
 } // namespace json

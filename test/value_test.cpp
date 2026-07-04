@@ -251,6 +251,21 @@ bool test_value_type_checks()
         std::cerr << "is<int>() test failed" << std::endl;
         return false;
     }
+    json::value v_fraction = 1.2;
+    if (v_fraction.is<int>()) {
+        std::cerr << "is<int>() should reject fractional number" << std::endl;
+        return false;
+    }
+    json::value v_negative = -1;
+    if (v_negative.is<unsigned>()) {
+        std::cerr << "is<unsigned>() should reject negative number" << std::endl;
+        return false;
+    }
+    json::value v_unsigned_overflow(json::value::value_type::number, std::string("4294967296"));
+    if (v_unsigned_overflow.is<unsigned>()) {
+        std::cerr << "is<unsigned>() should reject overflow" << std::endl;
+        return false;
+    }
     if (!v_str.is<std::string>()) {
         std::cerr << "is<std::string>() test failed" << std::endl;
         return false;
@@ -394,6 +409,17 @@ bool test_value_access_methods()
         return false;
     }
 
+    json::array erase_arr { 1 };
+    if (!erase_arr.erase(erase_arr.begin()) || !erase_arr.empty()) {
+        std::cerr << "array::erase(iterator) should report success for last element" << std::endl;
+        return false;
+    }
+    json::object erase_obj { { "key", 1 } };
+    if (!erase_obj.erase(erase_obj.begin()) || !erase_obj.empty()) {
+        std::cerr << "object::erase(iterator) should report success for last element" << std::endl;
+        return false;
+    }
+
     std::cout << "Value access methods test passed" << std::endl;
     return true;
 }
@@ -437,6 +463,24 @@ bool test_value_conversion_methods()
     if (v_uint.as_unsigned_long_long() != 42ull) {
         std::cerr << "as_unsigned_long_long() test failed" << std::endl;
         return false;
+    }
+
+    json::value v_fractional_number = 1.2;
+    try {
+        (void)v_fractional_number.as_integer();
+        std::cerr << "as_integer() should reject fractional number" << std::endl;
+        return false;
+    }
+    catch (const json::exception&) {
+    }
+
+    json::value v_negative_number = -1;
+    try {
+        (void)v_negative_number.as_unsigned();
+        std::cerr << "as_unsigned() should reject negative number" << std::endl;
+        return false;
+    }
+    catch (const json::exception&) {
     }
 
     // 浮点数测试
@@ -914,4 +958,3 @@ bool test_value_extended_conversions()
     std::cout << "Value extended conversions test passed" << std::endl;
     return true;
 }
-

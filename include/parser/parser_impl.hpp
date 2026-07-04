@@ -130,7 +130,7 @@ inline value parser<accept_jsonc, parsing_t, accel_traits>::parse_number()
     }
 
     // numbers cannot have leading zeroes
-    if (_cur != _end && *_cur == '0' && _cur + 1 != _end && std::isdigit(*(_cur + 1))) {
+    if (_cur != _end && *_cur == '0' && _cur + 1 != _end && std::isdigit(static_cast<unsigned char>(*(_cur + 1)))) {
         return invalid_value();
     }
 
@@ -381,6 +381,9 @@ inline std::optional<std::string> parser<accept_jsonc, parsing_t, accel_traits>:
             if (pair_high) {
                 return std::nullopt;
             }
+            if (static_cast<unsigned char>(*_cur) < 0x20) {
+                return std::nullopt;
+            }
             ++_cur;
             break;
         }
@@ -570,14 +573,14 @@ template <bool accept_jsonc, typename parsing_t, typename accel_traits>
 inline bool parser<accept_jsonc, parsing_t, accel_traits>::skip_digit()
 {
     // At least one digit
-    if (_cur != _end && std::isdigit(*_cur)) {
+    if (_cur != _end && std::isdigit(static_cast<unsigned char>(*_cur))) {
         ++_cur;
     }
     else {
         return false;
     }
 
-    while (_cur != _end && std::isdigit(*_cur)) {
+    while (_cur != _end && std::isdigit(static_cast<unsigned char>(*_cur))) {
         ++_cur;
     }
 
@@ -676,9 +679,8 @@ inline object operator""_jobject(const char* str, size_t len)
 }
 } // namespace literals
 
-inline const value invalid_value()
+inline value invalid_value()
 {
     return value(value::value_type::invalid, typename value::var_t());
 }
 } // namespace json
-

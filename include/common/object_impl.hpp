@@ -53,7 +53,8 @@ inline bool object::erase(const std::string& key)
 
 inline bool object::erase(iterator iter)
 {
-    return _object_data.erase(iter) != _object_data.end();
+    _object_data.erase(iter);
+    return true;
 }
 
 template <typename... args_t>
@@ -74,7 +75,7 @@ inline std::string object::to_string() const
     std::string str { '{' };
     for (auto iter = _object_data.cbegin(); iter != _object_data.cend();) {
         const auto& [key, val] = *iter;
-        str += '"' + _utils::unescape_string(key) + std::string { '\"', ':' } + val.to_string();
+        str += '"' + _utils::escape_string(key) + std::string { '\"', ':' } + val.to_string();
         if (++iter != _object_data.cend()) {
             str += ',';
         }
@@ -91,7 +92,7 @@ inline std::string object::format(size_t indent, size_t indent_times) const
     std::string str { '{', '\n' };
     for (auto iter = _object_data.cbegin(); iter != _object_data.cend();) {
         const auto& [key, val] = *iter;
-        str += body_indent + '"' + _utils::unescape_string(key) + std::string { '\"', ':', ' ' } + val.format(indent, indent_times + 1);
+        str += body_indent + '"' + _utils::escape_string(key) + std::string { '\"', ':', ' ' } + val.format(indent, indent_times + 1);
         if (++iter != _object_data.cend()) {
             str += ',';
         }
@@ -141,7 +142,8 @@ inline auto object::get_helper(const value_t& default_value, const std::string& 
     constexpr bool is_json = std::is_same_v<value, value_t> || std::is_same_v<array, value_t> || std::is_same_v<object, value_t>;
     constexpr bool is_string = std::is_constructible_v<std::string, value_t> && !is_json;
 
-    if (!contains(key)) {
+    auto iter = _object_data.find(key);
+    if (iter == _object_data.end()) {
         if constexpr (is_string) {
             return std::string(default_value);
         }
@@ -150,7 +152,7 @@ inline auto object::get_helper(const value_t& default_value, const std::string& 
         }
     }
 
-    return at(key).get_helper(default_value, std::forward<rest_keys_t>(rest)...);
+    return iter->second.get_helper(default_value, std::forward<rest_keys_t>(rest)...);
 }
 
 template <typename value_t>
@@ -159,7 +161,8 @@ inline auto object::get_helper(const value_t& default_value, const std::string& 
     constexpr bool is_json = std::is_same_v<value, value_t> || std::is_same_v<array, value_t> || std::is_same_v<object, value_t>;
     constexpr bool is_string = std::is_constructible_v<std::string, value_t> && !is_json;
 
-    if (!contains(key)) {
+    auto iter = _object_data.find(key);
+    if (iter == _object_data.end()) {
         if constexpr (is_string) {
             return std::string(default_value);
         }
@@ -168,7 +171,7 @@ inline auto object::get_helper(const value_t& default_value, const std::string& 
         }
     }
 
-    auto val = _object_data.at(key);
+    const auto& val = iter->second;
     if (val.template is<value_t>()) {
         if constexpr (is_string) {
             return val.template as<std::string>();
@@ -242,7 +245,7 @@ inline object object::operator|(const object& rhs) const&
 {
     object temp = *this;
     for (const auto& [key, val] : rhs) {
-        temp._object_data[key] = val;
+        temp._object_data.insert_or_assign(key, val);
     }
     return temp;
 }
@@ -251,7 +254,7 @@ inline object object::operator|(object&& rhs) const&
 {
     object temp = *this;
     for (auto& [key, val] : rhs) {
-        temp._object_data[key] = std::move(val);
+        temp._object_data.insert_or_assign(key, std::move(val));
     }
     return temp;
 }
@@ -259,7 +262,7 @@ inline object object::operator|(object&& rhs) const&
 inline object object::operator|(const object& rhs) &&
 {
     for (const auto& [key, val] : rhs) {
-        _object_data[key] = val;
+        _object_data.insert_or_assign(key, val);
     }
     return std::move(*this);
 }
@@ -267,7 +270,7 @@ inline object object::operator|(const object& rhs) &&
 inline object object::operator|(object&& rhs) &&
 {
     for (auto& [key, val] : rhs) {
-        _object_data[key] = std::move(val);
+        _object_data.insert_or_assign(key, std::move(val));
     }
     return std::move(*this);
 }
@@ -275,7 +278,7 @@ inline object object::operator|(object&& rhs) &&
 inline object& object::operator|=(const object& rhs)
 {
     for (const auto& [key, val] : rhs) {
-        _object_data[key] = val;
+        _object_data.insert_or_assign(key, val);
     }
     return *this;
 }
@@ -283,7 +286,7 @@ inline object& object::operator|=(const object& rhs)
 inline object& object::operator|=(object&& rhs)
 {
     for (auto& [key, val] : rhs) {
-        _object_data[key] = std::move(val);
+        _object_data.insert_or_assign(key, std::move(val));
     }
     return *this;
 }

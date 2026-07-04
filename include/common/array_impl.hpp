@@ -56,7 +56,8 @@ inline bool array::erase(size_t pos)
 
 inline bool array::erase(iterator iter)
 {
-    return _array_data.erase(iter) != _array_data.end();
+    _array_data.erase(iter);
+    return true;
 }
 
 template <typename... args_t>
@@ -156,7 +157,7 @@ inline auto array::get_helper(const value_t& default_value, size_t pos, rest_key
         }
     }
 
-    return at(pos).get_helper(default_value, std::forward<rest_keys_t>(rest)...);
+    return _array_data[pos].get_helper(default_value, std::forward<rest_keys_t>(rest)...);
 }
 
 template <typename value_t>
@@ -174,7 +175,7 @@ inline auto array::get_helper(const value_t& default_value, size_t pos) const
         }
     }
 
-    auto val = _array_data[pos];
+    const auto& val = _array_data[pos];
     if (val.template is<value_t>()) {
         if constexpr (is_string) {
             return val.template as<std::string>();
@@ -276,6 +277,7 @@ inline const value& array::operator[](size_t pos) const
 inline array array::operator+(const array& rhs) const&
 {
     array temp = *this;
+    temp._array_data.reserve(temp._array_data.size() + rhs.size());
     temp._array_data.insert(temp._array_data.end(), rhs.begin(), rhs.end());
     return temp;
 }
@@ -283,30 +285,35 @@ inline array array::operator+(const array& rhs) const&
 inline array array::operator+(array&& rhs) const&
 {
     array temp = *this;
+    temp._array_data.reserve(temp._array_data.size() + rhs.size());
     temp._array_data.insert(temp._array_data.end(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
     return temp;
 }
 
 inline array array::operator+(const array& rhs) &&
 {
+    _array_data.reserve(_array_data.size() + rhs.size());
     _array_data.insert(_array_data.end(), rhs.begin(), rhs.end());
     return std::move(*this);
 }
 
 inline array array::operator+(array&& rhs) &&
 {
+    _array_data.reserve(_array_data.size() + rhs.size());
     _array_data.insert(_array_data.end(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
     return std::move(*this);
 }
 
 inline array& array::operator+=(const array& rhs)
 {
+    _array_data.reserve(_array_data.size() + rhs.size());
     _array_data.insert(_array_data.end(), rhs.begin(), rhs.end());
     return *this;
 }
 
 inline array& array::operator+=(array&& rhs)
 {
+    _array_data.reserve(_array_data.size() + rhs.size());
     _array_data.insert(_array_data.end(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
     return *this;
 }
@@ -344,6 +351,9 @@ inline T array::as() const&
     }
     else if constexpr (_utils::is_collection<T>) {
         T result;
+        if constexpr (_utils::has_reserve<T>::value) {
+            result.reserve(_array_data.size());
+        }
         for (const auto& val : _array_data) {
             if constexpr (_utils::has_emplace_back<T>::value) {
                 result.emplace_back(val.as<typename T::value_type>());
@@ -387,6 +397,9 @@ inline T array::as() &&
     }
     else if constexpr (_utils::is_collection<T>) {
         T result;
+        if constexpr (_utils::has_reserve<T>::value) {
+            result.reserve(_array_data.size());
+        }
         for (auto& val : _array_data) {
             if constexpr (_utils::has_emplace_back<T>::value) {
                 result.emplace_back(std::move(val).as<typename T::value_type>());
