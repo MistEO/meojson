@@ -79,13 +79,7 @@ public:
                 && !_utils::has_to_json_in_member<arr_t<value_t, size>>::value
                 && !_utils::has_to_json_in_templ_spec<arr_t<value_t, size>>::value,
             bool> = true>
-    array(const arr_t<value_t, size>& arr)
-    {
-        _array_data.reserve(size);
-        for (size_t i = 0; i < size; i++) {
-            _array_data.emplace_back(arr.at(i));
-        }
-    }
+    array(const arr_t<value_t, size>& arr);
 
     template <
         template <typename, size_t> typename arr_t,
@@ -96,13 +90,7 @@ public:
                 && !_utils::has_to_json_in_member<arr_t<value_t, size>>::value
                 && !_utils::has_to_json_in_templ_spec<arr_t<value_t, size>>::value,
             bool> = true>
-    array(arr_t<value_t, size>&& arr)
-    {
-        _array_data.reserve(size);
-        for (size_t i = 0; i < size; i++) {
-            _array_data.emplace_back(std::move(arr.at(i)));
-        }
-    }
+    array(arr_t<value_t, size>&& arr);
 
     // Native support for collections (std::vector, std::list, std::set, etc.)
     template <
@@ -111,15 +99,7 @@ public:
             _utils::is_collection<collection_t> && !std::is_same_v<std::decay_t<collection_t>, array>
                 && !_utils::has_to_json_in_member<collection_t>::value && !_utils::has_to_json_in_templ_spec<collection_t>::value,
             bool> = true>
-    array(const collection_t& coll)
-    {
-        if constexpr (_utils::has_size<collection_t>::value) {
-            _array_data.reserve(coll.size());
-        }
-        for (const auto& val : coll) {
-            _array_data.emplace_back(val);
-        }
-    }
+    array(const collection_t& coll);
 
     template <
         typename collection_t,
@@ -127,15 +107,7 @@ public:
             _utils::is_collection<collection_t> && !std::is_same_v<std::decay_t<collection_t>, array>
                 && !_utils::has_to_json_in_member<collection_t>::value && !_utils::has_to_json_in_templ_spec<collection_t>::value,
             bool> = true>
-    array(collection_t&& coll)
-    {
-        if constexpr (_utils::has_size<collection_t>::value) {
-            _array_data.reserve(coll.size());
-        }
-        for (auto& val : coll) {
-            _array_data.emplace_back(std::move(val));
-        }
-    }
+    array(collection_t&& coll);
 
     // Native support for tuple-like types (std::tuple, std::pair)
     template <
@@ -146,12 +118,7 @@ public:
                 && !_utils::has_to_json_in_member<tuple_t<args_t...>>::value
                 && !_utils::has_to_json_in_templ_spec<tuple_t<args_t...>>::value,
             bool> = true>
-    array(const tuple_t<args_t...>& tpl)
-    {
-        constexpr size_t tuple_size = std::tuple_size_v<tuple_t<args_t...>>;
-        _array_data.reserve(tuple_size);
-        construct_from_tuple_helper(tpl, std::make_index_sequence<tuple_size>());
-    }
+    array(const tuple_t<args_t...>& tpl);
 
     template <
         template <typename...> typename tuple_t,
@@ -161,12 +128,7 @@ public:
                 && !_utils::has_to_json_in_member<tuple_t<args_t...>>::value
                 && !_utils::has_to_json_in_templ_spec<tuple_t<args_t...>>::value,
             bool> = true>
-    array(tuple_t<args_t...>&& tpl)
-    {
-        constexpr size_t tuple_size = std::tuple_size_v<tuple_t<args_t...>>;
-        _array_data.reserve(tuple_size);
-        construct_from_tuple_move_helper(std::move(tpl), std::make_index_sequence<tuple_size>());
-    }
+    array(tuple_t<args_t...>&& tpl);
 
     ~array() noexcept;
 
@@ -198,18 +160,10 @@ public:
 
 private:
     template <typename tuple_t, size_t... Is>
-    void construct_from_tuple_helper(const tuple_t& tpl, std::index_sequence<Is...>)
-    {
-        using std::get;
-        (_array_data.emplace_back(get<Is>(tpl)), ...);
-    }
+    void construct_from_tuple_helper(const tuple_t& tpl, std::index_sequence<Is...>);
 
     template <typename tuple_t, size_t... Is>
-    void construct_from_tuple_move_helper(tuple_t&& tpl, std::index_sequence<Is...>)
-    {
-        using std::get;
-        (_array_data.emplace_back(std::move(get<Is>(tpl))), ...);
-    }
+    void construct_from_tuple_move_helper(tuple_t&& tpl, std::index_sequence<Is...>);
 
     template <typename tuple_t, size_t... Is>
     void as_tuple_helper(tuple_t& result, std::index_sequence<Is...>) const;

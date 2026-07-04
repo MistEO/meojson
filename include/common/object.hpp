@@ -75,12 +75,7 @@ public:
                 && !std::is_same_v<std::decay_t<map_t>, object> && !_utils::has_to_json_in_member<map_t>::value
                 && !_utils::has_to_json_in_templ_spec<map_t>::value,
             bool> = true>
-    object(const map_t& m)
-    {
-        for (const auto& [key, val] : m) {
-            _object_data.emplace(key, val);
-        }
-    }
+    object(const map_t& m);
 
     template <
         typename map_t,
@@ -89,12 +84,7 @@ public:
                 && !std::is_same_v<std::decay_t<map_t>, object> && !_utils::has_to_json_in_member<map_t>::value
                 && !_utils::has_to_json_in_templ_spec<map_t>::value,
             bool> = true>
-    object(map_t&& m)
-    {
-        for (auto& [key, val] : m) {
-            _object_data.emplace(key, std::move(val));
-        }
-    }
+    object(map_t&& m);
 
     ~object();
 

@@ -33,6 +33,34 @@ inline object::object(std::initializer_list<value_type> init_list)
 {
 }
 
+template <
+    typename map_t,
+    std::enable_if_t<
+        _utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>
+            && !std::is_same_v<std::decay_t<map_t>, object> && !_utils::has_to_json_in_member<map_t>::value
+            && !_utils::has_to_json_in_templ_spec<map_t>::value,
+        bool>>
+inline object::object(const map_t& m)
+{
+    for (const auto& [key, val] : m) {
+        _object_data.emplace(key, val);
+    }
+}
+
+template <
+    typename map_t,
+    std::enable_if_t<
+        _utils::is_map<map_t> && std::is_same_v<typename map_t::key_type, std::string>
+            && !std::is_same_v<std::decay_t<map_t>, object> && !_utils::has_to_json_in_member<map_t>::value
+            && !_utils::has_to_json_in_templ_spec<map_t>::value,
+        bool>>
+inline object::object(map_t&& m)
+{
+    for (auto& [key, val] : m) {
+        _object_data.emplace(key, std::move(val));
+    }
+}
+
 inline bool object::contains(const std::string& key) const
 {
     return _object_data.find(key) != _object_data.cend();

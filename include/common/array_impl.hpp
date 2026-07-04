@@ -36,6 +36,102 @@ inline array::array(typename raw_array::size_type size)
 {
 }
 
+template <
+    template <typename, size_t> typename arr_t,
+    typename value_t,
+    size_t array_size,
+    std::enable_if_t<
+        _utils::is_fixed_array<arr_t<value_t, array_size>> && !std::is_same_v<std::decay_t<arr_t<value_t, array_size>>, array>
+            && !_utils::has_to_json_in_member<arr_t<value_t, array_size>>::value
+            && !_utils::has_to_json_in_templ_spec<arr_t<value_t, array_size>>::value,
+        bool>>
+inline array::array(const arr_t<value_t, array_size>& arr)
+{
+    _array_data.reserve(array_size);
+    for (size_t i = 0; i < array_size; i++) {
+        _array_data.emplace_back(arr.at(i));
+    }
+}
+
+template <
+    template <typename, size_t> typename arr_t,
+    typename value_t,
+    size_t array_size,
+    std::enable_if_t<
+        _utils::is_fixed_array<arr_t<value_t, array_size>> && !std::is_same_v<std::decay_t<arr_t<value_t, array_size>>, array>
+            && !_utils::has_to_json_in_member<arr_t<value_t, array_size>>::value
+            && !_utils::has_to_json_in_templ_spec<arr_t<value_t, array_size>>::value,
+        bool>>
+inline array::array(arr_t<value_t, array_size>&& arr)
+{
+    _array_data.reserve(array_size);
+    for (size_t i = 0; i < array_size; i++) {
+        _array_data.emplace_back(std::move(arr.at(i)));
+    }
+}
+
+template <
+    typename collection_t,
+    std::enable_if_t<
+        _utils::is_collection<collection_t> && !std::is_same_v<std::decay_t<collection_t>, array>
+            && !_utils::has_to_json_in_member<collection_t>::value && !_utils::has_to_json_in_templ_spec<collection_t>::value,
+        bool>>
+inline array::array(const collection_t& coll)
+{
+    if constexpr (_utils::has_size<collection_t>::value) {
+        _array_data.reserve(coll.size());
+    }
+    for (const auto& val : coll) {
+        _array_data.emplace_back(val);
+    }
+}
+
+template <
+    typename collection_t,
+    std::enable_if_t<
+        _utils::is_collection<collection_t> && !std::is_same_v<std::decay_t<collection_t>, array>
+            && !_utils::has_to_json_in_member<collection_t>::value && !_utils::has_to_json_in_templ_spec<collection_t>::value,
+        bool>>
+inline array::array(collection_t&& coll)
+{
+    if constexpr (_utils::has_size<collection_t>::value) {
+        _array_data.reserve(coll.size());
+    }
+    for (auto& val : coll) {
+        _array_data.emplace_back(std::move(val));
+    }
+}
+
+template <
+    template <typename...> typename tuple_t,
+    typename... args_t,
+    std::enable_if_t<
+        _utils::is_tuple_like<tuple_t<args_t...>> && !std::is_same_v<std::decay_t<tuple_t<args_t...>>, array>
+            && !_utils::has_to_json_in_member<tuple_t<args_t...>>::value
+            && !_utils::has_to_json_in_templ_spec<tuple_t<args_t...>>::value,
+        bool>>
+inline array::array(const tuple_t<args_t...>& tpl)
+{
+    constexpr size_t tuple_size = std::tuple_size_v<tuple_t<args_t...>>;
+    _array_data.reserve(tuple_size);
+    construct_from_tuple_helper(tpl, std::make_index_sequence<tuple_size>());
+}
+
+template <
+    template <typename...> typename tuple_t,
+    typename... args_t,
+    std::enable_if_t<
+        _utils::is_tuple_like<tuple_t<args_t...>> && !std::is_same_v<std::decay_t<tuple_t<args_t...>>, array>
+            && !_utils::has_to_json_in_member<tuple_t<args_t...>>::value
+            && !_utils::has_to_json_in_templ_spec<tuple_t<args_t...>>::value,
+        bool>>
+inline array::array(tuple_t<args_t...>&& tpl)
+{
+    constexpr size_t tuple_size = std::tuple_size_v<tuple_t<args_t...>>;
+    _array_data.reserve(tuple_size);
+    construct_from_tuple_move_helper(std::move(tpl), std::make_index_sequence<tuple_size>());
+}
+
 inline bool array::empty() const noexcept
 {
     return _array_data.empty();
@@ -413,7 +509,7 @@ inline T array::as() &&
         if (_array_data.size() != tuple_size) {
             throw exception("Array size mismatch for tuple conversion: expected=" + std::to_string(tuple_size) + ", actual=" + std::to_string(_array_data.size()));
         }
-        
+
         T result;
         move_as_tuple_helper(result, std::make_index_sequence<tuple_size>());
         _array_data.clear();
@@ -422,6 +518,20 @@ inline T array::as() &&
     else {
         static_assert(!sizeof(T), "Unsupported type for array::as()");
     }
+}
+
+template <typename tuple_t, size_t... Is>
+inline void array::construct_from_tuple_helper(const tuple_t& tpl, std::index_sequence<Is...>)
+{
+    using std::get;
+    (_array_data.emplace_back(get<Is>(tpl)), ...);
+}
+
+template <typename tuple_t, size_t... Is>
+inline void array::construct_from_tuple_move_helper(tuple_t&& tpl, std::index_sequence<Is...>)
+{
+    using std::get;
+    (_array_data.emplace_back(std::move(get<Is>(tpl))), ...);
 }
 
 template <typename tuple_t, size_t... Is>
